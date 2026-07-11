@@ -1,0 +1,9 @@
+# Unsupported Status Claims Audit
+
+| Claim | Source line range or local evidence | Problem | Required evidence | Later resolution | Final assessment |
+|---|---|---|---|---|---|
+| M3 is listed among ratified upstream authority in its proposal context | 609-629 | The task context labels upstream items ratified/binding but does not ratify M3 itself. | M3 audit, disposition, and ratification record | Direct M3 proposal says PROPOSED at 549-569 | M3 remains PROPOSED |
+| Trading-Model Admission Criteria is unblocked by M3 | 557-559 | The statement is inside a proposed decision and cannot establish downstream authority. | Ratified M3 transition | No M3 ratification evidence recovered | Unsupported as an authoritative unblock claim |
+| M3 has not begun after M2-C1 | 755-769; 1092-1143; 1693-1744; 1871-1912 | This conflicts temporally with the complete M3 proposal at 183-569 unless chronology is respected. | Chronology plus direct proposal | Reverse export ordering resolves it: these are earlier historical statuses | Supported historical status before proposal; not current final status |
+| A completed ratified Founding artifact was claimed delivered | 15559-15797; 15802-15850 | The chat states a downloadable file was created, but the workspace contains only an empty unrelated New folder/00_Founding_Authority.txt. | Actual matching workspace artifact or attachment record | No matching historical delivery file in workspace | Missing-file delivery claim; historical text remains recoverable from chat |
+| Prior shallow recovery claimed completion | Root CHAT_EXTRACTION_CHECKPOINT.md lines 12-18 and PROJECT_MINORE_FORENSIC_RECOVERY_REPORT.md | It omitted required directories, M3 history, authority versions, lifecycle, and control artifacts. | All completion-contract outputs and verification | Invalidated by the strict audit and superseded by this repair control set | Unsupported and invalidated |
