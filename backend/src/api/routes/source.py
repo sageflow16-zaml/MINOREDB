@@ -5,6 +5,7 @@ from typing import Optional
 from src.api.deps import get_db
 from src.schemas.source import SourceCreate, SourceUpdate, SourceRead, SourceUpload
 from src.crud import source as crud
+from src.services.text_normalizer import normalize_text
 import json
 
 router = APIRouter()
@@ -72,11 +73,11 @@ async def upload_source(
                 detail="Invalid metadata JSON"
             )
 
-    # Store raw content and initialize normalized_text as identical
+    # Store raw content and apply normalization
     source_data = SourceCreate(
         **meta_dict,
         raw_text=content,
-        normalized_text=content
+        normalized_text=normalize_text(content)
     )
     
     return crud.create(db, obj_in=source_data)
