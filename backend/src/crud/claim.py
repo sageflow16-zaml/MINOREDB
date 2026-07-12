@@ -6,6 +6,12 @@ from src.schemas.claim import ClaimCreate, ClaimUpdate
 def get(db: Session, id: UUID) -> Claim | None:
     return db.get(Claim, id)
 
+def get_by_text_and_source(db: Session, *, text: str, source_id: UUID) -> Claim | None:
+    return db.query(Claim).filter(
+        Claim.source_id == source_id,
+        Claim.verbatim_text == text
+    ).first()
+
 def get_multi(db: Session, *, skip: int = 0, limit: int = 100) -> list[Claim]:
     return db.query(Claim).offset(skip).limit(limit).all()
 

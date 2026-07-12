@@ -6,6 +6,7 @@ from src.api.deps import get_db
 from src.schemas.source import SourceCreate, SourceUpdate, SourceRead, SourceUpload
 from src.crud import source as crud
 from src.services.text_normalizer import normalize_text
+from src.services.claim_pipeline import extract_claims_from_source
 import json
 
 router = APIRouter()
@@ -37,6 +38,14 @@ def delete_source(id: UUID, db: Session = Depends(get_db)):
     if not crud.remove(db, id=id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found")
     return None
+
+@router.post("/{source_id}/extract-claims")
+def extract_source_claims(source_id: UUID, db: Session = Depends(get_db)):
+    created_count = extract_claims_from_source(db, source_id=source_id)
+    return {
+        "source_id": source_id,
+        "claims_created": created_count
+    }
 
 @router.post("/upload", response_model=SourceRead, status_code=status.HTTP_201_CREATED)
 async def upload_source(
