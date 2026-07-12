@@ -1,6 +1,6 @@
 from datetime import datetime
 from uuid import UUID, uuid4
-from sqlalchemy import String, DateTime, text
+from sqlalchemy import String, DateTime, text, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from src.db.session import Base
@@ -31,3 +31,5 @@ class Source(Base):
     provenance_confidence: Mapped[str | None] = mapped_column(String, nullable=True)
     source_metadata: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     provenance_metadata: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    normalized_text: Mapped[str | None] = mapped_column(Text, nullable=True)

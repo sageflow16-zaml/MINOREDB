@@ -1,9 +1,11 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from typing import Optional
 from src.api.deps import get_db
-from src.schemas.source import SourceCreate, SourceUpdate, SourceRead
+from src.schemas.source import SourceCreate, SourceUpdate, SourceRead, SourceUpload
 from src.crud import source as crud
+import json
 
 router = APIRouter()
 
@@ -34,3 +36,47 @@ def delete_source(id: UUID, db: Session = Depends(get_db)):
     if not crud.remove(db, id=id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found")
     return None
+
+@router.post("/upload", response_model=SourceRead, status_code=status.HTTP_201_CREATED)
+async def upload_source(
+    file: Optional[UploadFile] = File(None),
+    text: Optional[str] = Form(None),
+    metadata: Optional[str] = Form(None), 
+    db: Session = Depends(get_db)
+):
+    content = ""
+    
+    if file:
+        if not file.filename.endswith(".txt"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Only .txt files are supported"
+            )
+        content = (await file.read()).decode("utf-8")
+    elif text:
+        content = text
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Either a .txt file or plain text must be provided"
+        )
+
+    # Parse optional metadata JSON
+    meta_dict = {}
+    if metadata:
+        try:
+            meta_dict = json.loads(metadata)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Invalid metadata JSON"
+            )
+
+    # Store raw content and initialize normalized_text as identical
+    source_data = SourceCreate(
+        **meta_dict,
+        raw_text=content,
+        normalized_text=content
+    )
+    
+    return crud.create(db, obj_in=source_data)
