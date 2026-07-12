@@ -6,6 +6,15 @@ from src.schemas.association import AssociationCreate, AssociationUpdate
 def get(db: Session, id: UUID) -> Association | None:
     return db.get(Association, id)
 
+def get_by_claim_and_concept(db: Session, *, claim_id: UUID, concept_id: UUID) -> Association | None:
+    return db.query(Association).filter(
+        Association.claim_id == claim_id,
+        Association.concept_id == concept_id
+    ).first()
+
+def get_by_claim_id(db: Session, *, claim_id: UUID) -> list[Association]:
+    return db.query(Association).filter(Association.claim_id == claim_id).all()
+
 def get_multi(db: Session, *, skip: int = 0, limit: int = 100) -> list[Association]:
     return db.query(Association).offset(skip).limit(limit).all()
 

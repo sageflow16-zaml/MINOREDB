@@ -6,6 +6,14 @@ from src.schemas.concept import ConceptCreate, ConceptUpdate
 def get(db: Session, id: UUID) -> Concept | None:
     return db.get(Concept, id)
 
+def get_by_ids(db: Session, *, ids: list[UUID]) -> list[Concept]:
+    return db.query(Concept).filter(Concept.id.in_(ids)).all()
+
+def get_by_term(db: Session, *, term: str) -> Concept | None:
+    return db.query(Concept).filter(
+        Concept.conceptual_term == term
+    ).first()
+
 def get_multi(db: Session, *, skip: int = 0, limit: int = 100) -> list[Concept]:
     return db.query(Concept).offset(skip).limit(limit).all()
 

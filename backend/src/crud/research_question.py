@@ -6,6 +6,14 @@ from src.schemas.research_question import ResearchQuestionCreate, ResearchQuesti
 def get(db: Session, id: UUID) -> ResearchQuestion | None:
     return db.get(ResearchQuestion, id)
 
+def get_by_conflict(db: Session, *, conflict_id: UUID) -> ResearchQuestion | None:
+    return db.query(ResearchQuestion).filter(
+        ResearchQuestion.conflict_id == conflict_id
+    ).first()
+
+def get_by_conflicts(db: Session, *, conflict_ids: list[UUID]) -> list[ResearchQuestion]:
+    return db.query(ResearchQuestion).filter(ResearchQuestion.conflict_id.in_(conflict_ids)).all()
+
 def get_multi(db: Session, *, skip: int = 0, limit: int = 100) -> list[ResearchQuestion]:
     return db.query(ResearchQuestion).offset(skip).limit(limit).all()
 

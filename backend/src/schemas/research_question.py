@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 class ResearchQuestionBase(BaseModel):
+    conflict_id: Optional[UUID] = None
     question_statement: Optional[str] = None
     inquiry_origin: Optional[str] = None
     domain_relevance: Optional[str] = None

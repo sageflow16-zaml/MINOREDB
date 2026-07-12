@@ -9,6 +9,7 @@ from src.api.routes import (
     reconsideration_trigger,
     research_question,
     hypothesis,
+    search,
 )
 
 api_router = APIRouter()
@@ -22,3 +23,4 @@ api_router.include_router(interpretation.router, prefix="/interpretations", tags
 api_router.include_router(reconsideration_trigger.router, prefix="/triggers", tags=["Triggers"])
 api_router.include_router(research_question.router, prefix="/questions", tags=["Questions"])
 api_router.include_router(hypothesis.router, prefix="/hypotheses", tags=["Hypotheses"])
+api_router.include_router(search.router, prefix="/search", tags=["Search"])

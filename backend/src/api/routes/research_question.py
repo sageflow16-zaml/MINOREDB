@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from src.api.deps import get_db
 from src.schemas.research_question import ResearchQuestionCreate, ResearchQuestionUpdate, ResearchQuestionRead
 from src.crud import research_question as crud
+from src.services.hypothesis_engine import process_research_question_hypothesis
 
 router = APIRouter()
 
@@ -34,3 +35,12 @@ def delete_question(id: UUID, db: Session = Depends(get_db)):
     if not crud.remove(db, id=id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Research question not found")
     return None
+
+@router.post("/{research_question_id}/generate-hypothesis")
+def generate_hypothesis(research_question_id: UUID, db: Session = Depends(get_db)):
+    hypothesis = process_research_question_hypothesis(db, research_question_id=research_question_id)
+    return {
+        "research_question_id": research_question_id,
+        "hypothesis_id": hypothesis.id,
+        "status": "created"
+    }

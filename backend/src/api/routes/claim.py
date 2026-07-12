@@ -4,6 +4,10 @@ from sqlalchemy.orm import Session
 from src.api.deps import get_db
 from src.schemas.claim import ClaimCreate, ClaimUpdate, ClaimRead
 from src.crud import claim as crud
+from src.services.concept_extractor import process_claim_concepts
+from src.services.interpretation_engine import process_claim_interpretation
+from src.services.graph_explorer import explore_claim
+from src.schemas.graph import GraphResponse
 
 router = APIRouter()
 
@@ -34,3 +38,24 @@ def delete_claim(id: UUID, db: Session = Depends(get_db)):
     if not crud.remove(db, id=id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Claim not found")
     return None
+
+@router.post("/{claim_id}/extract-concepts")
+def extract_concepts(claim_id: UUID, db: Session = Depends(get_db)):
+    concepts = process_claim_concepts(db, claim_id=claim_id)
+    return {
+        "claim_id": claim_id,
+        "concepts_created": len(concepts)
+    }
+
+@router.post("/{claim_id}/interpret")
+def interpret_claim(claim_id: UUID, db: Session = Depends(get_db)):
+    interpretation = process_claim_interpretation(db, claim_id=claim_id)
+    return {
+        "claim_id": claim_id,
+        "interpretation_id": interpretation.id,
+        "status": "created"
+    }
+
+@router.get("/{claim_id}/graph", response_model=GraphResponse)
+def get_claim_graph(claim_id: UUID, db: Session = Depends(get_db)):
+    return explore_claim(db, claim_id=claim_id)

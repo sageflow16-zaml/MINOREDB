@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from src.api.deps import get_db
 from src.schemas.conflict import ConflictCreate, ConflictUpdate, ConflictRead
 from src.crud import conflict as crud
+from src.services.research_question_engine import process_conflict_questions
 
 router = APIRouter()
 
@@ -34,3 +35,12 @@ def delete_conflict(id: UUID, db: Session = Depends(get_db)):
     if not crud.remove(db, id=id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conflict not found")
     return None
+
+@router.post("/{conflict_id}/generate-question")
+def generate_question(conflict_id: UUID, db: Session = Depends(get_db)):
+    question = process_conflict_questions(db, conflict_id=conflict_id)
+    return {
+        "conflict_id": conflict_id,
+        "research_question_id": question.id,
+        "status": "created"
+    }

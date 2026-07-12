@@ -6,6 +6,14 @@ from src.schemas.hypothesis import HypothesisCreate, HypothesisUpdate
 def get(db: Session, id: UUID) -> Hypothesis | None:
     return db.get(Hypothesis, id)
 
+def get_by_research_question(db: Session, *, research_question_id: UUID) -> Hypothesis | None:
+    return db.query(Hypothesis).filter(
+        Hypothesis.research_question_id == research_question_id
+    ).first()
+
+def get_by_research_questions(db: Session, *, research_question_ids: list[UUID]) -> list[Hypothesis]:
+    return db.query(Hypothesis).filter(Hypothesis.research_question_id.in_(research_question_ids)).all()
+
 def get_multi(db: Session, *, skip: int = 0, limit: int = 100) -> list[Hypothesis]:
     return db.query(Hypothesis).offset(skip).limit(limit).all()
 

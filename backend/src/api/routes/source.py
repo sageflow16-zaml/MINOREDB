@@ -7,6 +7,7 @@ from src.schemas.source import SourceCreate, SourceUpdate, SourceRead, SourceUpl
 from src.crud import source as crud
 from src.services.text_normalizer import normalize_text
 from src.services.claim_pipeline import extract_claims_from_source
+from src.services.conflict_engine import process_source_conflicts
 import json
 
 router = APIRouter()
@@ -45,6 +46,14 @@ def extract_source_claims(source_id: UUID, db: Session = Depends(get_db)):
     return {
         "source_id": source_id,
         "claims_created": created_count
+    }
+
+@router.post("/{source_id}/detect-conflicts")
+def detect_source_conflicts(source_id: UUID, db: Session = Depends(get_db)):
+    created_count = process_source_conflicts(db, source_id=source_id)
+    return {
+        "source_id": source_id,
+        "conflicts_created": created_count
     }
 
 @router.post("/upload", response_model=SourceRead, status_code=status.HTTP_201_CREATED)

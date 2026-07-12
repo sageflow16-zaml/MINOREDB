@@ -6,6 +6,14 @@ from src.schemas.interpretation import InterpretationCreate, InterpretationUpdat
 def get(db: Session, id: UUID) -> Interpretation | None:
     return db.get(Interpretation, id)
 
+def get_by_concept_id(db: Session, *, concept_id: UUID) -> Interpretation | None:
+    return db.query(Interpretation).filter(Interpretation.concept_id == concept_id).first()
+
+def get_by_statement(db: Session, *, statement: str) -> Interpretation | None:
+    return db.query(Interpretation).filter(
+        Interpretation.interpretation_statement == statement
+    ).first()
+
 def get_multi(db: Session, *, skip: int = 0, limit: int = 100) -> list[Interpretation]:
     return db.query(Interpretation).offset(skip).limit(limit).all()
 
