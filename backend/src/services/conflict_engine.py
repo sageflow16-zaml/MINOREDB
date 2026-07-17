@@ -1,5 +1,6 @@
 import re
 from uuid import UUID
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from src.crud import source as source_crud
@@ -11,92 +12,91 @@ from src.schemas.conflict import ConflictCreate
 from src.schemas.claim_conflict import ClaimConflictCreate
 
 POLARITY_PAIRS = [
-    ("increase", "decrease"),
-    ("higher", "lower"),
-    ("always", "never"),
-    ("true", "false"),
-    ("buy", "sell"),
-    ("bullish", "bearish"),
-    ("long", "short"),
-    ("above", "below"),
-    ("before", "after"),
-    ("present", "absent"),
-    ("support", "resistance")
+    ("increase", "decrease"), ("higher", "lower"), ("always", "never"),
+    ("true", "false"), ("buy", "sell"), ("bullish", "bearish"),
+    ("long", "short"), ("above", "below"), ("before", "after"),
+    ("present", "absent"), ("support", "resistance")
 ]
 
 def has_polarity_conflict(text1: str, text2: str) -> bool:
-    """
-    Checks if two texts contain opposing polarity terms using word boundaries.
-    """
     t1 = text1.lower()
     t2 = text2.lower()
     
     for p1, p2 in POLARITY_PAIRS:
-        p1_in_t1 = bool(re.search(rf"\b{p1}\b", t1))
-        p2_in_t2 = bool(re.search(rf"\b{p2}\b", t2))
-        p2_in_t1 = bool(re.search(rf"\b{p2}\b", t1))
-        p1_in_t2 = bool(re.search(rf"\b{p1}\b", t2))
-        
-        if (p1_in_t1 and p2_in_t2) or (p2_in_t1 and p1_in_t2):
+        if (bool(re.search(rf"\b{p1}\b", t1)) and bool(re.search(rf"\b{p2}\b", t2))) or \
+           (bool(re.search(rf"\b{p2}\b", t1)) and bool(re.search(rf"\b{p1}\b", t2))):
             return True
-            
     return False
 
 def process_source_conflicts(db: Session, source_id: UUID) -> int:
-    """
-    Orchestrates deterministic conflict detection among claims of a given source.
-    """
     source = source_crud.get(db, id=source_id)
     if not source:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Source not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found")
 
-    claims = db.query(Claim).filter(Claim.source_id == source_id).all()
+    project_id = source.project_id
+
+    # Load claims
+    stmt = select(Claim).where(Claim.source_id == source_id)
+    claims = db.scalars(stmt).all()
     if len(claims) < 2:
         return 0
 
-    claim_concepts = {}
+    # Group claims by concept: concept_id -> list of claim_ids
+    concept_map = {}
     for claim in claims:
-        associations = db.query(Association).filter(Association.claim_id == claim.id).all()
-        claim_concepts[claim.id] = {a.concept_id for a in associations if a.concept_id}
+        stmt = select(Association.concept_id).where(Association.claim_id == claim.id)
+        c_ids = db.scalars(stmt).all()
+        for cid in c_ids:
+            concept_map.setdefault(cid, []).append(claim)
 
     conflicts_created = 0
+    checked_pairs = set()
 
-    for i in range(len(claims)):
-        for j in range(i + 1, len(claims)):
-            c1 = claims[i]
-            c2 = claims[j]
-
-            if c1.verbatim_text == c2.verbatim_text:
-                continue
-
-            shared_concepts = claim_concepts[c1.id].intersection(claim_concepts[c2.id])
-            if not shared_concepts:
-                continue
-
-            if has_polarity_conflict(c1.verbatim_text, c2.verbatim_text):
-                # Check for existing conflict between c1 and c2 via ClaimConflict
-                conflicts_a = {cc.conflict_id for cc in cc_crud.get_by_claim(db, claim_id=c1.id)}
-                conflicts_b = {cc.conflict_id for cc in cc_crud.get_by_claim(db, claim_id=c2.id)}
+    # Stage all writes and commit once at the end so a failure cannot leave a
+    # dangling Conflict with only one ClaimConflict link (atomic transaction).
+    staged: list[ClaimConflictCreate] = []
+    for claims_in_concept in concept_map.values():
+        if len(claims_in_concept) < 2:
+            continue
+            
+        for i in range(len(claims_in_concept)):
+            for j in range(i + 1, len(claims_in_concept)):
+                c1, c2 = claims_in_concept[i], claims_in_concept[j]
+                pair_id = tuple(sorted((c1.id, c2.id)))
                 
-                if not conflicts_a.intersection(conflicts_b):
-                    classification = "Deterministic polarity conflict detected. Confidence: HIGH"
-                    applicability_check = "Opposite polarity terms detected in claims sharing concepts."
+                if pair_id in checked_pairs or c1.verbatim_text == c2.verbatim_text:
+                    continue
+                
+                checked_pairs.add(pair_id)
+
+                if has_polarity_conflict(c1.verbatim_text, c2.verbatim_text):
+                    # Check for existing conflict via ClaimConflict linkage
+                    conflicts_a = {cc.conflict_id for cc in cc_crud.get_by_claim(db, claim_id=c1.id)}
+                    conflicts_b = {cc.conflict_id for cc in cc_crud.get_by_claim(db, claim_id=c2.id)}
                     
-                    conflict_in = ConflictCreate(
-                        conflict_classification=classification,
-                        contextual_applicability_check=applicability_check
-                    )
-                    conflict = conflict_crud.create(db, obj_in=conflict_in)
-                    
-                    # Create two ClaimConflict rows
-                    cc1 = ClaimConflictCreate(claim_id=c1.id, conflict_id=conflict.id)
-                    cc2 = ClaimConflictCreate(claim_id=c2.id, conflict_id=conflict.id)
-                    cc_crud.create(db, obj_in=cc1)
-                    cc_crud.create(db, obj_in=cc2)
-                    
-                    conflicts_created += 1
+                    if not conflicts_a.intersection(conflicts_b):
+                        conflict = conflict_crud.create(db, project_id=project_id, obj_in=ConflictCreate(
+                            conflict_classification="Deterministic polarity conflict detected. Confidence: HIGH",
+                            contextual_applicability_check="Opposite polarity terms detected."
+                        ), commit=False)
+                        db.flush()
+
+                        staged.append(ClaimConflictCreate(
+                            project_id=project_id,
+                            claim_id=c1.id,
+                            conflict_id=conflict.id,
+                        ))
+                        staged.append(ClaimConflictCreate(
+                            project_id=project_id,
+                            claim_id=c2.id,
+                            conflict_id=conflict.id,
+                        ))
+                        
+                        conflicts_created += 1
+
+    if staged:
+        for link in staged:
+            cc_crud.create(db, obj_in=link, commit=False)
+        db.commit()
 
     return conflicts_created

@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 from sqlalchemy import String, DateTime, text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.db.session import Base
 
 class Hypothesis(Base):
@@ -23,10 +23,16 @@ class Hypothesis(Base):
         server_default=text("CURRENT_TIMESTAMP"), 
         nullable=False
     )
-    research_question_id: Mapped[UUID | None] = mapped_column(
+    project_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), 
-        ForeignKey("research_question.id"), 
-        nullable=True
+        ForeignKey("project.id", ondelete="CASCADE"), 
+        nullable=False
+    )
+    project: Mapped["Project"] = relationship("Project")
+    research_question_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), 
+        ForeignKey("research_question.id", ondelete="CASCADE"), 
+        nullable=False
     )
     hypothesis_statement: Mapped[str | None] = mapped_column(String, nullable=True)
     variable_specification: Mapped[str | None] = mapped_column(String, nullable=True)

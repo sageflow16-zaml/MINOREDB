@@ -13,9 +13,11 @@ def process_conflict_questions(db: Session, conflict_id: UUID) -> ResearchQuesti
     conflict = conflict_crud.get(db, id=conflict_id)
     if not conflict:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Conflict not found"
         )
+
+    project_id = conflict.project_id
     
     # Prevent duplicate
     existing = rq_crud.get_by_conflict(db, conflict_id=conflict_id)
@@ -30,4 +32,4 @@ def process_conflict_questions(db: Session, conflict_id: UUID) -> ResearchQuesti
         substantive_grounding="Deterministic conflict detection"
     )
     
-    return rq_crud.create(db, obj_in=obj_in)
+    return rq_crud.create(db, project_id=project_id, obj_in=obj_in)

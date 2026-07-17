@@ -27,10 +27,11 @@ def extract_claims_from_source(db: Session, source_id: UUID) -> int:
         # Duplicate detection moved to CRUD layer
         if not claim_crud.get_by_text_and_source(db, text=text, source_id=source_id):
             claim_in = ClaimCreate(
+                project_id=source.project_id,
                 source_id=source_id,
                 verbatim_text=text
             )
-            claim_crud.create(db, obj_in=claim_in)
+            claim_crud.create(db, project_id=source.project_id, obj_in=claim_in)
             created_count += 1
             
     return created_count

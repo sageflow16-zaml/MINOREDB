@@ -40,11 +40,10 @@ def explore_claim(db: Session, claim_id: UUID) -> GraphResponse:
         if interpretation:
             break
     
-    # Load Conflicts via ClaimConflict linkage
+    # Load Conflicts via ClaimConflict linkage (single batched query, no N+1)
     ccs = cc_crud.get_by_claim(db, claim_id=claim_id)
     conflict_ids = [cc.conflict_id for cc in ccs]
-    conflicts = [conflict_crud.get(db, id=cid) for cid in conflict_ids]
-    conflicts = [c for c in conflicts if c]
+    conflicts = conflict_crud.get_by_ids(db, ids=conflict_ids)
     
     # Load Research Questions
     research_questions = rq_crud.get_by_conflicts(db, conflict_ids=conflict_ids)

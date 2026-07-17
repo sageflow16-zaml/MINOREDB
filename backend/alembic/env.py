@@ -5,11 +5,12 @@ from alembic import context
 import sys
 import os
 
-# Ensure backend is in sys.path
-sys.path.append(os.path.join(os.getcwd(), 'src'))
+# Ensure backend/ is in sys.path so "import src" resolves
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.db.session import Base
 from src.core.config import settings
+import src.db.base
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -17,6 +18,7 @@ fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
 def run_migrations_online():
+    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",

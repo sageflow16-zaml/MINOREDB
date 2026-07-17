@@ -1,7 +1,12 @@
 .env
+.venv
 venv/
+node_modules/
+dist/
 __pycache__/
 *.pyc
 .pytest_cache/
+logs/
+*.log
 .idea/
 .vscode/

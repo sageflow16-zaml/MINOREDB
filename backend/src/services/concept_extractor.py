@@ -40,18 +40,24 @@ def process_claim_concepts(db: Session, claim_id: UUID) -> list[Concept]:
         return []
 
     candidates = extract_concept_candidates(claim.verbatim_text)
-    
+    project_id = claim.project_id
+
+    # Batch-load existing concepts for all candidate terms in a single query (no N+1).
+    existing = concept_crud.get_by_terms(db, terms=candidates)
+    existing_by_term = {c.conceptual_term: c for c in existing}
+
     processed_concepts = []
     for term in candidates:
-        concept = concept_crud.get_by_term(db, term=term)
-        
+        concept = existing_by_term.get(term)
+
         if not concept:
             concept_in = ConceptCreate(
                 conceptual_term=term,
                 definition=f"Extracted from claim {claim_id}"
             )
-            concept = concept_crud.create(db, obj_in=concept_in)
-            
+            concept = concept_crud.create(db, project_id=project_id, obj_in=concept_in)
+            existing_by_term[term] = concept
+
         # Prevent duplicate associations
         if not association_crud.get_by_claim_and_concept(db, claim_id=claim_id, concept_id=concept.id):
             association_in = AssociationCreate(
@@ -59,7 +65,7 @@ def process_claim_concepts(db: Session, claim_id: UUID) -> list[Concept]:
                 concept_id=concept.id,
                 association_state="EXTRACTED"
             )
-            association_crud.create(db, obj_in=association_in)
+            association_crud.create(db, project_id=project_id, obj_in=association_in)
         
         processed_concepts.append(concept)
         

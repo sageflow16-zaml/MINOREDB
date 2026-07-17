@@ -1,4 +1,5 @@
 from uuid import UUID
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from src.models.claim_conflict import ClaimConflict
 from src.schemas.claim_conflict import ClaimConflictCreate
@@ -6,26 +7,30 @@ from src.schemas.claim_conflict import ClaimConflictCreate
 def get(db: Session, id: UUID) -> ClaimConflict | None:
     return db.get(ClaimConflict, id)
 
-def get_multi(db: Session, *, skip: int = 0, limit: int = 100) -> list[ClaimConflict]:
-    return db.query(ClaimConflict).offset(skip).limit(limit).all()
+def get_by_claim(db: Session, *, claim_id: UUID, project_id: UUID | None = None) -> list[ClaimConflict]:
+    stmt = select(ClaimConflict).where(ClaimConflict.claim_id == claim_id)
+    if project_id:
+        stmt = stmt.where(ClaimConflict.project_id == project_id)
+    return db.scalars(stmt).all()
 
-def get_by_claim(db: Session, *, claim_id: UUID) -> list[ClaimConflict]:
-    return db.query(ClaimConflict).filter(ClaimConflict.claim_id == claim_id).all()
-
-def get_by_conflict(db: Session, *, conflict_id: UUID) -> list[ClaimConflict]:
-    return db.query(ClaimConflict).filter(ClaimConflict.conflict_id == conflict_id).all()
+def get_by_conflict(db: Session, *, conflict_id: UUID, project_id: UUID | None = None) -> list[ClaimConflict]:
+    stmt = select(ClaimConflict).where(ClaimConflict.conflict_id == conflict_id)
+    if project_id:
+        stmt = stmt.where(ClaimConflict.project_id == project_id)
+    return db.scalars(stmt).all()
 
 def get_by_pair(db: Session, *, claim_id: UUID, conflict_id: UUID) -> ClaimConflict | None:
-    return db.query(ClaimConflict).filter(
+    return db.scalar(select(ClaimConflict).filter(
         ClaimConflict.claim_id == claim_id,
         ClaimConflict.conflict_id == conflict_id
-    ).first()
+    ))
 
-def create(db: Session, *, obj_in: ClaimConflictCreate) -> ClaimConflict:
+def create(db: Session, *, obj_in: ClaimConflictCreate, commit: bool = True) -> ClaimConflict:
     db_obj = ClaimConflict(**obj_in.model_dump())
     db.add(db_obj)
-    db.commit()
-    db.refresh(db_obj)
+    if commit:
+        db.commit()
+        db.refresh(db_obj)
     return db_obj
 
 def remove(db: Session, *, id: UUID) -> ClaimConflict | None:

@@ -1,20 +1,46 @@
-services:
-  postgres:
-    image: postgres:17
-    container_name: project_minore_postgres
-    restart: unless-stopped
+version: "3.9"
 
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: minore
+      POSTGRES_PASSWORD: minore
+      POSTGRES_DB: minore
     ports:
       - "5432:5432"
-
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/migrations/0001_initial_schema.sql:/docker-entrypoint-initdb.d/0001_initial_schema.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U minore"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://minore:minore@db:5432/minore
+      ENVIRONMENT: production
+      CORS_ORIGINS: http://localhost:3000
+      RATE_LIMIT_PER_MINUTE: 100
+      MAX_REQUEST_SIZE: 10485760
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
-  postgres_data:
+  pgdata:

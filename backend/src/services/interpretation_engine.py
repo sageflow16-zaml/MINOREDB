@@ -1,4 +1,5 @@
 from uuid import UUID
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from src.crud import claim as claim_crud
@@ -15,14 +16,16 @@ def process_claim_interpretation(db: Session, claim_id: UUID) -> Interpretation:
     claim = claim_crud.get(db, id=claim_id)
     if not claim:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Claim not found"
         )
+
+    project_id = claim.project_id
     
     # Load all associated Concepts
-    associations = db.query(Association).filter(Association.claim_id == claim_id).all()
+    associations = db.scalars(select(Association).filter(Association.claim_id == claim_id)).all()
     concept_ids = [assoc.concept_id for assoc in associations if assoc.concept_id]
-    concepts = db.query(Concept).filter(Concept.id.in_(concept_ids)).all() if concept_ids else []
+    concepts = db.scalars(select(Concept).filter(Concept.id.in_(concept_ids))).all() if concept_ids else []
     
     # Extract concept terms and format the statement
     concept_names = [c.conceptual_term for c in concepts if c.conceptual_term]
@@ -48,4 +51,4 @@ def process_claim_interpretation(db: Session, claim_id: UUID) -> Interpretation:
         interpretation_foundation=interpretation_foundation
     )
     
-    return interpretation_crud.create(db, obj_in=obj_in)
+    return interpretation_crud.create(db, project_id=project_id, obj_in=obj_in)

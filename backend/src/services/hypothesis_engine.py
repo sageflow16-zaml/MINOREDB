@@ -13,9 +13,11 @@ def process_research_question_hypothesis(db: Session, research_question_id: UUID
     rq = rq_crud.get(db, id=research_question_id)
     if not rq:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Research question not found"
         )
+
+    project_id = rq.project_id
     
     # Prevent duplicate
     existing = hyp_crud.get_by_research_question(db, research_question_id=research_question_id)
@@ -30,4 +32,4 @@ def process_research_question_hypothesis(db: Session, research_question_id: UUID
         substantive_departure="Deterministic hypothesis generation."
     )
     
-    return hyp_crud.create(db, obj_in=obj_in)
+    return hyp_crud.create(db, project_id=project_id, obj_in=obj_in)

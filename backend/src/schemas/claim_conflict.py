@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 class ClaimConflictBase(BaseModel):
+    project_id: UUID
     claim_id: UUID
     conflict_id: UUID
     role: Optional[str] = None

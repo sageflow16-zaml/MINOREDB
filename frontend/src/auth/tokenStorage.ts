@@ -1,0 +1,29 @@
+/**
+ * Centralised token storage. Used by both the axios interceptor (api client)
+ * and the auth layer so they stay in sync without circular imports.
+ */
+const TOKEN_KEY = 'minore_access_token';
+
+export function getToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setToken(token: string): void {
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+export function clearToken(): void {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore storage errors */
+  }
+}
