@@ -38,7 +38,7 @@ jobs:
       - name: Run backend tests
         run: python -m pytest backend/tests/ -v --tb=short
         env:
-          TEST_DATABASE_URL: postgresql+psycopg2://minore:minore@localhost:5432/minore_test
+          TEST_DATABASE_URL: postgresql+psycopg://minore:minore@localhost:5432/minore_test
           JWT_SECRET_KEY: ci-secret-key-that-is-at-least-32-characters-long
 
   frontend:

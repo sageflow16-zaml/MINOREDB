@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-at-least-32-characters!!")
-os.environ.setdefault("DATABASE_URL", "postgresql+psycopg2://minore:minore@localhost:5432/minore_test")
+os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://minore:minore@localhost:5432/minore_test")
 
 from src.main import app
 from src.api.deps import get_db, get_current_user
@@ -19,7 +19,7 @@ from src.core.security import hash_password
 
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql+psycopg2://minore:minore@localhost:5432/minore_test",
+    "postgresql+psycopg://minore:minore@localhost:5432/minore_test",
 )
 engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
