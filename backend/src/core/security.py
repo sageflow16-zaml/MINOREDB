@@ -17,16 +17,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def setup_security(app: FastAPI) -> None:
-    # --- CORS ---------------------------------------------------------------
-    origins = settings.cors_origin_list
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-        allow_methods=[m.strip() for m in settings.CORS_ALLOW_METHODS.split(",")],
-        allow_headers=[h.strip() for h in settings.CORS_ALLOW_HEADERS.split(",")],
-    )
-
     # --- Trusted Host -------------------------------------------------------
     allowed_hosts = settings.allowed_host_list
     if allowed_hosts:
@@ -37,3 +27,15 @@ def setup_security(app: FastAPI) -> None:
 
     # --- Compression --------------------------------------------------------
     app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+def setup_cors(app: FastAPI) -> None:
+    """Add CORSMiddleware as the outermost layer."""
+    origins = settings.cors_origin_list
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+        allow_methods=[m.strip() for m in settings.CORS_ALLOW_METHODS.split(",")],
+        allow_headers=[h.strip() for h in settings.CORS_ALLOW_HEADERS.split(",")],
+    )

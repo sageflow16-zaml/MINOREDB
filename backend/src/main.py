@@ -10,7 +10,7 @@ from sqlalchemy import text
 from src.api.router import api_router
 from src.api.routes.auth import router as auth_router
 from src.core.config import settings
-from src.core.security import setup_security
+from src.core.security import setup_security, setup_cors
 from src.api.middleware import (
     LoggingMiddleware,
     SecurityHeadersMiddleware,
@@ -48,13 +48,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-setup_security(app)
+# Non-CORS middlewares first (inner layers)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     RateLimitMiddleware, limit=settings.RATE_LIMIT_PER_MINUTE, times=60
 )
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(RequestIdMiddleware)
+
+setup_security(app)
+
+# CORSMiddleware must be the outermost (last to wrap) so it intercepts
+# OPTIONS preflight requests before any other middleware can interfere.
+setup_cors(app)
 
 app.add_exception_handler(Exception, handlers.unhandled_exception_handler)
 app.add_exception_handler(SQLAlchemyError, handlers.sqlalchemy_exception_handler)
