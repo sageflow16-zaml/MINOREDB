@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from src.db.session import SessionLocal
+from src.db.session import get_session_local
 from src.crud import project as crud
 from src.core.config import settings
 from src.core.jwt import decode_token
@@ -13,7 +13,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_db():
-    db = SessionLocal()
+    db = get_session_local()()
     try:
         yield db
     except Exception:

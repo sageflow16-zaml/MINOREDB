@@ -41,8 +41,9 @@ async def lifespan(app: FastAPI):
     yield
     from src.db.session import engine
 
-    logger.info("Application shutting down; disposing DB engine")
-    engine.dispose()
+    if engine is not None:
+        logger.info("Application shutting down; disposing DB engine")
+        engine.dispose()
 
 
 app = FastAPI(
@@ -89,6 +90,16 @@ async def readiness():
     """Returns 200 only when the database is reachable."""
     try:
         from src.db.session import engine
+        if engine is None:
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "status": "not_ready",
+                    "database": "disconnected",
+                    "error": "DATABASE_URL environment variable is not set. "
+                             "Ensure PostgreSQL add-on is linked to this Railway service.",
+                },
+            )
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return {"status": "ready", "database": "connected"}

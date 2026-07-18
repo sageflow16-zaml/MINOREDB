@@ -4,11 +4,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    DATABASE_URL: str = ""
 
     @field_validator("DATABASE_URL")
     @classmethod
     def normalize_url(cls, value: str) -> str:
+        if not value:
+            return value
         host = value.split("@")[-1].split(":")[0] if "@" in value else ""
         if host in ("db",):
             raise ValueError(
@@ -58,7 +60,7 @@ class Settings(BaseSettings):
     MAX_PAGE_SIZE: int = 1000
 
     # JWT authentication
-    JWT_SECRET_KEY: str
+    JWT_SECRET_KEY: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
