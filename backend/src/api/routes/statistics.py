@@ -8,6 +8,15 @@ from src.services import statistics
 router = APIRouter()
 
 
+@router.get("")
+def get_statistics_full(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    return statistics.get_statistics_overview(db, project_id=project_id)
+
+
 @router.get("/overview")
 def get_statistics_overview(
     project_id: UUID,
@@ -15,6 +24,16 @@ def get_statistics_overview(
     db: Session = Depends(get_db),
 ):
     return statistics.get_statistics_overview(db, project_id=project_id)
+
+
+@router.get("/risk")
+def get_statistics_risk(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = statistics.get_statistics_overview(db, project_id=project_id)
+    return overview.get("risk", {})
 
 
 @router.get("/equity-curve")

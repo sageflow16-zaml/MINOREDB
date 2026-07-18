@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Project Minore - FXReplay Connector",
+  "version": "1.0.0",
+  "description": "Seamlessly connect FXReplay trades to Project Minore for advanced analysis",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "alarms",
+    "notifications",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.fxreplay.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Project Minore"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "src/background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.fxreplay.com/*"
+      ],
+      "js": ["src/content/index.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

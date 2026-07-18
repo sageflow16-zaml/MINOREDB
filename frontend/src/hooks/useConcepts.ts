@@ -7,6 +7,7 @@ export const useConcepts = (projectId: string) => {
   return useQuery({
     queryKey: ['concepts', projectId],
     queryFn: () => conceptService.list(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -14,7 +15,7 @@ export const useConceptClaims = (projectId: string, conceptId: string) => {
     return useQuery({
       queryKey: ['concept-claims', projectId, conceptId],
       queryFn: () => conceptService.claims(projectId, conceptId),
-      enabled: !!conceptId,
+      enabled: !!projectId && !!conceptId,
     });
 };
 
@@ -22,7 +23,7 @@ export const useConceptInterpretations = (projectId: string, conceptId: string) 
     return useQuery({
       queryKey: ['concept-interpretations', projectId, conceptId],
       queryFn: () => conceptService.interpretations(projectId, conceptId),
-      enabled: !!conceptId,
+      enabled: !!projectId && !!conceptId,
     });
 };
 

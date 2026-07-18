@@ -5,6 +5,9 @@ from src.api.deps import get_db, get_project_or_404
 from src.models.project import Project
 from src.schemas.trade import TradeCreate, TradeUpdate, TradeRead
 from src.crud import trade as crud
+from src.services.trade_memory import generate_trade_memory
+from src.services.knowledge_engine import update_knowledge
+from src.services.knowledge_graph import update_graph
 
 router = APIRouter()
 
@@ -42,7 +45,14 @@ def create_trade(
     obj_in: TradeCreate = ...,
     db: Session = Depends(get_db),
 ):
-    return crud.create(db, project_id=project_id, obj_in=obj_in)
+    trade = crud.create(db, project_id=project_id, obj_in=obj_in)
+    try:
+        generate_trade_memory(db, trade.id)
+        update_knowledge(project_id, db)
+        update_graph(project_id, db)
+    except Exception:
+        pass
+    return trade
 
 
 @router.put("/{id}", response_model=TradeRead)
@@ -58,7 +68,14 @@ def update_trade(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found"
         )
-    return crud.update(db, db_obj=db_obj, obj_in=obj_in)
+    trade = crud.update(db, db_obj=db_obj, obj_in=obj_in)
+    try:
+        generate_trade_memory(db, trade.id)
+        update_knowledge(project_id, db)
+        update_graph(project_id, db)
+    except Exception:
+        pass
+    return trade
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

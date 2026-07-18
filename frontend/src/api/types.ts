@@ -229,6 +229,9 @@ export interface DashboardStats {
   profit_factor?: number;
   sharpe_ratio?: number;
   recovery_factor?: number;
+  top_knowledge_rule?: TopKnowledgeRule | null;
+  graph_nodes?: number;
+  graph_edges?: number;
 }
 
 export interface StatisticsOverview {
@@ -743,6 +746,74 @@ export interface LearningEventRead {
   summary?: string;
 }
 
+export interface KnowledgeRule {
+  id: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+  title: string;
+  description?: string;
+  category?: string;
+  rule_type?: string;
+  confidence?: number;
+  occurrences: number;
+  wins: number;
+  losses: number;
+  win_rate?: number;
+  avg_rr?: number;
+  expectancy?: number;
+  signature?: string;
+}
+
+export interface TopKnowledgeRule {
+  id: string;
+  title: string;
+  confidence?: number;
+  win_rate?: number;
+  occurrences: number;
+  avg_rr?: number;
+}
+
+export interface KnowledgeNode {
+  id: string;
+  project_id: string;
+  created_at: string;
+  type: string;
+  name: string;
+  category?: string;
+  weight?: number;
+  occurrences: number;
+}
+
+export interface KnowledgeEdge {
+  id: string;
+  project_id: string;
+  source_node_id: string;
+  target_node_id: string;
+  created_at: string;
+  relationship: string;
+  strength?: number;
+  occurrences: number;
+  confidence?: number;
+}
+
+export interface GraphSnapshot {
+  id: string;
+  project_id: string;
+  created_at: string;
+  total_nodes: number;
+  total_edges: number;
+  most_connected_type?: string;
+  highest_confidence_edge_id?: string;
+  summary?: string;
+}
+
+export interface GraphData {
+  nodes: KnowledgeNode[];
+  edges: KnowledgeEdge[];
+  snapshot?: GraphSnapshot | null;
+}
+
 export interface KnowledgeSnapshotRead {
   id: string;
   created_at?: string;
@@ -914,4 +985,35 @@ export interface WebhookStats {
   events_by_type: Record<string, number>;
   events_by_symbol: Record<string, number>;
   events_by_timeframe: Record<string, number>;
+}
+
+export interface TradeMemory {
+  id: string;
+  project_id: string;
+  trade_id: string;
+  created_at: string;
+  pair?: string;
+  direction?: string;
+  session?: string;
+  weekly_bias?: string;
+  daily_bias?: string;
+  h4_bias?: string;
+  market_phase?: string;
+  market_trend?: string;
+  entry_model?: string;
+  liquidity_type?: string;
+  execution_model?: string;
+  risk_percent?: number;
+  rr?: number;
+  pnl?: number;
+  result?: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  mistakes?: string[];
+  lessons?: string[];
+  tags?: string[];
+  confidence?: number;
+  pattern_match?: number;
+  similarity_score?: number;
+  summary?: string;
 }

@@ -7,6 +7,7 @@ export const useClaims = (projectId: string) => {
   return useQuery({
     queryKey: ['claims', projectId],
     queryFn: () => claimService.list(projectId),
+    enabled: !!projectId,
   });
 };
 

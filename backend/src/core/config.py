@@ -6,6 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     DATABASE_URL: str
 
+    # Port the uvicorn server binds to (Railway injects this dynamically).
+    PORT: int = 8000
+
     # Runtime environment: "development" | "production" | "test"
     ENVIRONMENT: str = "development"
 

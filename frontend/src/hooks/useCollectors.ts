@@ -6,6 +6,7 @@ export const useCollectors = (projectId: string) => {
   return useQuery({
     queryKey: ['collectors', projectId],
     queryFn: () => collectorService.list(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -13,6 +14,7 @@ export const useCollectorStatuses = (projectId: string) => {
   return useQuery({
     queryKey: ['collectors', projectId, 'status'],
     queryFn: () => collectorService.status(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -48,5 +50,6 @@ export const useCollectorLogs = (projectId: string, limit = 50) => {
   return useQuery({
     queryKey: ['collectors', projectId, 'logs', limit],
     queryFn: () => collectorService.logs(projectId, limit),
+    enabled: !!projectId,
   });
 };

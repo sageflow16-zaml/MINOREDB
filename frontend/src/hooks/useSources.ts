@@ -7,6 +7,7 @@ export const useSources = (projectId: string) => {
   return useQuery({
     queryKey: ['sources', projectId],
     queryFn: () => sourceService.list(projectId),
+    enabled: !!projectId,
   });
 };
 

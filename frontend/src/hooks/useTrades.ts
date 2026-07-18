@@ -6,6 +6,7 @@ export const useTrades = (projectId: string) => {
   return useQuery({
     queryKey: ['trades', projectId],
     queryFn: () => tradeService.list(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -13,7 +14,7 @@ export const useTrade = (projectId: string, tradeId: string) => {
   return useQuery({
     queryKey: ['trades', projectId, tradeId],
     queryFn: () => tradeService.get(projectId, tradeId),
-    enabled: !!tradeId,
+    enabled: !!projectId && !!tradeId,
   });
 };
 

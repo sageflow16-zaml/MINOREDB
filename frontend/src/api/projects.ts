@@ -7,6 +7,6 @@ export const projectService = {
   create: (data: { name: string; description?: string }) =>
     api.post<Project>('/projects/', data).then((r) => r.data),
   update: (id: string, data: Partial<Project>) =>
-    api.put<Project>(`/projects/${id}/`, data).then((r) => r.data),
-  remove: (id: string) => api.delete(`/projects/${id}/`).then((r) => r.data),
+    api.put<Project>(`/projects/${id}`, data).then((r) => r.data),
+  remove: (id: string) => api.delete(`/projects/${id}`).then((r) => r.data),
 };

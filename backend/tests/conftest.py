@@ -13,7 +13,7 @@ from src.db.session import Base
 
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql+psycopg://minore:minore@localhost:5432/minore_test",
+    "postgresql+psycopg2://minore:minore@localhost:5432/minore_test",
 )
 engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

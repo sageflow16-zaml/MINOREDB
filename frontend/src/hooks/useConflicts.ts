@@ -7,6 +7,7 @@ export const useConflicts = (projectId: string) => {
   return useQuery({
     queryKey: ['conflicts', projectId],
     queryFn: () => conflictService.list(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -14,7 +15,7 @@ export const useConflictClaims = (projectId: string, conflictId: string) => {
     return useQuery({
       queryKey: ['conflict-claims', projectId, conflictId],
       queryFn: () => conflictService.claims(projectId, conflictId),
-      enabled: !!conflictId,
+      enabled: !!projectId && !!conflictId,
     });
 };
 

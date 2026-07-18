@@ -325,12 +325,15 @@ def get_pnl_distribution(db: Session, project_id: UUID) -> dict:
     if not pnls:
         return {"bins": [], "counts": []}
     
-    import numpy as np
-    counts, bins = np.histogram(pnls, bins=20)
-    return {
-        "bins": [round(b, 2) for b in bins.tolist()],
-        "counts": counts.tolist(),
-    }
+    try:
+        import numpy as np
+        counts, bins = np.histogram(pnls, bins=20)
+        return {
+            "bins": [round(b, 2) for b in bins.tolist()],
+            "counts": counts.tolist(),
+        }
+    except ImportError:
+        return {"bins": [], "counts": [], "error": "numpy not installed"}
 
 
 def get_rr_distribution(db: Session, project_id: UUID) -> dict:
@@ -345,9 +348,12 @@ def get_rr_distribution(db: Session, project_id: UUID) -> dict:
     if not rrs:
         return {"bins": [], "counts": []}
     
-    import numpy as np
-    counts, bins = np.histogram(rrs, bins=20)
-    return {
-        "bins": [round(b, 2) for b in bins.tolist()],
-        "counts": counts.tolist(),
-    }
+    try:
+        import numpy as np
+        counts, bins = np.histogram(rrs, bins=20)
+        return {
+            "bins": [round(b, 2) for b in bins.tolist()],
+            "counts": counts.tolist(),
+        }
+    except ImportError:
+        return {"bins": [], "counts": [], "error": "numpy not installed"}

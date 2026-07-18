@@ -6,6 +6,7 @@ export const useMarketStructures = (projectId: string) => {
   return useQuery({
     queryKey: ['market-structures', projectId],
     queryFn: () => marketStructureService.list(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -13,7 +14,7 @@ export const useMarketStructure = (projectId: string, msId: string) => {
   return useQuery({
     queryKey: ['market-structures', projectId, msId],
     queryFn: () => marketStructureService.get(projectId, msId),
-    enabled: !!msId,
+    enabled: !!projectId && !!msId,
   });
 };
 

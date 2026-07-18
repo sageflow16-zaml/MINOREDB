@@ -9,6 +9,8 @@ from src.crud import (
     trade, market_structure, collector,
 )
 from src.services import statistics
+from src.crud import knowledge_rule as knowledge_crud
+from src.crud import knowledge_graph as graph_crud
 
 router = APIRouter()
 
@@ -42,6 +44,19 @@ def get_dashboard_stats(project_id: UUID, project: Project = Depends(get_project
     overview = stats_overview.get("overview", {})
     risk = stats_overview.get("risk", {})
 
+    top_rules = knowledge_crud.get_multi(db, project_id=project_id, skip=0, limit=1)
+    top_rule = (
+        {
+            "id": str(top_rules[0].id),
+            "title": top_rules[0].title,
+            "confidence": top_rules[0].confidence,
+            "win_rate": top_rules[0].win_rate,
+            "occurrences": top_rules[0].occurrences,
+            "avg_rr": top_rules[0].avg_rr,
+        } if top_rules else None
+    )
+    snap = graph_crud.get_snapshot(db, project_id=project_id)
+
     return {
         "sources": source.count(db, project_id=project_id),
         "claims": claim.count(db, project_id=project_id),
@@ -70,4 +85,7 @@ def get_dashboard_stats(project_id: UUID, project: Project = Depends(get_project
         "profit_factor": risk.get("profit_factor"),
         "sharpe_ratio": risk.get("sharpe_ratio"),
         "recovery_factor": risk.get("recovery_factor"),
+        "top_knowledge_rule": top_rule,
+        "graph_nodes": snap.total_nodes if snap else 0,
+        "graph_edges": snap.total_edges if snap else 0,
     }

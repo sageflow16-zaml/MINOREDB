@@ -23,6 +23,14 @@ from src.api.routes import (
     macro,
     mt5,
     tradingview,
+    trade_memory,
+    knowledge_rule,
+    knowledge_graph,
+    knowledge,
+    analyst,
+    research,
+    replay,
+    trader_intelligence,
 )
 
 api_router = APIRouter()
@@ -47,6 +55,14 @@ api_router.include_router(search.router, prefix="/projects/{project_id}/search",
 api_router.include_router(similarity.router, prefix="/projects/{project_id}/similarity", tags=["Similarity"])
 api_router.include_router(decision.router, prefix="/projects/{project_id}/decision", tags=["Decision Support"])
 api_router.include_router(learning.router, prefix="/projects/{project_id}/learning", tags=["Continuous Learning"])
+api_router.include_router(trade_memory.router, prefix="/projects/{project_id}/memories", tags=["Trade Memories"])
+api_router.include_router(knowledge_rule.router, prefix="/projects/{project_id}/knowledge", tags=["Knowledge Rules"])
+api_router.include_router(knowledge_graph.router, prefix="/projects/{project_id}/graph", tags=["Knowledge Graph"])
+api_router.include_router(knowledge.router, prefix="/knowledge", tags=["Knowledge Library"])
+api_router.include_router(analyst.router, prefix="/projects/{project_id}/analyst", tags=["AI Analyst"])
+api_router.include_router(research.router, prefix="/projects/{project_id}/research", tags=["Research Engine"])
+api_router.include_router(replay.router, prefix="/projects/{project_id}/replay", tags=["Historical Replay"])
+api_router.include_router(trader_intelligence.router, prefix="/projects/{project_id}/trader-intelligence", tags=["Trader Intelligence"])
 api_router.include_router(macro.router, prefix="/macro", tags=["Macro Intelligence"])
 api_router.include_router(mt5.router, prefix="/mt5", tags=["MT5 Integration"])
 api_router.include_router(tradingview.router, prefix="/tradingview", tags=["TradingView"])

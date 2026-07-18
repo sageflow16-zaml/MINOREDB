@@ -5,5 +5,6 @@ export const useDashboardStats = (projectId: string) => {
   return useQuery({
     queryKey: ['dashboard-stats', projectId],
     queryFn: () => dashboardService.stats(projectId),
+    enabled: !!projectId,
   });
 };

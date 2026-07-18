@@ -28,6 +28,14 @@ const Search = lazy(() => import('../pages/Search'));
 const Settings = lazy(() => import('../pages/Settings'));
 const GraphExplorer = lazy(() => import('../pages/GraphExplorer'));
 const Analytics = lazy(() => import('../pages/Analytics'));
+const TradeMemory = lazy(() => import('../pages/TradeMemory'));
+const Knowledge = lazy(() => import('../pages/Knowledge'));
+const KnowledgeGraph = lazy(() => import('../pages/KnowledgeGraph'));
+const Analyst = lazy(() => import('../pages/Analyst'));
+const Research = lazy(() => import('../pages/Research'));
+const Replay = lazy(() => import('../pages/Replay'));
+const KnowledgeCenter = lazy(() => import('../pages/KnowledgeCenter'));
+const TraderIntelligence = lazy(() => import('../pages/TraderIntelligence'));
 
 /**
  * Authenticated application routes. Every module under /projects/:projectId is
@@ -65,6 +73,14 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/search" element={<Search />} />
           <Route path="/projects/:projectId/settings" element={<Settings />} />
           <Route path="/projects/:projectId/analytics" element={<Analytics />} />
+          <Route path="/projects/:projectId/memories" element={<TradeMemory />} />
+          <Route path="/projects/:projectId/knowledge" element={<Knowledge />} />
+          <Route path="/projects/:projectId/knowledge-graph" element={<KnowledgeGraph />} />
+          <Route path="/projects/:projectId/analyst" element={<Analyst />} />
+          <Route path="/projects/:projectId/research" element={<Research />} />
+          <Route path="/projects/:projectId/replay" element={<Replay />} />
+          <Route path="/projects/:projectId/trader-intelligence" element={<TraderIntelligence />} />
+          <Route path="/projects/:projectId/knowledge" element={<KnowledgeCenter />} />
         </Route>
       </Routes>
     </Suspense>

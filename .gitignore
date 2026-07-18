@@ -1,12 +1,43 @@
+# Environment
 .env
+.env.*
+!.env.example
+
+# Python
 .venv
 venv/
-node_modules/
-dist/
 __pycache__/
 *.pyc
 .pytest_cache/
-logs/
-*.log
+*.egg-info/
+dist/
+build/
+*.db
+*.sqlite
+
+# Node
+node_modules/
+frontend/dist/
+extension/dist/
+
+# IDE
 .idea/
 .vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Backend
+backend/.venv/
+backend/__pycache__/
+backend/*.egg-info/
+
+# Docker
+pgdata/

@@ -7,6 +7,7 @@ export const useInterpretations = (projectId: string) => {
   return useQuery({
     queryKey: ['interpretations', projectId],
     queryFn: () => interpretationService.list(projectId),
+    enabled: !!projectId,
   });
 };
 

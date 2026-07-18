@@ -18,3 +18,10 @@ from src.models.learning import LearningEvent, KnowledgeSnapshot
 from src.models.macro import MacroEvent, MarketSnapshot
 from src.models.mt5 import BrokerConnection, TradeSyncLog
 from src.models.tradingview import MarketEvent, WebhookLog
+from src.models.trade_memory import TradeMemory
+from src.models.knowledge_rule import KnowledgeRule
+from src.models.knowledge_graph import KnowledgeNode, KnowledgeEdge, KnowledgeGraphSnapshot
+from src.models.research import ResearchSession, ResearchTask, ResearchReport
+from src.models.replay import MarketCandle, ReplaySession, ReplayTrade, ReplayBookmark
+from src.models.knowledge import KnowledgeCategory, KnowledgeTag, KnowledgeConcept, KnowledgeConceptTag, KnowledgeRelationship, KnowledgeExample, KnowledgeReference, KnowledgeSource, KnowledgeChunk, KnowledgeRevision
+from src.models.trader_intelligence import TradeDebrief, PersonalPattern, PersonalRule, PersonalRuleVersion, TraderProfile, TraderProfileSnapshot
