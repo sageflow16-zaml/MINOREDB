@@ -31,9 +31,9 @@ class Settings(BaseSettings):
 
     # CORS: comma-separated list of allowed origins.
     CORS_ORIGINS: str = ""
-    CORS_ALLOW_CREDENTIALS: bool = False
-    CORS_ALLOW_METHODS: str = "GET,POST,PUT,DELETE,OPTIONS"
-    CORS_ALLOW_HEADERS: str = "Authorization,Content-Type,Accept"
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOW_METHODS: str = "*"
+    CORS_ALLOW_HEADERS: str = "*"
 
     # TrustedHost: comma-separated list of allowed Host headers.
     ALLOWED_HOSTS: str = ""
@@ -82,9 +82,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        if not self.CORS_ORIGINS.strip():
-            return []
-        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        origins = [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        if origins:
+            return origins
+        # Default: allow local dev origins and the production Vercel domain.
+        return [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://project-minore.vercel.app",
+        ]
 
     @property
     def allowed_host_list(self) -> list[str]:
