@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import time
 
 
 def main():
@@ -11,21 +12,6 @@ def main():
     print(f"[entrypoint] DATABASE_URL = {safe_url}")
     print(f"[entrypoint] host = {host}")
 
-    if "railway.internal" not in raw_url and "localhost" not in raw_url and "host.docker" not in raw_url:
-        print(f"[entrypoint] WARNING: DATABASE_URL host is '{host}' — expected railway.internal or localhost")
-
-    # ── Database migrations ────────────────────────────────────────────
-    print("Running database migrations...")
-    result = subprocess.run(
-        ["alembic", "upgrade", "head"],
-        capture_output=False,
-    )
-    if result.returncode != 0:
-        print("Migrations failed. Exiting.")
-        sys.exit(result.returncode)
-    print("Migrations complete.")
-
-    # ── Start uvicorn ───────────────────────────────────────────────────
     port = os.environ.get("PORT", "8000")
     import socket
     hostname = socket.gethostname()
@@ -34,14 +20,27 @@ def main():
         ips = sorted(set(a[4][0] for a in addrs if a[0] == socket.AF_INET))
     except Exception:
         ips = []
-    # Railway may cache an old port (e.g. from docker-compose.yml's port 8000)
-    # or from the initial EXPOSE directive. Log everything we know.
     rail_vars = {k: v for k, v in os.environ.items()
                  if k.startswith("RAILWAY_") or k in ("PORT", "HOSTNAME", "HOME")}
     print(f"[entrypoint] PORT={port} HOSTNAME={hostname} IPs={ips}")
     print(f"[entrypoint] Railway env: {rail_vars}")
+
+    # ── Start uvicorn FIRST so the health check can succeed ────────────
     print(f"[entrypoint] Starting uvicorn on 0.0.0.0:{port}...")
-    os.execvp("uvicorn", ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", port])
+    proc = subprocess.Popen(
+        ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", port]
+    )
+
+    # ── Migrations in foreground (app is already listening) ────────────
+    print("[entrypoint] Running database migrations...")
+    result = subprocess.run(["alembic", "upgrade", "head"], capture_output=False)
+    if result.returncode != 0:
+        print("[entrypoint] WARNING: Migrations failed, but uvicorn continues.")
+    else:
+        print("[entrypoint] Migrations complete.")
+
+    # Wait for uvicorn
+    proc.wait()
 
 
 if __name__ == "__main__":
