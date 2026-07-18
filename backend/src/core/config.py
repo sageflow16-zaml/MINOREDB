@@ -8,13 +8,19 @@ class Settings(BaseSettings):
 
     @field_validator("DATABASE_URL")
     @classmethod
-    def reject_docker_compose_host(cls, value: str) -> str:
+    def normalize_url(cls, value: str) -> str:
         host = value.split("@")[-1].split(":")[0] if "@" in value else ""
         if host in ("db",):
             raise ValueError(
                 f"DATABASE_URL points to Docker Compose host '{host}' which does not exist "
                 "outside docker-compose. Use Railway's DATABASE_URL environment variable."
             )
+        # Railway injects postgresql:// without +driver. Only psycopg[binary] (v3) is
+        # installed (psycopg2 was removed). Rewrite to postgresql+psycopg:// so
+        # SQLAlchemy loads the psycopg (v3) dialect instead of failing with
+        # "Can't load plugin: sqlalchemy.dialects:postgresql".
+        if value.startswith("postgresql://") and "postgresql+" not in value:
+            value = value.replace("postgresql://", "postgresql+psycopg://", 1)
         return value
 
     # Port the uvicorn server binds to (Railway injects this dynamically).
