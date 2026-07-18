@@ -27,8 +27,17 @@ def main():
 
     # ── Start uvicorn on the port Railway provides ─────────────────────
     port = os.environ.get("PORT", "8000")
-    print(f"Starting uvicorn on 0.0.0.0:{port}...")
-    os.execvp("uvicorn", ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", port])
+    import socket
+    hostname = socket.gethostname()
+    try:
+        addrs = socket.getaddrinfo(hostname, None)
+        ips = sorted(set(a[4][0] for a in addrs if a[0] == socket.AF_INET))
+    except Exception:
+        ips = []
+    print(f"[entrypoint] PORT={port} HOSTNAME={hostname} IPs={ips}")
+    # --host :: enables IPv4+IPv6 dual-stack (Linux default IPV6_V6ONLY=0)
+    print(f"Starting uvicorn on [::]:{port} (dual-stack)...")
+    os.execvp("uvicorn", ["uvicorn", "src.main:app", "--host", "::", "--port", port])
 
 
 if __name__ == "__main__":
