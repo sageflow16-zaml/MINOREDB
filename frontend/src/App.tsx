@@ -7,6 +7,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { OfflineBanner } from './components/OfflineBanner';
 
 const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ServerError = lazy(() => import('./pages/ServerError'));
 
@@ -20,6 +21,7 @@ export const App = () => {
       <OfflineBanner />
       <Routes>
         <Route path="/login" element={withSuspense(<Login />)} />
+        <Route path="/register" element={withSuspense(<Register />)} />
         <Route path="/500" element={withSuspense(<ServerError />)} />
 
         <Route element={<ProtectedRoute />}>

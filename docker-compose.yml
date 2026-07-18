@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgresql+psycopg://minore:minore@db:5432/minore
       ENVIRONMENT: production
       CORS_ORIGINS: http://localhost:3000
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production}
       RATE_LIMIT_PER_MINUTE: 100
       MAX_REQUEST_SIZE: 10485760
     ports:

@@ -1,4 +1,5 @@
 from src.db.session import Base
+from src.models.user import User
 from src.models.project import Project
 from src.models.source import Source
 from src.models.claim import Claim

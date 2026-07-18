@@ -1,33 +1,31 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layers } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../auth/AuthContext';
 
-export default function Login() {
-  const { login } = useAuth();
+export default function Register() {
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const from = (location.state as { from?: Location })?.from?.pathname ?? '/';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
-      await login(email, password);
-      navigate(from, { replace: true });
+      await register(email, password, name || undefined);
+      navigate('/', { replace: true });
     } catch (err: unknown) {
       const msg =
         err instanceof Error
           ? err.message
           : (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
-            'Login failed. Please check your credentials.';
+            'Registration failed. Please try again.';
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -51,6 +49,19 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Name <span className="text-slate-400">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-950"
+              placeholder="Your name"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Email
             </label>
             <input
@@ -70,22 +81,23 @@ export default function Login() {
             <input
               type="password"
               required
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-950"
-              placeholder="••••••••"
+              placeholder="At least 8 characters"
             />
           </div>
 
           <Button type="submit" className="w-full" isLoading={isLoading}>
-            Sign in
+            Create account
           </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-          Don&apos;t have an account?{' '}
-          <Link to="/register" className="font-medium text-brand-500 hover:text-brand-600">
-            Sign up
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-brand-500 hover:text-brand-600">
+            Sign in
           </Link>
         </p>
       </div>

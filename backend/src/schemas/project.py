@@ -17,6 +17,7 @@ class ProjectUpdate(BaseModel):
 
 class Project(ProjectBase):
     id: UUID
+    user_id: UUID
     created_at: datetime
     updated_at: datetime
     status: str

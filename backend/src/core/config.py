@@ -13,22 +13,19 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # CORS: comma-separated list of allowed origins.
-    # Never use "*" together with credentials. Leave empty to deny all cross-origin
-    # requests (safest default for production).
     CORS_ORIGINS: str = ""
     CORS_ALLOW_CREDENTIALS: bool = False
     CORS_ALLOW_METHODS: str = "GET,POST,PUT,DELETE,OPTIONS"
     CORS_ALLOW_HEADERS: str = "Authorization,Content-Type,Accept"
 
     # TrustedHost: comma-separated list of allowed Host headers.
-    # Empty means "do not enforce" (development convenience). In production set this.
     ALLOWED_HOSTS: str = ""
 
     # OpenAPI / docs exposure. Disable in production.
     DOCS_ENABLED: bool = True
 
     # Security headers
-    HSTS_ENABLED: bool = False  # enable behind TLS in production
+    HSTS_ENABLED: bool = False
     HSTS_MAX_AGE: int = 31536000
     HSTS_INCLUDE_SUBDOMAINS: bool = True
     HSTS_PRELOAD: bool = True
@@ -40,12 +37,16 @@ class Settings(BaseSettings):
     MAX_REQUEST_SIZE: int = 0
     MAX_UPLOAD_SIZE: int = 5 * 1024 * 1024  # 5 MiB
 
-    # Pagination: hard cap on `limit` query params to prevent unbounded result sets.
+    # Pagination: hard cap on `limit` query params.
     MAX_PAGE_SIZE: int = 1000
 
-    # Optional API key. When set, all /api/v1 routes require the
-    # `X-API-Key` header to match. When unset, the API is open
-    # (backward compatible with existing deployments/tests).
+    # JWT authentication
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Optional shared API key for machine-to-machine access
     API_KEY: Optional[str] = None
     WEBHOOK_SECRET: Optional[str] = None
 

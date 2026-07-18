@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy import text
 
 from src.api.router import api_router
+from src.api.routes.auth import router as auth_router
 from src.core.config import settings
 from src.core.security import setup_security
 from src.api.middleware import (
@@ -17,7 +18,7 @@ from src.api.middleware import (
     RequestIdMiddleware,
 )
 from src.api import handlers
-from src.api.deps import verify_api_key, get_db
+from src.api.deps import get_current_user, get_db
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -60,7 +61,8 @@ app.add_exception_handler(SQLAlchemyError, handlers.sqlalchemy_exception_handler
 app.add_exception_handler(IntegrityError, handlers.integrity_error_handler)
 app.add_exception_handler(RequestValidationError, handlers.validation_exception_handler)
 
-app.include_router(api_router, prefix="/api/v1", dependencies=[Depends(verify_api_key)])
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(api_router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
 
 
 # ── Health / Readiness / Liveness ──────────────────────────────────────

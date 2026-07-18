@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { getToken, setToken, clearToken } from './tokenStorage';
+import { getToken, setToken, clearToken, setRefreshToken, getRefreshToken, clearRefreshToken, clearAllTokens } from './tokenStorage';
+import api from '../services/api';
 
 export interface User {
   id: string;
@@ -11,8 +12,10 @@ export interface AuthContextValue {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (token: string, user?: User) => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
+  refreshToken: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -21,24 +24,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() => getToken());
   const [user, setUser] = useState<User | null>(null);
 
-  // Keep the token in sync with storage (e.g. cleared by the api interceptor).
   useEffect(() => {
     const onStorage = () => setTokenState(getToken());
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const login = useCallback((newToken: string, newUser?: User) => {
-    setToken(newToken);
-    setTokenState(newToken);
-    if (newUser) setUser(newUser);
+  const login = useCallback(async (email: string, password: string) => {
+    const response = await api.post('/auth/login', { email, password });
+    const data = response.data;
+    setToken(data.access_token);
+    setRefreshToken(data.refresh_token);
+    setTokenState(data.access_token);
+    setUser(data.user);
+  }, []);
+
+  const register = useCallback(async (email: string, password: string, name?: string) => {
+    const response = await api.post('/auth/register', { email, password, name });
+    const data = response.data;
+    setToken(data.access_token);
+    setRefreshToken(data.refresh_token);
+    setTokenState(data.access_token);
+    setUser(data.user);
   }, []);
 
   const logout = useCallback(() => {
-    clearToken();
+    clearAllTokens();
     setTokenState(null);
     setUser(null);
+    api.post('/auth/logout').catch(() => {});
   }, []);
+
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    const stored = getRefreshToken();
+    if (!stored) return false;
+    try {
+      const response = await api.post('/auth/refresh', { refresh_token: stored });
+      const data = response.data;
+      setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
+      setTokenState(data.access_token);
+      return true;
+    } catch {
+      clearAllTokens();
+      setTokenState(null);
+      setUser(null);
+      return false;
+    }
+  }, []);
+
+  // Attempt to load user info if token exists but user is null
+  useEffect(() => {
+    if (token && !user) {
+      api.get('/auth/me')
+        .then(res => setUser(res.data))
+        .catch(() => {
+          clearAllTokens();
+          setTokenState(null);
+        });
+    }
+  }, [token, user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -46,9 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       isAuthenticated: Boolean(token),
       login,
+      register,
       logout,
+      refreshToken,
     }),
-    [user, token, login, logout]
+    [user, token, login, register, logout, refreshToken]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

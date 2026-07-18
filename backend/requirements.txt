@@ -8,3 +8,5 @@ alembic
 pytest
 httpx
 numpy
+bcrypt==4.2.1
+PyJWT==2.10.1
