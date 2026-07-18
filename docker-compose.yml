@@ -22,6 +22,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
+      # Local dev: connect to the `db` service. Railway overrides this.
       DATABASE_URL: postgresql+psycopg://minore:minore@db:5432/minore
       ENVIRONMENT: production
       CORS_ORIGINS: http://localhost:3000

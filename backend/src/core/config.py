@@ -6,6 +6,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     DATABASE_URL: str
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def reject_docker_compose_host(cls, value: str) -> str:
+        host = value.split("@")[-1].split(":")[0] if "@" in value else ""
+        if host in ("db",):
+            raise ValueError(
+                f"DATABASE_URL points to Docker Compose host '{host}' which does not exist "
+                "outside docker-compose. Use Railway's DATABASE_URL environment variable."
+            )
+        return value
+
     # Port the uvicorn server binds to (Railway injects this dynamically).
     PORT: int = 8000
 
