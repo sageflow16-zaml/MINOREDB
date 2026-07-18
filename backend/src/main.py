@@ -32,6 +32,12 @@ async def lifespan(app: FastAPI):
         "Application starting up",
         extra={"environment": settings.ENVIRONMENT, "docs_enabled": settings.DOCS_ENABLED, "version": APP_VERSION},
     )
+    # Log all registered routes for debugging
+    routes = sorted(
+        f"{m} {r.path}" for r in app.routes if hasattr(r, "methods") and hasattr(r, "path")
+        for m in r.methods if m not in ("HEAD", "OPTIONS")
+    )
+    logger.info("Registered routes", extra={"count": len(routes), "routes": routes})
     yield
     from src.db.session import engine
 
@@ -69,7 +75,6 @@ app.add_exception_handler(RequestValidationError, handlers.validation_exception_
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(api_router, prefix="/api/v1", dependencies=[Depends(get_current_user)])
-
 
 # ── Health / Readiness / Liveness ──────────────────────────────────────
 
