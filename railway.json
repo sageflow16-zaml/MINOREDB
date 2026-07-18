@@ -8,7 +8,10 @@
     "numReplicas": 1,
     "startCommand": "python entrypoint.py",
     "healthcheckPath": "/health",
+    "healthcheckTimeout": 180,
     "restartPolicyType": "ON_FAILURE",
-    "sleepApplication": false
+    "restartPolicyMaxRetries": 3,
+    "sleepApplication": false,
+    "runtime": "V2"
   }
 }
