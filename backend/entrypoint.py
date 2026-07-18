@@ -35,9 +35,8 @@ def main():
     except Exception:
         ips = []
     print(f"[entrypoint] PORT={port} HOSTNAME={hostname} IPs={ips}")
-    # --host :: enables IPv4+IPv6 dual-stack (Linux default IPV6_V6ONLY=0)
-    print(f"Starting uvicorn on [::]:{port} (dual-stack)...")
-    os.execvp("uvicorn", ["uvicorn", "src.main:app", "--host", "::", "--port", port])
+    print(f"Starting uvicorn on 0.0.0.0:{port}...")
+    os.execvp("uvicorn", ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", port])
 
 
 if __name__ == "__main__":
