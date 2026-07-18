@@ -25,7 +25,7 @@ def main():
         sys.exit(result.returncode)
     print("Migrations complete.")
 
-    # ── Start uvicorn on the port Railway provides ─────────────────────
+    # ── Start uvicorn ───────────────────────────────────────────────────
     port = os.environ.get("PORT", "8000")
     import socket
     hostname = socket.gethostname()
@@ -34,8 +34,13 @@ def main():
         ips = sorted(set(a[4][0] for a in addrs if a[0] == socket.AF_INET))
     except Exception:
         ips = []
+    # Railway may cache an old port (e.g. from docker-compose.yml's port 8000)
+    # or from the initial EXPOSE directive. Log everything we know.
+    rail_vars = {k: v for k, v in os.environ.items()
+                 if k.startswith("RAILWAY_") or k in ("PORT", "HOSTNAME", "HOME")}
     print(f"[entrypoint] PORT={port} HOSTNAME={hostname} IPs={ips}")
-    print(f"Starting uvicorn on 0.0.0.0:{port}...")
+    print(f"[entrypoint] Railway env: {rail_vars}")
+    print(f"[entrypoint] Starting uvicorn on 0.0.0.0:{port}...")
     os.execvp("uvicorn", ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", port])
 
 
