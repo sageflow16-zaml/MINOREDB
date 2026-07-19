@@ -1,8 +1,13 @@
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useKnowledgeRules } from '../hooks/useKnowledgeRules';
 import { PageHeader } from '../components/PageHeader';
+import { Card, CardContent } from '../components/ui/Card';
+import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import { ChevronDown, Lightbulb, TrendingUp, TrendingDown, Target, Zap } from 'lucide-react';
+import { cn } from '../lib/utils';
 import type { KnowledgeRule } from '../api/types';
 
 function RuleCard({ rule }: { rule: KnowledgeRule }) {
@@ -12,90 +17,106 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
   const confidence = rule.confidence != null ? rule.confidence.toFixed(1) : '—';
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {rule.title}
-          </h3>
-          {rule.category && (
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              {rule.category}
-            </span>
-          )}
-        </div>
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-          rule.confidence != null && rule.confidence >= 60
-            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-            : rule.confidence != null && rule.confidence >= 30
-            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-            : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-        }`}>
-          Confidence: {confidence}
-        </span>
-      </div>
-
-      <div className="mb-4 grid grid-cols-4 gap-4 text-sm">
-        <div className="rounded-md bg-slate-50 p-3 text-center dark:bg-slate-800/50">
-          <div className="text-lg font-bold text-slate-900 dark:text-white">{rule.occurrences}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Occurrences</div>
-        </div>
-        <div className="rounded-md bg-slate-50 p-3 text-center dark:bg-slate-800/50">
-          <div className="text-lg font-bold text-green-600">{wr}%</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Win Rate</div>
-        </div>
-        <div className="rounded-md bg-slate-50 p-3 text-center dark:bg-slate-800/50">
-          <div className="text-lg font-bold text-blue-600">{rule.avg_rr != null ? rule.avg_rr.toFixed(2) : '—'}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Avg R:R</div>
-        </div>
-        <div className="rounded-md bg-slate-50 p-3 text-center dark:bg-slate-800/50">
-          <div className="text-lg font-bold text-purple-600">{rule.expectancy != null ? rule.expectancy.toFixed(2) : '—'}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Expectancy</div>
-        </div>
-      </div>
-
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between rounded-md bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:bg-slate-800"
-      >
-        <span>Details & Evidence</span>
-        <svg className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {expanded && (
-        <div className="mt-4 space-y-3 text-sm">
-          {rule.description && (
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-              <h4 className="mb-2 font-semibold text-slate-700 dark:text-slate-300">Evidence</h4>
-              {rule.description.split('\n').map((line, i) => (
-                <p key={i} className="text-slate-600 dark:text-slate-400">{line}</p>
-              ))}
+    <motion.div
+      layout
+      className="rounded-xl border border-border bg-card shadow-sm"
+    >
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-chart-3/10">
+              <Lightbulb className="h-5 w-5 text-chart-3" />
             </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-md bg-green-50 p-3 dark:bg-green-900/10">
-              <span className="text-xs text-green-600 dark:text-green-400">Wins</span>
-              <div className="text-lg font-bold text-green-700 dark:text-green-300">{rule.wins}</div>
-            </div>
-            <div className="rounded-md bg-red-50 p-3 dark:bg-red-900/10">
-              <span className="text-xs text-red-600 dark:text-red-400">Losses</span>
-              <div className="text-lg font-bold text-red-700 dark:text-red-300">{rule.losses}</div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">{rule.title}</h3>
+              {rule.category && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">{rule.category}</p>
+              )}
             </div>
           </div>
-          {rule.signature && (
-            <div className="rounded-md border border-dashed border-slate-300 p-3 dark:border-slate-600">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Signature</span>
-              <p className="mt-1 font-mono text-xs text-slate-600 dark:text-slate-400">{rule.signature}</p>
-            </div>
-          )}
-          <div className="text-xs text-slate-400">
-            Created: {new Date(rule.created_at).toLocaleDateString()} — Updated: {new Date(rule.updated_at).toLocaleDateString()}
+          <Badge
+            variant={rule.confidence != null && rule.confidence >= 60 ? 'success' : rule.confidence != null && rule.confidence >= 30 ? 'warning' : 'default'}
+            size="sm"
+          >
+            Confidence: {confidence}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="rounded-lg bg-muted/50 p-3 text-center">
+            <div className="text-lg font-bold text-foreground">{rule.occurrences}</div>
+            <div className="text-[10px] text-muted-foreground">Occurrences</div>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3 text-center">
+            <div className="text-lg font-bold text-success">{wr}%</div>
+            <div className="text-[10px] text-muted-foreground">Win Rate</div>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3 text-center">
+            <div className="text-lg font-bold text-chart-1">{rule.avg_rr != null ? rule.avg_rr.toFixed(2) : '—'}</div>
+            <div className="text-[10px] text-muted-foreground">Avg R:R</div>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3 text-center">
+            <div className="text-lg font-bold text-chart-4">{rule.expectancy != null ? rule.expectancy.toFixed(2) : '—'}</div>
+            <div className="text-[10px] text-muted-foreground">Expectancy</div>
           </div>
         </div>
-      )}
-    </div>
+
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex w-full items-center justify-between rounded-lg bg-muted/30 px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+        >
+          <span>Details & Evidence</span>
+          <ChevronDown className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')} />
+        </button>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 space-y-3">
+                {rule.description && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Evidence</h4>
+                    {rule.description.split('\n').map((line, i) => (
+                      <p key={i} className="text-xs text-muted-foreground leading-relaxed">{line}</p>
+                    ))}
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-success/10 p-3">
+                    <div className="flex items-center gap-1 mb-1">
+                      <TrendingUp className="h-3 w-3 text-success" />
+                      <span className="text-[10px] text-success font-medium">Wins</span>
+                    </div>
+                    <div className="text-lg font-bold text-success">{rule.wins}</div>
+                  </div>
+                  <div className="rounded-lg bg-destructive/10 p-3">
+                    <div className="flex items-center gap-1 mb-1">
+                      <TrendingDown className="h-3 w-3 text-destructive" />
+                      <span className="text-[10px] text-destructive font-medium">Losses</span>
+                    </div>
+                    <div className="text-lg font-bold text-destructive">{rule.losses}</div>
+                  </div>
+                </div>
+                {rule.signature && (
+                  <div className="rounded-lg border border-dashed border-border p-3">
+                    <span className="text-[10px] text-muted-foreground font-medium">Signature</span>
+                    <p className="mt-1 font-mono text-[10px] text-foreground/70 break-all">{rule.signature}</p>
+                  </div>
+                )}
+                <div className="text-[10px] text-muted-foreground">
+                  Created: {new Date(rule.created_at).toLocaleDateString()} — Updated: {new Date(rule.updated_at).toLocaleDateString()}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
 
@@ -105,17 +126,29 @@ export default function KnowledgePage() {
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorState message="Error loading knowledge rules." onRetry={refetch} />;
-  if (!rules || rules.length === 0) return <EmptyState message="No knowledge rules yet. Create at least 5 similar trades to generate a rule." />;
+  if (!rules || rules.length === 0) return (
+    <EmptyState
+      message="No knowledge rules yet"
+      description="Create at least 5 similar trades to generate a rule."
+    />
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Knowledge Rules"
-        description="Reusable trading knowledge derived from historical trade memories."
+        description="Reusable trading knowledge derived from historical trade memories"
       />
-      <div className="space-y-4">
-        {rules.map((rule) => (
-          <RuleCard key={rule.id} rule={rule} />
+      <div className="grid gap-4">
+        {rules.map((rule, i) => (
+          <motion.div
+            key={rule.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.03 }}
+          >
+            <RuleCard rule={rule} />
+          </motion.div>
         ))}
       </div>
     </div>

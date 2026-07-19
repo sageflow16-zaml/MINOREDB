@@ -1,30 +1,30 @@
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line,
 } from 'recharts';
 import { PageHeader } from '../components/PageHeader';
-import { StatCard } from '../components/StatCard';
-import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { KpiCard } from '../components/ui/KpiCard';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/Button';
+import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import {
-  useLearningEvents,
-  useLearningSnapshots,
-  useLearningStatus,
-  useLearningRebuild,
+  useLearningEvents, useLearningSnapshots, useLearningStatus, useLearningRebuild,
 } from '../hooks/useLearning';
+import { Brain, RefreshCw, TrendingUp, TrendingDown, Layers, GitBranch, BookOpen } from 'lucide-react';
+import { cn } from '../lib/utils';
+
+const statusBadge = (status: string) => {
+  const map: Record<string, 'success' | 'warning' | 'destructive'> = {
+    SUCCESS: 'success', PARTIAL: 'warning', FAILED: 'destructive',
+  };
+  return map[status] || 'default';
+};
 
 export default function LearningPage() {
   const { projectId } = useParams<{ projectId: string }>();
-
   const events = useLearningEvents(projectId!);
   const snapshots = useLearningSnapshots(projectId!);
   const status = useLearningStatus(projectId!);
@@ -32,12 +32,7 @@ export default function LearningPage() {
 
   const isLoading = events.isLoading || snapshots.isLoading || status.isLoading;
   const isError = events.isError || snapshots.isError || status.isError;
-
-  const handleRetry = () => {
-    events.refetch();
-    snapshots.refetch();
-    status.refetch();
-  };
+  const handleRetry = () => { events.refetch(); snapshots.refetch(); status.refetch(); };
 
   if (isLoading) return <LoadingSpinner />;
   if (isError) return <ErrorState message="Error loading learning data." onRetry={handleRetry} />;
@@ -46,169 +41,172 @@ export default function LearningPage() {
   const snapshotData = snapshots.data || [];
   const statusData = status.data;
 
-  const growthTimeline = snapshotData
-    .slice()
-    .reverse()
-    .map((s) => ({
-      date: s.created_at ? new Date(s.created_at).toLocaleDateString() : '',
-      trades: s.total_trades,
-      patterns: s.total_patterns,
-      claims: s.total_claims,
-      concepts: s.total_concepts,
-      growth: s.knowledge_growth,
-    }));
+  const growthTimeline = snapshotData.slice().reverse().map((s) => ({
+    date: s.created_at ? new Date(s.created_at).toLocaleDateString() : '',
+    trades: s.total_trades, patterns: s.total_patterns, claims: s.total_claims,
+    concepts: s.total_concepts, growth: s.knowledge_growth,
+  }));
 
-  const learningRate = (() => {
-    const byType: Record<string, number> = {};
-    for (const e of eventData) {
-      byType[e.event_type] = (byType[e.event_type] || 0) + 1;
-    }
-    return Object.entries(byType).map(([type, count]) => ({ type, count }));
-  })();
+  const learningRate = Object.entries(
+    eventData.reduce((acc: Record<string, number>, e) => {
+      acc[e.event_type] = (acc[e.event_type] || 0) + 1;
+      return acc;
+    }, {}),
+  ).map(([type, count]) => ({ type, count }));
 
-  const knowledgeExpansion = snapshotData
-    .slice()
-    .reverse()
-    .map((s) => ({
-      date: s.created_at ? new Date(s.created_at).toLocaleDateString() : '',
-      total: s.total_trades + s.total_patterns + s.total_claims + s.total_concepts + s.total_sources + s.total_interpretations,
-    }));
+  const knowledgeExpansion = snapshotData.slice().reverse().map((s) => ({
+    date: s.created_at ? new Date(s.created_at).toLocaleDateString() : '',
+    total: s.total_trades + s.total_patterns + s.total_claims + s.total_concepts + s.total_sources + s.total_interpretations,
+  }));
 
-  const statusColors: Record<string, string> = {
-    SUCCESS: 'bg-green-100 text-green-800',
-    PARTIAL: 'bg-yellow-100 text-yellow-800',
-    FAILED: 'bg-red-100 text-red-800',
-  };
+  const chartConfig = { stroke: 'hsl(var(--chart-1))', fill: 'hsl(var(--chart-1))' };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <PageHeader title="Continuous Learning" />
-        <button
-          onClick={() => rebuild.mutate()}
-          disabled={rebuild.isPending}
-          className="rounded bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-        >
-          {rebuild.isPending ? 'Rebuilding...' : 'Rebuild Learning'}
-        </button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Continuous Learning"
+        description="Track knowledge growth and learning events"
+      >
+        <Button size="sm" onClick={() => rebuild.mutate()} isLoading={rebuild.isPending}>
+          <RefreshCw className="mr-1.5 h-4 w-4" /> Rebuild Learning
+        </Button>
+      </PageHeader>
 
       {rebuild.data && (
-        <div className={`rounded-lg border p-4 text-sm ${
-          rebuild.data.status === 'SUCCESS' ? 'border-green-200 bg-green-50 text-green-800'
-          : rebuild.data.status === 'PARTIAL' ? 'border-yellow-200 bg-yellow-50 text-yellow-800'
-          : 'border-red-200 bg-red-50 text-red-800'
-        }`}>
-          Rebuild {rebuild.data.status} in {rebuild.data.duration_ms}ms — Steps: {rebuild.data.steps_completed.join(', ')}
-          {rebuild.data.errors.length > 0 && ` — Errors: ${rebuild.data.errors.join(', ')}`}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className={cn(
+            'border-success/20 bg-success/5',
+            rebuild.data.status === 'PARTIAL' && 'border-warning/20 bg-warning/5',
+            rebuild.data.status === 'FAILED' && 'border-destructive/20 bg-destructive/5',
+          )}>
+            <CardContent className="py-3">
+              <p className="text-xs">
+                <span className="font-medium">Rebuild {rebuild.data.status}</span>
+                <span className="text-muted-foreground"> — {rebuild.data.duration_ms}ms — Steps: {rebuild.data.steps_completed.join(', ')}</span>
+                {rebuild.data.errors.length > 0 && <span className="text-destructive"> — Errors: {rebuild.data.errors.join(', ')}</span>}
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
-      {/* Status Cards */}
+      {/* KPI Cards */}
       {statusData && (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard title="Total Trades" value={String(statusData.total_trades)} />
-          <StatCard title="Total Patterns" value={String(statusData.total_patterns)} />
-          <StatCard title="Total Claims" value={String(statusData.total_claims)} />
-          <StatCard title="Total Concepts" value={String(statusData.total_concepts)} />
-          <StatCard title="Total Sources" value={String(statusData.total_sources)} />
-          <StatCard title="Interpretations" value={String(statusData.total_interpretations)} />
-          <StatCard title="Market Structures" value={String(statusData.total_market_structures)} />
-          <StatCard title="Learning Events" value={String(statusData.total_events)} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <KpiCard title="Total Trades" value={String(statusData.total_trades)} icon={TrendingUp} />
+          <KpiCard title="Total Patterns" value={String(statusData.total_patterns)} icon={GitBranch} />
+          <KpiCard title="Total Claims" value={String(statusData.total_claims)} icon={Layers} />
+          <KpiCard title="Total Concepts" value={String(statusData.total_concepts)} icon={Brain} />
+          <KpiCard title="Total Sources" value={String(statusData.total_sources)} icon={BookOpen} />
+          <KpiCard title="Interpretations" value={String(statusData.total_interpretations)} icon={BookOpen} />
+          <KpiCard title="Market Structures" value={String(statusData.total_market_structures)} icon={GitBranch} />
+          <KpiCard title="Learning Events" value={String(statusData.total_events)} icon={RefreshCw} />
         </div>
       )}
 
       {/* Charts */}
       {growthTimeline.length > 0 && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-slate-700">Knowledge Growth</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={growthTimeline}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Area type="monotone" dataKey="trades" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="patterns" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="claims" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="concepts" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
-              </AreaChart>
-            </ResponsiveContainer>
-            <div className="mt-2 flex gap-4 text-xs text-slate-500">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" /> Trades</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-500" /> Patterns</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500" /> Claims</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-purple-500" /> Concepts</span>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Knowledge Growth</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={growthTimeline}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
+                  <Area type="monotone" dataKey="trades" stackId="1" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="patterns" stackId="1" stroke="hsl(var(--chart-2))" fill="hsl(var(--chart-2))" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="claims" stackId="1" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3))" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="concepts" stackId="1" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4))" fillOpacity={0.6} />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="mt-2 flex flex-wrap gap-4 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-1))' }} /> Trades</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-2))' }} /> Patterns</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-3))' }} /> Claims</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-4))' }} /> Concepts</span>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-slate-700">Knowledge Expansion</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={knowledgeExpansion}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Knowledge Expansion</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={knowledgeExpansion}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                  <Line type="monotone" dataKey="total" stroke="hsl(var(--chart-5))" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* Learning Rate */}
       {learningRate.length > 0 && (
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700">Learning Rate by Event Type</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={learningRate}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="type" tick={{ fontSize: 10 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Learning Rate by Event Type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={learningRate}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="type" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                <Bar dataKey="count" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Events Timeline */}
-      <div className="rounded-lg border bg-white shadow-sm">
-        <div className="border-b px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Recent Learning Events</h2>
-        </div>
+      {/* Events Table */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Recent Learning Events</CardTitle>
+        </CardHeader>
         {eventData.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">No learning events yet.</div>
+          <CardContent><p className="text-center text-xs text-muted-foreground py-8">No learning events yet.</p></CardContent>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
-                <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
-                  <th className="px-4 py-3">Event</th>
-                  <th className="px-4 py-3">Entity</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Duration</th>
-                  <th className="px-4 py-3">Summary</th>
-                  <th className="px-4 py-3">Time</th>
+                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Event</th>
+                  <th className="px-4 py-2.5">Entity</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Duration</th>
+                  <th className="px-4 py-2.5">Summary</th>
+                  <th className="px-4 py-2.5">Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-border">
                 {eventData.map((e) => (
-                  <tr key={e.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium">{e.event_type}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
+                  <tr key={e.id} className="hover:bg-muted/20">
+                    <td className="px-4 py-2.5 font-medium text-foreground">{e.event_type}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
                       {e.entity_type ? `${e.entity_type}${e.entity_id ? ` (${e.entity_id.slice(0, 8)})` : ''}` : '—'}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[e.status] || 'bg-slate-100 text-slate-800'}`}>
-                        {e.status}
-                      </span>
+                    <td className="px-4 py-2.5">
+                      <Badge variant={statusBadge(e.status)} size="sm">{e.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-xs">{e.duration_ms != null ? `${e.duration_ms}ms` : '—'}</td>
-                    <td className="max-w-xs truncate px-4 py-3 text-xs text-slate-500">{e.summary || '—'}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
+                    <td className="px-4 py-2.5 text-muted-foreground">{e.duration_ms != null ? `${e.duration_ms}ms` : '—'}</td>
+                    <td className="max-w-xs truncate px-4 py-2.5 text-muted-foreground">{e.summary || '—'}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
                       {e.created_at ? new Date(e.created_at).toLocaleString() : '—'}
                     </td>
                   </tr>
@@ -217,42 +215,42 @@ export default function LearningPage() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Snapshots Table */}
       {snapshotData.length > 0 && (
-        <div className="rounded-lg border bg-white shadow-sm">
-          <div className="border-b px-6 py-4">
-            <h2 className="text-lg font-semibold text-slate-900">Knowledge Snapshots</h2>
-          </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Knowledge Snapshots</CardTitle>
+          </CardHeader>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
-                <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Trades</th>
-                  <th className="px-4 py-3">Patterns</th>
-                  <th className="px-4 py-3">Claims</th>
-                  <th className="px-4 py-3">Concepts</th>
-                  <th className="px-4 py-3">Win Rate</th>
-                  <th className="px-4 py-3">Expectancy</th>
-                  <th className="px-4 py-3">Growth</th>
+                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Date</th>
+                  <th className="px-4 py-2.5">Trades</th>
+                  <th className="px-4 py-2.5">Patterns</th>
+                  <th className="px-4 py-2.5">Claims</th>
+                  <th className="px-4 py-2.5">Concepts</th>
+                  <th className="px-4 py-2.5">Win Rate</th>
+                  <th className="px-4 py-2.5">Expectancy</th>
+                  <th className="px-4 py-2.5">Growth</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-border">
                 {snapshotData.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-xs text-slate-500">
+                  <tr key={s.id} className="hover:bg-muted/20">
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
                       {s.created_at ? new Date(s.created_at).toLocaleString() : '—'}
                     </td>
-                    <td className="px-4 py-3">{s.total_trades}</td>
-                    <td className="px-4 py-3">{s.total_patterns}</td>
-                    <td className="px-4 py-3">{s.total_claims}</td>
-                    <td className="px-4 py-3">{s.total_concepts}</td>
-                    <td className="px-4 py-3">{s.win_rate}%</td>
-                    <td className="px-4 py-3">{s.expectancy}</td>
-                    <td className="px-4 py-3">
-                      <span className={s.knowledge_growth >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    <td className="px-4 py-2.5 text-foreground">{s.total_trades}</td>
+                    <td className="px-4 py-2.5 text-foreground">{s.total_patterns}</td>
+                    <td className="px-4 py-2.5 text-foreground">{s.total_claims}</td>
+                    <td className="px-4 py-2.5 text-foreground">{s.total_concepts}</td>
+                    <td className="px-4 py-2.5 text-foreground">{s.win_rate}%</td>
+                    <td className="px-4 py-2.5 text-foreground">{s.expectancy}</td>
+                    <td className="px-4 py-2.5">
+                      <span className={s.knowledge_growth >= 0 ? 'text-success' : 'text-destructive'}>
                         {s.knowledge_growth >= 0 ? '+' : ''}{s.knowledge_growth}%
                       </span>
                     </td>
@@ -261,7 +259,7 @@ export default function LearningPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );
