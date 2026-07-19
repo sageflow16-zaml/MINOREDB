@@ -23,7 +23,7 @@ import {
   useSimilarityPattern,
   useSimilarityHistory,
 } from '../hooks/useSimilarity';
-import type { SimilarityResponse, SimilarityMatch, SimilarityEnvironment } from '../api/types';
+import type { SimilarityResponse, SimilarityEnvironment } from '../api/types';
 
 const COLORS = ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b'];
 

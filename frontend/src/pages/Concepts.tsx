@@ -31,7 +31,7 @@ export default function ConceptsPage() {
           data={concepts} 
           columns={[
             { header: 'Concept', accessor: 'conceptual_term' },
-            { header: 'Definition', accessor: (row) => row.definition?.substring(0, 50) + '...' },
+            { header: 'Definition', accessor: (row) => row.definition ? row.definition.substring(0, 50) + '...' : '' },
             { header: 'Number of Claims', accessor: (row) => <ClaimCount conceptId={row.id} /> },
             { header: 'Created At', accessor: 'created_at' },
             { header: 'Actions', accessor: (row) => (
