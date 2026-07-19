@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   BrainCircuit, FileText, Activity, Scale, User,
   Loader2, AlertCircle, Plus, RefreshCw, CheckCircle, XCircle,
@@ -8,9 +8,16 @@ import {
   BarChart3, BookOpen, Target, AlertTriangle, Lightbulb,
 } from 'lucide-react';
 import { traderIntelligenceService } from '../api/traderIntelligence';
+import { PageHeader } from '../components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import type {
   TradeDebrief, PersonalPattern, PersonalRule, TraderProfile, DashboardData,
 } from '../api/traderIntelligence';
+import { cn } from '../lib/utils';
 
 type TabType = 'dashboard' | 'debriefs' | 'patterns' | 'rules' | 'profile';
 
@@ -43,12 +50,7 @@ export default function TraderIntelligence() {
         traderIntelligenceService.getProfile(projectId).catch(() => null),
         traderIntelligenceService.getSnapshots(projectId).catch(() => []),
       ]);
-      setDashboard(dash);
-      setDebriefs(d);
-      setPatterns(p);
-      setRules(r);
-      setProfile(prof);
-      setSnapshots(snaps);
+      setDashboard(dash); setDebriefs(d); setPatterns(p); setRules(r); setProfile(prof); setSnapshots(snaps);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -104,63 +106,44 @@ export default function TraderIntelligence() {
     { key: 'profile', label: 'Profile', icon: <User className="h-4 w-4" /> },
   ];
 
-  if (loading && !dashboard) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-      </div>
-    );
-  }
-
-  if (error && !dashboard) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          {error}
-        </div>
-        <button onClick={fetchData} className="btn-primary flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" /> Retry
-        </button>
-      </div>
-    );
-  }
+  if (loading && !dashboard) return <LoadingSpinner />;
+  if (error && !dashboard) return <ErrorState message={error} onRetry={fetchData} />;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <BrainCircuit className="h-8 w-8 text-brand-400" />
-          <div>
-            <h1 className="text-2xl font-bold text-white">Trader Intelligence</h1>
-            <p className="text-sm text-slate-400">Personal Trading Intelligence Engine</p>
-          </div>
-        </div>
-        <button onClick={fetchData} className="btn-ghost p-2" title="Refresh">
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
+      <PageHeader
+        title="Trader Intelligence"
+        description="Personal Trading Intelligence Engine"
+      >
+        <Button variant="ghost" size="icon-sm" onClick={fetchData}>
+          <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
+        </Button>
+      </PageHeader>
 
       {error && (
-        <div className="flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            {error}
-          </div>
-          <button onClick={fetchData} className="text-red-300 hover:text-red-200 underline text-xs">Retry</button>
-        </div>
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2 text-xs text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              {error}
+            </div>
+            <Button variant="ghost" size="sm" onClick={fetchData}>Retry</Button>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="flex gap-1 border-b border-slate-700">
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+            className={cn(
+              'flex items-center gap-2 px-4 py-2.5 text-xs font-medium transition-colors border-b-2 border-transparent',
               tab === t.key
-                ? 'border-b-2 border-brand-500 text-brand-400'
-                : 'text-slate-400 hover:text-white'
-            }`}
+                ? 'border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
           >
             {t.icon}
             {t.label}
@@ -179,8 +162,6 @@ export default function TraderIntelligence() {
             onSearch={setSearchQuery}
             onGenerate={() => handleGenerate('debrief')}
             generating={generating === 'debrief'}
-            projectId={projectId!}
-            onRefresh={fetchData}
           />
         )}
         {tab === 'patterns' && (
@@ -212,100 +193,97 @@ export default function TraderIntelligence() {
 function DashboardTab({ dashboard }: { dashboard: DashboardData | null }) {
   if (!dashboard) return null;
   const stats = [
-    { label: 'Debriefs', value: dashboard.debrief_count, icon: <FileText className="h-5 w-5" />, color: 'text-blue-400' },
-    { label: 'Patterns', value: dashboard.pattern_count, icon: <Activity className="h-5 w-5" />, color: 'text-green-400' },
-    { label: 'Rules', value: dashboard.rule_count, icon: <Scale className="h-5 w-5" />, color: 'text-purple-400' },
-    { label: 'Approved Rules', value: dashboard.approved_rule_count, icon: <CheckCircle className="h-5 w-5" />, color: 'text-emerald-400' },
+    { label: 'Debriefs', value: dashboard.debrief_count, icon: <FileText className="h-5 w-5" />, color: 'text-chart-1' },
+    { label: 'Patterns', value: dashboard.pattern_count, icon: <Activity className="h-5 w-5" />, color: 'text-chart-2' },
+    { label: 'Rules', value: dashboard.rule_count, icon: <Scale className="h-5 w-5" />, color: 'text-chart-3' },
+    { label: 'Approved Rules', value: dashboard.approved_rule_count, icon: <CheckCircle className="h-5 w-5" />, color: 'text-success' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map(s => (
-          <div key={s.label} className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-400">{s.label}</span>
-              <span className={s.color}>{s.icon}</span>
-            </div>
-            <p className="mt-2 text-2xl font-bold text-white">{s.value}</p>
-          </div>
+          <Card key={s.label}>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{s.label}</span>
+                <span className={s.color}>{s.icon}</span>
+              </div>
+              <p className="mt-2 text-2xl font-bold text-foreground">{s.value}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {dashboard.profile && (
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-          <h3 className="mb-4 text-lg font-semibold text-white">Profile Snapshot</h3>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <p className="text-sm text-slate-400">Discipline Score</p>
-              <div className="mt-1 flex items-center gap-2">
-                <div className="h-2 flex-1 rounded-full bg-slate-700">
-                  <div
-                    className="h-2 rounded-full bg-brand-500 transition-all"
-                    style={{ width: `${dashboard.profile.discipline_score ?? 0}%` }}
-                  />
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Profile Snapshot</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Discipline Score</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="h-2 flex-1 rounded-full bg-muted">
+                    <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${dashboard.profile.discipline_score ?? 0}%` }} />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{dashboard.profile.discipline_score?.toFixed(0) ?? 'N/A'}</span>
                 </div>
-                <span className="text-sm font-medium text-white">{dashboard.profile.discipline_score?.toFixed(0) ?? 'N/A'}</span>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Rule Adherence</p>
+                <p className="text-lg font-medium text-foreground">
+                  {dashboard.profile.rule_adherence ? `${(dashboard.profile.rule_adherence as Record<string, unknown>).adherence_rate ?? 0}%` : 'N/A'}
+                </p>
               </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-400">Rule Adherence</p>
-              <p className="text-lg font-medium text-white">
-                {dashboard.profile.rule_adherence ? `${(dashboard.profile.rule_adherence as Record<string, unknown>).adherence_rate ?? 0}%` : 'N/A'}
-              </p>
-            </div>
-          </div>
-          {dashboard.profile.improvement_suggestions && dashboard.profile.improvement_suggestions.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-2 text-sm font-medium text-slate-400">Suggestions</p>
-              <ul className="space-y-1">
-                {dashboard.profile.improvement_suggestions.slice(0, 3).map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                    <Lightbulb className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-yellow-400" />
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+            {dashboard.profile.improvement_suggestions && dashboard.profile.improvement_suggestions.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Suggestions</p>
+                <ul className="space-y-1">
+                  {dashboard.profile.improvement_suggestions.slice(0, 3).map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {dashboard.recent_debriefs.length > 0 && (
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-          <h3 className="mb-4 text-lg font-semibold text-white">Recent Debriefs</h3>
-          <div className="space-y-3">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Recent Debriefs</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {dashboard.recent_debriefs.map(d => (
-              <div key={d.id} className="rounded-lg bg-slate-700/50 p-3">
+              <div key={d.id} className="rounded-lg bg-muted/50 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-white">{d.summary?.slice(0, 80) ?? 'Debrief'}</span>
+                  <span className="text-xs font-medium text-foreground">{d.summary?.slice(0, 80) ?? 'Debrief'}</span>
                   {d.overall_rating && (
-                    <span className={`text-sm font-bold ${d.overall_rating >= 7 ? 'text-green-400' : 'text-yellow-400'}`}>
+                    <span className={cn('text-xs font-bold', d.overall_rating >= 7 ? 'text-success' : 'text-warning')}>
                       {d.overall_rating}/10
                     </span>
                   )}
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
 }
 
-function DebriefsTab({
-  debriefs, selected, onSelect, searchQuery, onSearch, onGenerate, generating, projectId, onRefresh,
-}: {
-  debriefs: TradeDebrief[];
-  selected: TradeDebrief | null;
+function DebriefsTab({ debriefs, selected, onSelect, searchQuery, onSearch, onGenerate, generating }: {
+  debriefs: TradeDebrief[]; selected: TradeDebrief | null;
   onSelect: (d: TradeDebrief | null) => void;
-  searchQuery: string;
-  onSearch: (q: string) => void;
-  onGenerate: () => void;
-  generating: boolean;
-  projectId: string;
-  onRefresh: () => void;
+  searchQuery: string; onSearch: (q: string) => void; onGenerate: () => void; generating: boolean;
 }) {
   const filtered = searchQuery
     ? debriefs.filter(d => d.summary?.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -314,49 +292,53 @@ function DebriefsTab({
   if (selected) {
     return (
       <div className="space-y-4">
-        <button onClick={() => onSelect(null)} className="text-sm text-brand-400 hover:text-brand-300">&larr; Back to debriefs</button>
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Debrief Detail</h3>
-            {selected.overall_rating && (
-              <span className={`rounded-full px-3 py-1 text-sm font-bold ${selected.overall_rating >= 7 ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                {selected.overall_rating}/10
-              </span>
-            )}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              { label: 'Entry Review', value: selected.entry_review },
-              { label: 'Execution Review', value: selected.execution_review },
-              { label: 'Exit Review', value: selected.exit_review },
-              { label: 'Psychology Review', value: selected.psychology_review },
-            ].map(s => s.value ? (
-              <div key={s.label} className="rounded-lg bg-slate-700/50 p-3">
-                <p className="mb-1 text-xs font-medium text-slate-400">{s.label}</p>
-                <p className="text-sm text-white">{s.value}</p>
+        <Button variant="ghost" size="sm" onClick={() => onSelect(null)} className="text-xs">
+          &larr; Back to debriefs
+        </Button>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Debrief Detail</CardTitle>
+              {selected.overall_rating && (
+                <Badge variant={selected.overall_rating >= 7 ? 'success' : 'warning'}>{selected.overall_rating}/10</Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                { label: 'Entry Review', value: selected.entry_review },
+                { label: 'Execution Review', value: selected.execution_review },
+                { label: 'Exit Review', value: selected.exit_review },
+                { label: 'Psychology Review', value: selected.psychology_review },
+              ].map(s => s.value ? (
+                <div key={s.label} className="rounded-lg bg-muted/50 p-3">
+                  <p className="mb-1 text-[10px] font-medium text-muted-foreground">{s.label}</p>
+                  <p className="text-xs text-foreground">{s.value}</p>
+                </div>
+              ) : null)}
+            </div>
+            {selected.summary && (
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="mb-1 text-[10px] font-medium text-muted-foreground">Summary</p>
+                <p className="text-xs text-foreground">{selected.summary}</p>
               </div>
-            ) : null)}
-          </div>
-          {selected.summary && (
-            <div className="mt-4 rounded-lg bg-slate-700/50 p-3">
-              <p className="mb-1 text-xs font-medium text-slate-400">Summary</p>
-              <p className="text-sm text-white">{selected.summary}</p>
-            </div>
-          )}
-          {selected.lessons_learned && selected.lessons_learned.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-medium text-slate-400">Lessons Learned</p>
-              <ul className="space-y-1">
-                {selected.lessons_learned.map((l, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                    <Lightbulb className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-yellow-400" />
-                    {l}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+            )}
+            {selected.lessons_learned && selected.lessons_learned.length > 0 && (
+              <div>
+                <p className="mb-2 text-[10px] font-medium text-muted-foreground">Lessons Learned</p>
+                <ul className="space-y-1">
+                  {selected.lessons_learned.map((l, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+                      {l}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -365,47 +347,42 @@ function DebriefsTab({
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             value={searchQuery}
             onChange={e => onSearch(e.target.value)}
             placeholder="Search debriefs..."
-            className="w-full rounded-lg border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-brand-500"
+            className="pl-10"
           />
         </div>
-        <button onClick={onGenerate} disabled={generating} className="btn-primary flex items-center gap-2">
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          Generate
-        </button>
+        <Button onClick={onGenerate} disabled={generating} isLoading={generating} size="sm">
+          <Plus className="mr-1.5 h-4 w-4" /> Generate
+        </Button>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-          <FileText className="mb-2 h-12 w-12" />
-          <p>No debriefs found. Generate one from a completed trade.</p>
-        </div>
+        <EmptyState message="No debriefs found" description="Generate one from a completed trade." />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(d => (
             <button
               key={d.id}
               onClick={() => onSelect(d)}
-              className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 text-left transition-colors hover:border-slate-600"
+              className="rounded-xl border border-border bg-card p-4 text-left transition-all hover:shadow-md hover:border-primary/20"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400">{new Date(d.created_at).toLocaleDateString()}</span>
+                <span className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</span>
                 {d.overall_rating && (
-                  <span className={`text-xs font-bold ${d.overall_rating >= 7 ? 'text-green-400' : 'text-yellow-400'}`}>
+                  <span className={cn('text-[10px] font-bold', d.overall_rating >= 7 ? 'text-success' : 'text-warning')}>
                     {d.overall_rating}/10
                   </span>
                 )}
               </div>
-              <p className="mt-2 line-clamp-2 text-sm text-white">{d.summary ?? 'No summary'}</p>
+              <p className="mt-2 line-clamp-2 text-xs text-foreground">{d.summary ?? 'No summary'}</p>
               {d.strengths && d.strengths.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {d.strengths.slice(0, 2).map((s, i) => (
-                    <span key={i} className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-400">{s}</span>
+                    <span key={i} className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] text-success">{s}</span>
                   ))}
                 </div>
               )}
@@ -421,58 +398,57 @@ function PatternsTab({ patterns, onDetect, generating }: { patterns: PersonalPat
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-400">{patterns.length} patterns detected</p>
-        <button onClick={onDetect} disabled={generating} className="btn-primary flex items-center gap-2">
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
-          Detect Patterns
-        </button>
+        <p className="text-xs text-muted-foreground">{patterns.length} patterns detected</p>
+        <Button onClick={onDetect} disabled={generating} isLoading={generating} size="sm">
+          <Activity className="mr-1.5 h-4 w-4" /> Detect Patterns
+        </Button>
       </div>
 
       {patterns.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-          <Activity className="mb-2 h-12 w-12" />
-          <p>No patterns detected. Click "Detect Patterns" to analyze trades.</p>
-        </div>
+        <EmptyState message="No patterns detected" description='Click "Detect Patterns" to analyze trades.' />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {patterns.map(p => (
-            <div key={p.id} className={`rounded-lg border p-4 ${p.active ? 'border-slate-700 bg-slate-800/50' : 'border-slate-700/50 bg-slate-800/30 opacity-60'}`}>
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-white">{p.name}</h4>
-                <span className={`rounded-full px-2 py-0.5 text-xs ${
-                  p.category === 'session' ? 'bg-blue-500/10 text-blue-400' :
-                  p.category === 'pair' ? 'bg-purple-500/10 text-purple-400' :
-                  p.category === 'direction' ? 'bg-orange-500/10 text-orange-400' :
-                  'bg-slate-500/10 text-slate-400'
-                }`}>{p.category}</span>
-              </div>
-              <p className="mt-2 text-sm text-slate-300">{p.description}</p>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="rounded bg-slate-700/50 p-2">
-                  <p className="text-slate-400">Trades</p>
-                  <p className="font-medium text-white">{p.occurrence_count}</p>
+            <Card key={p.id} className={cn(!p.active && 'opacity-60')}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium">{p.name}</CardTitle>
+                  <Badge variant={
+                    p.category === 'session' ? 'info' :
+                    p.category === 'pair' ? 'default' :
+                    p.category === 'direction' ? 'warning' : 'secondary'
+                  } size="sm">{p.category}</Badge>
                 </div>
-                <div className="rounded bg-slate-700/50 p-2">
-                  <p className="text-green-400">Wins</p>
-                  <p className="font-medium text-white">{p.win_count}</p>
-                </div>
-                <div className="rounded bg-slate-700/50 p-2">
-                  <p className="text-red-400">Losses</p>
-                  <p className="font-medium text-white">{p.loss_count}</p>
-                </div>
-              </div>
-              {p.confidence !== null && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>Confidence</span>
-                    <span>{p.confidence.toFixed(0)}%</span>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground">{p.description}</p>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <div className="rounded-lg bg-muted/50 p-2">
+                    <p className="text-muted-foreground">Trades</p>
+                    <p className="font-medium text-foreground">{p.occurrence_count}</p>
                   </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-slate-700">
-                    <div className="h-1.5 rounded-full bg-brand-500" style={{ width: `${p.confidence}%` }} />
+                  <div className="rounded-lg bg-muted/50 p-2">
+                    <p className="text-success">Wins</p>
+                    <p className="font-medium text-foreground">{p.win_count}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-2">
+                    <p className="text-destructive">Losses</p>
+                    <p className="font-medium text-foreground">{p.loss_count}</p>
                   </div>
                 </div>
-              )}
-            </div>
+                {p.confidence !== null && (
+                  <div>
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>Confidence</span>
+                      <span>{p.confidence.toFixed(0)}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 rounded-full bg-muted">
+                      <div className="h-1.5 rounded-full bg-primary" style={{ width: `${p.confidence}%` }} />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
@@ -480,58 +456,56 @@ function PatternsTab({ patterns, onDetect, generating }: { patterns: PersonalPat
   );
 }
 
-function RulesTab({
-  rules, selected, onSelect, onGenerate, onApprove, onReject, generating,
-}: {
-  rules: PersonalRule[];
-  selected: PersonalRule | null;
+function RulesTab({ rules, selected, onSelect, onGenerate, onApprove, onReject, generating }: {
+  rules: PersonalRule[]; selected: PersonalRule | null;
   onSelect: (r: PersonalRule | null) => void;
-  onGenerate: () => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  generating: boolean;
+  onGenerate: () => void; onApprove: (id: string) => void; onReject: (id: string) => void; generating: boolean;
 }) {
   if (selected) {
     return (
       <div className="space-y-4">
-        <button onClick={() => onSelect(null)} className="text-sm text-brand-400 hover:text-brand-300">&larr; Back to rules</button>
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">{selected.title}</h3>
-            <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-              selected.status === 'approved' ? 'bg-green-500/20 text-green-400' :
-              selected.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-              'bg-yellow-500/20 text-yellow-400'
-            }`}>{selected.status}</span>
-          </div>
-          {selected.description && <p className="mb-4 text-sm text-slate-300">{selected.description}</p>}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-slate-700/50 p-3">
-              <p className="text-xs text-slate-400">Category</p>
-              <p className="text-sm font-medium text-white">{selected.category}</p>
+        <Button variant="ghost" size="sm" onClick={() => onSelect(null)} className="text-xs">
+          &larr; Back to rules
+        </Button>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">{selected.title}</CardTitle>
+              <Badge variant={selected.status === 'approved' ? 'success' : selected.status === 'rejected' ? 'destructive' : 'warning'} size="sm">
+                {selected.status}
+              </Badge>
             </div>
-            <div className="rounded-lg bg-slate-700/50 p-3">
-              <p className="text-xs text-slate-400">Version</p>
-              <p className="text-sm font-medium text-white">{selected.version}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {selected.description && <p className="text-xs text-muted-foreground">{selected.description}</p>}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-[10px] text-muted-foreground">Category</p>
+                <p className="text-xs font-medium text-foreground">{selected.category}</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-[10px] text-muted-foreground">Version</p>
+                <p className="text-xs font-medium text-foreground">{selected.version}</p>
+              </div>
             </div>
-          </div>
-          {selected.supporting_stats && (
-            <div className="mt-4 rounded-lg bg-slate-700/50 p-3">
-              <p className="mb-2 text-xs font-medium text-slate-400">Supporting Stats</p>
-              <pre className="text-xs text-slate-300">{JSON.stringify(selected.supporting_stats, null, 2)}</pre>
-            </div>
-          )}
-          {selected.status === 'draft' && (
-            <div className="mt-4 flex gap-3">
-              <button onClick={() => onApprove(selected.id)} className="btn-primary flex items-center gap-2">
-                <ThumbsUp className="h-4 w-4" /> Approve
-              </button>
-              <button onClick={() => onReject(selected.id)} className="btn-danger flex items-center gap-2">
-                <ThumbsDown className="h-4 w-4" /> Reject
-              </button>
-            </div>
-          )}
-        </div>
+            {selected.supporting_stats && (
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="mb-2 text-[10px] font-medium text-muted-foreground">Supporting Stats</p>
+                <pre className="text-[10px] text-foreground/70">{JSON.stringify(selected.supporting_stats, null, 2)}</pre>
+              </div>
+            )}
+            {selected.status === 'draft' && (
+              <div className="flex gap-3 pt-2">
+                <Button size="sm" onClick={() => onApprove(selected.id)}>
+                  <ThumbsUp className="mr-1.5 h-4 w-4" /> Approve
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => onReject(selected.id)}>
+                  <ThumbsDown className="mr-1.5 h-4 w-4" /> Reject
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -539,47 +513,41 @@ function RulesTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-400">
+        <p className="text-xs text-muted-foreground">
           {rules.filter(r => r.status === 'draft').length} draft, {rules.filter(r => r.status === 'approved').length} approved
         </p>
-        <button onClick={onGenerate} disabled={generating} className="btn-primary flex items-center gap-2">
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scale className="h-4 w-4" />}
-          Generate Rules
-        </button>
+        <Button onClick={onGenerate} disabled={generating} isLoading={generating} size="sm">
+          <Scale className="mr-1.5 h-4 w-4" /> Generate Rules
+        </Button>
       </div>
 
       {rules.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-          <Scale className="mb-2 h-12 w-12" />
-          <p>No rules yet. Generate rules from patterns and debriefs.</p>
-        </div>
+        <EmptyState message="No rules yet" description="Generate rules from patterns and debriefs." />
       ) : (
         <div className="grid gap-3">
           {rules.map(r => (
             <button
               key={r.id}
               onClick={() => onSelect(r)}
-              className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-4 text-left transition-colors hover:border-slate-600"
+              className="flex items-center justify-between rounded-xl border border-border bg-card p-4 text-left transition-all hover:shadow-md hover:border-primary/20"
             >
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-white">{r.title}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${
-                    r.status === 'approved' ? 'bg-green-500/10 text-green-400' :
-                    r.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
-                    'bg-yellow-500/10 text-yellow-400'
-                  }`}>{r.status}</span>
+                  <span className="text-sm font-medium text-foreground">{r.title}</span>
+                  <Badge variant={r.status === 'approved' ? 'success' : r.status === 'rejected' ? 'destructive' : 'warning'} size="sm">
+                    {r.status}
+                  </Badge>
                 </div>
-                {r.description && <p className="mt-1 line-clamp-1 text-sm text-slate-400">{r.description}</p>}
+                {r.description && <p className="mt-1 truncate text-xs text-muted-foreground">{r.description}</p>}
               </div>
-              <div className="ml-4 flex items-center gap-2">
-                <span className="text-xs text-slate-500">v{r.version}</span>
+              <div className="ml-4 flex items-center gap-2 shrink-0">
+                <span className="text-[10px] text-muted-foreground">v{r.version}</span>
                 {r.status === 'draft' && (
                   <>
-                    <button onClick={e => { e.stopPropagation(); onApprove(r.id); }} className="rounded p-1 text-green-400 hover:bg-green-500/10">
+                    <button onClick={e => { e.stopPropagation(); onApprove(r.id); }} className="rounded p-1 text-success hover:bg-success/10">
                       <CheckCircle className="h-4 w-4" />
                     </button>
-                    <button onClick={e => { e.stopPropagation(); onReject(r.id); }} className="rounded p-1 text-red-400 hover:bg-red-500/10">
+                    <button onClick={e => { e.stopPropagation(); onReject(r.id); }} className="rounded p-1 text-destructive hover:bg-destructive/10">
                       <XCircle className="h-4 w-4" />
                     </button>
                   </>
@@ -593,119 +561,135 @@ function RulesTab({
   );
 }
 
-function ProfileTab({ profile, snapshots, onBuild, generating }: { profile: TraderProfile | null; snapshots: unknown[]; onBuild: () => void; generating: boolean }) {
+function ProfileTab({ profile, snapshots, onBuild, generating }: {
+  profile: TraderProfile | null; snapshots: unknown[]; onBuild: () => void; generating: boolean;
+}) {
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-        <User className="mb-2 h-12 w-12" />
-        <p className="mb-4">No profile built yet.</p>
-        <button onClick={onBuild} disabled={generating} className="btn-primary flex items-center gap-2">
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
-          Build Profile
-        </button>
-      </div>
+      <EmptyState
+        message="No profile built yet"
+        action={<Button onClick={onBuild} isLoading={generating}><BrainCircuit className="mr-1.5 h-4 w-4" /> Build Profile</Button>}
+      />
     );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Trader Profile</h3>
-        <button onClick={onBuild} disabled={generating} className="btn-ghost flex items-center gap-2 text-sm">
-          <RefreshCw className={`h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
-          Rebuild
-        </button>
+        <h3 className="text-sm font-semibold text-foreground">Trader Profile</h3>
+        <Button variant="ghost" size="sm" onClick={onBuild} isLoading={generating}>
+          <RefreshCw className="mr-1.5 h-4 w-4" /> Rebuild
+        </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Trades Analyzed</p>
-          <p className="text-2xl font-bold text-white">{profile.total_trades_analyzed}</p>
-        </div>
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Active Patterns</p>
-          <p className="text-2xl font-bold text-white">{profile.active_patterns}</p>
-        </div>
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <p className="text-sm text-slate-400">Approved Rules</p>
-          <p className="text-2xl font-bold text-white">{profile.approved_rules}</p>
-        </div>
+        <Card>
+          <CardContent className="py-4">
+            <p className="text-xs text-muted-foreground">Trades Analyzed</p>
+            <p className="text-2xl font-bold text-foreground">{profile.total_trades_analyzed}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-4">
+            <p className="text-xs text-muted-foreground">Active Patterns</p>
+            <p className="text-2xl font-bold text-foreground">{profile.active_patterns}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-4">
+            <p className="text-xs text-muted-foreground">Approved Rules</p>
+            <p className="text-2xl font-bold text-foreground">{profile.approved_rules}</p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-        <h4 className="mb-4 font-medium text-white">Discipline Score</h4>
-        <div className="flex items-center gap-4">
-          <div className="h-3 flex-1 rounded-full bg-slate-700">
-            <div
-              className={`h-3 rounded-full transition-all ${
-                (profile.discipline_score ?? 0) >= 70 ? 'bg-green-500' :
-                (profile.discipline_score ?? 0) >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${profile.discipline_score ?? 0}%` }}
-            />
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Discipline Score</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="h-3 flex-1 rounded-full bg-muted">
+              <div
+                className={cn('h-3 rounded-full transition-all',
+                  (profile.discipline_score ?? 0) >= 70 ? 'bg-success' :
+                  (profile.discipline_score ?? 0) >= 40 ? 'bg-warning' : 'bg-destructive',
+                )}
+                style={{ width: `${profile.discipline_score ?? 0}%` }}
+              />
+            </div>
+            <span className="text-2xl font-bold text-foreground">{profile.discipline_score?.toFixed(0)}</span>
           </div>
-          <span className="text-2xl font-bold text-white">{profile.discipline_score?.toFixed(0)}</span>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 sm:grid-cols-2">
         {profile.strengths && profile.strengths.length > 0 && (
-          <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-green-400" />
-              <h4 className="font-medium text-green-400">Strengths</h4>
-            </div>
-            <ul className="space-y-1">
-              {profile.strengths.map((s, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                  <CheckCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-green-400" />
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Card className="border-success/20">
+            <CardContent className="py-4">
+              <div className="mb-3 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-success" />
+                <h4 className="text-xs font-semibold text-success">Strengths</h4>
+              </div>
+              <ul className="space-y-1">
+                {profile.strengths.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                    <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         )}
-
         {profile.weaknesses && profile.weaknesses.length > 0 && (
-          <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-red-400" />
-              <h4 className="font-medium text-red-400">Areas to Improve</h4>
-            </div>
-            <ul className="space-y-1">
-              {profile.weaknesses.map((w, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-red-400" />
-                  {w}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Card className="border-destructive/20">
+            <CardContent className="py-4">
+              <div className="mb-3 flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-destructive" />
+                <h4 className="text-xs font-semibold text-destructive">Areas to Improve</h4>
+              </div>
+              <ul className="space-y-1">
+                {profile.weaknesses.map((w, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                    {w}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         )}
       </div>
 
       {profile.improvement_suggestions && profile.improvement_suggestions.length > 0 && (
-        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-yellow-400" />
-            <h4 className="font-medium text-yellow-400">Improvement Suggestions</h4>
-          </div>
-          <ul className="space-y-2">
-            {profile.improvement_suggestions.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                <Target className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-yellow-400" />
-                {s}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Card className="border-warning/20">
+          <CardContent className="py-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-warning" />
+              <h4 className="text-xs font-semibold text-warning">Improvement Suggestions</h4>
+            </div>
+            <ul className="space-y-2">
+              {profile.improvement_suggestions.map((s, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
+                  <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+                  {s}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       )}
 
       {snapshots.length > 0 && (
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-          <h4 className="mb-4 font-medium text-white">Profile History ({snapshots.length} snapshots)</h4>
-          <p className="text-sm text-slate-400">Snapshots are captured each time the profile is rebuilt.</p>
-        </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Profile History ({snapshots.length} snapshots)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Snapshots are captured each time the profile is rebuilt.</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

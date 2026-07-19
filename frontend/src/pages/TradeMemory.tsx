@@ -1,7 +1,12 @@
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useTradeMemories } from '../hooks/useTradeMemory';
 import { PageHeader } from '../components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import { Brain, TrendingUp, TrendingDown, Target, Lightbulb, AlertTriangle, Layers, CheckCircle, XCircle } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 export default function TradeMemoryPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -9,105 +14,181 @@ export default function TradeMemoryPage() {
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorState message="Error loading trade memories." onRetry={refetch} />;
-  if (!memories || memories.length === 0) return <EmptyState message="No trade memories yet. Create a trade to generate one." />;
+  if (!memories || memories.length === 0) return (
+    <EmptyState
+      message="No trade memories yet"
+      description="Create a trade to generate one."
+    />
+  );
 
   return (
     <div className="space-y-6">
-      <PageHeader title="AI Memory Engine" description="Structured learning memories generated from every trade." />
-      <div className="space-y-8">
-        {memories.map((m) => (
-          <div key={m.id} className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {m.pair || "Unknown"} — {m.direction || "N/A"}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {m.session && `Session: ${m.session.replace(/_/g, ' / ')}`}
-                  {m.created_at && ` — ${new Date(m.created_at).toLocaleDateString()}`}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                {m.confidence != null && (
-                  <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                    Confidence: {m.confidence}%
-                  </span>
+      <PageHeader
+        title="AI Memory Engine"
+        description="Structured learning memories generated from every trade"
+      />
+      <div className="grid gap-4">
+        {memories.map((m, idx) => (
+          <motion.div
+            key={m.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.03 }}
+          >
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Brain className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-semibold">
+                        {m.pair || 'Unknown'} — {m.direction || 'N/A'}
+                      </CardTitle>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {m.session && `Session: ${m.session.replace(/_/g, ' / ')}`}
+                        {m.created_at && ` — ${new Date(m.created_at).toLocaleDateString()}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {m.confidence != null && (
+                      <Badge variant="default" size="sm">Confidence: {m.confidence}%</Badge>
+                    )}
+                    <Badge variant={m.result === 'WIN' ? 'success' : m.result === 'LOSS' ? 'destructive' : 'default'} size="sm">
+                      {m.result || 'OPEN'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {m.summary && (
+                  <div className="rounded-lg bg-muted/30 p-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed">{m.summary}</p>
+                  </div>
                 )}
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                  m.result === 'WIN' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                  m.result === 'LOSS' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
-                  'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                }`}>
-                  {m.result || 'OPEN'}
-                </span>
-              </div>
-            </div>
 
-            {m.summary && (
-              <div className="mb-4 rounded-md bg-slate-50 p-3 dark:bg-slate-800/50">
-                <p className="text-sm text-slate-700 dark:text-slate-300">{m.summary}</p>
-              </div>
-            )}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">R:R</span>
+                    <p className="font-medium text-foreground mt-0.5">{m.rr != null ? m.rr.toFixed(2) : '—'}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">P&L</span>
+                    <p className={cn('font-medium mt-0.5', (m.pnl || 0) >= 0 ? 'text-success' : 'text-destructive')}>
+                      {m.pnl != null ? m.pnl.toFixed(2) : '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">Risk</span>
+                    <p className="font-medium text-foreground mt-0.5">{m.risk_percent != null ? `${m.risk_percent.toFixed(2)}%` : '—'}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">Entry Model</span>
+                    <p className="font-medium text-foreground mt-0.5">{m.entry_model || '—'}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">Execution</span>
+                    <p className="font-medium text-foreground mt-0.5">{m.execution_model || '—'}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">Liquidity</span>
+                    <p className="font-medium text-foreground mt-0.5">{m.liquidity_type || '—'}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">Market Phase</span>
+                    <p className="font-medium text-foreground mt-0.5">{m.market_phase || '—'}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="text-muted-foreground">Market Trend</span>
+                    <p className="font-medium text-foreground mt-0.5">{m.market_trend || '—'}</p>
+                  </div>
+                  {m.similarity_score != null && (
+                    <div className="rounded-lg bg-muted/30 p-2.5">
+                      <span className="text-muted-foreground">Similarity</span>
+                      <p className="font-medium text-foreground mt-0.5">{m.similarity_score}%</p>
+                    </div>
+                  )}
+                </div>
 
-            <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">R:R:</span> {m.rr != null ? m.rr.toFixed(2) : '—'}</div>
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">P&L:</span> {m.pnl != null ? m.pnl.toFixed(2) : '—'}</div>
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">Risk:</span> {m.risk_percent != null ? `${m.risk_percent.toFixed(2)}%` : '—'}</div>
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">Entry Model:</span> {m.entry_model || '—'}</div>
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">Execution:</span> {m.execution_model || '—'}</div>
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">Liquidity:</span> {m.liquidity_type || '—'}</div>
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">Market Phase:</span> {m.market_phase || '—'}</div>
-              <div><span className="font-medium text-slate-500 dark:text-slate-400">Market Trend:</span> {m.market_trend || '—'}</div>
-              {m.similarity_score != null && (
-                <div><span className="font-medium text-slate-500 dark:text-slate-400">Similarity:</span> {m.similarity_score}%</div>
-              )}
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {m.strengths && m.strengths.length > 0 && (
+                    <div className="rounded-lg border border-success/20 bg-success/5 p-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <TrendingUp className="h-3.5 w-3.5 text-success" />
+                        <h4 className="text-xs font-semibold text-success">Strengths</h4>
+                      </div>
+                      <ul className="space-y-1">
+                        {m.strengths.map((s, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                            <CheckCircle className="h-3 w-3 text-success shrink-0 mt-0.5" />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {m.weaknesses && m.weaknesses.length > 0 && (
+                    <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+                        <h4 className="text-xs font-semibold text-destructive">Weaknesses</h4>
+                      </div>
+                      <ul className="space-y-1">
+                        {m.weaknesses.map((w, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                            <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                            {w}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {m.mistakes && m.mistakes.length > 0 && (
+                    <div className="rounded-lg border border-warning/20 bg-warning/5 p-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                        <h4 className="text-xs font-semibold text-warning">Mistakes</h4>
+                      </div>
+                      <ul className="space-y-1">
+                        {m.mistakes.map((mist, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                            <AlertTriangle className="h-3 w-3 text-warning shrink-0 mt-0.5" />
+                            {mist}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {m.lessons && m.lessons.length > 0 && (
+                    <div className="rounded-lg border border-chart-1/20 bg-chart-1/5 p-3">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Lightbulb className="h-3.5 w-3.5 text-chart-1" />
+                        <h4 className="text-xs font-semibold text-chart-1">Lessons</h4>
+                      </div>
+                      <ul className="space-y-1">
+                        {m.lessons.map((l, i) => (
+                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                            <Lightbulb className="h-3 w-3 text-chart-1 shrink-0 mt-0.5" />
+                            {l}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {m.strengths && m.strengths.length > 0 && (
-                <div className="rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-900/30 dark:bg-green-900/10">
-                  <h4 className="mb-2 text-sm font-semibold text-green-800 dark:text-green-300">Strengths</h4>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-green-700 dark:text-green-400">
-                    {m.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
-                </div>
-              )}
-              {m.weaknesses && m.weaknesses.length > 0 && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/10">
-                  <h4 className="mb-2 text-sm font-semibold text-red-800 dark:text-red-300">Weaknesses</h4>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-red-700 dark:text-red-400">
-                    {m.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
-                  </ul>
-                </div>
-              )}
-              {m.mistakes && m.mistakes.length > 0 && (
-                <div className="rounded-md border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-900/10">
-                  <h4 className="mb-2 text-sm font-semibold text-orange-800 dark:text-orange-300">Mistakes</h4>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-orange-700 dark:text-orange-400">
-                    {m.mistakes.map((mist, i) => <li key={i}>{mist}</li>)}
-                  </ul>
-                </div>
-              )}
-              {m.lessons && m.lessons.length > 0 && (
-                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/30 dark:bg-blue-900/10">
-                  <h4 className="mb-2 text-sm font-semibold text-blue-800 dark:text-blue-300">Lessons</h4>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-blue-700 dark:text-blue-400">
-                    {m.lessons.map((l, i) => <li key={i}>{l}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {m.tags && m.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {m.tags.map((tag, i) => (
-                  <span key={i} className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+                {m.tags && m.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.tags.map((tag, i) => (
+                      <Badge key={i} variant="secondary" size="sm">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
     </div>
