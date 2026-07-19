@@ -3,7 +3,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useKnowledgeGraphData, useKnowledgeGraphSnapshot } from '../hooks/useKnowledgeGraph';
 import { knowledgeGraphService } from '../api/knowledgeGraph';
 import { PageHeader } from '../components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import { X } from 'lucide-react';
 import type { KnowledgeNode, KnowledgeEdge, GraphSnapshot } from '../api/types';
 
 const NODE_TYPES = [
@@ -299,26 +303,25 @@ export default function KnowledgeGraphPage() {
         )}
       </PageHeader>
 
-      <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Filter by type:</label>
+      <div className="flex items-center gap-3">
+        <label className="text-xs font-medium text-muted-foreground">Filter by type:</label>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+          className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           {NODE_TYPES.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </select>
-        <button
-          onClick={() => {
-            setSelectedNode(null);
-            setConnectedEdgeIds(new Set());
-          }}
-          className="ml-auto rounded-md bg-slate-100 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => { setSelectedNode(null); setConnectedEdgeIds(new Set()); }}
+          className="ml-auto"
         >
           Clear Selection
-        </button>
+        </Button>
       </div>
 
       <div className="relative flex flex-1 gap-4">
@@ -337,50 +340,61 @@ export default function KnowledgeGraphPage() {
         </div>
 
         {selectedNode && (
-          <div className="w-72 shrink-0 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">{selectedNode.name}</h3>
-            <span
-              className="inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white"
-              style={{ backgroundColor: TYPE_COLORS[selectedNode.type] || '#6b7280' }}
-            >
-              {selectedNode.type}
-            </span>
-            <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Category</span>
-                <span className="font-medium text-slate-900 dark:text-white">{selectedNode.category || '—'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Occurrences</span>
-                <span className="font-medium text-slate-900 dark:text-white">{selectedNode.occurrences}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Weight</span>
-                <span className="font-medium text-slate-900 dark:text-white">{selectedNode.weight != null ? selectedNode.weight.toFixed(2) : '—'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Connected Edges</span>
-                <span className="font-medium text-slate-900 dark:text-white">{connectedEdgeIds.size}</span>
-              </div>
-            </div>
-            <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Connected Edges</h4>
-              <div className="max-h-40 space-y-1 overflow-y-auto">
-                {edgeRef.current
-                  .filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
-                  .slice(0, 10)
-                  .map((e) => {
-                    const otherId = e.source === selectedNode.id ? e.target : e.source;
-                    const other = simRef.current.find((n) => n.id === otherId);
-                    return (
-                      <div key={e.id} className="flex items-center justify-between rounded bg-slate-50 px-2 py-1 text-xs dark:bg-slate-800">
-                        <span className="text-slate-700 dark:text-slate-300">{other?.name || '?'}</span>
-                        <span className="text-slate-500">c:{e.confidence != null ? e.confidence.toFixed(2) : '—'}</span>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
+          <div className="w-72 shrink-0">
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between py-3">
+                <div>
+                  <CardTitle className="text-sm font-semibold">{selectedNode.name}</CardTitle>
+                  <span
+                    className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                    style={{ backgroundColor: TYPE_COLORS[selectedNode.type] || '#6b7280' }}
+                  >
+                    {selectedNode.type}
+                  </span>
+                </div>
+                <Button variant="ghost" size="icon-sm" onClick={() => setSelectedNode(null)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Category</span>
+                    <span className="font-medium text-foreground">{selectedNode.category || '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Occurrences</span>
+                    <span className="font-medium text-foreground">{selectedNode.occurrences}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Weight</span>
+                    <span className="font-medium text-foreground">{selectedNode.weight != null ? selectedNode.weight.toFixed(2) : '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Connected Edges</span>
+                    <span className="font-medium text-foreground">{connectedEdgeIds.size}</span>
+                  </div>
+                </div>
+                <div className="mt-4 border-t border-border pt-3">
+                  <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Connected Edges</h4>
+                  <div className="max-h-40 space-y-1 overflow-y-auto">
+                    {edgeRef.current
+                      .filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
+                      .slice(0, 10)
+                      .map((e) => {
+                        const otherId = e.source === selectedNode.id ? e.target : e.source;
+                        const other = simRef.current.find((n) => n.id === otherId);
+                        return (
+                          <div key={e.id} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1 text-[10px]">
+                            <span className="text-foreground/80">{other?.name || '?'}</span>
+                            <span className="text-muted-foreground">c:{e.confidence != null ? e.confidence.toFixed(2) : '—'}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

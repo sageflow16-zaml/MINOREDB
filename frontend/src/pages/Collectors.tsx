@@ -1,14 +1,16 @@
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  useCollectors,
-  useRunCollector,
-  useToggleCollector,
-  useCollectorLogs,
+  useCollectors, useRunCollector, useToggleCollector, useCollectorLogs,
 } from '../hooks/useCollectors';
 import { PageHeader } from '../components/PageHeader';
-import { DataTable } from '../components/DataTable';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useState } from 'react';
+import { Play, ToggleLeft, ToggleRight, AlertTriangle, Database, Clock, Activity } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 export default function CollectorsPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -32,101 +34,87 @@ export default function CollectorsPage() {
   if (error) return <ErrorState message="Error loading collectors." onRetry={refetch} />;
 
   return (
-    <div className="space-y-8">
-      <PageHeader title="Data Collectors" />
+    <div className="space-y-6">
+      <PageHeader
+        title="Data Collectors"
+        description="Manage automated data collection pipelines"
+      />
 
-      <div className="bg-white dark:bg-slate-900 rounded shadow overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="font-semibold">Collectors</h3>
-        </div>
+      {/* Collectors */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Collectors</CardTitle>
+        </CardHeader>
         {!collectors || collectors.length === 0 ? (
-          <EmptyState message="No collectors registered." />
+          <CardContent><EmptyState message="No collectors registered." /></CardContent>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  <th className="px-4 py-3">Collector</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Enabled</th>
-                  <th className="px-4 py-3">Last Run</th>
-                  <th className="px-4 py-3">Next Run</th>
-                  <th className="px-4 py-3 text-right">Records</th>
-                  <th className="px-4 py-3 text-right">Errors</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Collector</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Enabled</th>
+                  <th className="px-4 py-2.5">Last Run</th>
+                  <th className="px-4 py-2.5">Next Run</th>
+                  <th className="px-4 py-2.5 text-right">Records</th>
+                  <th className="px-4 py-2.5 text-right">Errors</th>
+                  <th className="px-4 py-2.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tbody className="divide-y divide-border">
                 {collectors.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          c.status === 'success'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : c.status === 'error'
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                            : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
-                        }`}
+                  <tr key={c.id} className="hover:bg-muted/20">
+                    <td className="px-4 py-2.5 font-medium text-foreground">{c.name}</td>
+                    <td className="px-4 py-2.5">
+                      <Badge
+                        variant={c.status === 'success' ? 'success' : c.status === 'error' ? 'destructive' : 'default'}
+                        size="sm"
                       >
                         {c.status}
-                      </span>
+                      </Badge>
                     </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          c.enabled
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                        }`}
-                      >
+                    <td className="px-4 py-2.5">
+                      <Badge variant={c.enabled ? 'success' : 'secondary'} size="sm">
                         {c.enabled ? 'Yes' : 'No'}
-                      </span>
+                      </Badge>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {c.last_run_at
-                        ? new Date(c.last_run_at).toLocaleString()
-                        : 'Never'}
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                      {c.last_run_at ? new Date(c.last_run_at).toLocaleString() : 'Never'}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {c.next_run_at
-                        ? new Date(c.next_run_at).toLocaleString()
-                        : '—'}
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                      {c.next_run_at ? new Date(c.next_run_at).toLocaleString() : '—'}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono">{c.records_collected}</td>
-                    <td className="px-4 py-3 text-right font-mono">
-                      <span className={c.errors > 0 ? 'text-red-600 dark:text-red-400' : ''}>
-                        {c.errors}
-                      </span>
-                      {c.last_error_message && (
-                        <span
-                          className="ml-1 cursor-help text-red-500"
-                          title={c.last_error_message}
-                        >
-                          ⚠
+                    <td className="px-4 py-2.5 text-right font-mono text-foreground">{c.records_collected}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">
+                      {c.errors > 0 ? (
+                        <span className="text-destructive flex items-center justify-end gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {c.errors}
                         </span>
+                      ) : (
+                        <span className="text-muted-foreground">0</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-2.5 text-right">
                       <div className="flex gap-1 justify-end">
-                        <button
+                        <Button
+                          variant="outline"
+                          size="icon-sm"
                           onClick={() => handleRun(c.name)}
                           disabled={running === c.name || !c.enabled}
-                          className="px-2 py-1 text-xs rounded bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Run"
                         >
-                          {running === c.name ? '...' : 'Run'}
-                        </button>
-                        <button
+                          {running === c.name ? <Activity className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
                           onClick={() => handleToggle(c.name, !c.enabled)}
-                          className={`px-2 py-1 text-xs rounded border ${
-                            c.enabled
-                              ? 'border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400'
-                              : 'border-green-300 text-green-600 hover:bg-green-50 dark:border-green-700 dark:text-green-400'
-                          }`}
+                          title={c.enabled ? 'Disable' : 'Enable'}
                         >
-                          {c.enabled ? 'Disable' : 'Enable'}
-                        </button>
+                          {c.enabled ? <ToggleRight className="h-3.5 w-3.5 text-success" /> : <ToggleLeft className="h-3.5 w-3.5 text-muted-foreground" />}
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -135,54 +123,45 @@ export default function CollectorsPage() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white dark:bg-slate-900 rounded shadow overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="font-semibold">Execution Logs</h3>
-        </div>
+      {/* Logs */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Execution Logs</CardTitle>
+        </CardHeader>
         {!logs || logs.length === 0 ? (
-          <EmptyState message="No logs yet. Run a collector to see execution logs." />
+          <CardContent><EmptyState message="No logs yet. Run a collector to see execution logs." /></CardContent>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  <th className="px-4 py-3">Collector</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Records</th>
-                  <th className="px-4 py-3 text-right">Errors</th>
-                  <th className="px-4 py-3 text-right">Duration</th>
-                  <th className="px-4 py-3">Started</th>
+                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Collector</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5 text-right">Records</th>
+                  <th className="px-4 py-2.5 text-right">Errors</th>
+                  <th className="px-4 py-2.5 text-right">Duration</th>
+                  <th className="px-4 py-2.5">Started</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tbody className="divide-y divide-border">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <td className="px-4 py-3 font-medium">{log.collector_name}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          log.status === 'success'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {log.status}
-                      </span>
+                  <tr key={log.id} className="hover:bg-muted/20">
+                    <td className="px-4 py-2.5 font-medium text-foreground">{log.collector_name}</td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant={log.status === 'success' ? 'success' : 'destructive'} size="sm">{log.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono">{log.records_count}</td>
-                    <td className="px-4 py-3 text-right font-mono">
+                    <td className="px-4 py-2.5 text-right font-mono text-foreground">{log.records_count}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">
                       {log.errors_count > 0 ? (
-                        <span className="text-red-600" title={log.error_message || ''}>
-                          {log.errors_count}
-                        </span>
+                        <span className="text-destructive" title={log.error_message || ''}>{log.errors_count}</span>
                       ) : (
-                        0
+                        <span className="text-muted-foreground">0</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono">{log.duration_ms ?? '—'}ms</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">{log.duration_ms ?? '—'}ms</td>
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
                       {new Date(log.started_at).toLocaleString()}
                     </td>
                   </tr>
@@ -191,7 +170,7 @@ export default function CollectorsPage() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

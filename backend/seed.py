@@ -73,60 +73,62 @@ def seed():
     db = SessionLocal()
 
     try:
-        # ── 1. User ──────────────────────────────────────────────────────
-        print("Creating user...")
-        user_id = uuid.uuid4()
-        db.execute(
-            sql_text("""
-                INSERT INTO "user" (id, email, hashed_password, name, is_active, created_at, updated_at)
-                VALUES (:id, :email, :password, :name, :active, :now, :now)
-                ON CONFLICT (email) DO NOTHING
-            """),
-            {
-                "id": user_id,
-                "email": "demo@minore.io",
-                "password": hash_password("demo1234"),
-                "name": "Demo Trader",
-                "active": True,
-                "now": now(),
-            },
-        )
+        # ── 1. Users ──────────────────────────────────────────────────────
+        print("Creating users...")
+        users_data = [
+            {"email": "demo@minore.io", "password": "demo1234", "name": "Demo Trader"},
+            {"email": "trader@minore.io", "password": "trader1234", "name": "Sarah Chen"},
+            {"email": "analyst@minore.io", "password": "analyst1234", "name": "Marcus Williams"},
+        ]
+        user_ids = {}
+        for u in users_data:
+            uid = uuid.uuid4()
+            db.execute(
+                sql_text("""
+                    INSERT INTO "user" (id, email, hashed_password, name, is_active, created_at, updated_at)
+                    VALUES (:id, :email, :password, :name, :active, :now, :now)
+                    ON CONFLICT (email) DO NOTHING
+                """),
+                {"id": uid, "email": u["email"], "password": hash_password(u["password"]),
+                 "name": u["name"], "active": True, "now": now()},
+            )
+            row = db.execute(
+                sql_text("SELECT id FROM \"user\" WHERE email = :email"),
+                {"email": u["email"]},
+            ).fetchone()
+            user_ids[u["email"]] = row[0]
         db.commit()
-
-        # Fetch the actual user id (might already exist)
-        row = db.execute(sql_text("SELECT id FROM \"user\" WHERE email = 'demo@minore.io'")).fetchone()
-        user_id = row[0]
+        print(f"  Created {len(users_data)} users")
 
         # ── 2. Projects ─────────────────────────────────────────────────
         projects_data = [
-            {
-                "id": uuid.uuid4(),
-                "name": "Forex Swing Trading",
-                "description": "Daily and 4H swing trading strategy focusing on EURUSD, GBPUSD, and USDJPY. Uses ICT concepts with FVG and order block entries.",
-                "status": "active",
-            },
-            {
-                "id": uuid.uuid4(),
-                "name": "Gold & Commodities",
-                "description": "Intraday and swing trades on XAUUSD and oil. Combining macro analysis with price action.",
-                "status": "active",
-            },
-            {
-                "id": uuid.uuid4(),
-                "name": "Scalping Lab",
-                "description": "15-minute scalping strategy on major pairs. Testing killzone entries with tight risk management.",
-                "status": "active",
-            },
+            {"user": "demo@minore.io", "name": "Forex Swing Trading",
+             "description": "Daily and 4H swing trading strategy focusing on EURUSD, GBPUSD, and USDJPY. Uses ICT concepts with FVG and order block entries.",
+             "status": "active"},
+            {"user": "demo@minore.io", "name": "Gold & Commodities",
+             "description": "Intraday and swing trades on XAUUSD and oil. Combining macro analysis with price action.",
+             "status": "active"},
+            {"user": "trader@minore.io", "name": "Scalping Lab",
+             "description": "15-minute scalping strategy on major pairs. Testing killzone entries with tight risk management.",
+             "status": "active"},
+            {"user": "trader@minore.io", "name": "Crypto Momentum",
+             "description": "Trend-following strategy on BTCUSD and ETHUSD using 1H and 4H timeframes. Focus on volume profile and market structure.",
+             "status": "active"},
+            {"user": "analyst@minore.io", "name": "Macro & Indices",
+             "description": "Position trading on US30, NASDAQ, and S&P500 based on macro economic data releases and central bank policy.",
+             "status": "active"},
         ]
 
         for p in projects_data:
+            pid = uuid.uuid4()
+            p["id"] = pid
             db.execute(
                 sql_text("""
                     INSERT INTO project (id, user_id, name, description, status, created_at, updated_at)
                     VALUES (:id, :uid, :name, :desc, :status, :now, :now)
                     ON CONFLICT (id) DO NOTHING
                 """),
-                {"id": p["id"], "uid": user_id, "name": p["name"], "desc": p["description"],
+                {"id": pid, "uid": user_ids[p["user"]], "name": p["name"], "desc": p["description"],
                  "status": p["status"], "now": now()},
             )
         db.commit()
@@ -418,6 +420,9 @@ def seed():
             ("Breaker Block Reversal", "Breaker block on HTF indicates reversal", "ANALYSIS"),
             ("Asian Range Breakout", "Trade breakouts from Asian session range", "ENTRY"),
             ("MSS Confirmation", "Only enter after market structure shift confirmed", "FILTER"),
+            ("NY Killzone Reversal", "Enter during New York close after liquidity grab on H1", "ENTRY"),
+            ("Fibonacci Confluence", "Use 61.8% retracement with FVG for high-probability entries", "FILTER"),
+            ("Premium/Discount Retest", "Enter when price retests premium/discount array after displacement", "ENTRY"),
         ]
         for pid in project_ids:
             for title, desc, rtype in rule_data:
@@ -564,7 +569,7 @@ def seed():
         event_types = ["PATTERN_DISCOVERED", "RULE_GENERATED", "KNOWLEDGE_REBUILT",
                        "SIMILARITY_SCAN", "TRADE_ANALYZED", "DEBRIEF_CREATED"]
         for pid in project_ids:
-            for i in range(5):
+            for i in range(6):
                 db.execute(
                     sql_text("""
                         INSERT INTO learning_event
@@ -577,8 +582,8 @@ def seed():
                      "status": random.choice(["SUCCESS", "SUCCESS", "SUCCESS", "FAILED"]),
                      "summary": f"Completed {random.choice(['analysis', 'scan', 'generation', 'rebuild'])} successfully."},
                 )
-            # Knowledge snapshots
-            for i in range(3):
+            # Knowledge snapshots — show knowledge growth over time
+            for i in range(8):
                 total_t = len(trade_ids[pid])
                 db.execute(
                     sql_text("""
