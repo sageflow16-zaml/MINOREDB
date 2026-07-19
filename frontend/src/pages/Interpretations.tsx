@@ -10,14 +10,14 @@ import { InterpretationRead } from '../types';
 
 export default function InterpretationsPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: interpretations, isLoading, error } = useInterpretations(projectId!);
+  const { data: interpretations, isLoading, error, refetch } = useInterpretations(projectId!);
   const deleteInterpretation = useDeleteInterpretation(projectId!);
   
   const [viewInterp, setViewInterp] = useState<InterpretationRead | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading interpretations." />;
+  if (error) return <ErrorState message="Error loading interpretations." onRetry={refetch} />;
 
   return (
     <div>

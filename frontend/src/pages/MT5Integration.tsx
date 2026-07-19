@@ -33,7 +33,7 @@ export default function MT5IntegrationPage() {
   const sync = useMT5Sync(projectId!);
 
   if (status.isLoading) return <LoadingSpinner />;
-  if (status.isError) return <ErrorState message="Error loading MT5 status." />;
+  if (status.isError) return <ErrorState message="Error loading MT5 status." onRetry={() => status.refetch()} />;
 
   const data = status.data;
   const logData = logs.data || [];

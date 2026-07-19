@@ -1,7 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useKnowledgeRules } from '../hooks/useKnowledgeRules';
-import { knowledgeRuleService } from '../api/knowledgeRules';
 import { PageHeader } from '../components/PageHeader';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import type { KnowledgeRule } from '../api/types';
@@ -102,10 +101,10 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
 
 export default function KnowledgePage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: rules, isLoading, error } = useKnowledgeRules(projectId!);
+  const { data: rules, isLoading, error, refetch } = useKnowledgeRules(projectId!);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading knowledge rules." />;
+  if (error) return <ErrorState message="Error loading knowledge rules." onRetry={refetch} />;
   if (!rules || rules.length === 0) return <EmptyState message="No knowledge rules yet. Create at least 5 similar trades to generate a rule." />;
 
   return (

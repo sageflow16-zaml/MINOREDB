@@ -1,6 +1,16 @@
-export const StatCard = ({ title, value }: { title: string; value: number | string }) => (
-  <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow">
-    <h3 className="text-sm font-medium text-slate-500">{title}</h3>
-    <p className="text-3xl font-bold mt-2 text-slate-900 dark:text-white">{value}</p>
+import { cn } from '../lib/utils';
+
+export const StatCard = ({
+  title,
+  value,
+  className,
+}: {
+  title: string;
+  value: number | string;
+  className?: string;
+}) => (
+  <div className={cn('rounded-xl border bg-card p-5 shadow-sm', className)}>
+    <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
+    <p className="text-2xl font-bold tracking-tight mt-1 text-foreground">{value}</p>
   </div>
 );

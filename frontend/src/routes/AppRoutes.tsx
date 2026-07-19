@@ -80,7 +80,7 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/research" element={<Research />} />
           <Route path="/projects/:projectId/replay" element={<Replay />} />
           <Route path="/projects/:projectId/trader-intelligence" element={<TraderIntelligence />} />
-          <Route path="/projects/:projectId/knowledge" element={<KnowledgeCenter />} />
+          <Route path="/projects/:projectId/knowledge-center" element={<KnowledgeCenter />} />
         </Route>
       </Routes>
     </Suspense>

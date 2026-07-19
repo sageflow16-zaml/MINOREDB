@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 
 export default function ClaimsPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: claims, isLoading, error } = useClaims(projectId!);
+  const { data: claims, isLoading, error, refetch } = useClaims(projectId!);
   const extractConcepts = useExtractConcepts(projectId!);
   const interpretClaim = useInterpretClaim(projectId!);
   const deleteClaim = useDeleteClaim(projectId!);
@@ -17,7 +17,7 @@ export default function ClaimsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading claims." />;
+  if (error) return <ErrorState message="Error loading claims." onRetry={refetch} />;
 
   return (
     <div>

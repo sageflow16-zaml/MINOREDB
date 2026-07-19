@@ -27,7 +27,7 @@ export default function MacroIntelligencePage() {
   const refresh = useMacroRefresh();
 
   if (state.isLoading) return <LoadingSpinner />;
-  if (state.isError) return <ErrorState message="Error loading macro data." />;
+  if (state.isError) return <ErrorState message="Error loading macro data." onRetry={() => state.refetch()} />;
 
   const data = state.data;
   const snapshot = data?.snapshot;

@@ -12,7 +12,7 @@ import { useState } from 'react';
 
 export default function CollectorsPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: collectors, isLoading, error } = useCollectors(projectId!);
+  const { data: collectors, isLoading, error, refetch } = useCollectors(projectId!);
   const { data: logs } = useCollectorLogs(projectId!, 25);
   const runCollector = useRunCollector(projectId!);
   const toggleCollector = useToggleCollector(projectId!);
@@ -29,7 +29,7 @@ export default function CollectorsPage() {
   };
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading collectors." />;
+  if (error) return <ErrorState message="Error loading collectors." onRetry={refetch} />;
 
   return (
     <div className="space-y-8">

@@ -30,7 +30,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
 
 export default function GraphExplorerPage() {
   const { projectId, claim_id } = useParams<{ projectId: string, claim_id: string }>();
-  const { data, isLoading, error } = useGraphData(projectId!, claim_id!);
+  const { data, isLoading, error, refetch } = useGraphData(projectId!, claim_id!);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedNode, setSelectedNode] = useState<any>(null);
@@ -64,7 +64,7 @@ export default function GraphExplorerPage() {
   const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), []);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error || !data) return <ErrorState message="Error loading graph." />;
+  if (error || !data) return <ErrorState message="Error loading graph." onRetry={() => refetch()} />;
 
   return (
     <div className="h-screen w-full relative">

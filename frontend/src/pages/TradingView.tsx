@@ -41,7 +41,7 @@ export default function TradingViewPage() {
   const logs = useTVLogs(30);
 
   if (stats.isLoading || events.isLoading) return <LoadingSpinner />;
-  if (stats.isError || events.isError) return <ErrorState message="Error loading TradingView data." />;
+  if (stats.isError || events.isError) return <ErrorState message="Error loading TradingView data." onRetry={() => { stats.refetch(); events.refetch(); }} />;
 
   const statsData = stats.data;
   const eventsData = events.data || [];

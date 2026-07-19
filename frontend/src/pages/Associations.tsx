@@ -8,7 +8,7 @@ import { useAssociations, useCreateAssociation, useDeleteAssociation } from '../
 
 export default function AssociationsPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: associations, isLoading, error } = useAssociations(projectId!);
+  const { data: associations, isLoading, error, refetch } = useAssociations(projectId!);
   const createAssociation = useCreateAssociation(projectId!);
   const deleteAssociation = useDeleteAssociation(projectId!);
 
@@ -26,7 +26,7 @@ export default function AssociationsPage() {
   };
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading associations." />;
+  if (error) return <ErrorState message="Error loading associations." onRetry={refetch} />;
 
   return (
     <div>

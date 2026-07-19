@@ -116,7 +116,7 @@ export default function KnowledgeGraphPage() {
   const animRef = useRef<number>(0);
   const dragRef = useRef<{ node: SimNode | null; ox: number; oy: number }>({ node: null, ox: 0, oy: 0 });
 
-  const { data, isLoading, error } = useKnowledgeGraphData(projectId!, filterType || undefined);
+  const { data, isLoading, error, refetch } = useKnowledgeGraphData(projectId!, filterType || undefined);
   const { data: snapshot } = useKnowledgeGraphSnapshot(projectId!);
 
   useEffect(() => {
@@ -279,7 +279,7 @@ export default function KnowledgeGraphPage() {
   }, []);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading knowledge graph." />;
+  if (error) return <ErrorState message="Error loading knowledge graph." onRetry={refetch} />;
   if (!data || data.nodes.length === 0) return <EmptyState message="No graph data yet. Create trades to build the knowledge graph." />;
 
   return (

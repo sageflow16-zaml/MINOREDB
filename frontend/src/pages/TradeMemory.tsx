@@ -5,10 +5,10 @@ import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedbac
 
 export default function TradeMemoryPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: memories, isLoading, error } = useTradeMemories(projectId!);
+  const { data: memories, isLoading, error, refetch } = useTradeMemories(projectId!);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading trade memories." />;
+  if (error) return <ErrorState message="Error loading trade memories." onRetry={refetch} />;
   if (!memories || memories.length === 0) return <EmptyState message="No trade memories yet. Create a trade to generate one." />;
 
   return (

@@ -10,7 +10,7 @@ import { ConflictRead } from '../types';
 
 export default function ConflictsPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: conflicts, isLoading, error } = useConflicts(projectId!);
+  const { data: conflicts, isLoading, error, refetch } = useConflicts(projectId!);
   const deleteConflict = useDeleteConflict(projectId!);
   const generateRQ = useGenerateRQ(projectId!);
   
@@ -18,7 +18,7 @@ export default function ConflictsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading conflicts." />;
+  if (error) return <ErrorState message="Error loading conflicts." onRetry={refetch} />;
 
   return (
     <div>

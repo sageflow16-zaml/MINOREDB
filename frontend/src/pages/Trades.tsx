@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   useTrades,
   useCreateTrade,
@@ -11,6 +12,16 @@ import { PageHeader } from '../components/PageHeader';
 import { DataTable } from '../components/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { KpiCard } from '../components/ui/KpiCard';
+import {
+  Plus, X, Pencil, Trash2, Eye, TrendingUp, TrendingDown,
+  DollarSign, BarChart3, Target, Activity, Search, ArrowUpDown
+} from 'lucide-react';
+import { cn } from '../lib/utils';
 import type { TradeRead, TradeCreate, TradeUpdate } from '../types';
 
 type FormData = TradeCreate & TradeUpdate;
@@ -51,57 +62,60 @@ const emptyForm: FormData = {
 };
 
 const SectionLabel = ({ label }: { label: string }) => (
-  <h4 className="col-span-full text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider pt-2 border-t border-slate-200 dark:border-slate-700">
+  <h4 className="col-span-full text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider pt-3 border-t border-border first:border-t-0 first:pt-0">
     {label}
   </h4>
 );
 
-const Field = ({
+function Field({
   label,
   value,
   onChange,
   type = 'text',
   step,
+  options,
 }: {
   label: string;
   value: string | number | undefined;
   onChange: (v: string) => void;
   type?: string;
   step?: string;
-}) => (
-  <div className="flex flex-col gap-1">
-    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">{label}</label>
-    {type === 'select' ? (
-      <select
-        value={String(value ?? '')}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100"
-      >
-        {(step?.split(',') || []).map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-    ) : (
-      <input
-        type={type}
-        value={value ?? ''}
-        step={step}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100"
-      />
-    )}
-  </div>
-);
+  options?: string[];
+}) {
+  const id = `field-${label.toLowerCase().replace(/\s+/g, '-')}`;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-[11px] font-medium text-muted-foreground">{label}</label>
+      {type === 'select' || options ? (
+        <select
+          id={id}
+          value={String(value ?? '')}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          {(options || step?.split(',') || []).map((opt) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      ) : (
+        <Input
+          id={id}
+          type={type}
+          value={value ?? ''}
+          step={step}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </div>
+  );
+}
 
 type Direction = 'BUY' | 'SELL';
-type Result = '' | 'WIN' | 'LOSS' | 'BE';
 type Status = 'OPEN' | 'CLOSED';
 
 export default function TradesPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: trades, isLoading, error } = useTrades(projectId!);
+  const { data: trades, isLoading, error, refetch } = useTrades(projectId!);
   const { data: msRecords } = useMarketStructures(projectId!);
   const createTrade = useCreateTrade(projectId!);
   const updateTrade = useUpdateTrade(projectId!);
@@ -112,6 +126,13 @@ export default function TradesPage() {
   const [viewTrade, setViewTrade] = useState<TradeRead | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
+
+  const wins = trades?.filter(t => t.result === 'WIN').length ?? 0;
+  const losses = trades?.filter(t => t.result === 'LOSS').length ?? 0;
+  const totalPnl = trades?.reduce((sum, t) => sum + (t.pnl ?? 0), 0) ?? 0;
+  const avgRR = trades && trades.length > 0
+    ? trades.reduce((sum, t) => sum + (t.rr ?? 0), 0) / trades.length
+    : 0;
 
   const resetForm = () => {
     setForm(emptyForm);
@@ -190,226 +211,274 @@ export default function TradesPage() {
   };
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading trades." />;
+  if (error) return <ErrorState message="Error loading trades." onRetry={refetch} />;
 
   return (
-    <div>
-      <PageHeader title="Trading Journal">
-        <button
-          onClick={openCreate}
-          disabled={createTrade.isPending}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
-        >
-          New Trade
-        </button>
-      </PageHeader>
+    <div className="space-y-6">
+      <PageHeader
+        title="Trading Journal"
+        description={`${trades?.length ?? 0} trades · ${wins}W / ${losses}L`}
+        actions={
+          <Button onClick={openCreate} isLoading={createTrade.isPending}>
+            <Plus className="mr-1.5 h-4 w-4" /> New Trade
+          </Button>
+        }
+      />
+
+      {/* KPI summary */}
+      {trades && trades.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <KpiCard title="Total P&L" value={`$${totalPnl.toFixed(2)}`} icon={DollarSign} variant={totalPnl >= 0 ? 'success' : 'danger'} size="sm" />
+          <KpiCard title="Win Rate" value={trades.length > 0 ? `${((wins / trades.length) * 100).toFixed(1)}%` : '0%'} icon={Target} variant={wins >= losses ? 'success' : 'danger'} size="sm" />
+          <KpiCard title="Avg R:R" value={avgRR.toFixed(2)} icon={Activity} variant={avgRR >= 1.5 ? 'success' : 'warning'} size="sm" />
+          <KpiCard title="Total Trades" value={trades.length} icon={BarChart3} variant="info" size="sm" />
+        </div>
+      )}
 
       {!trades || trades.length === 0 ? (
-        <EmptyState message="No trades yet. Create your first trade to start tracking." />
+        <EmptyState
+          title="No trades yet"
+          description="Create your first trade to start tracking your performance."
+          action={<Button onClick={openCreate}><Plus className="mr-1.5 h-4 w-4" /> New Trade</Button>}
+        />
       ) : (
         <DataTable
           data={trades}
           columns={[
-            { header: 'Pair', accessor: (row) => row.pair || '-' },
-            { header: 'Direction', accessor: (row) => (
-              <span className={row.direction === 'BUY' ? 'text-green-500' : 'text-red-500'}>{row.direction || '-'}</span>
-            )},
-            { header: 'Entry', accessor: (row) => row.entry_price?.toFixed(5) ?? '-' },
-            { header: 'SL', accessor: (row) => row.stop_loss?.toFixed(5) ?? '-' },
-            { header: 'TP', accessor: (row) => row.take_profit?.toFixed(5) ?? '-' },
-            { header: 'P&L', accessor: (row) => {
-              if (!row.pnl) return '-';
-              return <span className={row.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>{row.pnl?.toFixed(2)}</span>;
-            }},
-            { header: 'RR', accessor: (row) => row.rr?.toFixed(2) ?? '-' },
-            { header: 'Result', accessor: (row) => {
-              if (!row.result) return '-';
-              const colors: Record<string, string> = { WIN: 'text-green-500', LOSS: 'text-red-500', BE: 'text-yellow-500' };
-              return <span className={colors[row.result] || ''}>{row.result}</span>;
-            }},
-            { header: 'Status', accessor: (row) => (
-              <span className={row.status === 'OPEN' ? 'text-blue-500' : 'text-slate-500'}>{row.status || '-'}</span>
-            )},
-            { header: 'Date', accessor: (row) => new Date(row.created_at).toLocaleDateString() },
-            { header: 'Actions', accessor: (row) => (
-              <div className="flex gap-2">
-                <button onClick={() => setViewTrade(row)} className="text-slate-600 hover:text-slate-900 dark:hover:text-white text-sm">View</button>
-                <button onClick={() => openEdit(row)} className="text-blue-500 hover:text-blue-700 text-sm">Edit</button>
-                <button onClick={() => setDeleteId(row.id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
+            { header: 'Pair', accessor: (row: any) => row.pair || '-', sortable: true, className: 'font-medium' },
+            { header: 'Direction', accessor: (row: any) => (
+              <div className="flex items-center gap-1">
+                {row.direction === 'BUY' ? (
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                ) : (
+                  <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                )}
+                <span className={row.direction === 'BUY' ? 'text-emerald-500' : 'text-red-500'}>{row.direction || '-'}</span>
               </div>
             )},
+            { header: 'Entry', accessor: (row: any) => row.entry_price?.toFixed(5) ?? '-', hideOnMobile: true },
+            { header: 'SL', accessor: (row: any) => row.stop_loss?.toFixed(5) ?? '-', hideOnMobile: true },
+            { header: 'TP', accessor: (row: any) => row.take_profit?.toFixed(5) ?? '-', hideOnMobile: true },
+            { header: 'P&L', accessor: (row: any) => {
+              if (!row.pnl) return '-';
+              return <span className={cn('font-medium', row.pnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>${row.pnl?.toFixed(2)}</span>;
+            }, sortable: true },
+            { header: 'RR', accessor: (row: any) => row.rr?.toFixed(2) ?? '-', sortable: true },
+            { header: 'Result', accessor: (row: any) => {
+              if (!row.result) return '-';
+              const variants: Record<string, 'success' | 'destructive' | 'warning'> = { WIN: 'success', LOSS: 'destructive', BE: 'warning' };
+              return <Badge variant={variants[row.result] || 'secondary'} size="sm">{row.result}</Badge>;
+            }},
+            { header: 'Status', accessor: (row: any) => (
+              <Badge variant={row.status === 'OPEN' ? 'info' : 'secondary'} size="sm">{row.status || '-'}</Badge>
+            )},
+            { header: 'Date', accessor: (row: any) => new Date(row.created_at).toLocaleDateString(), hideOnMobile: true },
+            { header: '', accessor: (row: any) => (
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setViewTrade(row); }}>
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); openEdit(row); }}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setDeleteId(row.id); }}>
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+            ), className: 'w-[100px]' },
           ]}
+          searchable
+          searchFields={['pair']}
+          searchPlaceholder="Search by pair..."
         />
       )}
 
       {/* Create / Edit Drawer */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="fixed inset-0 bg-black/50" onClick={() => { setDrawerOpen(false); resetForm(); }} />
-          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 shadow-xl overflow-y-auto">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {editingId ? 'Edit Trade' : 'New Trade'}
-                </h3>
-                <button onClick={() => { setDrawerOpen(false); resetForm(); }} className="text-slate-500">&times;</button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <SectionLabel label="Trade Info" />
-                <Field label="Pair" value={form.pair} onChange={set('pair')} />
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Market Structure</label>
-                  <select
-                    value={form.market_structure_id ?? ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, market_structure_id: e.target.value || undefined }))}
-                    className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100"
-                  >
-                    <option value="">None</option>
-                    {(msRecords || [])
-                      .filter((ms) => !form.pair || ms.pair === form.pair)
-                      .map((ms) => (
-                        <option key={ms.id} value={ms.id}>
-                          {ms.date || '?'} | {ms.pair || '-'} | {ms.timeframe || '-'} | {ms.weekly_bias || '-'}
-                        </option>
-                      ))}
-                  </select>
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              onClick={() => { setDrawerOpen(false); resetForm(); }}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 z-50 h-full w-full max-w-xl border-l border-border bg-background shadow-xl"
+            >
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                  <h2 className="text-base font-semibold">{editingId ? 'Edit Trade' : 'New Trade'}</h2>
+                  <Button variant="ghost" size="icon" onClick={() => { setDrawerOpen(false); resetForm(); }}>
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Field label="Direction" value={form.direction} onChange={set('direction')} type="select" step="BUY,SELL" />
-                <Field label="Entry Price" value={form.entry_price} onChange={set('entry_price')} type="number" step="0.00001" />
-                <Field label="Stop Loss" value={form.stop_loss} onChange={set('stop_loss')} type="number" step="0.00001" />
-                <Field label="Take Profit" value={form.take_profit} onChange={set('take_profit')} type="number" step="0.00001" />
-                <Field label="Exit Price" value={form.exit_price} onChange={set('exit_price')} type="number" step="0.00001" />
-                <Field label="Position Size" value={form.position_size} onChange={set('position_size')} type="number" step="0.01" />
-                <Field label="Risk %" value={form.risk_percent} onChange={set('risk_percent')} type="number" step="0.01" />
-                <Field label="R:R" value={form.rr} onChange={set('rr')} type="number" step="0.01" />
-                <Field label="P&L" value={form.pnl} onChange={set('pnl')} type="number" step="0.01" />
-                <Field label="Result" value={form.result} onChange={set('result')} type="select" step="WIN,LOSS,BE," />
-                <Field label="Status" value={form.status} onChange={set('status')} type="select" step="OPEN,CLOSED" />
+                <div className="flex-1 overflow-y-auto p-5">
+                  <div className="grid grid-cols-2 gap-4">
+                    <SectionLabel label="Trade Info" />
+                    <Field label="Pair" value={form.pair} onChange={set('pair')} />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-medium text-muted-foreground">Market Structure</label>
+                      <select
+                        value={form.market_structure_id ?? ''}
+                        onChange={(e) => setForm((prev) => ({ ...prev, market_structure_id: e.target.value || '' }))}
+                        className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        <option value="">None</option>
+                        {(msRecords || [])
+                          .filter((ms) => !form.pair || ms.pair === form.pair)
+                          .map((ms) => (
+                            <option key={ms.id} value={ms.id}>
+                              {ms.date || '?'} | {ms.pair || '-'} | {ms.timeframe || '-'}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <Field label="Direction" value={form.direction} onChange={set('direction')} options={['BUY', 'SELL']} />
+                    <Field label="Entry Price" value={form.entry_price} onChange={set('entry_price')} type="number" step="0.00001" />
+                    <Field label="Stop Loss" value={form.stop_loss} onChange={set('stop_loss')} type="number" step="0.00001" />
+                    <Field label="Take Profit" value={form.take_profit} onChange={set('take_profit')} type="number" step="0.00001" />
+                    <Field label="Exit Price" value={form.exit_price} onChange={set('exit_price')} type="number" step="0.00001" />
+                    <Field label="Position Size" value={form.position_size} onChange={set('position_size')} type="number" step="0.01" />
+                    <Field label="Risk %" value={form.risk_percent} onChange={set('risk_percent')} type="number" step="0.01" />
+                    <Field label="R:R" value={form.rr} onChange={set('rr')} type="number" step="0.01" />
+                    <Field label="P&L" value={form.pnl} onChange={set('pnl')} type="number" step="0.01" />
+                    <Field label="Result" value={form.result} onChange={set('result')} options={['WIN', 'LOSS', 'BE', '']} />
+                    <Field label="Status" value={form.status} onChange={set('status')} options={['OPEN', 'CLOSED']} />
 
-                <SectionLabel label="Market Context" />
-                <Field label="Weekly Bias" value={form.weekly_bias} onChange={set('weekly_bias')} />
-                <Field label="Daily Bias" value={form.daily_bias} onChange={set('daily_bias')} />
-                <Field label="H4 Bias" value={form.h4_bias} onChange={set('h4_bias')} />
+                    <SectionLabel label="Market Context" />
+                    <Field label="Weekly Bias" value={form.weekly_bias} onChange={set('weekly_bias')} />
+                    <Field label="Daily Bias" value={form.daily_bias} onChange={set('daily_bias')} />
+                    <Field label="H4 Bias" value={form.h4_bias} onChange={set('h4_bias')} />
 
-                <SectionLabel label="ICT" />
-                <Field label="Liquidity Sweep" value={form.liquidity_sweep} onChange={set('liquidity_sweep')} />
-                <Field label="BOS" value={form.bos} onChange={set('bos')} />
-                <Field label="MSS" value={form.mss} onChange={set('mss')} />
-                <Field label="Order Block" value={form.order_block} onChange={set('order_block')} />
-                <Field label="FVG" value={form.fvg} onChange={set('fvg')} />
+                    <SectionLabel label="ICT Concepts" />
+                    <Field label="Liquidity Sweep" value={form.liquidity_sweep} onChange={set('liquidity_sweep')} />
+                    <Field label="BOS" value={form.bos} onChange={set('bos')} />
+                    <Field label="MSS" value={form.mss} onChange={set('mss')} />
+                    <Field label="Order Block" value={form.order_block} onChange={set('order_block')} />
+                    <Field label="FVG" value={form.fvg} onChange={set('fvg')} />
 
-                <SectionLabel label="Sessions" />
-                <Field label="Asian" value={form.asian_session} onChange={set('asian_session')} />
-                <Field label="London" value={form.london_session} onChange={set('london_session')} />
-                <Field label="New York" value={form.newyork_session} onChange={set('newyork_session')} />
+                    <SectionLabel label="Sessions" />
+                    <Field label="Asian" value={form.asian_session} onChange={set('asian_session')} />
+                    <Field label="London" value={form.london_session} onChange={set('london_session')} />
+                    <Field label="New York" value={form.newyork_session} onChange={set('newyork_session')} />
 
-                <SectionLabel label="Macro" />
-                <Field label="DXY" value={form.dxy} onChange={set('dxy')} />
-                <Field label="US10Y" value={form.us10y} onChange={set('us10y')} />
-                <Field label="US02Y" value={form.us02y} onChange={set('us02y')} />
-                <Field label="News Event" value={form.news_event} onChange={set('news_event')} />
+                    <SectionLabel label="Macro" />
+                    <Field label="DXY" value={form.dxy} onChange={set('dxy')} />
+                    <Field label="US10Y" value={form.us10y} onChange={set('us10y')} />
+                    <Field label="US02Y" value={form.us02y} onChange={set('us02y')} />
+                    <Field label="News Event" value={form.news_event} onChange={set('news_event')} />
 
-                <SectionLabel label="Psychology" />
-                <Field label="Emotion" value={form.emotion} onChange={set('emotion')} />
-                <div className="col-span-full flex flex-col gap-1">
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Notes</label>
-                  <textarea
-                    value={form.notes ?? ''}
-                    onChange={(e) => set('notes')(e.target.value)}
-                    rows={3}
-                    className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm text-slate-900 dark:text-slate-100"
-                  />
+                    <SectionLabel label="Psychology" />
+                    <Field label="Emotion" value={form.emotion} onChange={set('emotion')} />
+                    <div className="col-span-full flex flex-col gap-1.5">
+                      <label className="text-[11px] font-medium text-muted-foreground">Notes</label>
+                      <textarea
+                        value={form.notes ?? ''}
+                        onChange={(e) => set('notes')(e.target.value)}
+                        rows={4}
+                        className="rounded-lg border border-input bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-4">
+                  <Button variant="outline" onClick={() => { setDrawerOpen(false); resetForm(); }}>Cancel</Button>
+                  <Button onClick={handleSave} isLoading={createTrade.isPending || updateTrade.isPending}>
+                    {editingId ? 'Update' : 'Create'}
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button
-                  onClick={() => { setDrawerOpen(false); resetForm(); }}
-                  className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={createTrade.isPending || updateTrade.isPending}
-                  className="px-4 py-2 text-sm rounded bg-blue-600 text-white disabled:opacity-50"
-                >
-                  {editingId ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* View Drawer */}
-      {viewTrade && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setViewTrade(null)} />
-          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 shadow-xl overflow-y-auto">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Trade Details</h3>
-                <button onClick={() => setViewTrade(null)} className="text-slate-500">&times;</button>
-              </div>
-              {(
-                [
-                  ['Pair', viewTrade.pair],
-                  ['Direction', viewTrade.direction],
-                  ['Entry Price', viewTrade.entry_price?.toFixed(5)],
-                  ['Stop Loss', viewTrade.stop_loss?.toFixed(5)],
-                  ['Take Profit', viewTrade.take_profit?.toFixed(5)],
-                  ['Exit Price', viewTrade.exit_price?.toFixed(5)],
-                  ['Position Size', viewTrade.position_size],
-                  ['Risk %', viewTrade.risk_percent],
-                  ['R:R', viewTrade.rr],
-                  ['P&L', viewTrade.pnl],
-                  ['Result', viewTrade.result],
-                  ['Status', viewTrade.status],
-                  ['Weekly Bias', viewTrade.weekly_bias],
-                  ['Daily Bias', viewTrade.daily_bias],
-                  ['H4 Bias', viewTrade.h4_bias],
-                  ['Liquidity Sweep', viewTrade.liquidity_sweep],
-                  ['BOS', viewTrade.bos],
-                  ['MSS', viewTrade.mss],
-                  ['Order Block', viewTrade.order_block],
-                  ['FVG', viewTrade.fvg],
-                  ['Asian Session', viewTrade.asian_session],
-                  ['London Session', viewTrade.london_session],
-                  ['New York Session', viewTrade.newyork_session],
-                  ['DXY', viewTrade.dxy],
-                  ['US10Y', viewTrade.us10y],
-                  ['US02Y', viewTrade.us02y],
-                  ['News Event', viewTrade.news_event],
-                  ['Emotion', viewTrade.emotion],
-                  ['Notes', viewTrade.notes],
-                ] as const
-              ).map(([label, val]) =>
-                val ? (
-                  <div key={label} className="flex justify-between text-sm">
-                    <span className="text-slate-500">{label}</span>
-                    <span className="text-slate-900 dark:text-slate-100">{String(val)}</span>
+      <AnimatePresence>
+        {viewTrade && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              onClick={() => setViewTrade(null)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 z-50 h-full w-full max-w-lg border-l border-border bg-background shadow-xl"
+            >
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                  <h2 className="text-base font-semibold">Trade Details</h2>
+                  <Button variant="ghost" size="icon" onClick={() => setViewTrade(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-5">
+                  <div className="space-y-3">
+                    {([
+                      ['Pair', viewTrade.pair],
+                      ['Direction', viewTrade.direction],
+                      ['Entry Price', viewTrade.entry_price?.toFixed(5)],
+                      ['Stop Loss', viewTrade.stop_loss?.toFixed(5)],
+                      ['Take Profit', viewTrade.take_profit?.toFixed(5)],
+                      ['Exit Price', viewTrade.exit_price?.toFixed(5)],
+                      ['Position Size', viewTrade.position_size],
+                      ['Risk %', viewTrade.risk_percent],
+                      ['R:R', viewTrade.rr],
+                      ['P&L', viewTrade.pnl != null ? `$${viewTrade.pnl.toFixed(2)}` : null],
+                      ['Result', viewTrade.result],
+                      ['Status', viewTrade.status],
+                      ['Weekly Bias', viewTrade.weekly_bias],
+                      ['Daily Bias', viewTrade.daily_bias],
+                      ['H4 Bias', viewTrade.h4_bias],
+                      ['Liquidity Sweep', viewTrade.liquidity_sweep],
+                      ['BOS', viewTrade.bos],
+                      ['MSS', viewTrade.mss],
+                      ['Order Block', viewTrade.order_block],
+                      ['FVG', viewTrade.fvg],
+                      ['Asian Session', viewTrade.asian_session],
+                      ['London Session', viewTrade.london_session],
+                      ['New York Session', viewTrade.newyork_session],
+                      ['DXY', viewTrade.dxy],
+                      ['US10Y', viewTrade.us10y],
+                      ['US02Y', viewTrade.us02y],
+                      ['News Event', viewTrade.news_event],
+                      ['Emotion', viewTrade.emotion],
+                      ['Notes', viewTrade.notes],
+                    ] as const).map(([label, val]) =>
+                      val ? (
+                        <div key={label} className="flex justify-between items-center py-1.5 border-b border-border/50 last:border-b-0">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <span className="text-xs font-medium text-foreground">{String(val)}</span>
+                        </div>
+                      ) : null
+                    )}
                   </div>
-                ) : null
-              )}
-              <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button
-                  onClick={() => setViewTrade(null)}
-                  className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300"
-                >
-                  Close
-                </button>
+                </div>
+                <div className="flex items-center justify-end border-t border-border px-5 py-4">
+                  <Button variant="outline" onClick={() => setViewTrade(null)}>Close</Button>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <ConfirmDialog
         isOpen={!!deleteId}
         title="Delete Trade"
-        message="Are you sure you want to delete this trade?"
+        message="Are you sure you want to delete this trade? This action cannot be undone."
         onConfirm={() => {
           if (deleteId) deleteTrade.mutate(deleteId);
           setDeleteId(null);

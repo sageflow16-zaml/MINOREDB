@@ -60,6 +60,15 @@ export default function SimilarityPage() {
 
   const isLoading = currentMutation.isPending || tradeMutation.isPending || patternMutation.isPending;
   const isError = currentMutation.isError || tradeMutation.isError || patternMutation.isError;
+  const handleRetry = () => {
+    if (compareMode === 'current') {
+      currentMutation.mutate(env);
+    } else if (compareMode === 'trade' && tradeIdInput) {
+      tradeMutation.mutate(tradeIdInput);
+    } else if (compareMode === 'pattern' && patternIdInput) {
+      patternMutation.mutate(patternIdInput);
+    }
+  };
 
   const handleCompare = () => {
     if (compareMode === 'current') {
@@ -217,7 +226,7 @@ export default function SimilarityPage() {
         </button>
       </div>
 
-      {isError && <ErrorState message="Error running similarity comparison." />}
+      {isError && <ErrorState message="Error running similarity comparison." onRetry={handleRetry} />}
 
       {/* Summary Cards */}
       {summary && (

@@ -8,12 +8,12 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export default function HypothesesPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: hypotheses, isLoading, error } = useHypotheses(projectId!);
+  const { data: hypotheses, isLoading, error, refetch } = useHypotheses(projectId!);
   const deleteHypothesis = useDeleteHypothesis(projectId!);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading hypotheses." />;
+  if (error) return <ErrorState message="Error loading hypotheses." onRetry={refetch} />;
 
   return (
     <div>

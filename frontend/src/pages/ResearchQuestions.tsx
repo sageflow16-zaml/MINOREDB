@@ -8,13 +8,13 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export default function ResearchQuestionsPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: questions, isLoading, error } = useResearchQuestions(projectId!);
+  const { data: questions, isLoading, error, refetch } = useResearchQuestions(projectId!);
   const deleteRQ = useDeleteRQ(projectId!);
   const generateHypothesis = useGenerateHypothesis(projectId!);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading questions." />;
+  if (error) return <ErrorState message="Error loading questions." onRetry={refetch} />;
 
   return (
     <div>

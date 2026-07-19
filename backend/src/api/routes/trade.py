@@ -8,6 +8,9 @@ from src.crud import trade as crud
 from src.services.trade_memory import generate_trade_memory
 from src.services.knowledge_engine import update_knowledge
 from src.services.knowledge_graph import update_graph
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -50,8 +53,8 @@ def create_trade(
         generate_trade_memory(db, trade.id)
         update_knowledge(project_id, db)
         update_graph(project_id, db)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to update knowledge for trade %s: %s", trade.id, exc)
     return trade
 
 
@@ -73,8 +76,8 @@ def update_trade(
         generate_trade_memory(db, trade.id)
         update_knowledge(project_id, db)
         update_graph(project_id, db)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to update knowledge for trade %s: %s", trade.id, exc)
     return trade
 
 

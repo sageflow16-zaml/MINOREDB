@@ -51,6 +51,13 @@ export default function DecisionPage() {
   const result: DecisionResponse | null = currentMutation.data || tradeMutation.data || null;
   const isLoading = currentMutation.isPending || tradeMutation.isPending;
   const isError = currentMutation.isError || tradeMutation.isError;
+  const handleRetry = () => {
+    if (compareMode === 'current') {
+      currentMutation.mutate(env);
+    } else if (compareMode === 'trade' && tradeIdInput) {
+      tradeMutation.mutate(tradeIdInput);
+    }
+  };
 
   const handleEvaluate = () => {
     if (compareMode === 'current') {
@@ -145,7 +152,7 @@ export default function DecisionPage() {
         </button>
       </div>
 
-      {isError && <ErrorState message="Error running decision evaluation." />}
+      {isError && <ErrorState message="Error running decision evaluation." onRetry={handleRetry} />}
 
       {/* Confidence & Execution */}
       {result && (

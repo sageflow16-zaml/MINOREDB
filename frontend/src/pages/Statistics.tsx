@@ -54,8 +54,24 @@ export default function StatisticsPage() {
   const isLoading = overview.isLoading;
   const isError = overview.isError;
 
+  const handleRetry = () => {
+    overview.refetch();
+    byPair.refetch();
+    byDirection.refetch();
+    byBias.refetch();
+    bySession.refetch();
+    byMarketPhase.refetch();
+    byTrend.refetch();
+    monthlyReturns.refetch();
+    rolling10.refetch();
+    rolling50.refetch();
+    equityCurve.refetch();
+    pnlDistribution.refetch();
+    rrDistribution.refetch();
+  };
+
   if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorState message="Error loading statistics." />;
+  if (isError) return <ErrorState message="Error loading statistics." onRetry={handleRetry} />;
 
   const o = overview.data?.overview as StatisticsOverview | undefined;
   const r = overview.data?.risk as StatisticsRisk | undefined;

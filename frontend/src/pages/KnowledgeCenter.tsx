@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/PageHeader';
-import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
+import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { knowledgeService, type KnowledgeCategory, type KnowledgeConcept, type KnowledgeConceptDetail, type KnowledgeRelationship, type KnowledgeTag, type KnowledgeStats } from '../api/knowledge';
 
 type Tab = 'dashboard' | 'categories' | 'concepts' | 'relationships' | 'search';
@@ -204,7 +204,7 @@ export default function KnowledgeCenter() {
     ? concepts.filter(c => c.category_id === selectedCategory)
     : concepts;
 
-  if (error) return <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>;
+  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
 
   return (
     <div className="space-y-6">

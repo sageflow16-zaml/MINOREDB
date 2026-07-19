@@ -93,7 +93,7 @@ const Field = ({
 
 export default function MarketStructurePage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: records, isLoading, error } = useMarketStructures(projectId!);
+  const { data: records, isLoading, error, refetch } = useMarketStructures(projectId!);
   const createMs = useCreateMarketStructure(projectId!);
   const updateMs = useUpdateMarketStructure(projectId!);
   const deleteMs = useDeleteMarketStructure(projectId!);
@@ -169,7 +169,7 @@ export default function MarketStructurePage() {
   };
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading market structures." />;
+  if (error) return <ErrorState message="Error loading market structures." onRetry={() => refetch()} />;
 
   return (
     <div>

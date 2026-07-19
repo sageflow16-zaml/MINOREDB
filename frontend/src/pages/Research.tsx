@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useRunResearch, useResearchSession, useResearchHistory } from '../hooks/useResearch';
 import { PageHeader } from '../components/PageHeader';
-import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
+import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
 
 const TOOL_COLORS: Record<string, string> = {
   trade_memory: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
@@ -138,8 +138,8 @@ export default function ResearchPage() {
   const [question, setQuestion] = useState('');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const runMutation = useRunResearch();
-  const { data: activeSession, isLoading: sessionLoading } = useResearchSession(projectId!, activeSessionId);
-  const { data: history = [], isLoading: historyLoading } = useResearchHistory(projectId!);
+  const { data: activeSession, isLoading: sessionLoading, isError: sessionError, error: sessionErr } = useResearchSession(projectId!, activeSessionId);
+  const { data: history = [], isLoading: historyLoading, isError: historyError, error: historyErr, refetch: refetchHistory } = useResearchHistory(projectId!);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,13 +192,21 @@ export default function ResearchPage() {
         </div>
       )}
 
+      {runMutation.isError && (
+        <ErrorState message={runMutation.error?.message || 'Error running research. Please try again.'} onRetry={() => { if (!question.trim() || !projectId) return; runMutation.mutate({ projectId, question: question.trim() }); }} />
+      )}
+
       {sessionLoading && (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner />
         </div>
       )}
 
-      {activeSession && !sessionLoading && (
+      {sessionError && !sessionLoading && (
+        <ErrorState message={sessionErr?.message || 'Error loading research session.'} onRetry={() => { if (activeSessionId) setActiveSessionId(activeSessionId); }} />
+      )}
+
+      {activeSession && !sessionLoading && !sessionError && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-4">
             <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
@@ -234,6 +242,8 @@ export default function ResearchPage() {
           <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Research History</h3>
           {historyLoading ? (
             <LoadingSpinner />
+          ) : historyError ? (
+            <ErrorState message={historyErr?.message || 'Failed to load research history.'} onRetry={() => refetchHistory()} />
           ) : history.length === 0 ? (
             <EmptyState message="No research sessions yet. Ask a question above to begin." />
           ) : (
@@ -257,7 +267,4 @@ export default function ResearchPage() {
             </div>
           )}
         </div>
-      )}
-    </div>
-  );
-}
+ 

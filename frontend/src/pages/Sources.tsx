@@ -10,7 +10,7 @@ import { SourceRead } from '../types';
 
 export default function SourcesPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: sources, isLoading, error } = useSources(projectId!);
+  const { data: sources, isLoading, error, refetch } = useSources(projectId!);
   const uploadSource = useUploadSource(projectId!);
   const extractClaims = useExtractClaims(projectId!);
   const detectConflicts = useDetectConflicts(projectId!);
@@ -28,7 +28,7 @@ export default function SourcesPage() {
   };
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading sources." />;
+  if (error) return <ErrorState message="Error loading sources." onRetry={refetch} />;
 
   return (
     <div>

@@ -112,6 +112,20 @@ export default function TraderIntelligence() {
     );
   }
 
+  if (error && !dashboard) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          {error}
+        </div>
+        <button onClick={fetchData} className="btn-primary flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" /> Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -128,9 +142,12 @@ export default function TraderIntelligence() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          {error}
+        <div className="flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            {error}
+          </div>
+          <button onClick={fetchData} className="text-red-300 hover:text-red-200 underline text-xs">Retry</button>
         </div>
       )}
 

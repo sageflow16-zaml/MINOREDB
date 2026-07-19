@@ -11,7 +11,7 @@ import { useProject } from '../context/ProjectContext';
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const { setProjectId } = useProject();
-  const { data: projects, isLoading, error } = useProjects();
+  const { data: projects, isLoading, error, refetch } = useProjects();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
@@ -49,7 +49,7 @@ export default function ProjectsPage() {
   };
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading projects." />;
+  if (error) return <ErrorState message="Error loading projects." onRetry={refetch} />;
 
   return (
     <div>

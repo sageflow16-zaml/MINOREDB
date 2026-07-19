@@ -11,14 +11,14 @@ import { ConceptRead } from '../types';
 
 export default function ConceptsPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: concepts, isLoading, error } = useConcepts(projectId!);
+  const { data: concepts, isLoading, error, refetch } = useConcepts(projectId!);
   const deleteConcept = useDeleteConcept(projectId!);
   
   const [viewConcept, setViewConcept] = useState<ConceptRead | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading concepts." />;
+  if (error) return <ErrorState message="Error loading concepts." onRetry={refetch} />;
 
   return (
     <div>

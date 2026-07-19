@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Moon, Sun, LogOut, User, Search as SearchIcon, Command, Bell } from 'lucide-react';
+import { Menu, Moon, Sun, LogOut, User, Search as SearchIcon, Command, Bell, Settings, Keyboard } from 'lucide-react';
 import { Breadcrumb } from './ui/Breadcrumb';
 import { Button } from './ui/Button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -34,7 +34,7 @@ export const Topbar = ({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/50 bg-background/60 px-4 backdrop-blur-xl md:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/50 bg-background/80 px-4 backdrop-blur-xl md:px-6">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -48,23 +48,23 @@ export const Topbar = ({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
         <Breadcrumb />
       </div>
 
-      <div className="flex items-center gap-1.5">
-        {/* Command palette trigger */}
+      <div className="flex items-center gap-1">
+        {/* Search / Command Palette */}
         <button
           onClick={onCommandPalette}
-          className="hidden md:flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all"
+          className="hidden md:flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/50 transition-all min-w-[200px]"
         >
-          <SearchIcon className="h-3.5 w-3.5" />
-          <span>Search...</span>
-          <kbd className="ml-2 flex items-center gap-0.5 rounded-md border border-border/50 bg-background/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/60 shadow-sm">
+          <SearchIcon className="h-3.5 w-3.5 shrink-0" />
+          <span className="flex-1 text-left">Search anything...</span>
+          <kbd className="flex items-center gap-0.5 rounded border border-border/40 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/50 shadow-xs">
             <Command className="h-2.5 w-2.5" />K
           </kbd>
         </button>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="icon" className="relative text-muted-foreground/70 hover:text-foreground">
           <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary shadow-sm shadow-primary/50" />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary shadow-xs shadow-primary/50" />
         </Button>
 
         {/* Theme toggle */}
@@ -73,7 +73,7 @@ export const Topbar = ({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
           size="icon"
           onClick={toggleTheme}
           aria-label="Toggle theme"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground/70 hover:text-foreground"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
@@ -82,7 +82,7 @@ export const Topbar = ({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full ml-1">
-              <Avatar className="h-7 w-7 ring-2 ring-border/50 ring-offset-2 ring-offset-background">
+              <Avatar className="h-7 w-7 ring-2 ring-border/40 ring-offset-2 ring-offset-background">
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                   {initials}
                 </AvatarFallback>
@@ -102,6 +102,14 @@ export const Topbar = ({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
             <DropdownMenuItem onClick={() => navigate('/projects')}>
               <User className="mr-2 h-4 w-4" />
               Projects
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Keyboard className="mr-2 h-4 w-4" />
+              Keyboard Shortcuts
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">

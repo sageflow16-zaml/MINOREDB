@@ -33,8 +33,14 @@ export default function LearningPage() {
   const isLoading = events.isLoading || snapshots.isLoading || status.isLoading;
   const isError = events.isError || snapshots.isError || status.isError;
 
+  const handleRetry = () => {
+    events.refetch();
+    snapshots.refetch();
+    status.refetch();
+  };
+
   if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorState message="Error loading learning data." />;
+  if (isError) return <ErrorState message="Error loading learning data." onRetry={handleRetry} />;
 
   const eventData = events.data || [];
   const snapshotData = snapshots.data || [];
