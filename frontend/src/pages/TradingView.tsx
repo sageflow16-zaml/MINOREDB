@@ -1,31 +1,21 @@
 import { useState } from 'react';
 import { PageHeader } from '../components/PageHeader';
-import { StatCard } from '../components/StatCard';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
 import { useTVEvents, useTVLogs, useTVStats } from '../hooks/useTradingView';
+import { Activity, Radio } from 'lucide-react';
+import { cn } from '../lib/utils';
 
-const eventTypeColor: Record<string, string> = {
-  break_of_structure: 'bg-blue-100 text-blue-800',
-  market_structure_shift: 'bg-purple-100 text-purple-800',
-  liquidity_sweep: 'bg-red-100 text-red-800',
-  equal_high: 'bg-yellow-100 text-yellow-800',
-  equal_low: 'bg-yellow-100 text-yellow-800',
-  order_block: 'bg-green-100 text-green-800',
-  breaker_block: 'bg-orange-100 text-orange-800',
-  fair_value_gap: 'bg-cyan-100 text-cyan-800',
-  mitigation_block: 'bg-gray-100 text-gray-800',
-  asian_range: 'bg-indigo-100 text-indigo-800',
-  london_open: 'bg-blue-100 text-blue-800',
-  new_york_open: 'bg-green-100 text-green-800',
-  weekly_open: 'bg-purple-100 text-purple-800',
-  daily_open: 'bg-pink-100 text-pink-800',
+const eventTypeVariant: Record<string, 'info' | 'default' | 'destructive' | 'warning' | 'success' | 'secondary'> = {
+  break_of_structure: 'info', market_structure_shift: 'default', liquidity_sweep: 'destructive',
+  equal_high: 'warning', equal_low: 'warning', order_block: 'success', breaker_block: 'warning',
+  fair_value_gap: 'info', mitigation_block: 'secondary', asian_range: 'info',
+  london_open: 'info', new_york_open: 'success', weekly_open: 'default', daily_open: 'secondary',
 };
 
-const logStatusColor: Record<string, string> = {
-  processed: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  received: 'bg-gray-100 text-gray-800',
-  error: 'bg-red-100 text-red-800',
+const logStatusVariant: Record<string, 'success' | 'destructive' | 'default'> = {
+  processed: 'success', rejected: 'destructive', received: 'default', error: 'destructive',
 };
 
 export default function TradingViewPage() {
@@ -33,11 +23,7 @@ export default function TradingViewPage() {
   const [timeframeFilter, setTimeframeFilter] = useState('');
 
   const stats = useTVStats();
-  const events = useTVEvents({
-    limit: 50,
-    symbol: symbolFilter || undefined,
-    timeframe: timeframeFilter || undefined,
-  });
+  const events = useTVEvents({ limit: 50, symbol: symbolFilter || undefined, timeframe: timeframeFilter || undefined });
   const logs = useTVLogs(30);
 
   if (stats.isLoading || events.isLoading) return <LoadingSpinner />;
@@ -47,152 +33,143 @@ export default function TradingViewPage() {
   const eventsData = events.data || [];
   const logsData = logs.data || [];
 
-  const eventTimeline = eventsData.slice(0, 20).map((e) => ({
-    name: e.event_type.replace(/_/g, ' '),
-    symbol: e.symbol,
-    timeframe: e.timeframe,
-    price: e.price ?? 0,
-    timestamp: new Date(e.timestamp).toLocaleTimeString(),
-  }));
-
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <PageHeader title="TradingView Integration" />
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+    <div className="space-y-6">
+      <PageHeader
+        title="TradingView Integration"
+        description="Webhook-based market structure events"
+      >
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
           Webhook Active
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Total Events" value={statsData?.total_events ?? 0} />
-        <StatCard title="Total Logs" value={statsData?.total_logs ?? 0} />
-        <StatCard title="Unique Symbols" value={Object.keys(statsData?.events_by_symbol ?? {}).length} />
-        <StatCard title="Event Types" value={Object.keys(statsData?.events_by_type ?? {}).length} />
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Total Events</p><p className="text-lg font-bold text-foreground">{statsData?.total_events ?? 0}</p></CardContent></Card>
+        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Total Logs</p><p className="text-lg font-bold text-foreground">{statsData?.total_logs ?? 0}</p></CardContent></Card>
+        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Unique Symbols</p><p className="text-lg font-bold text-foreground">{Object.keys(statsData?.events_by_symbol ?? {}).length}</p></CardContent></Card>
+        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Event Types</p><p className="text-lg font-bold text-foreground">{Object.keys(statsData?.events_by_type ?? {}).length}</p></CardContent></Card>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
-            <select
-              value={symbolFilter}
-              onChange={(e) => setSymbolFilter(e.target.value)}
-              className="border rounded-lg px-3 py-2"
-            >
-              <option value="">All Symbols</option>
-              {Object.keys(statsData?.events_by_symbol ?? {}).map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div>
+              <label className="block text-[10px] font-medium text-muted-foreground mb-1">Symbol</label>
+              <select value={symbolFilter} onChange={(e) => setSymbolFilter(e.target.value)}
+                className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="">All Symbols</option>
+                {Object.keys(statsData?.events_by_symbol ?? {}).map((s) => (<option key={s} value={s}>{s}</option>))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-medium text-muted-foreground mb-1">Timeframe</label>
+              <select value={timeframeFilter} onChange={(e) => setTimeframeFilter(e.target.value)}
+                className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="">All Timeframes</option>
+                {Object.keys(statsData?.events_by_timeframe ?? {}).map((tf) => (<option key={tf} value={tf}>{tf}</option>))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Timeframe</label>
-            <select
-              value={timeframeFilter}
-              onChange={(e) => setTimeframeFilter(e.target.value)}
-              className="border rounded-lg px-3 py-2"
-            >
-              <option value="">All Timeframes</option>
-              {Object.keys(statsData?.events_by_timeframe ?? {}).map((tf) => (
-                <option key={tf} value={tf}>{tf}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Event Timeline */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Event Timeline</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 px-3">Time</th>
-                <th className="text-left py-2 px-3">Event Type</th>
-                <th className="text-left py-2 px-3">Symbol</th>
-                <th className="text-left py-2 px-3">Timeframe</th>
-                <th className="text-right py-2 px-3">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {eventTimeline.map((e, i) => (
-                <tr key={i} className="border-b hover:bg-gray-50">
-                  <td className="py-2 px-3 font-mono text-xs">{e.timestamp}</td>
-                  <td className="py-2 px-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${eventTypeColor[e.name.replace(/ /g, '_')] || 'bg-gray-100'}`}>
-                      {e.name}
-                    </span>
-                  </td>
-                  <td className="py-2 px-3 font-medium">{e.symbol}</td>
-                  <td className="py-2 px-3">{e.timeframe}</td>
-                  <td className="py-2 px-3 text-right">{e.price || '--'}</td>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Event Timeline</CardTitle>
+        </CardHeader>
+        {eventsData.length === 0 ? (
+          <CardContent><p className="text-xs text-muted-foreground text-center py-4">No events yet</p></CardContent>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Time</th>
+                  <th className="px-4 py-2.5">Event Type</th>
+                  <th className="px-4 py-2.5">Symbol</th>
+                  <th className="px-4 py-2.5">Timeframe</th>
+                  <th className="px-4 py-2.5 text-right">Price</th>
                 </tr>
-              ))}
-              {eventTimeline.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-4 text-center text-gray-500">No events yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {eventsData.slice(0, 20).map((e, i) => (
+                  <tr key={i} className="hover:bg-muted/20">
+                    <td className="px-4 py-2.5 font-mono text-[10px] text-muted-foreground">{new Date(e.timestamp).toLocaleTimeString()}</td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant={eventTypeVariant[e.event_type] || 'secondary'} size="sm">{e.event_type.replace(/_/g, ' ')}</Badge>
+                    </td>
+                    <td className="px-4 py-2.5 font-medium text-foreground">{e.symbol}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{e.timeframe}</td>
+                    <td className="px-4 py-2.5 text-right text-foreground">{e.price ?? '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       {/* Events by Type */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Events by Type</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {Object.entries(statsData?.events_by_type ?? {}).map(([type, count]) => (
-            <div key={type} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span className={`px-2 py-1 rounded text-xs font-medium ${eventTypeColor[type] || 'bg-gray-100'}`}>
-                {type.replace(/_/g, ' ')}
-              </span>
-              <span className="font-semibold">{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Events by Type</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {Object.entries(statsData?.events_by_type ?? {}).map(([type, count]) => (
+              <div key={type} className="flex items-center justify-between rounded-lg bg-muted/30 p-2.5">
+                <Badge variant={eventTypeVariant[type] || 'secondary'} size="sm">{type.replace(/_/g, ' ')}</Badge>
+                <span className="text-xs font-semibold text-foreground">{count as number}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Webhook Logs */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Webhook Logs</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 px-3">Received At</th>
-                <th className="text-left py-2 px-3">Status</th>
-                <th className="text-left py-2 px-3">Message</th>
-                <th className="text-right py-2 px-3">Processing Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logsData.map((log) => (
-                <tr key={log.id} className="border-b hover:bg-gray-50">
-                  <td className="py-2 px-3">{new Date(log.received_at).toLocaleString()}</td>
-                  <td className="py-2 px-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${logStatusColor[log.status] || 'bg-gray-100'}`}>
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="py-2 px-3 text-gray-600">{log.message || '--'}</td>
-                  <td className="py-2 px-3 text-right">{log.processing_time_ms != null ? `${log.processing_time_ms}ms` : '--'}</td>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Webhook Logs</CardTitle>
+        </CardHeader>
+        {logsData.length === 0 ? (
+          <CardContent><p className="text-xs text-muted-foreground text-center py-4">No logs yet</p></CardContent>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Received At</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Message</th>
+                  <th className="px-4 py-2.5 text-right">Processing Time</th>
                 </tr>
-              ))}
-              {logsData.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-4 text-center text-gray-500">No logs yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {logsData.map((log) => (
+                  <tr key={log.id} className="hover:bg-muted/20">
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{new Date(log.received_at).toLocaleString()}</td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant={logStatusVariant[log.status] || 'default'} size="sm">{log.status}</Badge>
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground max-w-xs truncate">{log.message || '--'}</td>
+                    <td className="px-4 py-2.5 text-right text-muted-foreground">{log.processing_time_ms != null ? `${log.processing_time_ms}ms` : '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

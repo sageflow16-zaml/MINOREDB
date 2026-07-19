@@ -1,34 +1,32 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/PageHeader';
+import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { knowledgeService, type KnowledgeCategory, type KnowledgeConcept, type KnowledgeConceptDetail, type KnowledgeRelationship, type KnowledgeTag, type KnowledgeStats } from '../api/knowledge';
 
 type Tab = 'dashboard' | 'categories' | 'concepts' | 'relationships' | 'search';
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: 'bg-green-100 text-green-700',
-  intermediate: 'bg-amber-100 text-amber-700',
-  advanced: 'bg-red-100 text-red-700',
-  expert: 'bg-purple-100 text-purple-700',
+const DIFFICULTY_VARIANT: Record<string, 'success' | 'warning' | 'destructive' | 'default'> = {
+  beginner: 'success', intermediate: 'warning', advanced: 'destructive', expert: 'default',
 };
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-      <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{value}</p>
-      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+    <div className="rounded-xl border border-border bg-card p-4">
+      <p className="text-xl font-bold text-foreground">{value}</p>
+      <p className="text-[10px] text-muted-foreground">{label}</p>
     </div>
   );
 }
 
 function CategoryCard({ cat, onClick }: { cat: KnowledgeCategory; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:border-indigo-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500">
+    <button onClick={onClick} className="w-full rounded-xl border border-border bg-card p-4 text-left transition-all hover:shadow-md hover:border-primary/30">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-lg dark:bg-indigo-900/30">{cat.icon || '📚'}</div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm">{cat.icon || '📚'}</div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{cat.name}</p>
-          {cat.description && <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{cat.description}</p>}
+          <p className="text-sm font-semibold text-foreground truncate">{cat.name}</p>
+          {cat.description && <p className="text-[10px] text-muted-foreground truncate">{cat.description}</p>}
         </div>
       </div>
     </button>
@@ -37,21 +35,17 @@ function CategoryCard({ cat, onClick }: { cat: KnowledgeCategory; onClick: () =>
 
 function ConceptCard({ concept, onClick }: { concept: KnowledgeConcept; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500">
+    <button onClick={onClick} className="w-full rounded-xl border border-border bg-card p-3 text-left transition-all hover:shadow-md hover:border-primary/30">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{concept.title}</p>
-          {concept.summary && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{concept.summary}</p>}
+          <p className="text-sm font-semibold text-foreground truncate">{concept.title}</p>
+          {concept.summary && <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{concept.summary}</p>}
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
           {concept.difficulty && (
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${DIFFICULTY_COLORS[concept.difficulty] || 'bg-slate-100 text-slate-600'}`}>
-              {concept.difficulty}
-            </span>
+            <Badge variant={DIFFICULTY_VARIANT[concept.difficulty] || 'default'} size="sm">{concept.difficulty}</Badge>
           )}
-          <span className={`rounded-full px-2 py-0.5 text-xs ${concept.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-            {concept.status}
-          </span>
+          <Badge variant={concept.status === 'published' ? 'success' : 'secondary'} size="sm">{concept.status}</Badge>
         </div>
       </div>
     </button>
