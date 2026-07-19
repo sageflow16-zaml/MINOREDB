@@ -1,8 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAnalystQuery } from '../hooks/useAnalyst';
 import { PageHeader } from '../components/PageHeader';
-import { LoadingSpinner } from '../components/ui/Feedback';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/Button';
+import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
+import { Send, Bot, User, Sparkles, BarChart3, Brain, LineChart, BookOpen, Network, Globe, Layers, AlertCircle, Lightbulb, ChevronRight, X } from 'lucide-react';
+import { cn } from '../lib/utils';
 import type { EvidenceItem } from '../api/analyst';
 
 interface ChatMessage {
@@ -14,31 +20,47 @@ interface ChatMessage {
   evidence?: EvidenceItem[];
 }
 
-const SOURCE_BADGES: Record<string, string> = {
-  statistics: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  knowledge_rules: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  knowledge_graph: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
-  patterns: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  trade_memory: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  similarity: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
-  macro: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
-  learning: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300',
+const SOURCE_CONFIG: Record<string, { label: string; icon: typeof Brain; color: string }> = {
+  statistics: { label: 'Statistics', icon: BarChart3, color: 'text-chart-1 bg-chart-1/10' },
+  knowledge_rules: { label: 'Knowledge Rules', icon: BookOpen, color: 'text-chart-3 bg-chart-3/10' },
+  knowledge_graph: { label: 'Knowledge Graph', icon: Network, color: 'text-chart-3 bg-chart-3/10' },
+  patterns: { label: 'Patterns', icon: LineChart, color: 'text-chart-2 bg-chart-2/10' },
+  trade_memory: { label: 'Trade Memory', icon: Brain, color: 'text-chart-4 bg-chart-4/10' },
+  similarity: { label: 'Similarity', icon: LineChart, color: 'text-chart-2 bg-chart-2/10' },
+  macro: { label: 'Macro', icon: Globe, color: 'text-chart-5 bg-chart-5/10' },
+  learning: { label: 'Learning', icon: Layers, color: 'text-muted-foreground bg-muted' },
 };
 
-function EvidencePanel({ evidence }: { evidence: EvidenceItem[] }) {
+function getConfidenceVariant(confidence: number) {
+  if (confidence >= 60) return 'success';
+  if (confidence >= 30) return 'warning';
+  return 'destructive';
+}
+
+function SourceBadge({ source }: { source: string }) {
+  const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.learning;
+  const Icon = config.icon;
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium', config.color)}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </span>
+  );
+}
+
+function EvidencePanel({ evidence }: { evidence: EvidenceItem[] }) {
+  if (!evidence.length) return null;
+  return (
+    <div className="space-y-2">
+      <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
         Evidence ({evidence.length})
-      </h3>
+      </h4>
       {evidence.map((item, i) => (
-        <div key={i} className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
-          <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${SOURCE_BADGES[item.source] || 'bg-slate-100 text-slate-700'}`}>
-            {item.source.replace(/_/g, ' ')}
-          </span>
-          <pre className="mt-2 max-h-40 overflow-auto rounded bg-slate-50 p-2 text-xs text-slate-600 dark:bg-slate-900 dark:text-slate-400">
-            {JSON.stringify(item.data, null, 1).slice(0, 1000)}
-            {JSON.stringify(item.data, null, 1).length > 1000 ? '...' : ''}
+        <div key={i} className="rounded-lg border border-border bg-card p-2.5">
+          <SourceBadge source={item.source} />
+          <pre className="mt-1.5 max-h-32 overflow-auto rounded bg-muted/30 p-2 text-[10px] text-muted-foreground font-mono">
+            {JSON.stringify(item.data, null, 1).slice(0, 800)}
+            {JSON.stringify(item.data, null, 1).length > 800 ? '...' : ''}
           </pre>
         </div>
       ))}
@@ -46,19 +68,19 @@ function EvidencePanel({ evidence }: { evidence: EvidenceItem[] }) {
   );
 }
 
-function SourceBadge({ source }: { source: string }) {
-  const colors = SOURCE_BADGES[source] || SOURCE_BADGES.learning;
-  return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${colors}`}>
-      {source.replace(/_/g, ' ')}
-    </span>
-  );
-}
+const suggestions = [
+  'How am I performing overall?',
+  'What patterns are working best?',
+  'Why did my last trade win?',
+  'Analyze my risk management',
+  'What market conditions suit me?',
+];
 
 export default function AnalystPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [showEvidence, setShowEvidence] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mutation = useAnalystQuery();
 
@@ -66,8 +88,8 @@ export default function AnalystPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!question.trim() || !projectId) return;
 
     const userMsg: ChatMessage = { role: 'user', question: question.trim() };
@@ -78,75 +100,102 @@ export default function AnalystPage() {
       { projectId, question: question.trim() },
       {
         onSuccess: (data) => {
-          const analystMsg: ChatMessage = {
+          setMessages((prev) => [...prev, {
             role: 'analyst',
             answer: data.answer,
             confidence: data.confidence,
             sources: data.sources,
             evidence: data.evidence,
-          };
-          setMessages((prev) => [...prev, analystMsg]);
+          }]);
         },
         onError: () => {
-          const analystMsg: ChatMessage = {
+          setMessages((prev) => [...prev, {
             role: 'analyst',
             answer: 'There is insufficient historical evidence.',
             confidence: 0,
             sources: [],
             evidence: [],
-          };
-          setMessages((prev) => [...prev, analystMsg]);
+          }]);
         },
       },
     );
   };
 
+  const lastAnalystMsg = messages.filter(m => m.role === 'analyst' && m.evidence && m.evidence.length > 0).slice(-1)[0];
+
   return (
-    <div className="flex h-full flex-col space-y-4">
+    <div className="space-y-6 h-full flex flex-col">
       <PageHeader
         title="AI Research Analyst"
-        description="Ask questions about your trading performance, patterns, and market connections."
+        description="Ask questions about your trading performance and patterns"
       />
 
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        <div className="flex flex-1 flex-col rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
-            {messages.length === 0 && (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center text-sm text-slate-400 dark:text-slate-500">
-                  <p className="mb-2 text-lg">Ask a question about your trading data.</p>
-                  <p className="text-xs">Examples: "How am I performing overall?" "Why did my last trade win?" "What patterns are working?"</p>
-                </div>
-              </div>
-            )}
+      <div className="flex flex-1 gap-6 overflow-hidden">
+        {/* Chat Area */}
+        <div className="flex flex-1 flex-col rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <AnimatePresence>
+              {messages.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex h-full items-center justify-center"
+                >
+                  <div className="text-center max-w-md">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                      <Bot className="h-6 w-6 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground mb-1">Ask the AI Analyst anything</p>
+                    <p className="text-xs text-muted-foreground mb-4">Examples: performance, patterns, risk analysis</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {suggestions.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => { setQuestion(s); }}
+                          className="rounded-full border border-border bg-muted/30 px-3 py-1 text-[10px] text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {messages.map((msg, i) => (
-              <div key={i}>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 {msg.role === 'user' && (
                   <div className="flex justify-end">
-                    <div className="max-w-lg rounded-2xl rounded-br-md bg-blue-600 px-4 py-2 text-sm text-white">
-                      {msg.question}
+                    <div className="flex items-start gap-2 max-w-lg">
+                      <div className="rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
+                        {msg.question}
+                      </div>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 mt-1">
+                        <User className="h-4 w-4 text-primary" />
+                      </div>
                     </div>
                   </div>
                 )}
                 {msg.role === 'analyst' && (
                   <div className="flex gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
-                      AI
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-chart-3/10 mt-1">
+                      <Bot className="h-4 w-4 text-chart-3" />
                     </div>
                     <div className="max-w-xl space-y-2">
-                      <div className="rounded-2xl rounded-bl-md bg-slate-100 px-4 py-2 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                        <div className="whitespace-pre-wrap">{msg.answer}</div>
+                      <div className="rounded-2xl rounded-bl-md bg-muted/50 px-4 py-2.5 text-sm text-foreground">
+                        <div className="whitespace-pre-wrap leading-relaxed">{msg.answer}</div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         {msg.confidence != null && (
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                            msg.confidence >= 60 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
-                            msg.confidence >= 30 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' :
-                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                          }`}>
+                          <Badge variant={getConfidenceVariant(msg.confidence)} size="sm">
                             Confidence: {msg.confidence}%
-                          </span>
+                          </Badge>
                         )}
                         {msg.sources?.map((s) => (
                           <SourceBadge key={s} source={s} />
@@ -155,56 +204,63 @@ export default function AnalystPage() {
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
+
             {mutation.isPending && (
-              <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
-                  AI
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex gap-3"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-chart-3/10">
+                  <Bot className="h-4 w-4 text-chart-3" />
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-slate-100 px-4 py-2 dark:bg-slate-800">
-                  <LoadingSpinner />
-                  <span className="text-sm text-slate-500">Analyzing...</span>
+                <div className="flex items-center gap-3 rounded-2xl rounded-bl-md bg-muted/50 px-4 py-3">
+                  <LoadingSpinner size="sm" />
+                  <span className="text-xs text-muted-foreground">Analyzing your data...</span>
                 </div>
-              </div>
+              </motion.div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-slate-200 p-4 dark:border-slate-700">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Ask the analyst a question..."
-                className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-                disabled={mutation.isPending}
-              />
-              <button
-                type="submit"
-                disabled={mutation.isPending || !question.trim()}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                Ask
-              </button>
-            </div>
-          </form>
+          {/* Input */}
+          <div className="border-t border-border p-4">
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder={messages.length === 0 ? 'Ask the analyst a question...' : 'Follow-up question...'}
+                  className="h-10 w-full rounded-lg border border-input bg-background px-4 pr-4 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  disabled={mutation.isPending}
+                />
+              </div>
+              <Button type="submit" disabled={mutation.isPending || !question.trim()} isLoading={mutation.isPending}>
+                <Send className="mr-1.5 h-4 w-4" /> Ask
+              </Button>
+            </form>
+          </div>
         </div>
 
-        <div className="w-80 shrink-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center text-center text-xs text-slate-400">
-              Evidence will appear here after you ask a question.
-            </div>
-          )}
-          {messages
-            .filter((m) => m.role === 'analyst' && m.evidence && m.evidence.length > 0)
-            .slice(-1)
-            .map((msg, i) => (
-              <EvidencePanel key={i} evidence={msg.evidence!} />
-            ))}
-        </div>
+        {/* Evidence Panel */}
+        {lastAnalystMsg && (
+          <div className="hidden lg:block w-72 shrink-0">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between py-3">
+                <CardTitle className="text-xs font-medium">Evidence</CardTitle>
+                <Button variant="ghost" size="icon-sm" onClick={() => {}}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <EvidencePanel evidence={lastAnalystMsg.evidence!} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
