@@ -267,4 +267,7 @@ export default function ResearchPage() {
             </div>
           )}
         </div>
- 
+      )}
+    </div>
+  );
+}

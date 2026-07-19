@@ -6,7 +6,10 @@ import { DataTable } from '../components/DataTable';
 import { SourceDrawer } from '../components/SourceDrawer';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { SourceRead } from '../types';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/badge';
+import { Upload, FileText, Brain, AlertTriangle, Trash2, Eye, Sparkles, ChevronRight } from 'lucide-react';
+import type { SourceRead } from '../types';
 
 export default function SourcesPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -28,62 +31,115 @@ export default function SourcesPage() {
   };
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Error loading sources." onRetry={refetch} />;
+  if (error) return <ErrorState message="Error loading sources." onRetry={() => refetch()} />;
 
   return (
-    <div>
-      <PageHeader title="Sources">
-        <div className="flex gap-2">
-            <input type="file" accept=".txt,.pdf,.docx" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-            <button 
-              onClick={handleUpload} 
-              disabled={uploadSource.isPending}
-              className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+    <div className="space-y-6">
+      <PageHeader
+        title="Sources"
+        description={`${sources?.length ?? 0} documents uploaded`}
+        actions={
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".txt,.pdf,.docx"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent max-w-[200px]"
+            />
+            <Button
+              onClick={handleUpload}
+              disabled={!file || uploadSource.isPending}
+              isLoading={uploadSource.isPending}
+              size="sm"
             >
-              {uploadSource.isPending ? 'Uploading...' : 'Upload'}
-            </button>
-        </div>
-      </PageHeader>
-      
+              <Upload className="mr-1.5 h-3.5 w-3.5" /> Upload
+            </Button>
+          </div>
+        }
+      />
+
       {!sources || sources.length === 0 ? (
-        <EmptyState message="No sources found. Upload a file to begin." />
+        <EmptyState
+          title="No sources found"
+          description="Upload a file to begin extracting trading intelligence."
+          icon={<FileText className="h-6 w-6" />}
+          action={
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept=".txt,.pdf,.docx"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent max-w-[200px]"
+              />
+              <Button onClick={handleUpload} disabled={!file} size="sm">
+                <Upload className="mr-1.5 h-3.5 w-3.5" /> Upload
+              </Button>
+            </div>
+          }
+        />
       ) : (
-        <DataTable 
-          data={sources} 
+        <DataTable
+          data={sources}
           columns={[
-            { header: 'ID', accessor: 'id' },
-            { header: 'Created At', accessor: 'created_at' },
-            { header: 'Preview', accessor: (row) => row.raw_text?.substring(0, 50) + '...' },
-            { header: 'Actions', accessor: (row) => (
-              <div className="flex gap-2">
-                <button onClick={() => setViewSource(row)} className="text-slate-600">View</button>
-                <button 
-                  onClick={() => extractClaims.mutate(row.id)} 
-                  disabled={extractClaims.isPending}
-                  className="text-blue-500 disabled:opacity-50"
-                >
-                  Extract
-                </button>
-                <button 
-                  onClick={() => detectConflicts.mutate(row.id)} 
-                  disabled={detectConflicts.isPending}
-                  className="text-orange-500 disabled:opacity-50"
-                >
-                  Detect
-                </button>
-                <button onClick={() => setDeleteId(row.id)} className="text-red-500">Delete</button>
-              </div>
-            )}
-          ]} 
+            {
+              header: 'Preview',
+              accessor: (row: any) => (
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate max-w-[200px] text-xs">
+                    {row.raw_text?.substring(0, 60) || row.id?.substring(0, 8) || '-'}
+                    {row.raw_text?.length > 60 ? '...' : ''}
+                  </span>
+                </div>
+              ),
+              sortable: true,
+            },
+            { header: 'ID', accessor: (row: any) => <span className="font-mono text-[10px] text-muted-foreground">{row.id?.substring(0, 8)}</span>, hideOnMobile: true },
+            { header: 'Date', accessor: (row: any) => new Date(row.created_at).toLocaleDateString(), hideOnMobile: true },
+            {
+              header: 'Actions',
+              accessor: (row: any) => (
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setViewSource(row); }}>
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={(e) => { e.stopPropagation(); extractClaims.mutate(row.id); }}
+                    disabled={extractClaims.isPending}
+                  >
+                    <Brain className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={(e) => { e.stopPropagation(); detectConflicts.mutate(row.id); }}
+                    disabled={detectConflicts.isPending}
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setDeleteId(row.id); }}>
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+              ),
+              className: 'w-[140px]',
+            },
+          ]}
+          searchable
+          searchFields={['raw_text']}
+          searchPlaceholder="Search source content..."
         />
       )}
+
       {viewSource && <SourceDrawer source={viewSource} onClose={() => setViewSource(null)} />}
-      <ConfirmDialog 
-        isOpen={!!deleteId} 
-        title="Delete Source" 
-        message="Are you sure you want to delete this source?" 
-        onConfirm={() => { if (deleteId) deleteSource.mutate(deleteId); setDeleteId(null); }} 
-        onCancel={() => setDeleteId(null)} 
+      <ConfirmDialog
+        isOpen={!!deleteId}
+        title="Delete Source"
+        message="Are you sure you want to delete this source? This action cannot be undone."
+        onConfirm={() => { if (deleteId) deleteSource.mutate(deleteId); setDeleteId(null); }}
+        onCancel={() => setDeleteId(null)}
       />
     </div>
   );
