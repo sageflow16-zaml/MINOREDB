@@ -25,11 +25,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Toaster
         position="top-right"
         toastOptions={{
-          className: 'dark:bg-slate-800 dark:text-white',
+          className: '!bg-card !text-card-foreground !border-border',
           style: {
-            background: 'var(--toast-bg, #1e293b)',
-            color: '#fff',
-            border: '1px solid #334155',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-lg)',
           },
         }}
       />

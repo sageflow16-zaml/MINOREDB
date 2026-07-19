@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
-import { Sparkles, Send, History, Clock, CheckCircle2, XCircle, AlertCircle, BarChart3, Brain, LineChart, BookOpen, Network, Globe, Layers, ChevronRight } from 'lucide-react';
+import { Sparkles, Send, History, Clock, CheckCircle, XCircle, AlertCircle, BarChart3, Brain, LineChart, BookOpen, Network, Globe, Layers, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const TOOL_COLORS: Record<string, string> = {
@@ -33,7 +33,7 @@ const TOOL_ICONS: Record<string, typeof Brain> = {
   macro: Globe,
   learning: Layers,
   validator: AlertCircle,
-  report: CheckCircle2,
+  report: CheckCircle,
 };
 
 function StatusBadge({ status }: { status: string }) {

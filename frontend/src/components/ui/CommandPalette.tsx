@@ -104,7 +104,7 @@ export function CommandPalette({ open, onClose, groups }: CommandPaletteProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-popover flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div

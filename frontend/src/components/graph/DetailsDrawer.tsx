@@ -15,25 +15,25 @@ export const DetailsDrawer = ({ node, onClose }: { node: any; onClose: () => voi
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-          <span className="text-[11px] text-muted-foreground">ID</span>
+          <span className="text-xs text-muted-foreground">ID</span>
           <span className="text-xs font-mono text-foreground">{node.id}</span>
         </div>
         <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-          <span className="text-[11px] text-muted-foreground">Type</span>
+          <span className="text-xs text-muted-foreground">Type</span>
           <span className="text-xs font-medium text-foreground">{data.type}</span>
         </div>
         <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-          <span className="text-[11px] text-muted-foreground">Label</span>
+          <span className="text-xs text-muted-foreground">Label</span>
           <span className="text-xs font-medium text-foreground">{data.label}</span>
         </div>
         <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-          <span className="text-[11px] text-muted-foreground">Created</span>
+          <span className="text-xs text-muted-foreground">Created</span>
           <span className="text-xs font-medium text-foreground">{data.created_at || 'N/A'}</span>
         </div>
         {data.meta && (
           <div className="pt-3 border-t border-border">
-            <h4 className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Metadata</h4>
-            <pre className="text-[10px] p-3 bg-muted/30 rounded-lg text-muted-foreground overflow-x-auto leading-relaxed">
+            <h4 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Metadata</h4>
+            <pre className="text-caption p-3 bg-muted/30 rounded-lg text-muted-foreground overflow-x-auto leading-relaxed">
               {JSON.stringify(data.meta, null, 2)}
             </pre>
           </div>

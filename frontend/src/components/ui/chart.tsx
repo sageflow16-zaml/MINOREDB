@@ -14,13 +14,9 @@ const chartColors = [
   'hsl(var(--chart-5))',
 ];
 
-const defaultTooltipStyle = {
-  background: 'hsl(var(--popover))',
-  border: '1px solid hsl(var(--border))',
-  borderRadius: '8px',
-  fontSize: '12px',
-  boxShadow: 'var(--shadow-lg)',
-};
+import { chartTooltipStyle } from '../../lib/chart';
+
+const defaultTooltipStyle = chartTooltipStyle.contentStyle;
 
 interface BaseChartProps {
   data: any[];

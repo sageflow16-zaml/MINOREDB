@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layers, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Layers, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { useAuth } from '../auth/AuthContext';
@@ -110,7 +110,7 @@ export default function Register() {
               </div>
               {password && (
                 <div className="flex items-center gap-1.5 mt-1">
-                  <CheckCircle2 className={password.length >= 6 ? 'h-3 w-3 text-success' : 'h-3 w-3 text-muted-foreground/30'} />
+                  <CheckCircle className={password.length >= 6 ? 'h-3 w-3 text-success' : 'h-3 w-3 text-muted-foreground/30'} />
                   <span className="text-[10px] text-muted-foreground/50">6+ characters</span>
                 </div>
               )}

@@ -9,11 +9,11 @@ export const ConceptDrawer = ({ concept, onClose }: { concept: ConceptRead; onCl
   const { data: interpretations, isLoading: interpsLoading } = useConceptInterpretations(projectId!, concept.id);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg p-6 shadow-xl overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 z-overlay flex justify-end">
+      <div className="bg-card text-card-foreground w-full max-w-lg p-6 shadow-xl overflow-y-auto border-l border-border">
         <div className="flex justify-between mb-4">
           <h3 className="text-xl font-bold">Concept Details</h3>
-          <button onClick={onClose} className="text-slate-500">Close</button>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">Close</button>
         </div>
         <div className="space-y-4">
           <div><h4 className="font-semibold">Term</h4><p>{concept.conceptual_term}</p></div>
