@@ -13,7 +13,14 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_db():
-    db = get_session_local()()
+    try:
+        session_local = get_session_local()
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e),
+        )
+    db = session_local()
     try:
         yield db
     except Exception:
