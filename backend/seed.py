@@ -718,8 +718,8 @@ def seed():
         print("Creating trader intelligence data...")
         for pid in project_ids:
             tids = trade_ids[pid]
-            # Debriefs
-            for tid in tids[:5]:
+            # Debriefs (4 per project = 20 total)
+            for tid in tids[:4]:
                 db.execute(
                     sql_text("""
                         INSERT INTO trade_debrief
@@ -778,7 +778,7 @@ def seed():
                 "Maximum 2% risk per trade",
                 "Close all positions before weekend gap",
             ]
-            for title in rule_titles[:4]:
+            for title in rule_titles:
                 db.execute(
                     sql_text("""
                         INSERT INTO personal_rule
@@ -811,7 +811,7 @@ def seed():
                  "habits": '{"best_session": "London", "avg_trades_per_day": 3, "common_mistakes": ["early_exit"]}',
                  "discipline": round(random.uniform(5, 9), 1),
                  "tta": len(trade_ids[pid]),
-                 "td": min(5, len(trade_ids[pid])),
+                 "td": min(4, len(trade_ids[pid])),
                  "ap": random.randint(2, 5),
                  "ar": random.randint(1, 4)},
             )
@@ -919,7 +919,9 @@ def seed():
         print("\n" + "=" * 60)
         print("[OK] Database seeded successfully!")
         print("=" * 60)
-        print(f"  User:     demo@minore.io / demo1234")
+        print(f"  Users:    demo@minore.io / demo1234")
+        print(f"            trader@minore.io / trader1234")
+        print(f"            analyst@minore.io / analyst1234")
         print(f"  Projects: {len(project_ids)}")
         print(f"  Sources:  {total_sources}")
         print(f"  Claims:   {total_claims}")
