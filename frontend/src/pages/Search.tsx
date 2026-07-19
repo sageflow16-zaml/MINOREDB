@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useSearch } from '../hooks/useSearch';
 import { PageHeader } from '../components/PageHeader';
+import { Card, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Skeleton } from '../components/ui/skeleton';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { Search as SearchIcon } from 'lucide-react';
+import { Search as SearchIcon, Sparkles } from 'lucide-react';
+
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
+const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 
 export default function SearchPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -21,43 +28,53 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Search Knowledge Graph">
-        <div className="flex gap-2">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              className="h-10 w-80 rounded-lg border border-input bg-background pl-10 pr-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter search term..."
-            />
-          </div>
-          <button
-            onClick={handleSearch}
-            disabled={!query.trim() || isLoading}
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isLoading ? 'Searching...' : 'Search'}
-          </button>
-        </div>
-      </PageHeader>
+    <motion.div variants={container} initial="hidden" animate="show" className="p-4 md:p-6 space-y-6">
+      <motion.div variants={item}>
+        <PageHeader
+          title="Search Knowledge Graph"
+          description="Find concepts, claims, sources, and relationships"
+          actions={
+            <div className="flex gap-2">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  className="h-9 w-72 rounded-lg border border-input bg-background pl-9 pr-3 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Enter search term..."
+                />
+              </div>
+              <Button onClick={handleSearch} disabled={!query.trim() || isLoading} size="sm">
+                <SearchIcon className="mr-1.5 h-3.5 w-3.5" /> {isLoading ? 'Searching...' : 'Search'}
+              </Button>
+            </div>
+          }
+        />
+      </motion.div>
 
       {!searchTrigger && !data && (
-        <EmptyState
-          icon={<SearchIcon className="h-6 w-6" />}
-          title="Search the knowledge graph"
-          description="Enter a term above and press Search to find related concepts, claims, and sources."
-        />
+        <motion.div variants={item}>
+          <EmptyState
+            icon={<SearchIcon className="h-6 w-6" />}
+            title="Search the knowledge graph"
+            description="Enter a term above and press Search to find related concepts, claims, and sources."
+          />
+        </motion.div>
       )}
 
-      {error && <ErrorState message="Search failed. Please try again." onRetry={refetch} />}
+      {error && <motion.div variants={item}><ErrorState message="Search failed. Please try again." onRetry={refetch} /></motion.div>}
 
-      {isLoading && <LoadingSpinner message="Searching knowledge graph..." />}
+      {isLoading && (
+        <motion.div variants={item} className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </motion.div>
+      )}
 
       {data && !isLoading && !error && (
-        <div className="space-y-4">
+        <motion.div variants={item} className="space-y-4">
           {data.length === 0 ? (
             <EmptyState
               icon={<SearchIcon className="h-6 w-6" />}
@@ -66,20 +83,24 @@ export default function SearchPage() {
             />
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">{data.length} result{data.length !== 1 ? 's' : ''} found</p>
+              <p className="text-xs text-muted-foreground">{data.length} result{data.length !== 1 ? 's' : ''} found</p>
               <div className="space-y-3">
                 {data.map((result, i) => (
-                  <div key={'result-' + i} className="rounded-lg border bg-card p-4 shadow-sm">
-                    <pre className="text-sm text-card-foreground whitespace-pre-wrap">
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
-                  </div>
+                  <motion.div key={'result-' + i} variants={item}>
+                    <Card className="transition-all hover:shadow-md">
+                      <CardContent className="p-4">
+                        <pre className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                          {JSON.stringify(result, null, 2)}
+                        </pre>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             </>
           )}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -3,47 +3,46 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
-  FolderOpen,
   BarChart3,
-  CandlestickChart,
   BookOpen,
   Brain,
-  Search,
+  Database,
   Settings,
   ChevronDown,
-  ChevronRight,
-  Layers,
-  LineChart,
-  TrendingUp,
-  PieChart,
-  Calendar,
-  Target,
-  MessageSquare,
-  Sparkles,
-  Globe,
-  Eye,
+  Search,
   LogOut,
   PanelLeftClose,
   PanelLeft,
   Activity,
-  BookMarked,
-  GraduationCap,
-  Database,
+  CandlestickChart,
+  Sparkles,
+  LineChart,
+  Target,
   Network,
+  Layers,
+  MessageSquare,
+  AlertTriangle,
   Lightbulb,
-  RefreshCw,
-  ChartLine,
-  Library,
-  Notebook,
-  ScrollText,
-  UserCircle2,
+  PieChart,
+  Globe,
   Zap,
+  RefreshCw,
+  Library,
+  ScrollText,
+  GraduationCap,
+  Notebook,
+  UserCircle2,
+  FolderOpen,
+  FileText,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { useProjects } from '../hooks/useProjects';
+import { clearAllTokens } from '../auth/tokenStorage';
 import { cn } from '../lib/utils';
 import { ScrollArea } from './ui/scroll-area';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { useAuth } from '../auth/AuthContext';
 
 interface SidebarProps {
   open: boolean;
@@ -65,29 +64,20 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    title: 'Dashboard',
+    title: 'Workspace',
     icon: LayoutDashboard,
     items: [
-      { name: 'Overview', path: 'dashboard', icon: LayoutDashboard },
+      { name: 'Dashboard', path: 'dashboard', icon: LayoutDashboard },
     ],
   },
   {
-    title: 'Workspace',
-    icon: FolderOpen,
+    title: 'Trading',
+    icon: BarChart3,
     items: [
-      { name: 'Projects', path: 'projects', icon: FolderOpen },
       { name: 'Trades', path: 'trades', icon: BarChart3 },
       { name: 'Journal', path: 'learning', icon: Notebook },
-      { name: 'Calendar', path: 'dashboard', icon: Calendar },
-    ],
-  },
-  {
-    title: 'Analytics',
-    icon: TrendingUp,
-    items: [
-      { name: 'Performance', path: 'analytics', icon: Activity },
-      { name: 'Statistics', path: 'statistics', icon: PieChart },
-      { name: 'Reports', path: 'statistics', icon: ScrollText },
+      { name: 'Strategies', path: 'knowledge', icon: Lightbulb },
+      { name: 'Replay', path: 'replay', icon: RefreshCw },
     ],
   },
   {
@@ -96,41 +86,42 @@ const navSections: NavSection[] = [
     items: [
       { name: 'Market Structure', path: 'market-structure', icon: CandlestickChart },
       { name: 'AI Analyst', path: 'analyst', icon: Sparkles },
-      { name: 'Trade Memory', path: 'memories', icon: Brain },
-      { name: 'Similarity', path: 'similarity', icon: LineChart },
-      { name: 'Knowledge Graph', path: 'knowledge-graph', icon: Network },
       { name: 'Research Engine', path: 'research', icon: Search },
+      { name: 'Similarity', path: 'similarity', icon: LineChart },
+      { name: 'Decision Support', path: 'decision', icon: Target },
+      { name: 'Knowledge Graph', path: 'knowledge-graph', icon: Network },
     ],
   },
   {
-    title: 'Intelligence',
-    icon: Lightbulb,
+    title: 'Knowledge',
+    icon: BookOpen,
     items: [
-      { name: 'Sources', path: 'sources', icon: BookOpen },
-      { name: 'Concepts', path: 'concepts', icon: Layers },
-      { name: 'Hypotheses', path: 'hypotheses', icon: TrendingUp },
-      { name: 'Questions', path: 'questions', icon: MessageSquare },
-      { name: 'Knowledge', path: 'knowledge', icon: Library },
+      { name: 'Sources', path: 'sources', icon: FileText },
+      { name: 'Claims', path: 'claims', icon: Layers },
+      { name: 'Interpretations', path: 'interpretations', icon: MessageSquare },
+      { name: 'Conflicts & RQs', path: 'conflicts', icon: AlertTriangle },
+      { name: 'Hypotheses', path: 'hypotheses', icon: Lightbulb },
+      { name: 'Knowledge Center', path: 'knowledge-center', icon: Library },
       { name: 'Trader Intelligence', path: 'trader-intelligence', icon: Zap },
     ],
   },
   {
-    title: 'Data',
-    icon: Database,
+    title: 'Analytics',
+    icon: Activity,
     items: [
+      { name: 'Statistics', path: 'statistics', icon: PieChart },
+      { name: 'Analytics', path: 'analytics', icon: Activity },
       { name: 'Macro', path: 'macro', icon: Globe },
-      { name: 'TradingView', path: 'tradingview', icon: CandlestickChart },
-      { name: 'MT5', path: 'mt5', icon: BarChart3 },
-      { name: 'Collectors', path: 'collectors', icon: Database },
-      { name: 'Replay', path: 'replay', icon: RefreshCw },
     ],
   },
   {
     title: 'System',
     icon: Settings,
     items: [
-      { name: 'Search', path: 'search', icon: Search },
       { name: 'Settings', path: 'settings', icon: Settings },
+      { name: 'Integrations', path: 'mt5', icon: Database },
+      { name: 'Search', path: 'search', icon: Search },
+      { name: 'Collectors', path: 'collectors', icon: Zap },
     ],
   },
 ];
@@ -138,6 +129,7 @@ const navSections: NavSection[] = [
 export const Sidebar = ({ open, onClose }: SidebarProps) => {
   const { projectId, setProjectId } = useProject();
   const { data: projects = [] } = useProjects();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -147,6 +139,9 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     return saved;
   });
 
+  const displayName = user?.name || user?.email || 'User';
+  const initials = displayName.charAt(0).toUpperCase();
+
   const toggleSection = (title: string) => {
     setExpandedSections((prev) => ({ ...prev, [title]: !prev[title] }));
   };
@@ -155,6 +150,10 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     setProjectId(id);
     const currentPath = location.pathname.split('/').slice(3).join('/');
     navigate(`/projects/${id}/${currentPath || 'dashboard'}`);
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname.includes(`/${path}`);
   };
 
   useEffect(() => {
@@ -186,7 +185,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       >
         {/* Brand */}
         <div className={cn(
-          'flex h-14 items-center border-b border-sidebar-muted/20',
+          'flex h-14 items-center border-b border-sidebar-muted/20 shrink-0',
           collapsed ? 'justify-center px-0' : 'justify-between px-4'
         )}>
           {collapsed ? (
@@ -218,7 +217,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="mx-auto mt-2 text-sidebar-foreground/30 hover:text-sidebar-foreground/70 transition-colors"
+            className="mx-auto mt-2 text-sidebar-foreground/30 hover:text-sidebar-foreground/70 transition-colors shrink-0"
             aria-label="Expand sidebar"
           >
             <PanelLeft className="h-4 w-4" />
@@ -227,7 +226,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
 
         {/* Project Selector */}
         {!collapsed && (
-          <div className="px-3 py-3">
+          <div className="px-3 py-3 shrink-0">
             <select
               value={projectId || ''}
               onChange={(e) => handleProjectChange(e.target.value)}
@@ -241,7 +240,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
           </div>
         )}
 
-        {!collapsed && <div className="border-t border-sidebar-muted/20" />}
+        {!collapsed && <div className="border-t border-sidebar-muted/20 shrink-0" />}
 
         {/* Navigation */}
         <ScrollArea className={cn('flex-1', collapsed ? 'px-2 py-2' : 'px-3 py-2')}>
@@ -258,10 +257,10 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
                               key={item.path}
                               to={`/projects/${projectId}/${item.path}`}
                               onClick={onClose}
-                              className={({ isActive }) =>
+                              className={({ isActive: active }) =>
                                 cn(
                                   'flex h-10 w-10 items-center justify-center rounded-lg transition-all',
-                                  isActive
+                                  active
                                     ? 'bg-sidebar-active/15 text-sidebar-active'
                                     : 'text-sidebar-foreground/40 hover:bg-sidebar-muted/20 hover:text-sidebar-foreground/70'
                                 )
@@ -307,10 +306,10 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
                                       key={item.path}
                                       to={`/projects/${projectId}/${item.path}`}
                                       onClick={onClose}
-                                      className={({ isActive }) =>
+                                      className={({ isActive: active }) =>
                                         cn(
                                           'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all',
-                                          isActive
+                                          active
                                             ? 'bg-sidebar-active/10 text-sidebar-active font-medium'
                                             : 'text-sidebar-foreground/50 hover:bg-sidebar-muted/15 hover:text-sidebar-foreground/80'
                                         )
@@ -343,34 +342,45 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
           </nav>
         </ScrollArea>
 
-        {/* Bottom */}
+        {/* Bottom — User Profile */}
         <div className={cn(
-          'border-t border-sidebar-muted/20 p-3',
-          collapsed && 'flex flex-col items-center gap-2'
+          'border-t border-sidebar-muted/20 shrink-0',
+          collapsed ? 'p-2 flex flex-col items-center gap-2' : 'p-3'
         )}>
           {collapsed ? (
             <>
-              <button className="flex h-10 w-10 items-center justify-center rounded-lg text-sidebar-foreground/40 hover:bg-sidebar-muted/20 hover:text-sidebar-foreground/70 transition-all" aria-label="Search">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-sidebar-foreground/40 hover:bg-sidebar-muted/20 hover:text-sidebar-foreground/70 transition-all"
+                aria-label="Search"
+                onClick={() => {
+                  const e = new KeyboardEvent('keydown', { metaKey: true, key: 'k' });
+                  window.dispatchEvent(e);
+                }}
+              >
                 <Search className="h-4 w-4" />
               </button>
-              <button className="flex h-10 w-10 items-center justify-center rounded-lg text-sidebar-foreground/40 hover:bg-sidebar-muted/20 hover:text-sidebar-foreground/70 transition-all" aria-label="Settings">
-                <Settings className="h-4 w-4" />
-              </button>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
+                {initials}
+              </div>
             </>
           ) : (
-            <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-sidebar-muted/10 transition-colors cursor-pointer group">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
-                U
-              </div>
+            <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-sidebar-muted/10 transition-colors group">
+              <Avatar className="h-8 w-8 shrink-0 ring-2 ring-sidebar-muted/20">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-sidebar-foreground/80 truncate">User</p>
-                <p className="text-[10px] text-sidebar-foreground/40 truncate">View profile</p>
+                <p className="text-xs font-medium text-sidebar-foreground/80 truncate">{displayName}</p>
+                <p className="text-[10px] text-sidebar-foreground/40 truncate">
+                  {user?.email || 'View profile'}
+                </p>
               </div>
               <button
                 className="text-sidebar-foreground/30 hover:text-sidebar-foreground/60 transition-colors opacity-0 group-hover:opacity-100"
                 aria-label="Logout"
                 onClick={() => {
-                  localStorage.clear();
+                  clearAllTokens();
                   window.location.href = '/login';
                 }}
               >

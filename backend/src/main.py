@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from src.api.router import api_router
 from src.api.routes.auth import router as auth_router
+from src.db.base import Base  # noqa: F401 — ensure all models are registered before any query
 from src.core.config import settings
 from src.core.security import setup_security, setup_cors
 from src.api.middleware import (
@@ -53,6 +54,7 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DOCS_ENABLED else None,
     openapi_url="/openapi.json" if settings.DOCS_ENABLED else None,
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 # Non-CORS middlewares first (inner layers)

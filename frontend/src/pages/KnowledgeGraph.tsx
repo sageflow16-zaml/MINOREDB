@@ -197,7 +197,7 @@ export default function KnowledgeGraphPage() {
         ctx.font = `${Math.max(10, n.radius * 0.5)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const label = n.name.length > 8 ? n.name.substring(0, 7) + '..' : n.name;
+        const label = (n.name && n.name.length > 8) ? n.name.substring(0, 7) + '..' : (n.name || '?');
         ctx.fillText(label, n.x, n.y);
       }
 
@@ -293,7 +293,7 @@ export default function KnowledgeGraphPage() {
         description="Interactive force-directed graph of trading knowledge derived from trade memories."
       >
         {snapshot && (
-          <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
             <span>{snapshot.total_nodes} nodes</span>
             <span>{snapshot.total_edges} edges</span>
             {snapshot.most_connected_type && (
@@ -325,7 +325,7 @@ export default function KnowledgeGraphPage() {
       </div>
 
       <div className="relative flex flex-1 gap-4">
-        <div className="flex-1 rounded-lg border border-slate-200 bg-slate-900 dark:border-slate-700">
+        <div className="flex-1 rounded-lg border border-border bg-card/50">
           <canvas
             ref={canvasRef}
             width={dim.w}

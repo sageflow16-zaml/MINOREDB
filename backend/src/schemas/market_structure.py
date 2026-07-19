@@ -1,12 +1,12 @@
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
-from datetime import datetime, date
+from datetime import datetime, date as _date_type
 from typing import Optional
 
 
 class MarketStructureBase(BaseModel):
     trade_id: Optional[UUID] = None
-    date: Optional[date] = None
+    date: Optional[_date_type] = None
     pair: Optional[str] = None
     timeframe: Optional[str] = None
     weekly_bias: Optional[str] = None

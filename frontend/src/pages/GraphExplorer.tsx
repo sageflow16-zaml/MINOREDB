@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ReactFlow, { Background, Controls, MiniMap, Node, Edge, Connection, addEdge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange } from 'reactflow';
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
@@ -35,23 +35,28 @@ export default function GraphExplorerPage() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
-  useMemo(() => {
+  useEffect(() => {
     if (!data) return;
+    const concepts = data.concepts || [];
+    const conflicts = data.conflicts || [];
+    const research_questions = data.research_questions || [];
+    const hypotheses = data.hypotheses || [];
+
     const initialNodes: Node[] = [
-      { id: data.claim.id, type: 'claim', data: { label: 'Claim', type: 'Claim', ...data.claim }, position: { x: 0, y: 0 } },
-      ...data.concepts.map(c => ({ id: c.id, type: 'concept', data: { label: c.conceptual_term, type: 'Concept', ...c }, position: { x: 0, y: 0 } })),
+      { id: data.claim?.id ?? 'claim', type: 'claim', data: { label: 'Claim', type: 'Claim', ...data.claim }, position: { x: 0, y: 0 } },
+      ...concepts.map(c => ({ id: c.id, type: 'concept', data: { label: c.conceptual_term, type: 'Concept', ...c }, position: { x: 0, y: 0 } })),
       ...(data.interpretation ? [{ id: data.interpretation.id, type: 'interpretation', data: { label: 'Interpretation', type: 'Interpretation', ...data.interpretation }, position: { x: 0, y: 0 } }] : []),
-      ...data.conflicts.map(c => ({ id: c.id, type: 'conflict', data: { label: 'Conflict', type: 'Conflict', ...c }, position: { x: 0, y: 0 } })),
-      ...data.research_questions.map(rq => ({ id: rq.id, type: 'research_question', data: { label: 'RQ', type: 'ResearchQuestion', ...rq }, position: { x: 0, y: 0 } })),
-      ...data.hypotheses.map(h => ({ id: h.id, type: 'hypothesis', data: { label: 'Hypothesis', type: 'Hypothesis', ...h }, position: { x: 0, y: 0 } })),
+      ...conflicts.map(c => ({ id: c.id, type: 'conflict', data: { label: 'Conflict', type: 'Conflict', ...c }, position: { x: 0, y: 0 } })),
+      ...research_questions.map(rq => ({ id: rq.id, type: 'research_question', data: { label: 'RQ', type: 'ResearchQuestion', ...rq }, position: { x: 0, y: 0 } })),
+      ...hypotheses.map(h => ({ id: h.id, type: 'hypothesis', data: { label: 'Hypothesis', type: 'Hypothesis', ...h }, position: { x: 0, y: 0 } })),
     ];
     
     const initialEdges: Edge[] = [
-      ...data.concepts.map(c => ({ id: `e-claim-${c.id}`, source: data.claim.id, target: c.id, animated: true })),
-      ...(data.interpretation ? [{ id: `e-interp-${data.interpretation.id}`, source: data.claim.id, target: data.interpretation.id, animated: true }] : []),
-      ...data.conflicts.map(c => ({ id: `e-conflict-${c.id}`, source: data.claim.id, target: c.id, animated: true })),
-      ...data.research_questions.map(rq => ({ id: `e-rq-${rq.id}`, source: rq.conflict_id, target: rq.id, animated: true })),
-      ...data.hypotheses.map(h => ({ id: `e-hyp-${h.id}`, source: h.research_question_id, target: h.id, animated: true })),
+      ...concepts.map(c => ({ id: `e-claim-${c.id}`, source: data.claim?.id ?? 'claim', target: c.id, animated: true })),
+      ...(data.interpretation ? [{ id: `e-interp-${data.interpretation.id}`, source: data.claim?.id ?? 'claim', target: data.interpretation.id, animated: true }] : []),
+      ...conflicts.map(c => ({ id: `e-conflict-${c.id}`, source: data.claim?.id ?? 'claim', target: c.id, animated: true })),
+      ...research_questions.map(rq => ({ id: `e-rq-${rq.id}`, source: rq.conflict_id, target: rq.id, animated: true })),
+      ...hypotheses.map(h => ({ id: `e-hyp-${h.id}`, source: h.research_question_id, target: h.id, animated: true })),
     ];
     
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(initialNodes, initialEdges);

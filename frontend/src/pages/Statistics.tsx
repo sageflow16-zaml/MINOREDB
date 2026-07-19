@@ -27,7 +27,9 @@ import {
 import type { StatisticsOverview, StatisticsRisk, StatisticsByField, MonthlyReturn, RollingStats, EquityPoint, DistributionData } from '../api/types';
 import { DollarSign, Target, TrendingUp, Activity, BarChart3, PieChart as PieChartIcon, TrendingDown, Wallet, Percent, Award, LineChart } from 'lucide-react';
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', '#f59e0b', '#a855f7', '#ec4899'];
+import { cn } from '../lib/utils';
+
+const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--warning))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 const container = {
   hidden: { opacity: 0 },
@@ -64,9 +66,9 @@ function BreakdownTable({ title, data }: { title: string; data: StatisticsByFiel
                 <tr key={key} className={cn('border-b border-border/50 last:border-b-0', i % 2 === 0 && 'bg-muted/20')}>
                   <td className="px-4 py-2.5 font-medium text-foreground">{key}</td>
                   <td className="px-4 py-2.5 text-right text-muted-foreground">{stats.trades}</td>
-                  <td className="px-4 py-2.5 text-right text-emerald-500">{stats.wins}</td>
+                  <td className="px-4 py-2.5 text-right text-success">{stats.wins}</td>
                   <td className="px-4 py-2.5 text-right text-muted-foreground">{stats.win_rate}%</td>
-                  <td className="px-4 py-2.5 text-right font-mono">{stats.pnl >= 0 ? '+' : ''}{stats.pnl.toFixed(2)}</td>
+                  <td className={cn('px-4 py-2.5 text-right font-mono', stats.pnl >= 0 ? 'text-success' : 'text-destructive')}>{stats.pnl >= 0 ? '+' : ''}{stats.pnl.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -75,10 +77,6 @@ function BreakdownTable({ title, data }: { title: string; data: StatisticsByFiel
       </CardContent>
     </Card>
   );
-}
-
-function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(' ');
 }
 
 export default function StatisticsPage() {
@@ -297,11 +295,11 @@ export default function StatisticsPage() {
                   <div className="text-[10px] text-muted-foreground">Trades</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
-                  <div className="text-lg font-bold text-emerald-500">{rolling10.data.win_rate}%</div>
+                  <div className="text-lg font-bold text-success">{rolling10.data.win_rate}%</div>
                   <div className="text-[10px] text-muted-foreground">Win Rate</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
-                  <div className={cn('text-lg font-bold', rolling10.data.pnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                  <div className={cn('text-lg font-bold', rolling10.data.pnl >= 0 ? 'text-success' : 'text-destructive')}>
                     {rolling10.data.pnl >= 0 ? '+' : ''}{rolling10.data.pnl.toFixed(2)}
                   </div>
                   <div className="text-[10px] text-muted-foreground">P&L</div>
@@ -325,11 +323,11 @@ export default function StatisticsPage() {
                   <div className="text-[10px] text-muted-foreground">Trades</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
-                  <div className="text-lg font-bold text-emerald-500">{rolling50.data.win_rate}%</div>
+                  <div className="text-lg font-bold text-success">{rolling50.data.win_rate}%</div>
                   <div className="text-[10px] text-muted-foreground">Win Rate</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
-                  <div className={cn('text-lg font-bold', rolling50.data.pnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                  <div className={cn('text-lg font-bold', rolling50.data.pnl >= 0 ? 'text-success' : 'text-destructive')}>
                     {rolling50.data.pnl >= 0 ? '+' : ''}{rolling50.data.pnl.toFixed(2)}
                   </div>
                   <div className="text-[10px] text-muted-foreground">P&L</div>

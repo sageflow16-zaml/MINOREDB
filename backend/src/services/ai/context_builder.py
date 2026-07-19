@@ -88,12 +88,12 @@ def _format_statistics(data: dict) -> str:
     lines = ["[STATISTICS]"]
     if o.get("total_trades"):
         lines.append(f"Total trades: {o['total_trades']} | Wins: {o.get('wins',0)} | Losses: {o.get('losses',0)}")
-        wr = o.get('win_rate', 0)
+        wr = o.get('win_rate', 0) or 0
         if wr > 1:
             wr = wr / 100
-        lines.append(f"Win rate: {wr*100:.1f}% | Avg R:R: {o.get('avg_rr',0):.2f}")
-        lines.append(f"Expectancy: {o.get('expectancy',0):.2f} | Profit factor: {r.get('profit_factor',0):.2f}")
-        lines.append(f"Total P&L: {o.get('total_pnl',0):.2f} | Max drawdown: {r.get('max_drawdown',0):.2f}")
+        lines.append(f"Win rate: {wr*100:.1f}% | Avg R:R: {o.get('avg_rr') or 0:.2f}")
+        lines.append(f"Expectancy: {o.get('expectancy') or 0:.2f} | Profit factor: {r.get('profit_factor') or 0:.2f}")
+        lines.append(f"Total P&L: {o.get('total_pnl') or 0:.2f} | Max drawdown: {r.get('max_drawdown') or 0:.2f}")
     return "\n".join(lines)
 
 
@@ -101,7 +101,7 @@ def _format_rules(data: list) -> str:
     lines = ["[KNOWLEDGE RULES]"]
     for r in data[:5]:
         wr = (r.get("win_rate", 0) or 0) * 100
-        lines.append(f"- {r.get('title','?')}: {r.get('occurrences',0)} occurrences, {wr:.0f}% WR, avg R:R {r.get('avg_rr',0):.2f}, confidence {r.get('confidence',0):.1f}")
+        lines.append(f"- {r.get('title','?')}: {r.get('occurrences',0)} occurrences, {wr:.0f}% WR, avg R:R {r.get('avg_rr') or 0:.2f}, confidence {r.get('confidence') or 0:.1f}")
     return "\n".join(lines)
 
 
@@ -118,7 +118,7 @@ def _format_patterns(data: list) -> str:
     lines = ["[PATTERNS]"]
     for p in data[:5]:
         wr = (p.get("win_rate", 0) or 0) * 100
-        lines.append(f"- {p.get('name','?')}: {p.get('total_occurrences',0)} occurrences, {wr:.0f}% WR, expectancy {p.get('expectancy',0):.2f}, confidence {p.get('confidence_score',0):.1f}")
+        lines.append(f"- {p.get('name','?')}: {p.get('total_occurrences',0)} occurrences, {wr:.0f}% WR, expectancy {p.get('expectancy') or 0:.2f}, confidence {p.get('confidence_score') or 0:.1f}")
     return "\n".join(lines)
 
 
@@ -135,7 +135,7 @@ def _format_memories(data: list) -> str:
 def _format_similarity(data: list) -> str:
     lines = ["[SIMILAR TRADES]"]
     for s in data[:3]:
-        lines.append(f"- Trade {s.get('trade_id','?')[:8]}... | Score: {s.get('similarity_score',0):.2f} | Result: {s.get('trade_result','?')} | RR: {s.get('rr','?')}")
+        lines.append(f"- Trade {s.get('trade_id','?')[:8]}... | Score: {s.get('similarity_score') or 0:.2f} | Result: {s.get('trade_result','?')} | RR: {s.get('rr','?')}")
     return "\n".join(lines)
 
 
@@ -208,7 +208,7 @@ def _format_personal_patterns(data: list) -> str:
     lines = ["[PERSONAL PATTERNS]"]
     for p in data[:5]:
         wr = (p.get("win_count", 0) / max(p.get("occurrence_count", 1), 1)) * 100
-        lines.append(f"- {p.get('name','?')} ({p.get('category','?')}): {p.get('occurrence_count',0)} occurrences, {wr:.0f}% WR, avg R:R {p.get('avg_rr',0):.2f}, confidence {p.get('confidence',0):.1f}")
+        lines.append(f"- {p.get('name','?')} ({p.get('category','?')}): {p.get('occurrence_count',0)} occurrences, {wr:.0f}% WR, avg R:R {p.get('avg_rr') or 0:.2f}, confidence {p.get('confidence') or 0:.1f}")
     return "\n".join(lines)
 
 

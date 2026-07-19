@@ -33,6 +33,7 @@ export const useResearchHistory = (projectId: string) => {
   return useQuery({
     queryKey: ['research-history', projectId],
     queryFn: () => researchService.getHistory(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -40,6 +41,7 @@ export const useHypotheses = (projectId: string) => {
   return useQuery({
     queryKey: ['hypotheses', projectId],
     queryFn: () => hypothesisService.list(projectId),
+    enabled: !!projectId,
   });
 };
 
@@ -57,6 +59,7 @@ export const useResearchQuestions = (projectId: string) => {
   return useQuery({
     queryKey: ['research-questions', projectId],
     queryFn: () => researchQuestionService.list(projectId),
+    enabled: !!projectId,
   });
 };
 

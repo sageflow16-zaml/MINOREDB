@@ -186,7 +186,7 @@ export default function DecisionPage() {
                   {exec?.status?.replace('_', ' ') || 'NOT EVALUATED'}
                 </Badge>
                 <div className="space-y-1.5">
-                  {exec?.criteria.map((c) => (
+                  {exec?.criteria?.map((c) => (
                     <div key={c.name} className="flex items-center justify-between text-xs">
                       <span className="flex items-center gap-2 text-muted-foreground">
                         <span className={cn('h-2 w-2 rounded-full', c.met ? 'bg-success' : 'bg-destructive')} />
@@ -313,7 +313,7 @@ export default function DecisionPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
-                {result.explanation.map((line, i) => (
+                {result.explanation?.map((line, i) => (
                   <p key={i} className="text-xs text-muted-foreground">{line}</p>
                 ))}
               </div>

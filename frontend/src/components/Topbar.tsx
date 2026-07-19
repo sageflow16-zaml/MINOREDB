@@ -49,22 +49,38 @@ export const Topbar = ({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
       </div>
 
       <div className="flex items-center gap-1">
-        {/* Search / Command Palette */}
+        {/* Command Palette Trigger */}
         <button
           onClick={onCommandPalette}
-          className="hidden md:flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/50 transition-all min-w-[200px]"
+          className="hidden md:flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/50 transition-all min-w-[200px] group"
         >
           <SearchIcon className="h-3.5 w-3.5 shrink-0" />
-          <span className="flex-1 text-left">Search anything...</span>
-          <kbd className="flex items-center gap-0.5 rounded border border-border/40 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/50 shadow-xs">
+          <span className="flex-1 text-left">Search pages, actions...</span>
+          <kbd className="flex items-center gap-0.5 rounded border border-border/40 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/50 shadow-xs group-hover:bg-muted/30 transition-colors">
             <Command className="h-2.5 w-2.5" />K
           </kbd>
         </button>
 
+        {/* Mobile search trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden text-muted-foreground/70 hover:text-foreground"
+          onClick={onCommandPalette}
+          aria-label="Search"
+        >
+          <SearchIcon className="h-4 w-4" />
+        </Button>
+
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground/70 hover:text-foreground">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-muted-foreground/70 hover:text-foreground"
+          aria-label="Notifications"
+        >
           <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary shadow-xs shadow-primary/50" />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary shadow-xs shadow-primary/50 animate-pulse-subtle" />
         </Button>
 
         {/* Theme toggle */}
@@ -103,11 +119,11 @@ export const Topbar = ({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
               <User className="mr-2 h-4 w-4" />
               Projects
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/projects')}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={onCommandPalette}>
               <Keyboard className="mr-2 h-4 w-4" />
               Keyboard Shortcuts
             </DropdownMenuItem>

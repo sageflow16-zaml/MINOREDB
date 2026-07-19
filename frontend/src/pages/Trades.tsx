@@ -249,19 +249,19 @@ export default function TradesPage() {
             { header: 'Direction', accessor: (row: any) => (
               <div className="flex items-center gap-1">
                 {row.direction === 'BUY' ? (
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                  <TrendingUp className="h-3.5 w-3.5 text-success" />
                 ) : (
-                  <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                  <TrendingDown className="h-3.5 w-3.5 text-destructive" />
                 )}
-                <span className={row.direction === 'BUY' ? 'text-emerald-500' : 'text-red-500'}>{row.direction || '-'}</span>
+                <span className={row.direction === 'BUY' ? 'text-success' : 'text-destructive'}>{row.direction || '-'}</span>
               </div>
             )},
             { header: 'Entry', accessor: (row: any) => row.entry_price?.toFixed(5) ?? '-', hideOnMobile: true },
             { header: 'SL', accessor: (row: any) => row.stop_loss?.toFixed(5) ?? '-', hideOnMobile: true },
             { header: 'TP', accessor: (row: any) => row.take_profit?.toFixed(5) ?? '-', hideOnMobile: true },
             { header: 'P&L', accessor: (row: any) => {
-              if (!row.pnl) return '-';
-              return <span className={cn('font-medium', row.pnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>${row.pnl?.toFixed(2)}</span>;
+              if (row.pnl == null) return '-';
+              return <span className={cn('font-medium', row.pnl >= 0 ? 'text-success' : 'text-destructive')}>${row.pnl?.toFixed(2)}</span>;
             }, sortable: true },
             { header: 'RR', accessor: (row: any) => row.rr?.toFixed(2) ?? '-', sortable: true },
             { header: 'Result', accessor: (row: any) => {

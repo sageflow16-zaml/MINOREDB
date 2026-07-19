@@ -1,24 +1,43 @@
+import { X } from 'lucide-react';
+import { Button } from '../ui/Button';
+
 export const DetailsDrawer = ({ node, onClose }: { node: any; onClose: () => void }) => {
   if (!node) return null;
   const { data } = node;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-slate-900 shadow-2xl p-6 z-50 border-l border-slate-200 dark:border-slate-800 overflow-y-auto">
-      <div className="flex justify-between mb-6">
-        <h3 className="text-lg font-bold">Details</h3>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-800">Close</button>
+    <div className="fixed right-0 top-0 h-full w-96 bg-background shadow-2xl p-5 z-50 border-l border-border overflow-y-auto">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-sm font-semibold text-foreground">Node Details</h3>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
       </div>
-      <div className="space-y-4 text-sm">
-        <div><strong>ID:</strong> <span className="font-mono text-xs">{node.id}</span></div>
-        <div><strong>Type:</strong> {data.type}</div>
-        <div><strong>Label:</strong> {data.label}</div>
-        <div><strong>Created At:</strong> {data.created_at || 'N/A'}</div>
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <h4 className="font-semibold mb-2">Relations</h4>
-          <pre className="text-xs p-2 bg-slate-50 dark:bg-slate-800 rounded">
-            {JSON.stringify(data.meta || {}, null, 2)}
-          </pre>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+          <span className="text-[11px] text-muted-foreground">ID</span>
+          <span className="text-xs font-mono text-foreground">{node.id}</span>
         </div>
+        <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+          <span className="text-[11px] text-muted-foreground">Type</span>
+          <span className="text-xs font-medium text-foreground">{data.type}</span>
+        </div>
+        <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+          <span className="text-[11px] text-muted-foreground">Label</span>
+          <span className="text-xs font-medium text-foreground">{data.label}</span>
+        </div>
+        <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+          <span className="text-[11px] text-muted-foreground">Created</span>
+          <span className="text-xs font-medium text-foreground">{data.created_at || 'N/A'}</span>
+        </div>
+        {data.meta && (
+          <div className="pt-3 border-t border-border">
+            <h4 className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Metadata</h4>
+            <pre className="text-[10px] p-3 bg-muted/30 rounded-lg text-muted-foreground overflow-x-auto leading-relaxed">
+              {JSON.stringify(data.meta, null, 2)}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );

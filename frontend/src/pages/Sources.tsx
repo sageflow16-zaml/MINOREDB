@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useSources, useUploadSource, useExtractClaims, useDetectConflicts, useDeleteSource } from '../hooks/useSources';
 import { PageHeader } from '../components/PageHeader';
 import { DataTable } from '../components/DataTable';
@@ -10,6 +11,9 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { Upload, FileText, Brain, AlertTriangle, Trash2, Eye, Sparkles, ChevronRight } from 'lucide-react';
 import type { SourceRead } from '../types';
+
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
+const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 
 export default function SourcesPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -34,7 +38,7 @@ export default function SourcesPage() {
   if (error) return <ErrorState message="Error loading sources." onRetry={() => refetch()} />;
 
   return (
-    <div className="space-y-6">
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <PageHeader
         title="Sources"
         description={`${sources?.length ?? 0} documents uploaded`}
@@ -141,6 +145,6 @@ export default function SourcesPage() {
         onConfirm={() => { if (deleteId) deleteSource.mutate(deleteId); setDeleteId(null); }}
         onCancel={() => setDeleteId(null)}
       />
-    </div>
+    </motion.div>
   );
 }

@@ -5,7 +5,7 @@ const base = (projectId: string) => `/projects/${projectId}/knowledge`;
 
 export const knowledgeRuleService = {
   list: (projectId: string) =>
-    api.get<KnowledgeRule[]>(base(projectId)).then((r) => r.data),
+    api.get<KnowledgeRule[]>(`${base(projectId)}/`).then((r) => r.data),
   get: (projectId: string, ruleId: string) =>
     api.get<KnowledgeRule>(`${base(projectId)}/${ruleId}`).then((r) => r.data),
   top: (projectId: string) =>

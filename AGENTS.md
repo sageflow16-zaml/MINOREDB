@@ -46,12 +46,19 @@ Complete UI/UX redesign of a React+TypeScript/Vite trading intelligence applicat
 - **KnowledgeCenter**: Updated StatCard/CategoryCard/ConceptCard with tokens
 - Fixed casing issue (`Input.tsx`/`input.tsx`)
 
+### Phase 5 (current) — Product Architecture + Layout + Dashboard
+- **Phase 1.1 Product Architecture**: Full audit of 33 pages, 124 API endpoints, navigation tree restructured from 7→6 sections (Workspace/Trading/Research/Knowledge/Analytics/System), 7 user flows documented, dashboard 8-zone hierarchy, page consistency template
+- **Phase 1.2 Design System**: Typography scale (12–32px), HSL color palette (dark-first), spacing/grid/elevation/animation specs, 22 existing + 4 new component APIs
+- **Components built**: `Select` (Radix with error state), `Toast` (react-hot-toast wrapper, imperative API), `CommandPalette` (Framer Motion, ⌘K trigger, keyboard nav, search filtering, `useCommandPalette()` hook), `Alert` (4 variants, dismissible), `RightPanel` (spring-animated slide-out drawer, configurable width, overlay blur, escape-to-close)
+- **Layout**: Sidebar rewritten (6-section IA, collapsible 68px/256px, project selector, user profile with avatar), Topbar rewritten (⌘K badge, notification bell with pulse, theme toggle, user dropdown), MainLayout rewritten (command palette, global shortcuts D/T/A/?, ⌘1-9, FAB mobile, Toaster)
+- **Dashboard redesigned**: Greeting header + market status, quick actions row, 6-card global KPIs, equity curve + risk panel (drawdown, sharpe, recovery, win rate + collector grid), recent trades DataTable + top strategy metrics, AI Insights banner
+
 ## Key Design Tokens Used
 - `bg-card`, `bg-background`, `bg-muted`, `bg-primary`, `bg-success`, `bg-warning`, `bg-destructive`
 - `text-foreground`, `text-muted-foreground`, `text-primary`, `text-success`, `text-destructive`
 - `border-border`, `border-input`, `border-primary`
 - `hsl(var(--chart-1))` through `hsl(var(--chart-5))` for all chart colors
-- Component library: `Button`, `Card`, `Badge`, `Input`, `KpiCard`, `DataTable`, `Feedback` (LoadingSpinner/ErrorState/EmptyState), `ConfirmDialog`
+- Component library: `Button`, `Card`, `Badge`, `Input`, `KpiCard`, `DataTable`, `Feedback` (LoadingSpinner/ErrorState/EmptyState), `ConfirmDialog`, `Select`, `Toast`, `CommandPalette`, `Alert`, `RightPanel`, `ChartCard` + `AreaChartCard`/`BarChartCard`/`PieChartCard`/`LineChartCard` + `PieChartLegend`, `AccordionItem`/`AccordionGroup`, `MetricCard`/`MetricRow`/`MetricGroup`, `Timeline`/`TimelineItem`/`TimelineBadge`, `ActivityFeed`/`ActivityItem`, `TradeMemoryCard`, `JournalEntryCard`, `ResearchTaskCard`/`ResearchReport`/`ChatBubble`, `FeedbackBlock`
 
 ## Build Status
 - `npx tsc --noEmit` passes clean
@@ -63,3 +70,4 @@ Complete UI/UX redesign of a React+TypeScript/Vite trading intelligence applicat
 - Similarity.tsx — partially updated
 - Settings.tsx — ComingSoon placeholder (minimal)
 - Phase 5 potential: Lazy loading/code splitting, performance optimization, full dark/light theme verification, mobile responsiveness
+- RightPanel can be adopted by existing page drawers (Trades, MarketStructure, Sources, etc.) to replace inline drawer code

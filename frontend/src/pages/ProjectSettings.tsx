@@ -12,17 +12,20 @@ export default function ProjectSettings() {
   const navigate = useNavigate();
 
   const handleDelete = async () => {
-    if (projectId && confirm('Are you sure?')) {
+    if (!projectId || !confirm('Are you sure?')) return;
+    try {
       await deleteProject.mutateAsync(projectId);
       setProjectId(null);
       navigate('/projects');
+    } catch {
+      // mutation error handled by hook toast
     }
   };
 
   return (
     <div className="space-y-6">
       <PageHeader title="Project Settings" />
-      <div className="p-6 border rounded dark:border-slate-800">
+      <div className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-lg font-semibold mb-4">Danger Zone</h2>
         <Button variant="destructive" onClick={handleDelete}>Delete Project</Button>
       </div>

@@ -75,14 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Attempt to load user info if token exists but user is null
   useEffect(() => {
-    if (token && !user) {
-      api.get('/auth/me')
-        .then(res => setUser(res.data))
-        .catch(() => {
-          clearAllTokens();
-          setTokenState(null);
-        });
-    }
+    if (!token || user) return;
+    const controller = new AbortController();
+    api.get('/auth/me', { signal: controller.signal })
+      .then(res => { if (!controller.signal.aborted) setUser(res.data); })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        clearAllTokens();
+        setTokenState(null);
+      });
+    return () => controller.abort();
   }, [token, user]);
 
   const value = useMemo<AuthContextValue>(

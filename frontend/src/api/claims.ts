@@ -5,11 +5,11 @@ const base = (projectId: string) => `/projects/${projectId}/claims`;
 
 export const claimService = {
   list: (projectId: string) =>
-    api.get<ClaimRead[]>(base(projectId)).then((r) => r.data),
+    api.get<ClaimRead[]>(`${base(projectId)}/`).then((r) => r.data),
   get: (projectId: string, id: string) =>
     api.get<ClaimRead>(`${base(projectId)}/${id}`).then((r) => r.data),
   create: (projectId: string, data: ClaimCreate) =>
-    api.post<ClaimRead>(base(projectId), data).then((r) => r.data),
+    api.post<ClaimRead>(`${base(projectId)}/`, data).then((r) => r.data),
   update: (projectId: string, id: string, data: ClaimUpdate) =>
     api.put<ClaimRead>(`${base(projectId)}/${id}`, data).then((r) => r.data),
   remove: (projectId: string, id: string) =>

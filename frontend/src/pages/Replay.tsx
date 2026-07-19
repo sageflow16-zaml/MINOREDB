@@ -316,7 +316,7 @@ export default function ReplayPage() {
           <span className="text-xs text-slate-500">
             Sessions: {dashboardQuery.data?.total_sessions ?? 0} | 
             Trades: {dashboardQuery.data?.total_trades ?? 0} |
-            Avg R:R: {dashboardQuery.data?.avg_rr.toFixed(2) ?? 'N/A'}
+            Avg R:R: {dashboardQuery.data?.avg_rr != null ? dashboardQuery.data.avg_rr.toFixed(2) : 'N/A'}
           </span>
         </div>
       </div>

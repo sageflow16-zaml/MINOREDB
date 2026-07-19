@@ -256,7 +256,7 @@ export default function AnalystPage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <EvidencePanel evidence={lastAnalystMsg.evidence!} />
+                <EvidencePanel evidence={lastAnalystMsg.evidence ?? []} />
               </CardContent>
             </Card>
           </div>

@@ -33,7 +33,9 @@ export const useNextCandle = (projectId: string) => {
   return useMutation({
     mutationFn: (sessionId: string) => replayService.nextCandle(projectId, sessionId),
     onSuccess: (data) => {
-      qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      if (data?.session?.id) {
+        qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      }
     },
   });
 };
@@ -43,7 +45,9 @@ export const usePrevCandle = (projectId: string) => {
   return useMutation({
     mutationFn: (sessionId: string) => replayService.prevCandle(projectId, sessionId),
     onSuccess: (data) => {
-      qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      if (data?.session?.id) {
+        qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      }
     },
   });
 };
@@ -54,7 +58,9 @@ export const useJumpToCandle = (projectId: string) => {
     mutationFn: ({ sessionId, candleIndex }: { sessionId: string; candleIndex: number }) =>
       replayService.jumpToCandle(projectId, sessionId, candleIndex),
     onSuccess: (data) => {
-      qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      if (data?.session?.id) {
+        qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      }
     },
   });
 };
@@ -99,7 +105,9 @@ export const useCreateTrade = (projectId: string) => {
     mutationFn: ({ sessionId, ...data }: { sessionId: string; direction: string; entry_price: number; stop_loss?: number; take_profit?: number; position_size?: number; risk_percent?: number; notes?: string; confidence?: number }) =>
       replayService.createTrade(projectId, sessionId, data),
     onSuccess: (data) => {
-      qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      if (data?.session?.id) {
+        qc.setQueryData(['replay-state', projectId, data.session.id], data);
+      }
       qc.invalidateQueries({ queryKey: ['replay-dashboard', projectId] });
     },
   });

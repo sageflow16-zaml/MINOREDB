@@ -5,7 +5,7 @@ const base = (projectId: string) => `/projects/${projectId}/collectors`;
 
 export const collectorService = {
   list: (projectId: string) =>
-    api.get<CollectorStatus[]>(base(projectId)).then((r) => r.data),
+    api.get<CollectorStatus[]>(`${base(projectId)}/`).then((r) => r.data),
   status: (projectId: string) =>
     api.get<CollectorStatus[]>(`${base(projectId)}/status`).then((r) => r.data),
   run: (projectId: string, name: string) =>

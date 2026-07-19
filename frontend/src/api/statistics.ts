@@ -42,5 +42,5 @@ export const statisticsService = {
   rrDistribution: (projectId: string) =>
     api.get<DistributionData>(`${base(projectId)}/rr-distribution`).then((r) => r.data),
   full: (projectId: string) =>
-    api.get<StatisticsResponse>(base(projectId)).then((r) => r.data),
+    api.get<StatisticsResponse>(`${base(projectId)}/`).then((r) => r.data),
 };

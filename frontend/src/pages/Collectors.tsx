@@ -22,12 +22,21 @@ export default function CollectorsPage() {
 
   const handleRun = async (name: string) => {
     setRunning(name);
-    await runCollector.mutateAsync(name);
-    setRunning(null);
+    try {
+      await runCollector.mutateAsync(name);
+    } catch {
+      // mutation error handled by hook toast
+    } finally {
+      setRunning(null);
+    }
   };
 
   const handleToggle = async (name: string, enabled: boolean) => {
-    await toggleCollector.mutateAsync({ name, enabled });
+    try {
+      await toggleCollector.mutateAsync({ name, enabled });
+    } catch {
+      // mutation error handled by hook toast
+    }
   };
 
   if (isLoading) return <LoadingSpinner />;
