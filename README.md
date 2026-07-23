@@ -153,6 +153,9 @@ Starts PostgreSQL, Redis, backend (port 8000), and frontend (port 80).
 | `ENVIRONMENT` | No | `development` / `production` / `test` | `development` |
 | `PORT` | No | Server port | `8000` |
 | `CORS_ORIGINS` | No | Allowed CORS origins (comma-separated) | `http://localhost:5173` |
+| `CORS_ALLOW_CREDENTIALS` | No | Allow credentials in CORS | `true` |
+| `CORS_ALLOW_METHODS` | No | Allowed HTTP methods | `GET,POST,PUT,DELETE,PATCH,OPTIONS` |
+| `CORS_ALLOW_HEADERS` | No | Allowed HTTP headers | `Authorization,Content-Type,...` |
 | `ALLOWED_HOSTS` | No | Allowed Host headers | `*` |
 | `RATE_LIMIT_PER_MINUTE` | No | Max requests per minute per IP | `60` |
 | `MAX_REQUEST_SIZE` | No | Max request body size (bytes) | `10485760` |
@@ -160,8 +163,14 @@ Starts PostgreSQL, Redis, backend (port 8000), and frontend (port 80).
 | `MAX_PAGE_SIZE` | No | Hard cap on pagination limit | `1000` |
 | `DOCS_ENABLED` | No | Enable Swagger/ReDoc | `true` |
 | `HSTS_ENABLED` | No | Enable HSTS headers | `false` |
+| `HSTS_MAX_AGE` | No | HSTS max-age in seconds | `31536000` |
+| `HSTS_INCLUDE_SUBDOMAINS` | No | Include subdomains in HSTS | `true` |
+| `HSTS_PRELOAD` | No | Allow HSTS preload | `true` |
 | `API_KEY` | No | Machine-to-machine API key | — |
 | `WEBHOOK_SECRET` | No | Webhook signing secret | — |
+| `JWT_ALGORITHM` | No | JWT signing algorithm | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | Access token lifetime | `30` |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | No | Refresh token lifetime | `7` |
 
 ### Frontend (`frontend/.env`)
 
