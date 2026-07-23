@@ -1,8 +1,8 @@
-name: Deploy to Vercel + Render
+name: Deploy to Vercel
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -10,31 +10,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ── Frontend: Build & Deploy to Vercel ──────────────────────────────────
-  deploy-frontend:
-    name: Deploy Frontend → Vercel
+  deploy:
+    name: Deploy Frontend + Backend → Vercel
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build for production
-        run: npm run build
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://project-minore.onrender.com/api/v1' }}
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
@@ -42,20 +23,4 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod --cwd frontend'
-          working-directory: frontend
-
-  # ── Backend: Deploy to Render ───────────────────────────────────────────
-  deploy-backend:
-    name: Deploy Backend → Render
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Trigger Render Deploy
-        uses: sws2k/render-deploy-action@v1
-        with:
-          render-token: ${{ secrets.RENDER_API_KEY }}
-          service-id: ${{ secrets.RENDER_SERVICE_ID }}
-          poll-timeout: 300
+          vercel-args: '--prod'
