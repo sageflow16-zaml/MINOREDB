@@ -15,15 +15,13 @@ class Settings(BaseSettings):
         if host in ("db",):
             raise ValueError(
                 f"DATABASE_URL points to Docker Compose host '{host}' which does not exist "
-                "outside docker-compose. Use your DATABASE_URL environment variable (Neon/Render)."
+                "outside docker-compose. Use your DATABASE_URL environment variable (Neon)."
             )
         # Convert bare postgresql:// to postgresql+psycopg:// for SQLAlchemy.
-        # psycopg 3 (binary) is the installed driver.
         if value.startswith("postgresql://") and "postgresql+" not in value:
             value = value.replace("postgresql://", "postgresql+psycopg://", 1)
         return value
 
-    # Port the uvicorn server binds to (Render injects this dynamically).
     PORT: int = 8000
 
     # Runtime environment: "development" | "production" | "test"

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Any
-import httpx
 from src.broker.providers.base import (
     BrokerProviderBase, ProviderAccount, ProviderTrade,
     ProviderPosition, ProviderOrder, ProviderHealth,
@@ -15,7 +14,7 @@ class CustomRESTProvider(BrokerProviderBase):
         self._connected = False
         self._credentials: dict = {}
         self._config: dict = {}
-        self._client: httpx.AsyncClient | None = None
+        self._client: Any = None
 
     @property
     def provider_name(self) -> str: return "custom_rest"
@@ -29,6 +28,7 @@ class CustomRESTProvider(BrokerProviderBase):
     def optional_credentials(self) -> list[str]: return ["api_secret", "headers"]
 
     async def connect(self, credentials: dict[str, Any], config: dict[str, Any] | None = None) -> bool:
+        import httpx
         self._credentials = credentials
         self._config = config or {}
         try:

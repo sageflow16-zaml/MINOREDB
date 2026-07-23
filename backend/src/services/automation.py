@@ -10,7 +10,6 @@ from uuid import UUID, uuid4
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from fastapi import HTTPException
-import httpx
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 from src.models.automation import (
@@ -799,6 +798,7 @@ class NotificationService:
         pass
 
     def _deliver_webhook(self, notification: Notification, channel_type: str):
+        import httpx
         channels = self.db.query(NotificationChannel).filter(
             NotificationChannel.project_id == self.project_id,
             NotificationChannel.channel_type == channel_type,
