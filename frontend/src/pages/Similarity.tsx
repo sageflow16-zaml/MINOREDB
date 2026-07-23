@@ -8,7 +8,6 @@ import { KpiCard } from '../components/ui/KpiCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { Skeleton, SkeletonCard } from '../components/ui/skeleton';
 import { DataTable } from '../components/ui/DataTable';
 import {
   useSimilarityCurrent, useSimilarityTrade, useSimilarityPattern, useSimilarityHistory,
@@ -16,9 +15,10 @@ import {
 import type { SimilarityResponse, SimilarityEnvironment } from '../api/types';
 import { TrendingUp, Target, BarChart3, Activity, Search, ArrowUpRight } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { FormField } from '../components/ui/form-field';
+import { chartTooltipStyle } from '../lib/chart';
 
 const chartColors = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
-const tooltipStyle = { background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' };
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
@@ -28,18 +28,6 @@ const BIAS_OPTIONS = ['BULLISH', 'BEARISH', 'NEUTRAL'];
 const PHASE_OPTIONS = ['ACCUMULATION', 'MARKUP', 'DISTRIBUTION', 'MARKDOWN'];
 const TREND_OPTIONS = ['UPTREND', 'DOWNTREND', 'RANGING'];
 const BOOL_OPTIONS = ['YES', 'NO'];
-
-function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-medium text-muted-foreground">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-        <option value="">Any</option>
-        {options.map((o) => (<option key={o} value={o}>{o}</option>))}
-      </select>
-    </div>
-  );
-}
 
 export default function SimilarityPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -122,7 +110,7 @@ export default function SimilarityPage() {
             <div className="flex gap-1 rounded-lg bg-muted p-0.5">
               {(['current', 'trade', 'pattern'] as const).map((mode) => (
                 <button key={mode} onClick={() => setCompareMode(mode)}
-                  className={cn('rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors', compareMode === mode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
+                  className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-colors', compareMode === mode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
                   {mode === 'current' ? 'Current Env' : mode === 'trade' ? 'By Trade' : 'By Pattern'}
                 </button>
               ))}
@@ -131,21 +119,21 @@ export default function SimilarityPage() {
           <CardContent>
             {compareMode === 'current' && (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-                <SelectField label="Pair" value={env.pair || ''} onChange={(v) => setEnv({ ...env, pair: v })} options={PAIR_OPTIONS} />
-                <SelectField label="Direction" value={env.direction || ''} onChange={(v) => setEnv({ ...env, direction: v })} options={['BUY', 'SELL']} />
-                <SelectField label="Weekly Bias" value={env.weekly_bias || ''} onChange={(v) => setEnv({ ...env, weekly_bias: v })} options={BIAS_OPTIONS} />
-                <SelectField label="Daily Bias" value={env.daily_bias || ''} onChange={(v) => setEnv({ ...env, daily_bias: v })} options={BIAS_OPTIONS} />
-                <SelectField label="H4 Bias" value={env.h4_bias || ''} onChange={(v) => setEnv({ ...env, h4_bias: v })} options={BIAS_OPTIONS} />
-                <SelectField label="Market Phase" value={env.market_phase || ''} onChange={(v) => setEnv({ ...env, market_phase: v })} options={PHASE_OPTIONS} />
-                <SelectField label="Trend" value={env.trend || ''} onChange={(v) => setEnv({ ...env, trend: v })} options={TREND_OPTIONS} />
-                <SelectField label="Liquidity Sweep" value={env.liquidity_sweep || ''} onChange={(v) => setEnv({ ...env, liquidity_sweep: v })} options={BOOL_OPTIONS} />
-                <SelectField label="MSS" value={env.mss || ''} onChange={(v) => setEnv({ ...env, mss: v })} options={BOOL_OPTIONS} />
-                <SelectField label="FVG" value={env.fvg || ''} onChange={(v) => setEnv({ ...env, fvg: v })} options={BOOL_OPTIONS} />
+                <FormField label="Pair" value={env.pair || ''} onChange={(v) => setEnv({ ...env, pair: v })} options={PAIR_OPTIONS} />
+                <FormField label="Direction" value={env.direction || ''} onChange={(v) => setEnv({ ...env, direction: v })} options={['BUY', 'SELL']} />
+                <FormField label="Weekly Bias" value={env.weekly_bias || ''} onChange={(v) => setEnv({ ...env, weekly_bias: v })} options={BIAS_OPTIONS} />
+                <FormField label="Daily Bias" value={env.daily_bias || ''} onChange={(v) => setEnv({ ...env, daily_bias: v })} options={BIAS_OPTIONS} />
+                <FormField label="H4 Bias" value={env.h4_bias || ''} onChange={(v) => setEnv({ ...env, h4_bias: v })} options={BIAS_OPTIONS} />
+                <FormField label="Market Phase" value={env.market_phase || ''} onChange={(v) => setEnv({ ...env, market_phase: v })} options={PHASE_OPTIONS} />
+                <FormField label="Trend" value={env.trend || ''} onChange={(v) => setEnv({ ...env, trend: v })} options={TREND_OPTIONS} />
+                <FormField label="Liquidity Sweep" value={env.liquidity_sweep || ''} onChange={(v) => setEnv({ ...env, liquidity_sweep: v })} options={BOOL_OPTIONS} />
+                <FormField label="MSS" value={env.mss || ''} onChange={(v) => setEnv({ ...env, mss: v })} options={BOOL_OPTIONS} />
+                <FormField label="FVG" value={env.fvg || ''} onChange={(v) => setEnv({ ...env, fvg: v })} options={BOOL_OPTIONS} />
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-medium text-muted-foreground">Sessions</label>
+                  <label className="text-xs font-medium text-muted-foreground">Sessions</label>
                   <div className="flex gap-3">
                     {(['asian_session', 'london_session', 'newyork_session'] as const).map((s) => (
-                      <label key={s} className="flex items-center gap-1 text-[11px] text-muted-foreground cursor-pointer">
+                      <label key={s} className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer">
                         <input type="checkbox" checked={!!env[s]} onChange={(e) => setEnv({ ...env, [s]: e.target.checked })} className="rounded border-input" />
                         {s.replace('_session', '').replace(/^\w/, (c) => c.toUpperCase())}
                       </label>
@@ -198,7 +186,7 @@ export default function SimilarityPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
                   <XAxis dataKey="range" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <Tooltip contentStyle={chartTooltipStyle.contentStyle} />
                   <Bar dataKey="count" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -212,7 +200,7 @@ export default function SimilarityPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
                   <XAxis dataKey="index" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <Tooltip contentStyle={chartTooltipStyle.contentStyle} />
                   <Line type="monotone" dataKey="rr" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -226,7 +214,7 @@ export default function SimilarityPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
                   <XAxis dataKey="range" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v}%`]} />
+                  <Tooltip contentStyle={chartTooltipStyle.contentStyle} formatter={(v: number) => [`${v}%`]} />
                   <Bar dataKey="win_rate" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -247,7 +235,7 @@ export default function SimilarityPage() {
                     <Pie data={resultPieData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, value }: any) => `${name}: ${value}`}>
                       {resultPieData.map((_, i) => (<Cell key={i} fill={chartColors[i % chartColors.length]} />))}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle} />
+                    <Tooltip contentStyle={chartTooltipStyle.contentStyle} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>

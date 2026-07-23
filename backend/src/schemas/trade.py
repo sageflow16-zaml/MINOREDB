@@ -5,6 +5,7 @@ from typing import Optional
 
 
 class TradeBase(BaseModel):
+    strategy_id: Optional[UUID] = None
     market_structure_id: Optional[UUID] = None
     pair: Optional[str] = None
     direction: Optional[str] = None
@@ -16,8 +17,15 @@ class TradeBase(BaseModel):
     risk_percent: Optional[float] = None
     rr: Optional[float] = None
     pnl: Optional[float] = None
+    commission: Optional[float] = None
+    swap: Optional[float] = None
     result: Optional[str] = None
     status: Optional[str] = None
+    broker_name: Optional[str] = None
+    timeframe: Optional[str] = None
+    open_time: Optional[datetime] = None
+    close_time: Optional[datetime] = None
+    tags: Optional[list[str]] = None
     weekly_bias: Optional[str] = None
     daily_bias: Optional[str] = None
     h4_bias: Optional[str] = None

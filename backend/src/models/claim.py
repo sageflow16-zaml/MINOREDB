@@ -16,7 +16,8 @@ class Claim(Base):
     project_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), 
         ForeignKey("project.id", ondelete="CASCADE"), 
-        nullable=False
+        nullable=False,
+        index=True,
     )
     project = relationship("Project")
     created_at: Mapped[datetime] = mapped_column(
@@ -31,8 +32,9 @@ class Claim(Base):
     )
     source_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), 
-        ForeignKey("source.id"), 
-        nullable=True
+        ForeignKey("source.id", ondelete="SET NULL"), 
+        nullable=True,
+        index=True,
     )
     verbatim_text: Mapped[str | None] = mapped_column(String, nullable=True)
     source_location: Mapped[str | None] = mapped_column(String, nullable=True)

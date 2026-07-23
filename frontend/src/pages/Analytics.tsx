@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar, PieChart, Pie, Cell } from 'recharts';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
@@ -8,7 +8,7 @@ import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedbac
 import { Skeleton, SkeletonCard } from '../components/ui/skeleton';
 import { Badge } from '../components/ui/badge';
 import { useDashboardStats } from '../hooks/useDashboard';
-import { Activity, TrendingUp, BarChart3, PieChart as PieChartIcon, Database, BookOpen, MessageSquare, Layers, Brain, GitBranch } from 'lucide-react';
+import { BarChart3, PieChart as PieChartIcon, BookOpen, MessageSquare, Layers, Brain, GitBranch } from 'lucide-react';
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
               {chartData.filter(d => d.value > 0).map((d, i) => (
                 <div key={d.name} className="flex items-center gap-1.5">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-[10px] text-muted-foreground">{d.name}: {d.value}</span>
+                  <span className="text-xs text-muted-foreground">{d.name}: {d.value}</span>
                 </div>
               ))}
             </div>

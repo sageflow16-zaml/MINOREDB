@@ -7,6 +7,7 @@ import {
   useUpdateTrade,
   useDeleteTrade,
 } from '../hooks/useTrades';
+import { useStrategies } from '../hooks/useStrategies';
 import { useMarketStructures } from '../hooks/useMarketStructures';
 import { PageHeader } from '../components/PageHeader';
 import { DataTable } from '../components/DataTable';
@@ -14,12 +15,15 @@ import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedbac
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
+import { FormField, SectionLabel } from '../components/ui/form-field';
+import TradeImportDialog from '../components/TradeImportDialog';
+import TradeExportDialog from '../components/TradeExportDialog';
 import {
   Plus, X, Pencil, Trash2, Eye, TrendingUp, TrendingDown,
-  DollarSign, BarChart3, Target, Activity, Search, ArrowUpDown
+  DollarSign, BarChart3, Target, Activity, Search, ArrowUpDown,
+  Upload, Download
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { TradeRead, TradeCreate, TradeUpdate } from '../types';
@@ -27,7 +31,7 @@ import type { TradeRead, TradeCreate, TradeUpdate } from '../types';
 type FormData = TradeCreate & TradeUpdate;
 
 const emptyForm: FormData = {
-  market_structure_id: '',
+  market_structure_id: undefined,
   pair: '',
   direction: 'BUY',
   entry_price: undefined,
@@ -38,77 +42,28 @@ const emptyForm: FormData = {
   risk_percent: undefined,
   rr: undefined,
   pnl: undefined,
-  result: '',
+  result: undefined,
   status: 'OPEN',
-  weekly_bias: '',
-  daily_bias: '',
-  h4_bias: '',
-  liquidity_sweep: '',
-  bos: '',
-  mss: '',
-  order_block: '',
-  fvg: '',
-  asian_session: '',
-  london_session: '',
-  newyork_session: '',
-  dxy: '',
-  us10y: '',
-  us02y: '',
-  news_event: '',
-  emotion: '',
-  notes: '',
-  before_image: '',
-  after_image: '',
+  weekly_bias: undefined,
+  daily_bias: undefined,
+  h4_bias: undefined,
+  liquidity_sweep: undefined,
+  bos: undefined,
+  mss: undefined,
+  order_block: undefined,
+  fvg: undefined,
+  asian_session: undefined,
+  london_session: undefined,
+  newyork_session: undefined,
+  dxy: undefined,
+  us10y: undefined,
+  us02y: undefined,
+  news_event: undefined,
+  emotion: undefined,
+  notes: undefined,
+  before_image: undefined,
+  after_image: undefined,
 };
-
-const SectionLabel = ({ label }: { label: string }) => (
-  <h4 className="col-span-full text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider pt-3 border-t border-border first:border-t-0 first:pt-0">
-    {label}
-  </h4>
-);
-
-function Field({
-  label,
-  value,
-  onChange,
-  type = 'text',
-  step,
-  options,
-}: {
-  label: string;
-  value: string | number | undefined;
-  onChange: (v: string) => void;
-  type?: string;
-  step?: string;
-  options?: string[];
-}) {
-  const id = `field-${label.toLowerCase().replace(/\s+/g, '-')}`;
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[11px] font-medium text-muted-foreground">{label}</label>
-      {type === 'select' || options ? (
-        <select
-          id={id}
-          value={String(value ?? '')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          {(options || step?.split(',') || []).map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      ) : (
-        <Input
-          id={id}
-          type={type}
-          value={value ?? ''}
-          step={step}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      )}
-    </div>
-  );
-}
 
 type Direction = 'BUY' | 'SELL';
 type Status = 'OPEN' | 'CLOSED';
@@ -116,6 +71,7 @@ type Status = 'OPEN' | 'CLOSED';
 export default function TradesPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { data: trades, isLoading, error, refetch } = useTrades(projectId!);
+  const { data: strategies } = useStrategies(projectId!);
   const { data: msRecords } = useMarketStructures(projectId!);
   const createTrade = useCreateTrade(projectId!);
   const updateTrade = useUpdateTrade(projectId!);
@@ -126,6 +82,9 @@ export default function TradesPage() {
   const [viewTrade, setViewTrade] = useState<TradeRead | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const wins = trades?.filter(t => t.result === 'WIN').length ?? 0;
   const losses = trades?.filter(t => t.result === 'LOSS').length ?? 0;
@@ -146,7 +105,7 @@ export default function TradesPage() {
 
   const openEdit = (trade: TradeRead) => {
     setForm({
-      market_structure_id: trade.market_structure_id ?? '',
+      market_structure_id: trade.market_structure_id ?? undefined,
       pair: trade.pair ?? '',
       direction: (trade.direction as Direction) ?? 'BUY',
       entry_price: trade.entry_price,
@@ -157,27 +116,27 @@ export default function TradesPage() {
       risk_percent: trade.risk_percent,
       rr: trade.rr,
       pnl: trade.pnl,
-      result: trade.result ?? '',
+      result: trade.result ?? undefined,
       status: (trade.status as Status) ?? 'OPEN',
-      weekly_bias: trade.weekly_bias ?? '',
-      daily_bias: trade.daily_bias ?? '',
-      h4_bias: trade.h4_bias ?? '',
-      liquidity_sweep: trade.liquidity_sweep ?? '',
-      bos: trade.bos ?? '',
-      mss: trade.mss ?? '',
-      order_block: trade.order_block ?? '',
-      fvg: trade.fvg ?? '',
-      asian_session: trade.asian_session ?? '',
-      london_session: trade.london_session ?? '',
-      newyork_session: trade.newyork_session ?? '',
-      dxy: trade.dxy ?? '',
-      us10y: trade.us10y ?? '',
-      us02y: trade.us02y ?? '',
-      news_event: trade.news_event ?? '',
-      emotion: trade.emotion ?? '',
-      notes: trade.notes ?? '',
-      before_image: trade.before_image ?? '',
-      after_image: trade.after_image ?? '',
+      weekly_bias: trade.weekly_bias ?? undefined,
+      daily_bias: trade.daily_bias ?? undefined,
+      h4_bias: trade.h4_bias ?? undefined,
+      liquidity_sweep: trade.liquidity_sweep ?? undefined,
+      bos: trade.bos ?? undefined,
+      mss: trade.mss ?? undefined,
+      order_block: trade.order_block ?? undefined,
+      fvg: trade.fvg ?? undefined,
+      asian_session: trade.asian_session ?? undefined,
+      london_session: trade.london_session ?? undefined,
+      newyork_session: trade.newyork_session ?? undefined,
+      dxy: trade.dxy ?? undefined,
+      us10y: trade.us10y ?? undefined,
+      us02y: trade.us02y ?? undefined,
+      news_event: trade.news_event ?? undefined,
+      emotion: trade.emotion ?? undefined,
+      notes: trade.notes ?? undefined,
+      before_image: trade.before_image ?? undefined,
+      after_image: trade.after_image ?? undefined,
     });
     setEditingId(trade.id);
     setDrawerOpen(true);
@@ -195,6 +154,11 @@ export default function TradesPage() {
       rr: form.rr ?? undefined,
       pnl: form.pnl ?? undefined,
     };
+    for (const key in payload) {
+      if ((payload as any)[key] === '') {
+        (payload as any)[key] = undefined;
+      }
+    }
     if (editingId) {
       updateTrade.mutate({ id: editingId, data: payload }, { onSuccess: () => { setDrawerOpen(false); resetForm(); } });
     } else {
@@ -206,7 +170,7 @@ export default function TradesPage() {
     const numFields = ['entry_price', 'stop_loss', 'take_profit', 'exit_price', 'position_size', 'risk_percent', 'rr', 'pnl'] as const;
     setForm((prev) => ({
       ...prev,
-      [field]: numFields.includes(field as typeof numFields[number]) ? (value === '' ? undefined : parseFloat(value)) : value,
+      [field]: value === '' ? undefined : numFields.includes(field as typeof numFields[number]) ? parseFloat(value) : value,
     }));
   };
 
@@ -219,9 +183,17 @@ export default function TradesPage() {
         title="Trading Journal"
         description={`${trades?.length ?? 0} trades · ${wins}W / ${losses}L`}
         actions={
-          <Button onClick={openCreate} isLoading={createTrade.isPending}>
-            <Plus className="mr-1.5 h-4 w-4" /> New Trade
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+              <Download className="mr-1.5 h-4 w-4" /> Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+              <Upload className="mr-1.5 h-4 w-4" /> Import
+            </Button>
+            <Button onClick={openCreate} isLoading={createTrade.isPending}>
+              <Plus className="mr-1.5 h-4 w-4" /> New Trade
+            </Button>
+          </div>
         }
       />
 
@@ -321,12 +293,12 @@ export default function TradesPage() {
                 <div className="flex-1 overflow-y-auto p-5">
                   <div className="grid grid-cols-2 gap-4">
                     <SectionLabel label="Trade Info" />
-                    <Field label="Pair" value={form.pair} onChange={set('pair')} />
+                    <FormField label="Pair" value={form.pair} onChange={set('pair')} />
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] font-medium text-muted-foreground">Market Structure</label>
                       <select
                         value={form.market_structure_id ?? ''}
-                        onChange={(e) => setForm((prev) => ({ ...prev, market_structure_id: e.target.value || '' }))}
+                        onChange={(e) => setForm((prev) => ({ ...prev, market_structure_id: e.target.value || undefined }))}
                         className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       >
                         <option value="">None</option>
@@ -339,43 +311,43 @@ export default function TradesPage() {
                           ))}
                       </select>
                     </div>
-                    <Field label="Direction" value={form.direction} onChange={set('direction')} options={['BUY', 'SELL']} />
-                    <Field label="Entry Price" value={form.entry_price} onChange={set('entry_price')} type="number" step="0.00001" />
-                    <Field label="Stop Loss" value={form.stop_loss} onChange={set('stop_loss')} type="number" step="0.00001" />
-                    <Field label="Take Profit" value={form.take_profit} onChange={set('take_profit')} type="number" step="0.00001" />
-                    <Field label="Exit Price" value={form.exit_price} onChange={set('exit_price')} type="number" step="0.00001" />
-                    <Field label="Position Size" value={form.position_size} onChange={set('position_size')} type="number" step="0.01" />
-                    <Field label="Risk %" value={form.risk_percent} onChange={set('risk_percent')} type="number" step="0.01" />
-                    <Field label="R:R" value={form.rr} onChange={set('rr')} type="number" step="0.01" />
-                    <Field label="P&L" value={form.pnl} onChange={set('pnl')} type="number" step="0.01" />
-                    <Field label="Result" value={form.result} onChange={set('result')} options={['WIN', 'LOSS', 'BE', '']} />
-                    <Field label="Status" value={form.status} onChange={set('status')} options={['OPEN', 'CLOSED']} />
+                    <FormField label="Direction" value={form.direction} onChange={set('direction')} options={['BUY', 'SELL']} />
+                    <FormField label="Entry Price" value={form.entry_price} onChange={set('entry_price')} type="number" step="0.00001" />
+                    <FormField label="Stop Loss" value={form.stop_loss} onChange={set('stop_loss')} type="number" step="0.00001" />
+                    <FormField label="Take Profit" value={form.take_profit} onChange={set('take_profit')} type="number" step="0.00001" />
+                    <FormField label="Exit Price" value={form.exit_price} onChange={set('exit_price')} type="number" step="0.00001" />
+                    <FormField label="Position Size" value={form.position_size} onChange={set('position_size')} type="number" step="0.01" />
+                    <FormField label="Risk %" value={form.risk_percent} onChange={set('risk_percent')} type="number" step="0.01" />
+                    <FormField label="R:R" value={form.rr} onChange={set('rr')} type="number" step="0.01" />
+                    <FormField label="P&L" value={form.pnl} onChange={set('pnl')} type="number" step="0.01" />
+                    <FormField label="Result" value={form.result} onChange={set('result')} options={['WIN', 'LOSS', 'BE', '']} />
+                    <FormField label="Status" value={form.status} onChange={set('status')} options={['OPEN', 'CLOSED']} />
 
                     <SectionLabel label="Market Context" />
-                    <Field label="Weekly Bias" value={form.weekly_bias} onChange={set('weekly_bias')} />
-                    <Field label="Daily Bias" value={form.daily_bias} onChange={set('daily_bias')} />
-                    <Field label="H4 Bias" value={form.h4_bias} onChange={set('h4_bias')} />
+                    <FormField label="Weekly Bias" value={form.weekly_bias} onChange={set('weekly_bias')} />
+                    <FormField label="Daily Bias" value={form.daily_bias} onChange={set('daily_bias')} />
+                    <FormField label="H4 Bias" value={form.h4_bias} onChange={set('h4_bias')} />
 
                     <SectionLabel label="ICT Concepts" />
-                    <Field label="Liquidity Sweep" value={form.liquidity_sweep} onChange={set('liquidity_sweep')} />
-                    <Field label="BOS" value={form.bos} onChange={set('bos')} />
-                    <Field label="MSS" value={form.mss} onChange={set('mss')} />
-                    <Field label="Order Block" value={form.order_block} onChange={set('order_block')} />
-                    <Field label="FVG" value={form.fvg} onChange={set('fvg')} />
+                    <FormField label="Liquidity Sweep" value={form.liquidity_sweep} onChange={set('liquidity_sweep')} />
+                    <FormField label="BOS" value={form.bos} onChange={set('bos')} />
+                    <FormField label="MSS" value={form.mss} onChange={set('mss')} />
+                    <FormField label="Order Block" value={form.order_block} onChange={set('order_block')} />
+                    <FormField label="FVG" value={form.fvg} onChange={set('fvg')} />
 
                     <SectionLabel label="Sessions" />
-                    <Field label="Asian" value={form.asian_session} onChange={set('asian_session')} />
-                    <Field label="London" value={form.london_session} onChange={set('london_session')} />
-                    <Field label="New York" value={form.newyork_session} onChange={set('newyork_session')} />
+                    <FormField label="Asian" value={form.asian_session} onChange={set('asian_session')} />
+                    <FormField label="London" value={form.london_session} onChange={set('london_session')} />
+                    <FormField label="New York" value={form.newyork_session} onChange={set('newyork_session')} />
 
                     <SectionLabel label="Macro" />
-                    <Field label="DXY" value={form.dxy} onChange={set('dxy')} />
-                    <Field label="US10Y" value={form.us10y} onChange={set('us10y')} />
-                    <Field label="US02Y" value={form.us02y} onChange={set('us02y')} />
-                    <Field label="News Event" value={form.news_event} onChange={set('news_event')} />
+                    <FormField label="DXY" value={form.dxy} onChange={set('dxy')} />
+                    <FormField label="US10Y" value={form.us10y} onChange={set('us10y')} />
+                    <FormField label="US02Y" value={form.us02y} onChange={set('us02y')} />
+                    <FormField label="News Event" value={form.news_event} onChange={set('news_event')} />
 
                     <SectionLabel label="Psychology" />
-                    <Field label="Emotion" value={form.emotion} onChange={set('emotion')} />
+                    <FormField label="Emotion" value={form.emotion} onChange={set('emotion')} />
                     <div className="col-span-full flex flex-col gap-1.5">
                       <label className="text-[11px] font-medium text-muted-foreground">Notes</label>
                       <textarea
@@ -484,6 +456,19 @@ export default function TradesPage() {
           setDeleteId(null);
         }}
         onCancel={() => setDeleteId(null)}
+      />
+
+      <TradeImportDialog
+        projectId={projectId!}
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+      />
+      <TradeExportDialog
+        projectId={projectId!}
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        selectedIds={selectedIds.length > 0 ? selectedIds : undefined}
+        availableStrategies={strategies?.map((s: any) => ({ id: s.id, name: s.name }))}
       />
     </div>
   );

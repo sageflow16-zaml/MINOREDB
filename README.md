@@ -2,7 +2,7 @@
 
 **AI-Augmented Trading Journal & Knowledge System**
 
-Project Minore is a production-grade platform for retail traders who want to analyze, learn from, and improve their trading using AI-powered pattern recognition, knowledge graphs, and decision support — without relying on any official broker API.
+Project Minore is a production-grade platform for retail traders who want to analyze, learn from, and improve their trading using AI-powered pattern recognition, knowledge graphs, and decision support.
 
 ---
 
@@ -22,37 +22,69 @@ Project Minore is a production-grade platform for retail traders who want to ana
 
 ---
 
-## Architecture
+## Quick Start (Local Development)
 
+### Prerequisites
+
+- Python 3.12+
+- Node.js 20+
+- PostgreSQL 16+
+
+### Backend
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate    # Windows
+# source .venv/bin/activate  # macOS/Linux
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your DATABASE_URL and JWT_SECRET_KEY
+alembic upgrade head
+uvicorn src.main:app --reload --port 8000
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Frontend (React + Vite)          │
-│  Dashboard │ Trades │ Knowledge │ Analyst │ Replay  │
-│  Research  │ Statistics │ Similarity │ Settings     │
-└──────────────────────┬──────────────────────────────┘
-                       │ HTTP/REST
-┌──────────────────────▼──────────────────────────────┐
-│               Backend (FastAPI + Python)             │
-│  ┌─────────┐ ┌──────────┐ ┌──────────────────────┐  │
-│  │ Routes  │ │ Services │ │ AI Engine Pipeline   │  │
-│  │ CRUD    │ │ Engines  │ │ Analyst │ Research    │  │
-│  │ Auth    │ │ Tasks    │ │ Pattern Discovery    │  │
-│  └────┬────┘ └────┬─────┘ └──────────┬───────────┘  │
-│       └───────────┼──────────────────┘              │
-│                   ▼                                  │
-│     ┌──────────────────────────────┐                 │
-│     │  PostgreSQL + SQLAlchemy     │                 │
-│     │  Alembic Migrations          │                 │
-│     └──────────────────────────────┘                 │
-└──────────────────────────────────────────────────────┘
-                       │ HTTPS
-┌──────────────────────▼──────────────────────────────┐
-│          Chrome Extension (Manifest V3)              │
-│  Content Script → Detector → Notes Modal → Queue    │
-│  Background Worker → Auth → API Client → Retry      │
-│  Popup UI │ Options Page │ Offline Queue             │
-└──────────────────────────────────────────────────────┘
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev      # starts on http://localhost:5173
 ```
+
+### Verify
+
+```bash
+# Backend health check
+curl http://localhost:8000/health
+# → {"status":"healthy","version":"1.1.0","environment":"development"}
+```
+
+---
+
+## Docker (Full Stack)
+
+```bash
+docker compose up --build
+```
+
+This starts PostgreSQL, Redis, the backend (port 8000), and the frontend (port 80).
+
+---
+
+## Testing
+
+```bash
+# Backend (requires PostgreSQL with minore_test database)
+cd backend
+pytest
+
+# Frontend
+cd frontend
+npm test
+```
+
+All 183 backend tests pass. Coverage target: 70% (currently 49% overall, 100% on model/schema files).
 
 ---
 
@@ -60,17 +92,16 @@ Project Minore is a production-grade platform for retail traders who want to ana
 
 ### Backend
 - **Python 3.12+** with FastAPI
-- **PostgreSQL 16** with SQLAlchemy 2.0 (async)
-- **Alembic** for database migrations
+- **PostgreSQL 16+** with SQLAlchemy 2.0 + Alembic
 - **Pydantic v2** for validation
-- **JWT** authentication + API key security
+- **JWT** authentication with bcrypt password hashing
 - **Uvicorn** ASGI server
 
 ### Frontend
 - **React 18** with TypeScript
-- **Vite** build tool
+- **Vite** build tool (production build verified)
 - **Tailwind CSS** (shadcn/ui design system)
-- **React Query** for server state
+- **TanStack Query** for server state
 - **Recharts** for charts
 - **React Router v6**
 
@@ -83,67 +114,14 @@ Project Minore is a production-grade platform for retail traders who want to ana
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Python 3.12+
-- Node.js 20+
-- PostgreSQL 16
-- Chrome/Chromium (for extension)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/your-org/project-minore.git
-cd project-minore
-
-# Backend setup
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Run migrations
-alembic upgrade head
-
-# Start backend
-uvicorn src.main:app --reload --port 8000
-
-# Frontend setup (new terminal)
-cd frontend
-npm install
-npm run dev
-
-# Extension setup (new terminal)
-cd extension
-npm install
-npm run build
-# Load dist/ as unpacked extension at chrome://extensions
-```
-
-### Docker
-
-```bash
-docker-compose up --build
-```
-
-This starts PostgreSQL, the backend (port 8000), and the frontend (port 3000).
-
----
-
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql+psycopg://minore:minore@localhost:5432/minore` |
-| `SECRET_KEY` | JWT signing secret | (required) |
+| `JWT_SECRET_KEY` | JWT signing secret (min 32 chars) | (required) |
 | `ENVIRONMENT` | `development`, `staging`, `production` | `development` |
-| `CORS_ORIGINS` | Allowed CORS origins | `http://localhost:3000` |
-| `API_KEY` | API key for backend-to-backend auth | (optional) |
+| `CORS_ORIGINS` | Allowed CORS origins | `http://localhost:5173` |
 | `RATE_LIMIT_PER_MINUTE` | Max requests per minute | `100` |
 | `MAX_REQUEST_SIZE` | Max request body size (bytes) | `10485760` |
 
@@ -153,56 +131,37 @@ This starts PostgreSQL, the backend (port 8000), and the frontend (port 3000).
 
 ```
 project-minore/
-├── backend/           # FastAPI application
+├── backend/           # FastAPI application (264+ source files)
 │   ├── src/
 │   │   ├── api/       # Routes, deps, middleware
-│   │   ├── core/      # Config, security
-│   │   ├── crud/      # Database operations
-│   │   ├── db/        # Session, base models
-│   │   ├── models/    # SQLAlchemy models
+│   │   ├── core/      # Config, security, crypto
+│   │   ├── crud/      # Database CRUD operations
+│   │   ├── db/        # Session, base, migrations
+│   │   ├── models/    # 40+ SQLAlchemy models (114 tables)
 │   │   ├── schemas/   # Pydantic schemas
 │   │   └── services/  # Business logic + AI engines
-│   ├── tests/         # Pytest test suite
+│   ├── tests/         # 183 pytest tests
 │   └── alembic/       # Database migrations
 ├── frontend/          # React + Vite SPA
 │   └── src/
 │       ├── api/       # API client services
-│       ├── components/# UI components
+│       ├── components/# 70+ UI components
 │       ├── hooks/     # React Query hooks
-│       ├── layouts/   # Page layouts
-│       ├── pages/     # Route pages
-│       └── routes/    # Router configuration
-├── extension/         # Chrome Extension
-│   └── src/
-│       ├── background/# Service worker
-│       ├── content/   # Content scripts
-│       ├── popup/     # Popup UI
-│       ├── options/   # Settings page
-│       └── shared/    # Shared types, storage, logger
-└── docs/              # Documentation
+│       └── pages/     # 50+ route pages
+├── extension/         # Chrome Extension (Manifest V3)
+└── docs/              # 40+ documentation files
 ```
 
 ---
 
-## Deployment
+## Documentation
 
-See [docs/Deployment.md](docs/Deployment.md) for Vercel (frontend), Railway/Render (backend), and GitHub Actions CI/CD.
-
----
-
-## Roadmap
-
-- **v1.0** — Core trade journaling, AI analyst, pattern discovery, FXReplay extension
-- **v1.1** — Decision support, similarity engine, knowledge graph
-- **v1.2** — Research engine, trader intelligence profiling
-- **v1.5** — MT5 integration, live trading sync
-- **v2.0** — AI overlays, real-time recommendations, community features
-
----
-
-## Screenshots
-
-*Coming soon.*
+- `docs/deployment/LOCAL.md` — Local development setup
+- `docs/backend/AUTH.md` — Authentication flow
+- `docs/api/OVERVIEW.md` — API reference
+- `docs/database/OVERVIEW.md` — Database schema overview
+- `docs/security/SECURITY_AUDIT_REPORT.md` — Security audit
+- `docs/devops/DEPLOYMENT_PIPELINE.md` — CI/CD pipeline
 
 ---
 

@@ -30,7 +30,7 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
             <div>
               <h3 className="text-sm font-semibold text-foreground">{rule.title}</h3>
               {rule.category && (
-                <p className="text-[10px] text-muted-foreground mt-0.5">{rule.category}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{rule.category}</p>
               )}
             </div>
           </div>
@@ -45,19 +45,19 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
         <div className="grid grid-cols-4 gap-3 mb-4">
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <div className="text-lg font-bold text-foreground">{rule.occurrences}</div>
-            <div className="text-[10px] text-muted-foreground">Occurrences</div>
+            <div className="text-xs text-muted-foreground">Occurrences</div>
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <div className="text-lg font-bold text-success">{wr}%</div>
-            <div className="text-[10px] text-muted-foreground">Win Rate</div>
+            <div className="text-xs text-muted-foreground">Win Rate</div>
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <div className="text-lg font-bold text-chart-1">{rule.avg_rr != null ? rule.avg_rr.toFixed(2) : '—'}</div>
-            <div className="text-[10px] text-muted-foreground">Avg R:R</div>
+            <div className="text-xs text-muted-foreground">Avg R:R</div>
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <div className="text-lg font-bold text-chart-4">{rule.expectancy != null ? rule.expectancy.toFixed(2) : '—'}</div>
-            <div className="text-[10px] text-muted-foreground">Expectancy</div>
+            <div className="text-xs text-muted-foreground">Expectancy</div>
           </div>
         </div>
 
@@ -90,25 +90,25 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
                   <div className="rounded-lg bg-success/10 p-3">
                     <div className="flex items-center gap-1 mb-1">
                       <TrendingUp className="h-3 w-3 text-success" />
-                      <span className="text-[10px] text-success font-medium">Wins</span>
+                      <span className="text-xs text-success font-medium">Wins</span>
                     </div>
                     <div className="text-lg font-bold text-success">{rule.wins}</div>
                   </div>
                   <div className="rounded-lg bg-destructive/10 p-3">
                     <div className="flex items-center gap-1 mb-1">
                       <TrendingDown className="h-3 w-3 text-destructive" />
-                      <span className="text-[10px] text-destructive font-medium">Losses</span>
+                      <span className="text-xs text-destructive font-medium">Losses</span>
                     </div>
                     <div className="text-lg font-bold text-destructive">{rule.losses}</div>
                   </div>
                 </div>
                 {rule.signature && (
                   <div className="rounded-lg border border-dashed border-border p-3">
-                    <span className="text-[10px] text-muted-foreground font-medium">Signature</span>
-                    <p className="mt-1 font-mono text-[10px] text-foreground/70 break-all">{rule.signature}</p>
+                    <span className="text-xs text-muted-foreground font-medium">Signature</span>
+                    <p className="mt-1 font-mono text-xs text-foreground/70 break-all">{rule.signature}</p>
                   </div>
                 )}
-                <div className="text-[10px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   Created: {new Date(rule.created_at).toLocaleDateString()} — Updated: {new Date(rule.updated_at).toLocaleDateString()}
                 </div>
               </div>

@@ -36,6 +36,67 @@ const Research = lazy(() => import('../pages/Research'));
 const Replay = lazy(() => import('../pages/Replay'));
 const KnowledgeCenter = lazy(() => import('../pages/KnowledgeCenter'));
 const TraderIntelligence = lazy(() => import('../pages/TraderIntelligence'));
+const Strategies = lazy(() => import('../pages/Strategies'));
+const StrategyDetail = lazy(() => import('../pages/StrategyDetail'));
+const StrategyBuilder = lazy(() => import('../pages/StrategyBuilder'));
+const Performance = lazy(() => import('../pages/Performance'));
+const Risk = lazy(() => import('../pages/Risk'));
+const Planning = lazy(() => import('../pages/Planning'));
+const AIDashboard = lazy(() => import('../pages/AIDashboard'));
+const AICoach = lazy(() => import('../pages/AICoach'));
+const AIProfile = lazy(() => import('../pages/AIProfile'));
+const KnowledgeExplorer = lazy(() => import('../pages/KnowledgeExplorer'));
+const VaultManager = lazy(() => import('../pages/VaultManager'));
+const SyncDashboard = lazy(() => import('../pages/SyncDashboard'));
+const NoteExplorer = lazy(() => import('../pages/NoteExplorer'));
+const TemplateLibrary = lazy(() => import('../pages/TemplateLibrary'));
+const ObsidianSearch = lazy(() => import('../pages/ObsidianSearch'));
+const MarketDashboard = lazy(() => import('../pages/MarketDashboard'));
+const EconomicCalendar = lazy(() => import('../pages/EconomicCalendar'));
+const CorrelationCenter = lazy(() => import('../pages/CorrelationCenter'));
+const LiquidityMonitor = lazy(() => import('../pages/LiquidityMonitor'));
+const Watchlist = lazy(() => import('../pages/Watchlist'));
+const SessionAnalysis = lazy(() => import('../pages/SessionAnalysis'));
+const MarketTimeline = lazy(() => import('../pages/MarketTimeline'));
+const AlertManager = lazy(() => import('../pages/AlertManager'));
+const CopilotWorkspace = lazy(() => import('../pages/CopilotWorkspace'));
+const QuantResearchDashboard = lazy(() => import('../pages/QuantResearchDashboard'));
+const QuantExperiments = lazy(() => import('../pages/QuantExperiments'));
+const QuantBacktestLab = lazy(() => import('../pages/QuantBacktestLab'));
+const QuantBacktestDetail = lazy(() => import('../pages/QuantBacktestDetail'));
+const QuantSimulationLab = lazy(() => import('../pages/QuantSimulationLab'));
+const QuantWalkForwardLab = lazy(() => import('../pages/QuantWalkForwardLab'));
+const QuantOptimizationLab = lazy(() => import('../pages/QuantOptimizationLab'));
+const QuantEdgeHealth = lazy(() => import('../pages/QuantEdgeHealth'));
+const QuantNotebooks = lazy(() => import('../pages/QuantNotebooks'));
+const AutomationDashboard = lazy(() => import('../pages/AutomationDashboard'));
+const WorkflowList = lazy(() => import('../pages/WorkflowList'));
+const WorkflowBuilder = lazy(() => import('../pages/WorkflowBuilder'));
+const RuleEngine = lazy(() => import('../pages/RuleEngine'));
+const Scheduler = lazy(() => import('../pages/Scheduler'));
+const NotificationCenter = lazy(() => import('../pages/NotificationCenter'));
+const AutomationTemplates = lazy(() => import('../pages/AutomationTemplates'));
+const Connectors = lazy(() => import('../pages/Connectors'));
+const AuditLog = lazy(() => import('../pages/AuditLog'));
+const AutomationReports = lazy(() => import('../pages/AutomationReports'));
+const PortfolioDashboard = lazy(() => import('../pages/PortfolioDashboard'));
+const AccountList = lazy(() => import('../pages/AccountList'));
+const AccountDetail = lazy(() => import('../pages/AccountDetail'));
+const BrokerProfiles = lazy(() => import('../pages/BrokerProfiles'));
+const PortfolioAnalytics = lazy(() => import('../pages/PortfolioAnalytics'));
+const PortfolioRisk = lazy(() => import('../pages/PortfolioRisk'));
+const AllocationManager = lazy(() => import('../pages/AllocationManager'));
+const TransferManager = lazy(() => import('../pages/TransferManager'));
+const Goals = lazy(() => import('../pages/Goals'));
+const PortfolioReports = lazy(() => import('../pages/PortfolioReports'));
+const BrokerHub = lazy(() => import('../pages/BrokerHub'));
+const BrokerDetail = lazy(() => import('../pages/BrokerDetail'));
+const BrokerSetup = lazy(() => import('../pages/BrokerSetup'));
+const BrokerAnalyticsPage = lazy(() => import('../pages/BrokerAnalyticsPage'));
+const Workspace = lazy(() => import('../pages/Workspace'));
+const ICTSmartEngine = lazy(() => import('../pages/ICTSmartEngine'));
+const BrainDashboard = lazy(() => import('../pages/BrainDashboard'));
+const IntelligenceDashboard = lazy(() => import('../pages/IntelligenceDashboard'));
 
 /**
  * Authenticated application routes. Every module under /projects/:projectId is
@@ -58,9 +119,16 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/associations" element={<Associations />} />
           <Route path="/projects/:projectId/interpretations" element={<Interpretations />} />
           <Route path="/projects/:projectId/trades" element={<Trades />} />
+          <Route path="/projects/:projectId/strategies" element={<Strategies />} />
+          <Route path="/projects/:projectId/strategies/new" element={<StrategyBuilder />} />
+          <Route path="/projects/:projectId/strategies/:strategyId" element={<StrategyDetail />} />
+          <Route path="/projects/:projectId/strategies/:strategyId/edit" element={<StrategyBuilder />} />
           <Route path="/projects/:projectId/market-structure" element={<MarketStructure />} />
           <Route path="/projects/:projectId/collectors" element={<Collectors />} />
 <Route path="/projects/:projectId/statistics" element={<Statistics />} />
+          <Route path="/projects/:projectId/performance" element={<Performance />} />
+          <Route path="/projects/:projectId/risk" element={<Risk />} />
+          <Route path="/projects/:projectId/planning" element={<Planning />} />
           <Route path="/projects/:projectId/similarity" element={<Similarity />} />
           <Route path="/projects/:projectId/decision" element={<DecisionSupport />} />
           <Route path="/projects/:projectId/learning" element={<Learning />} />
@@ -81,6 +149,61 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/replay" element={<Replay />} />
           <Route path="/projects/:projectId/trader-intelligence" element={<TraderIntelligence />} />
           <Route path="/projects/:projectId/knowledge-center" element={<KnowledgeCenter />} />
+          <Route path="/projects/:projectId/ai" element={<AIDashboard />} />
+          <Route path="/projects/:projectId/ai/coach" element={<AICoach />} />
+          <Route path="/projects/:projectId/ai/profile" element={<AIProfile />} />
+          <Route path="/projects/:projectId/ai/knowledge" element={<KnowledgeExplorer />} />
+          <Route path="/projects/:projectId/obsidian/vaults" element={<VaultManager />} />
+          <Route path="/projects/:projectId/obsidian/sync" element={<SyncDashboard />} />
+          <Route path="/projects/:projectId/obsidian/notes" element={<NoteExplorer />} />
+          <Route path="/projects/:projectId/obsidian/templates" element={<TemplateLibrary />} />
+          <Route path="/projects/:projectId/obsidian/search" element={<ObsidianSearch />} />
+          <Route path="/projects/:projectId/market-intel" element={<MarketDashboard />} />
+          <Route path="/projects/:projectId/market-intel/calendar" element={<EconomicCalendar />} />
+          <Route path="/projects/:projectId/market-intel/correlations" element={<CorrelationCenter />} />
+          <Route path="/projects/:projectId/market-intel/liquidity" element={<LiquidityMonitor />} />
+          <Route path="/projects/:projectId/market-intel/watchlist" element={<Watchlist />} />
+          <Route path="/projects/:projectId/market-intel/sessions" element={<SessionAnalysis />} />
+          <Route path="/projects/:projectId/market-intel/timeline" element={<MarketTimeline />} />
+          <Route path="/projects/:projectId/market-intel/alerts" element={<AlertManager />} />
+          <Route path="/projects/:projectId/copilot" element={<CopilotWorkspace />} />
+          <Route path="/projects/:projectId/quant-research" element={<QuantResearchDashboard />} />
+          <Route path="/projects/:projectId/quant-research/experiments" element={<QuantExperiments />} />
+          <Route path="/projects/:projectId/quant-research/backtests" element={<QuantBacktestLab />} />
+          <Route path="/projects/:projectId/quant-research/backtests/:backtestId" element={<QuantBacktestDetail />} />
+          <Route path="/projects/:projectId/quant-research/simulations" element={<QuantSimulationLab />} />
+          <Route path="/projects/:projectId/quant-research/walkforward" element={<QuantWalkForwardLab />} />
+          <Route path="/projects/:projectId/quant-research/optimization" element={<QuantOptimizationLab />} />
+          <Route path="/projects/:projectId/quant-research/edge-health" element={<QuantEdgeHealth />} />
+          <Route path="/projects/:projectId/quant-research/notebooks" element={<QuantNotebooks />} />
+          <Route path="/projects/:projectId/automation" element={<AutomationDashboard />} />
+          <Route path="/projects/:projectId/automation/workflows" element={<WorkflowList />} />
+          <Route path="/projects/:projectId/automation/workflows/:workflowId" element={<WorkflowBuilder />} />
+          <Route path="/projects/:projectId/automation/rules" element={<RuleEngine />} />
+          <Route path="/projects/:projectId/automation/jobs" element={<Scheduler />} />
+          <Route path="/projects/:projectId/automation/notifications" element={<NotificationCenter />} />
+          <Route path="/projects/:projectId/automation/templates" element={<AutomationTemplates />} />
+          <Route path="/projects/:projectId/automation/connectors" element={<Connectors />} />
+          <Route path="/projects/:projectId/automation/audit" element={<AuditLog />} />
+          <Route path="/projects/:projectId/automation/reports" element={<AutomationReports />} />
+          <Route path="/projects/:projectId/portfolio" element={<PortfolioDashboard />} />
+          <Route path="/projects/:projectId/portfolio/accounts" element={<AccountList />} />
+          <Route path="/projects/:projectId/portfolio/accounts/:accountId" element={<AccountDetail />} />
+          <Route path="/projects/:projectId/portfolio/brokers" element={<BrokerProfiles />} />
+          <Route path="/projects/:projectId/portfolio/analytics" element={<PortfolioAnalytics />} />
+          <Route path="/projects/:projectId/portfolio/risk" element={<PortfolioRisk />} />
+          <Route path="/projects/:projectId/portfolio/allocations" element={<AllocationManager />} />
+          <Route path="/projects/:projectId/portfolio/transfers" element={<TransferManager />} />
+          <Route path="/projects/:projectId/portfolio/goals" element={<Goals />} />
+          <Route path="/projects/:projectId/portfolio/reports" element={<PortfolioReports />} />
+          <Route path="/projects/:projectId/broker" element={<BrokerHub />} />
+          <Route path="/projects/:projectId/broker/setup" element={<BrokerSetup />} />
+          <Route path="/projects/:projectId/broker/:connectionId" element={<BrokerDetail />} />
+          <Route path="/projects/:projectId/broker/analytics" element={<BrokerAnalyticsPage />} />
+          <Route path="/projects/:projectId/workspace" element={<Workspace />} />
+          <Route path="/projects/:projectId/ict" element={<ICTSmartEngine />} />
+          <Route path="/projects/:projectId/brain" element={<BrainDashboard />} />
+          <Route path="/projects/:projectId/intelligence" element={<IntelligenceDashboard />} />
         </Route>
       </Routes>
     </Suspense>

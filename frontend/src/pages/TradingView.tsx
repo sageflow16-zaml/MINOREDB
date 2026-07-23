@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
 import { useTVEvents, useTVLogs, useTVStats } from '../hooks/useTradingView';
-import { Activity, Radio } from 'lucide-react';
+
 import { cn } from '../lib/utils';
 
 const eventTypeVariant: Record<string, 'info' | 'default' | 'destructive' | 'warning' | 'success' | 'secondary'> = {
@@ -39,7 +39,7 @@ export default function TradingViewPage() {
         title="TradingView Integration"
         description="Webhook-based market structure events"
       >
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
           Webhook Active
         </div>
@@ -47,10 +47,10 @@ export default function TradingViewPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Total Events</p><p className="text-lg font-bold text-foreground">{statsData?.total_events ?? 0}</p></CardContent></Card>
-        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Total Logs</p><p className="text-lg font-bold text-foreground">{statsData?.total_logs ?? 0}</p></CardContent></Card>
-        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Unique Symbols</p><p className="text-lg font-bold text-foreground">{Object.keys(statsData?.events_by_symbol ?? {}).length}</p></CardContent></Card>
-        <Card><CardContent className="py-4"><p className="text-[10px] text-muted-foreground">Event Types</p><p className="text-lg font-bold text-foreground">{Object.keys(statsData?.events_by_type ?? {}).length}</p></CardContent></Card>
+        <Card><CardContent className="py-4"><p className="text-xs text-muted-foreground">Total Events</p><p className="text-lg font-bold text-foreground">{statsData?.total_events ?? 0}</p></CardContent></Card>
+        <Card><CardContent className="py-4"><p className="text-xs text-muted-foreground">Total Logs</p><p className="text-lg font-bold text-foreground">{statsData?.total_logs ?? 0}</p></CardContent></Card>
+        <Card><CardContent className="py-4"><p className="text-xs text-muted-foreground">Unique Symbols</p><p className="text-lg font-bold text-foreground">{Object.keys(statsData?.events_by_symbol ?? {}).length}</p></CardContent></Card>
+        <Card><CardContent className="py-4"><p className="text-xs text-muted-foreground">Event Types</p><p className="text-lg font-bold text-foreground">{Object.keys(statsData?.events_by_type ?? {}).length}</p></CardContent></Card>
       </div>
 
       {/* Filters */}
@@ -61,7 +61,7 @@ export default function TradingViewPage() {
         <CardContent>
           <div className="flex gap-4">
             <div>
-              <label className="block text-[10px] font-medium text-muted-foreground mb-1">Symbol</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Symbol</label>
               <select value={symbolFilter} onChange={(e) => setSymbolFilter(e.target.value)}
                 className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
@@ -70,7 +70,7 @@ export default function TradingViewPage() {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-medium text-muted-foreground mb-1">Timeframe</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Timeframe</label>
               <select value={timeframeFilter} onChange={(e) => setTimeframeFilter(e.target.value)}
                 className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
@@ -93,7 +93,7 @@ export default function TradingViewPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-xs font-medium uppercase text-muted-foreground">
                   <th className="px-4 py-2.5">Time</th>
                   <th className="px-4 py-2.5">Event Type</th>
                   <th className="px-4 py-2.5">Symbol</th>
@@ -104,7 +104,7 @@ export default function TradingViewPage() {
               <tbody className="divide-y divide-border">
                 {eventsData.slice(0, 20).map((e, i) => (
                   <tr key={i} className="hover:bg-muted/20">
-                    <td className="px-4 py-2.5 font-mono text-[10px] text-muted-foreground">{new Date(e.timestamp).toLocaleTimeString()}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{new Date(e.timestamp).toLocaleTimeString()}</td>
                     <td className="px-4 py-2.5">
                       <Badge variant={eventTypeVariant[e.event_type] || 'secondary'} size="sm">{e.event_type.replace(/_/g, ' ')}</Badge>
                     </td>
@@ -147,7 +147,7 @@ export default function TradingViewPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-xs font-medium uppercase text-muted-foreground">
                   <th className="px-4 py-2.5">Received At</th>
                   <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Message</th>

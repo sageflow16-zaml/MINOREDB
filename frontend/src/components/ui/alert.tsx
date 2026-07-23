@@ -54,7 +54,8 @@ export function Alert({
       {onClose && (
         <button
           onClick={onClose}
-          className="shrink-0 rounded-md p-1 text-muted-foreground/50 hover:text-foreground transition-colors"
+          aria-label="Close alert"
+          className="shrink-0 rounded-md p-1 text-muted-foreground/50 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <X className="h-3.5 w-3.5" />
         </button>

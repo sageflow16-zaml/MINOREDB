@@ -313,20 +313,20 @@ function DebriefsTab({ debriefs, selected, onSelect, searchQuery, onSearch, onGe
                 { label: 'Psychology Review', value: selected.psychology_review },
               ].map(s => s.value ? (
                 <div key={s.label} className="rounded-lg bg-muted/50 p-3">
-                  <p className="mb-1 text-[10px] font-medium text-muted-foreground">{s.label}</p>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">{s.label}</p>
                   <p className="text-xs text-foreground">{s.value}</p>
                 </div>
               ) : null)}
             </div>
             {selected.summary && (
               <div className="rounded-lg bg-muted/50 p-3">
-                <p className="mb-1 text-[10px] font-medium text-muted-foreground">Summary</p>
+                <p className="mb-1 text-xs font-medium text-muted-foreground">Summary</p>
                 <p className="text-xs text-foreground">{selected.summary}</p>
               </div>
             )}
             {selected.lessons_learned && selected.lessons_learned.length > 0 && (
               <div>
-                <p className="mb-2 text-[10px] font-medium text-muted-foreground">Lessons Learned</p>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Lessons Learned</p>
                 <ul className="space-y-1">
                   {selected.lessons_learned.map((l, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
@@ -371,9 +371,9 @@ function DebriefsTab({ debriefs, selected, onSelect, searchQuery, onSearch, onGe
               className="rounded-xl border border-border bg-card p-4 text-left transition-all hover:shadow-md hover:border-primary/20"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</span>
+                <span className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleDateString()}</span>
                 {d.overall_rating && (
-                  <span className={cn('text-[10px] font-bold', d.overall_rating >= 7 ? 'text-success' : 'text-warning')}>
+                  <span className={cn('text-xs font-bold', d.overall_rating >= 7 ? 'text-success' : 'text-warning')}>
                     {d.overall_rating}/10
                   </span>
                 )}
@@ -382,7 +382,7 @@ function DebriefsTab({ debriefs, selected, onSelect, searchQuery, onSearch, onGe
               {d.strengths && d.strengths.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {d.strengths.slice(0, 2).map((s, i) => (
-                    <span key={i} className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] text-success">{s}</span>
+                    <span key={i} className="rounded-full bg-success/10 px-2 py-0.5 text-xs text-success">{s}</span>
                   ))}
                 </div>
               )}
@@ -422,7 +422,7 @@ function PatternsTab({ patterns, onDetect, generating }: { patterns: PersonalPat
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-xs text-muted-foreground">{p.description}</p>
-                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="rounded-lg bg-muted/50 p-2">
                     <p className="text-muted-foreground">Trades</p>
                     <p className="font-medium text-foreground">{p.occurrence_count}</p>
@@ -438,7 +438,7 @@ function PatternsTab({ patterns, onDetect, generating }: { patterns: PersonalPat
                 </div>
                 {p.confidence !== null && (
                   <div>
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Confidence</span>
                       <span>{p.confidence.toFixed(0)}%</span>
                     </div>
@@ -480,18 +480,18 @@ function RulesTab({ rules, selected, onSelect, onGenerate, onApprove, onReject, 
             {selected.description && <p className="text-xs text-muted-foreground">{selected.description}</p>}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-[10px] text-muted-foreground">Category</p>
+                <p className="text-xs text-muted-foreground">Category</p>
                 <p className="text-xs font-medium text-foreground">{selected.category}</p>
               </div>
               <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-[10px] text-muted-foreground">Version</p>
+                <p className="text-xs text-muted-foreground">Version</p>
                 <p className="text-xs font-medium text-foreground">{selected.version}</p>
               </div>
             </div>
             {selected.supporting_stats && (
               <div className="rounded-lg bg-muted/50 p-3">
-                <p className="mb-2 text-[10px] font-medium text-muted-foreground">Supporting Stats</p>
-                <pre className="text-[10px] text-foreground/70">{JSON.stringify(selected.supporting_stats, null, 2)}</pre>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Supporting Stats</p>
+                <pre className="text-xs text-foreground/70">{JSON.stringify(selected.supporting_stats, null, 2)}</pre>
               </div>
             )}
             {selected.status === 'draft' && (
@@ -541,7 +541,7 @@ function RulesTab({ rules, selected, onSelect, onGenerate, onApprove, onReject, 
                 {r.description && <p className="mt-1 truncate text-xs text-muted-foreground">{r.description}</p>}
               </div>
               <div className="ml-4 flex items-center gap-2 shrink-0">
-                <span className="text-[10px] text-muted-foreground">v{r.version}</span>
+                <span className="text-xs text-muted-foreground">v{r.version}</span>
                 {r.status === 'draft' && (
                   <>
                     <button onClick={e => { e.stopPropagation(); onApprove(r.id); }} className="rounded p-1 text-success hover:bg-success/10">

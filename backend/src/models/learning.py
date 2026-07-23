@@ -16,7 +16,7 @@ class LearningEvent(Base):
         DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False
     )
     project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False, index=True
     )
     event_type: Mapped[str] = mapped_column(String, nullable=False)
     entity_type: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -37,7 +37,7 @@ class KnowledgeSnapshot(Base):
         DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False
     )
     project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False, index=True
     )
     total_trades: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_patterns: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

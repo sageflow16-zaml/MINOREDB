@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+
 import {
   useCollectors, useRunCollector, useToggleCollector, useCollectorLogs,
 } from '../hooks/useCollectors';
@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useState } from 'react';
-import { Play, ToggleLeft, ToggleRight, AlertTriangle, Database, Clock, Activity } from 'lucide-react';
+import { Play, ToggleLeft, ToggleRight, AlertTriangle, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function CollectorsPage() {
@@ -55,12 +55,12 @@ export default function CollectorsPage() {
           <CardTitle className="text-sm font-medium">Collectors</CardTitle>
         </CardHeader>
         {!collectors || collectors.length === 0 ? (
-          <CardContent><EmptyState message="No collectors registered." /></CardContent>
+          <CardContent><EmptyState message="No collectors registered." description="Add a collector in the Collectors page to start gathering market data." /></CardContent>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-xs font-medium uppercase text-muted-foreground">
                   <th className="px-4 py-2.5">Collector</th>
                   <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Enabled</th>
@@ -145,7 +145,7 @@ export default function CollectorsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-xs font-medium uppercase text-muted-foreground">
                   <th className="px-4 py-2.5">Collector</th>
                   <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5 text-right">Records</th>

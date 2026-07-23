@@ -2,19 +2,18 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, ComposedChart, Line,
+  ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
+import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { Skeleton, SkeletonCard } from '../components/ui/skeleton';
 import {
   useStatisticsOverview,
   useStatisticsByPair,
   useStatisticsByDirection,
-  useStatisticsByBias,
   useStatisticsBySession,
   useStatisticsByMarketPhase,
   useStatisticsByTrend,
@@ -25,7 +24,7 @@ import {
   useRrDistribution,
 } from '../hooks/useStatistics';
 import type { StatisticsOverview, StatisticsRisk, StatisticsByField, MonthlyReturn, RollingStats, EquityPoint, DistributionData } from '../api/types';
-import { DollarSign, Target, TrendingUp, Activity, BarChart3, PieChart as PieChartIcon, TrendingDown, Wallet, Percent, Award, LineChart } from 'lucide-react';
+import { DollarSign, Target, TrendingUp, Activity, BarChart3, TrendingDown, Wallet, Award } from 'lucide-react';
 
 import { cn } from '../lib/utils';
 
@@ -128,6 +127,18 @@ export default function StatisticsPage() {
   if (isError) return <ErrorState message="Error loading statistics." onRetry={handleRetry} />;
 
   const o = overview.data?.overview as StatisticsOverview | undefined;
+
+  if (!o || o.total_trades === 0) {
+    return (
+      <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+        <PageHeader title="Statistics" description="Comprehensive trading performance metrics" />
+        <EmptyState
+          message="No statistics yet"
+          description="Complete some trades to see your performance statistics."
+        />
+      </motion.div>
+    );
+  }
   const r = overview.data?.risk as StatisticsRisk | undefined;
   const eq = equityCurve.data as EquityPoint[] | undefined || [];
   const pnlDist = pnlDistribution.data as DistributionData | undefined;
@@ -292,17 +303,17 @@ export default function StatisticsPage() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <div className="text-lg font-bold text-foreground">{rolling10.data.trades}</div>
-                  <div className="text-[10px] text-muted-foreground">Trades</div>
+                  <div className="text-xs text-muted-foreground">Trades</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <div className="text-lg font-bold text-success">{rolling10.data.win_rate}%</div>
-                  <div className="text-[10px] text-muted-foreground">Win Rate</div>
+                  <div className="text-xs text-muted-foreground">Win Rate</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <div className={cn('text-lg font-bold', rolling10.data.pnl >= 0 ? 'text-success' : 'text-destructive')}>
                     {rolling10.data.pnl >= 0 ? '+' : ''}{rolling10.data.pnl.toFixed(2)}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">P&L</div>
+                  <div className="text-xs text-muted-foreground">P&L</div>
                 </div>
               </div>
             ) : (
@@ -320,17 +331,17 @@ export default function StatisticsPage() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <div className="text-lg font-bold text-foreground">{rolling50.data.trades}</div>
-                  <div className="text-[10px] text-muted-foreground">Trades</div>
+                  <div className="text-xs text-muted-foreground">Trades</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <div className="text-lg font-bold text-success">{rolling50.data.win_rate}%</div>
-                  <div className="text-[10px] text-muted-foreground">Win Rate</div>
+                  <div className="text-xs text-muted-foreground">Win Rate</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-3 text-center">
                   <div className={cn('text-lg font-bold', rolling50.data.pnl >= 0 ? 'text-success' : 'text-destructive')}>
                     {rolling50.data.pnl >= 0 ? '+' : ''}{rolling50.data.pnl.toFixed(2)}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">P&L</div>
+                  <div className="text-xs text-muted-foreground">P&L</div>
                 </div>
               </div>
             ) : (

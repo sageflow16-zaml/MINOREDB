@@ -20,7 +20,7 @@ export function Spinner({ className, size = 20, label }: SpinnerProps) {
 
 export function PageLoader({ label = 'Loading…' }: { label?: string }) {
   return (
-    <div className="flex h-full min-h-[50vh] w-full flex-col items-center justify-center gap-3">
+    <div className="flex h-full min-h-[50vh] w-full flex-col items-center justify-center gap-3" role="status" aria-live="polite">
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>

@@ -32,7 +32,7 @@ export default function ConflictsPage() {
       />
 
       {!conflicts || conflicts.length === 0 ? (
-        <EmptyState message="No conflicts detected." />
+        <EmptyState message="No conflicts detected." description="Add multiple sources with differing viewpoints to detect conflicts." />
       ) : (
         <div className="grid gap-3">
           {conflicts.map((row, i) => (
@@ -42,7 +42,7 @@ export default function ConflictsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
             >
-              <Card>
+              <Card className="hover:shadow-md hover:border-primary/20 transition-all duration-200">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -53,7 +53,7 @@ export default function ConflictsPage() {
                         <CardTitle className="text-sm font-medium">
                           {row.conflict_classification?.split('.')[0] || 'Conflict'}
                         </CardTitle>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {row.created_at ? new Date(row.created_at).toLocaleDateString() : ''}
                         </p>
                       </div>

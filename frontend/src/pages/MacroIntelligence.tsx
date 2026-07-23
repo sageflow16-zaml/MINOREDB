@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { Skeleton, SkeletonCard } from '../components/ui/skeleton';
 import { useMacroState, useMacroRefresh } from '../hooks/useMacro';
-import { Globe, RefreshCw, TrendingUp, DollarSign, BarChart3, Activity, List, AlertTriangle } from 'lucide-react';
+import { RefreshCw, TrendingUp, DollarSign, BarChart3, Activity, List } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };

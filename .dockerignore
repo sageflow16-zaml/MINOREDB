@@ -15,3 +15,5 @@ check*.py
 tests/
 Dockerfile
 README.md
+scripts/
+.github/

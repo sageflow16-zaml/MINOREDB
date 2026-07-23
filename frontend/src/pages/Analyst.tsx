@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
-import { Send, Bot, User, Sparkles, BarChart3, Brain, LineChart, BookOpen, Network, Globe, Layers, AlertCircle, Lightbulb, ChevronRight, X } from 'lucide-react';
+import { Send, Bot, User, BarChart3, Brain, LineChart, BookOpen, Network, Globe, Layers, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { EvidenceItem } from '../api/analyst';
 
@@ -41,7 +41,7 @@ function SourceBadge({ source }: { source: string }) {
   const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.learning;
   const Icon = config.icon;
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium', config.color)}>
+    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', config.color)}>
       <Icon className="h-3 w-3" />
       {config.label}
     </span>
@@ -52,13 +52,13 @@ function EvidencePanel({ evidence }: { evidence: EvidenceItem[] }) {
   if (!evidence.length) return null;
   return (
     <div className="space-y-2">
-      <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         Evidence ({evidence.length})
       </h4>
       {evidence.map((item, i) => (
         <div key={i} className="rounded-lg border border-border bg-card p-2.5">
           <SourceBadge source={item.source} />
-          <pre className="mt-1.5 max-h-32 overflow-auto rounded bg-muted/30 p-2 text-[10px] text-muted-foreground font-mono">
+          <pre className="mt-1.5 max-h-32 overflow-auto rounded bg-muted/30 p-2 text-xs text-muted-foreground font-mono">
             {JSON.stringify(item.data, null, 1).slice(0, 800)}
             {JSON.stringify(item.data, null, 1).length > 800 ? '...' : ''}
           </pre>
@@ -153,7 +153,7 @@ export default function AnalystPage() {
                         <button
                           key={s}
                           onClick={() => { setQuestion(s); }}
-                          className="rounded-full border border-border bg-muted/30 px-3 py-1 text-[10px] text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
+                          className="rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
                         >
                           {s}
                         </button>

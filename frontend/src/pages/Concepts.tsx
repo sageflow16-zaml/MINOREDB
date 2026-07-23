@@ -32,7 +32,7 @@ export default function ConceptsPage() {
       />
 
       {!concepts || concepts.length === 0 ? (
-        <EmptyState message="No concepts found." />
+        <EmptyState message="No concepts found." description="Extract concepts from your research sources to build your knowledge graph." />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {concepts.map((c, i) => (
@@ -42,7 +42,7 @@ export default function ConceptsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
             >
-              <Card className="h-full">
+              <Card className="h-full hover:shadow-md hover:border-primary/20 transition-all duration-200">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -52,7 +52,7 @@ export default function ConceptsPage() {
                       <div>
                         <CardTitle className="text-sm font-semibold">{c.conceptual_term}</CardTitle>
                         {c.definition && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{c.definition}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{c.definition}</p>
                         )}
                       </div>
                     </div>
@@ -60,7 +60,7 @@ export default function ConceptsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <FileText className="h-3 w-3" />
                       <ClaimCount conceptId={c.id} /> claims
                     </div>

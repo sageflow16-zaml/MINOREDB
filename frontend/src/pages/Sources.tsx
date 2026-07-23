@@ -9,7 +9,7 @@ import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedbac
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { Upload, FileText, Brain, AlertTriangle, Trash2, Eye, Sparkles, ChevronRight } from 'lucide-react';
+import { Upload, FileText, Brain, AlertTriangle, Trash2, Eye } from 'lucide-react';
 import type { SourceRead } from '../types';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
@@ -98,7 +98,7 @@ export default function SourcesPage() {
               ),
               sortable: true,
             },
-            { header: 'ID', accessor: (row: any) => <span className="font-mono text-[10px] text-muted-foreground">{row.id?.substring(0, 8)}</span>, hideOnMobile: true },
+            { header: 'ID', accessor: (row: any) => <span className="font-mono text-xs text-muted-foreground">{row.id?.substring(0, 8)}</span>, hideOnMobile: true },
             { header: 'Date', accessor: (row: any) => new Date(row.created_at).toLocaleDateString(), hideOnMobile: true },
             {
               header: 'Actions',

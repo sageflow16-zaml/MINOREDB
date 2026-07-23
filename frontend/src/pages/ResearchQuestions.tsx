@@ -28,7 +28,7 @@ export default function ResearchQuestionsPage() {
       />
 
       {!questions || questions.length === 0 ? (
-        <EmptyState message="No research questions found." />
+        <EmptyState message="No research questions found." description="Create a research session in the Research page to generate questions." />
       ) : (
         <div className="grid gap-3">
           {questions.map((row: any, i: number) => (
@@ -38,7 +38,7 @@ export default function ResearchQuestionsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
             >
-              <Card>
+              <Card className="hover:shadow-md hover:border-primary/20 transition-all duration-200">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">

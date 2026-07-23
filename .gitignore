@@ -38,6 +38,24 @@ logs/
 backend/.venv/
 backend/__pycache__/
 backend/*.egg-info/
+backend/.env
+backend/.env.*
+
+# Railway / deployment
+railway.json
+
+# Log files checked into repo accidentally
+backend_stdout.log
+backend_stderr.log
+*.log
 
 # Docker
 pgdata/
+
+# Backups
+backups/
+
+# Archives
+*.zip
+*.tar
+*.gz

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
@@ -80,6 +81,11 @@ def remove(
 ) -> Trade | None:
     obj = get(db, id, project_id=project_id)
     if obj:
+        if hasattr(obj, 'deleted_at'):
+            from sqlalchemy import update as sa_update
+            db.execute(sa_update(Trade).where(Trade.id == id).values(deleted_at=datetime.now(timezone.utc)))
+            db.commit()
+            return obj
         db.delete(obj)
         db.commit()
     return obj

@@ -29,7 +29,7 @@ export const Breadcrumb = () => {
           <span key={to} className="flex items-center gap-1">
             <ChevronRight className="h-3.5 w-3.5" />
             {isLast ? (
-              <span className="text-foreground font-medium">{labelize(seg)}</span>
+              <span className="text-foreground font-medium" aria-current="page">{labelize(seg)}</span>
             ) : (
               <Link to={to} className="hover:text-foreground transition-colors">
                 {labelize(seg)}

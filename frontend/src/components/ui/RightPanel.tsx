@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from '../../lib/utils';
+import { useReducedMotion } from '../../lib/animate';
 
 const widthMap = {
   sm: 'max-w-sm',
@@ -37,6 +38,7 @@ export function RightPanel({
   width = 'xl',
   className,
 }: RightPanelProps) {
+  const prefersReduced = useReducedMotion();
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -59,10 +61,12 @@ export function RightPanel({
             onClick={onClose}
           />
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={spring}
+            initial={prefersReduced ? { opacity: 0 } : { x: '100%' }}
+            animate={prefersReduced ? { opacity: 1 } : { x: 0 }}
+            exit={prefersReduced ? { opacity: 0 } : { x: '100%' }}
+            transition={prefersReduced ? { duration: 0.15 } : spring}
+            role="dialog"
+            aria-modal="true"
             className={cn(
               'fixed right-0 top-0 z-50 h-full w-full border-l border-border bg-background shadow-xl',
               widthMap[width],

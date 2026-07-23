@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useReducedMotion } from '../../lib/animate';
 
 interface KpiCardProps {
   title: string;
@@ -34,12 +35,16 @@ const iconContainerStyles = {
 };
 
 export function KpiCard({ title, value, icon: Icon, trend, subtitle, onClick, variant = 'default', size = 'default' }: KpiCardProps) {
+  const prefersReduced = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={prefersReduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={onClick ? { scale: 1.01, y: -1 } : undefined}
+      whileHover={prefersReduced ? undefined : (onClick ? { scale: 1.01, y: -1 } : undefined)}
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={cn(
         'relative overflow-hidden rounded-xl border bg-card p-4 transition-all',
         variantStyles[variant],

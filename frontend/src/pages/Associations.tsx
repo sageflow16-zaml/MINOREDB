@@ -82,12 +82,12 @@ export default function AssociationsPage() {
       )}
 
       {!associations || associations.length === 0 ? (
-        <EmptyState message="No associations found." />
+        <EmptyState message="No associations found." description="Create claims and concepts first, then associate them." />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+              <tr className="border-b border-border bg-muted/30 text-left text-xs font-medium uppercase text-muted-foreground">
                 <th className="px-4 py-2.5">Claim ID</th>
                 <th className="px-4 py-2.5">Concept ID</th>
                 <th className="px-4 py-2.5">State</th>
@@ -98,8 +98,8 @@ export default function AssociationsPage() {
             <tbody className="divide-y divide-border">
               {associations.map((row: any) => (
                 <tr key={row.id} className="hover:bg-muted/20">
-                  <td className="px-4 py-2.5 font-mono text-foreground text-[10px]">{row.claim_id?.slice(0, 12)}...</td>
-                  <td className="px-4 py-2.5 font-mono text-foreground text-[10px]">{row.concept_id?.slice(0, 12)}...</td>
+                  <td className="px-4 py-2.5 font-mono text-foreground text-xs">{row.claim_id?.slice(0, 12)}...</td>
+                  <td className="px-4 py-2.5 font-mono text-foreground text-xs">{row.concept_id?.slice(0, 12)}...</td>
                   <td className="px-4 py-2.5">
                     {row.association_state && (
                       <Badge variant={

@@ -18,7 +18,8 @@ export function AccordionItem({ title, icon, children, defaultOpen = false, clas
     <div className={cn('rounded-xl border border-border bg-card shadow-sm', className)}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-2 p-4 text-left transition-colors hover:bg-muted/20"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 p-4 text-left transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
         <div className="flex items-center gap-2 min-w-0">
           {icon && <span className="text-muted-foreground shrink-0">{icon}</span>}

@@ -171,3 +171,160 @@ def get_rolling_stats(
     elif window == 50:
         return overview.get("rolling_50", {})
     return {}
+
+
+# ──────────────────────────────────────────────────────────────────────
+# NEW: Phase 2.5 - Performance Intelligence Extensions
+# ──────────────────────────────────────────────────────────────────────
+
+@router.get("/by-strategy")
+def get_by_strategy(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("by_strategy", {})
+
+
+@router.get("/by-weekday")
+def get_by_weekday(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("by_weekday", {})
+
+
+@router.get("/by-timeframe")
+def get_by_timeframe(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("by_timeframe", {})
+
+
+@router.get("/by-market-condition")
+def get_by_market_condition(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("by_market_condition", {})
+
+
+@router.get("/by-volatility")
+def get_by_volatility(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("by_volatility", {})
+
+
+@router.get("/by-news")
+def get_by_news(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("by_news", {})
+
+
+@router.get("/by-setup")
+def get_by_setup(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("by_setup", {})
+
+
+@router.get("/weekly-returns")
+def get_weekly_returns(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("weekly_returns", [])
+
+
+@router.get("/yearly-returns")
+def get_yearly_returns(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("yearly_returns", [])
+
+
+@router.get("/risk-analytics")
+def get_risk_analytics(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("risk_analytics", {})
+
+
+@router.get("/psychology-analytics")
+def get_psychology_analytics(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("psychology_analytics", {})
+
+
+@router.get("/calendar-heatmap")
+def get_calendar_heatmap(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("calendar_heatmap", {})
+
+
+@router.get("/scatter-data")
+def get_scatter_data(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    overview = _safe_overview(db, project_id=project_id)
+    return overview.get("scatter_data", {})
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Filtered Statistics (with date range)
+# ──────────────────────────────────────────────────────────────────────
+
+@router.get("/filtered")
+def get_filtered_statistics(
+    project_id: UUID,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+    start_date: str | None = None,
+    end_date: str | None = None,
+):
+    """Get statistics with optional date filtering."""
+    from datetime import datetime
+    try:
+        start = datetime.fromisoformat(start_date) if start_date else None
+        end = datetime.fromisoformat(end_date) if end_date else None
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use ISO format.")
+    
+    return statistics.get_statistics_overview(db, project_id=project_id, start_date=start, end_date=end)

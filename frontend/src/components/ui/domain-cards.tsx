@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { TrendingUp, TrendingDown, AlertTriangle, Lightbulb, CheckCircle, XCircle, Brain, FileText, MessageSquare, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { Badge } from './badge';

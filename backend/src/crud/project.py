@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from src.models.project import Project
 from src.schemas.project import ProjectCreate, ProjectUpdate
@@ -5,13 +6,13 @@ from uuid import UUID
 
 
 def get_project(db: Session, project_id: UUID) -> Project | None:
-    return db.query(Project).filter(Project.id == project_id).first()
+    return db.query(Project).filter(Project.id == project_id, Project.deleted_at.is_(None)).first()
 
 
 def get_projects(db: Session, user_id: UUID, skip: int = 0, limit: int = 100) -> list[Project]:
     return (
         db.query(Project)
-        .filter(Project.user_id == user_id)
+        .filter(Project.user_id == user_id, Project.deleted_at.is_(None))
         .offset(skip)
         .limit(limit)
         .all()
@@ -41,6 +42,6 @@ def delete_project(db: Session, project_id: UUID) -> bool:
     project = get_project(db, project_id)
     if not project:
         return False
-    db.delete(project)
+    project.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True

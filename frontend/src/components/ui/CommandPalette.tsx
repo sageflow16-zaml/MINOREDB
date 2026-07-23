@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Command as CommandIcon } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useReducedMotion } from '../../lib/animate';
 
 interface CommandItem {
   id: string;
@@ -22,22 +23,26 @@ interface CommandPaletteProps {
   open: boolean;
   onClose: () => void;
   groups: CommandGroup[];
+  extraGroups?: CommandGroup[];
 }
 
-export function CommandPalette({ open, onClose, groups }: CommandPaletteProps) {
+export function CommandPalette({ open, onClose, groups, extraGroups = [] }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const prefersReduced = useReducedMotion();
+
+  const allGroups = useMemo(() => [...groups, ...extraGroups], [groups, extraGroups]);
 
   const flatItems = useMemo(() => {
     const items: ({ groupIndex: number } & CommandItem)[] = [];
-    groups.forEach((g, gi) => {
+    allGroups.forEach((g, gi) => {
       g.items.forEach((item) => {
         items.push({ ...item, groupIndex: gi });
       });
     });
     return items;
-  }, [groups]);
+  }, [allGroups]);
 
   const filtered = useMemo(() => {
     if (!query) return flatItems;
@@ -96,23 +101,32 @@ export function CommandPalette({ open, onClose, groups }: CommandPaletteProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, filtered, selectedIndex, handleSelect, onClose]);
 
+  const overlayAnim = prefersReduced
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.1 } }
+    : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.15 } };
+
+  const panelAnim = prefersReduced
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.1 } }
+    : {
+        initial: { opacity: 0, scale: 0.96, y: -8 },
+        animate: { opacity: 1, scale: 1, y: 0 },
+        exit: { opacity: 0, scale: 0.96, y: -8 },
+        transition: { duration: 0.15, ease: [0.16, 1, 0.3, 1] },
+      };
+
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          {...overlayAnim}
           className="fixed inset-0 z-popover flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -8 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
+            {...panelAnim}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
             className="w-full max-w-lg rounded-xl border bg-card shadow-2xl overflow-hidden"
           >
             <div className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -130,14 +144,14 @@ export function CommandPalette({ open, onClose, groups }: CommandPaletteProps) {
               </kbd>
             </div>
 
-            <div className="max-h-[300px] overflow-y-auto p-2">
+            <div className="max-h-[360px] overflow-y-auto p-2">
               {filtered.length === 0 && (
                 <p className="py-8 text-center text-sm text-muted-foreground">
                   No results found.
                 </p>
               )}
 
-              {groups.map((group, gi) => {
+              {allGroups.map((group, gi) => {
                 const groupItems = filtered.filter((item) => item.groupIndex === gi);
                 if (groupItems.length === 0) return null;
                 return (

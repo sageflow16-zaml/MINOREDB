@@ -23,6 +23,7 @@ class TradeMemory(Base):
         PG_UUID(as_uuid=True),
         ForeignKey("project.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     project: Mapped["Project"] = relationship("Project")
     trade_id: Mapped[UUID] = mapped_column(

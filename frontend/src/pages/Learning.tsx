@@ -13,7 +13,7 @@ import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedbac
 import {
   useLearningEvents, useLearningSnapshots, useLearningStatus, useLearningRebuild,
 } from '../hooks/useLearning';
-import { Brain, RefreshCw, TrendingUp, TrendingDown, Layers, GitBranch, BookOpen } from 'lucide-react';
+import { Brain, RefreshCw, TrendingUp, Layers, GitBranch, BookOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const statusBadge = (status: string) => {

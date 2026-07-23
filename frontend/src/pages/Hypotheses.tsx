@@ -26,7 +26,7 @@ export default function HypothesesPage() {
       />
 
       {!hypotheses || hypotheses.length === 0 ? (
-        <EmptyState message="No hypotheses found." />
+        <EmptyState message="No hypotheses found." description="Combine claims and interpretations to form hypotheses." />
       ) : (
         <div className="grid gap-3">
           {hypotheses.map((row: any, i: number) => (
@@ -36,7 +36,7 @@ export default function HypothesesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
             >
-              <Card>
+              <Card className="hover:shadow-md hover:border-primary/20 transition-all duration-200">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -46,12 +46,12 @@ export default function HypothesesPage() {
                       <div>
                         <CardTitle className="text-sm font-medium">{row.hypothesis_statement}</CardTitle>
                         {row.variable_specification && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5">Variables: {row.variable_specification}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Variables: {row.variable_specification}</p>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
                         {row.created_at ? new Date(row.created_at).toLocaleDateString() : ''}
                       </span>
                       <Button variant="ghost" size="icon-sm" onClick={() => setDeleteId(row.id)}>

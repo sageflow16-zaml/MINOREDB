@@ -16,7 +16,8 @@ class ClaimConflict(Base):
     project_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), 
         ForeignKey("project.id", ondelete="CASCADE"), 
-        nullable=False
+        nullable=False,
+        index=True,
     )
     project: Mapped["Project"] = relationship("Project")
     claim_id: Mapped[UUID] = mapped_column(

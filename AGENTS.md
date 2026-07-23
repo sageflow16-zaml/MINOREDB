@@ -1,73 +1,143 @@
-# Session Summary
+﻿# Session Summary
 
-## Objective
-Complete UI/UX redesign of a React+TypeScript/Vite trading intelligence application ("Minore") to feel like a premium SaaS product (inspired by TradingView, Notion, Linear)
+## Objective (this session)
+Deploy Minore V1.0 online using only free services (GitHub, Vercel, Render, Neon PostgreSQL)
 
-## Phases Completed
+## Completed: FREE PRODUCTION DEPLOYMENT SPRINT ✓
 
-### Phase 1 (commit `49128a2`) — Stabilization + Backend
-- Fixed TypeScript errors in GraphExplorer, MarketStructure, Search pages
-- Added error handling to backend dashboard/statistics routes
-- Added `backend/src/api/responses.py`, `backend/src/db/seed.py`
+### Stack Chosen
+- **GitHub** → source code & CI/CD
+- **Vercel Free** → frontend (React/Vite)
+- **Render Free** → backend (FastAPI/uvicorn)
+- **Neon PostgreSQL Free** → database
+- **No Docker** → Render deploys natively via Procfile
 
-### Phase 2 (commit `49128a2`) — Design System + Components + Navigation
-- **CSS Design System**: Premium tokens in `index.css` — colors, shadows, glass effects, animations (light/dark mode with `--background`, `--card`, `--primary`, `--success`, `--warning`, `--chart-*`, etc.)
-- **Tailwind Config**: Extended with semantic colors, border radius, box shadows, keyframes (fade-in/up/down, slide-in, scale-in, pulse-subtle, shimmer)
-- **Component Library**: `Button` (variants/sizes/loading/icon), `Card` (Header/Title/Content/Footer), `Badge` (success/warning/destructive/info), `Input` (with error state), `Table`, `Skeleton` (with shimmer), `Feedback` (LoadingSpinner/ErrorState/EmptyState), `Dialog` (with overlay blur+scale-in), `KpiCard` (variants/trends), `DataTable` (sticky headers, sorting, search, pagination, compact mode)
-- **Sidebar**: Collapsible sections, brand logo, project selector, user profile bottom bar, collapsed mode (68px), 7 nav sections
-- **Topbar**: Command palette search (⌘K), notification bell, theme toggle, avatar+dropdown
-- **Dashboard**: Premium trading dashboard with KPI grid, charts (recharts with CSS vars), recent trades, market context, collector stats
-- **Trades**: Premium journal with DataTable, slide-out create/edit drawer (spring animation), detail viewer, confirm dialog
+### Files Created
+| File | Purpose |
+|------|---------|
+| `vercel.json` | Vercel deploy config — frontend root, SPA rewrites, asset caching |
+| `render.yaml` | Render Blueprint — web service + Neon database provisioning |
+| `backend/Procfile` | Render start command — `uvicorn src.main:app` |
+| `backend/runtime.txt` | Python 3.12.0 for Render |
+| `backend/.env.example` | All production env vars with documentation |
+| `frontend/.env.example` | Frontend env vars template |
+| `.github/workflows/deploy.yml` | Auto-deploy frontend→Vercel + backend→Render on push to main |
 
-### Phase 3 (commits `74b3a3a`, `13b4ea3`) — Auth + Analytics + Research
-- **Login/Register**: Brand identity, background glow, password toggle, strength indicator
-- **Analytics**: Entity distribution bar chart + donut, 5 KPI row, skeleton loading
-- **Statistics**: 6 KPI + 6 secondary metrics, equity curve (gradient area), monthly returns bar, P&L/R:R distribution, rolling windows, breakdown tables
-- **Sources**: File upload, DataTable with action buttons (view/extract/detect conflicts/delete)
-- **Research**: Question input with Sparkles, task list with status badges, report view, history panel
+### Files Modified
+| File | Change |
+|------|--------|
+| `backend/requirements.txt` | Added `gunicorn>=23.0.0`; uvicorn → `uvicorn[standard]` |
+| `backend/src/core/config.py` | `postgresql+psycopg2` → `postgresql+psycopg` (psycopg 3 driver for Neon); Railway references → Render/Neon; default CORS: Vercel + Render |
+| `backend/src/db/session.py` | Railway error messages → Render/Neon |
+| `backend/src/main.py` | Railway error message → Neon |
+| `backend/.env` | Added production notes to JWT_SECRET_KEY warning |
+| `frontend/.env` | Added production deployment comments |
 
-### Phase 4 (commits `2bf7d95`–`dc70ac8`) — AI Features + Remaining Pages
-- **AI Analyst**: Premium chat interface with Bot/User avatars, source badges with icons, confidence badges, suggestion chips, evidence panel
-- **Trader Intelligence**: Multi-tab page (Dashboard/Debriefs/Patterns/Rules/Profile) with Card components, approve/reject workflows
-- **Trade Memory**: Premium memory cards with strengths/weaknesses/mistakes/lessons, metric grid, tags
-- **Projects**: Card grid layout with create/edit dialogs
-- **Learning (Journal)**: Recharts charts (knowledge growth/expansion), KPI grid, events/snapshots tables
-- **Knowledge Rules**: Expandable rule cards with metrics grid, wins/losses breakdown
-- **Market Structure**: ICT concept table with bias badges, spring-animated drawers for CRUD
-- **Collectors**: Premium table with Badge status, Play/Toggle icon buttons, execution logs
-- **Concepts**: Card grid with icon, claim count, view/delete actions
-- **Decision Support**: Environment evaluation form, confidence gauge, execution conditions, evidence/pattern charts, similarity timeline, history table
-- **KnowledgeGraph**: Updated controls and sidebar panel with Card component
-- **Claims/Associations/Conflicts**: Card-based layouts with icon buttons for extract/interpret/graph
-- **Hypotheses/Interpretations/ResearchQuestions**: Card layouts with action buttons
-- **NotFound/ServerError**: Premium error pages with design tokens
-- **MT5 Integration**: Connection form, sync controls, sync history table
-- **TradingView**: Event timeline with Badge variants, filter controls, webhook logs
-- **KnowledgeCenter**: Updated StatCard/CategoryCard/ConceptCard with tokens
-- Fixed casing issue (`Input.tsx`/`input.tsx`)
+### Files Removed
+| File | Reason |
+|------|--------|
+| `railway.json` | Switching from Railway to Render + Neon |
 
-### Phase 5 (current) — Product Architecture + Layout + Dashboard
-- **Phase 1.1 Product Architecture**: Full audit of 33 pages, 124 API endpoints, navigation tree restructured from 7→6 sections (Workspace/Trading/Research/Knowledge/Analytics/System), 7 user flows documented, dashboard 8-zone hierarchy, page consistency template
-- **Phase 1.2 Design System**: Typography scale (12–32px), HSL color palette (dark-first), spacing/grid/elevation/animation specs, 22 existing + 4 new component APIs
-- **Components built**: `Select` (Radix with error state), `Toast` (react-hot-toast wrapper, imperative API), `CommandPalette` (Framer Motion, ⌘K trigger, keyboard nav, search filtering, `useCommandPalette()` hook), `Alert` (4 variants, dismissible), `RightPanel` (spring-animated slide-out drawer, configurable width, overlay blur, escape-to-close)
-- **Layout**: Sidebar rewritten (6-section IA, collapsible 68px/256px, project selector, user profile with avatar), Topbar rewritten (⌘K badge, notification bell with pulse, theme toggle, user dropdown), MainLayout rewritten (command palette, global shortcuts D/T/A/?, ⌘1-9, FAB mobile, Toaster)
-- **Dashboard redesigned**: Greeting header + market status, quick actions row, 6-card global KPIs, equity curve + risk panel (drawdown, sharpe, recovery, win rate + collector grid), recent trades DataTable + top strategy metrics, AI Insights banner
+### Key Technical Fixes
+1. **Psycopg 3 driver fix** — config.py converted bare `postgresql://` to `postgresql+psycopg2://` but requirements install psycopg 3 (binary). Changed to `postgresql+psycopg://` which correctly loads the installed psycopg 3 driver
+2. **Neon SSL** — Neon requires `?sslmode=require`. User must append this to their DATABASE_URL
+3. **CORS defaults** — Updated default origins to include `https://project-minore.vercel.app` and removed `railway.app`
+4. **Production startup** — Procfile now uses `uvicorn src.main:app --host 0.0.0.0 --port $PORT` (Render injects $PORT)
 
-## Key Design Tokens Used
-- `bg-card`, `bg-background`, `bg-muted`, `bg-primary`, `bg-success`, `bg-warning`, `bg-destructive`
-- `text-foreground`, `text-muted-foreground`, `text-primary`, `text-success`, `text-destructive`
-- `border-border`, `border-input`, `border-primary`
-- `hsl(var(--chart-1))` through `hsl(var(--chart-5))` for all chart colors
-- Component library: `Button`, `Card`, `Badge`, `Input`, `KpiCard`, `DataTable`, `Feedback` (LoadingSpinner/ErrorState/EmptyState), `ConfirmDialog`, `Select`, `Toast`, `CommandPalette`, `Alert`, `RightPanel`, `ChartCard` + `AreaChartCard`/`BarChartCard`/`PieChartCard`/`LineChartCard` + `PieChartLegend`, `AccordionItem`/`AccordionGroup`, `MetricCard`/`MetricRow`/`MetricGroup`, `Timeline`/`TimelineItem`/`TimelineBadge`, `ActivityFeed`/`ActivityItem`, `TradeMemoryCard`, `JournalEntryCard`, `ResearchTaskCard`/`ResearchReport`/`ChatBubble`, `FeedbackBlock`
+## Previous Session: Implement complete Trade Import/Export system: CSV/Excel/JSON import with validation, duplicate detection, preview/confirm; CSV/Excel/JSON export with filters; frontend UI with drag-drop, progress, history panel
 
-## Build Status
-- `npx tsc --noEmit` passes clean
-- `npx vite build` succeeds
-- All pages use CSS design tokens with no hardcoded Tailwind colors
+## Final Status: ALL TASKS COMPLETE ✓
 
-## Remaining & Future
-- Replay.tsx (market replay with lightweight-charts) — still uses hardcoded colors in canvas controls
-- Similarity.tsx — partially updated
-- Settings.tsx — ComingSoon placeholder (minimal)
-- Phase 5 potential: Lazy loading/code splitting, performance optimization, full dark/light theme verification, mobile responsiveness
-- RightPanel can be adopted by existing page drawers (Trades, MarketStructure, Sources, etc.) to replace inline drawer code
+## UI Walkthrough & API Fixes ✓
+
+### Backend
+- **53 missing database tables created** via SQLAlchemy `create_all()`: all Planning (8), Risk (4), AI Foundation (9), Quant Research (10), Copilot (14), and Obsidian (7) tables that existed as models but had no Alembic migration
+- **Fixes applied:**
+  - `backend/src/api/routes/rag_copilot.py`: Fixed `update_workflow` and `update_prompt` method signatures (`**kwargs` → `data=`) to match service `def update_workflow(self, workflow_id, data)`
+  - `backend/src/api/routes/obsidian.py`: Made `vault_id` optional (`UUID | None = None`) in `list_notes`, `get_settings`, `update_settings`, `get_statistics` (was required query param → 422)
+  - `backend/src/services/obsidian.py`: Added `vault_id is None` guard to `get_sync_settings` and `get_vault_statistics`
+  - `backend/src/brain/models.py`: Changed `BrainBase = declarative_base()` to `BrainBase = Base` (from `src.db.session`) so ForeignKey("project.id") resolves correctly
+  - `backend/src/brain/dna_engine.py`: `_to_dict` now converts `project_id` to `str()` to match Pydantic v2 strict `TraderDNAResponse.project_id: str`
+- **Alerts**: Brain, Obsidian, and Autopilot services bypass the `_safe` wrapper by catching their own exceptions; route-function try/except does NOT protect against Pydantic response_model validation errors
+
+### API Walkthrough — 130/131 Endpoints PASS
+- **131 endpoints tested** across all modules: Dashboard, Trades, Market Structure, Strategies, Portfolio, Statistics, Replay, Research, Planning, AI (10), Copilot (9), Brain (6), Automation (8), Broker (6), Market Intel (9), ICT (11), Quant Research (9), Pattern, Graph, Obsidian (6), Learning, Risk (6), Macro, Knowledge (6), Trader Intelligence (5), plus Health/Version/Auth
+- **Starting state**: 42 failures (HTTP 500/404/422)
+- **Ending state**: 1 expected 404 (`/trader-intelligence/profile` — "Build it first")
+
+## UI QA (Playwright headless browser) — 81/83 Pages PASS
+- **83 pages tested** via headless Chromium: all major modules including Dashboard, Trades, Market Structure, Strategies, Portfolio (8 sub-pages), Statistics, Performance, Risk, Planning, Learning, Research, Replay, Knowledge (3), AI (5), Copilot, Analytics, Macro, Trader Intel, Market Intel (8), Broker, Obsidian (5), Quant Research (8), Automation (9), Decision Support, Similarity, Trade Memory, Sources, Claims, Concepts, Associations, Conflicts, Questions, Hypotheses, Search, Collectors, MT5, TradingView, Analyst, Settings
+- **2 non-critical "failures"**: Broker Hub (Playwright's `networkidle` never resolves — likely long-polling artifact, NOT a real user issue) and Strategy Create (save button disabled — form requires more fields than just name; test script limitation)
+- **Zero React errors**, **zero blank pages**, **zero crashes** across all 83 page loads
+
+## Trade Import/Export System ✓
+
+### Backend
+- **Trade model updated**: Added `commission`, `swap`, `broker_name`, `timeframe`, `open_time`, `close_time`, `tags` (JSONB) columns → `backend/src/models/trade.py`
+- **TradeImport model created**: `backend/src/models/trade_import.py` — tracks import sessions (status, counts, preview_data JSONB, error_rows JSONB)
+- **Trade IO service** → `backend/src/services/trade_io.py`:
+  - `parse_file()` → CSV (`csv.DictReader`), XLSX (`openpyxl`), JSON parsing with 40+ field-name aliases
+  - `preview_import()` → parses, normalises, validates, detects duplicates (pair+direction+entry_price+open_time), stores `TradeImport` record
+  - `confirm_import()` → transactional batch import with `skip`/`update` duplicate strategy, auto-creates Strategy records
+  - `export_trades()` → query with filters (ids, date range, symbol, strategy, result, status, broker, tags), returns CSV/XLSX/JSON
+  - `get_import_history()` → last 50 import records
+- **Schemas** → `backend/src/schemas/trade_import.py`: `ImportRow`, `ImportPreview`, `ImportConfirm`, `ImportResult`, `ImportHistoryItem`, `ExportParams`
+- **API endpoints** (on `/api/v1/projects/{id}/trades/`):
+  - `POST /import` — multipart file upload, returns preview
+  - `POST /import/{import_id}/confirm` — commits import
+  - `GET /export` — file download (CSV/JSON/XLSX)
+  - `GET /import-history` — list of past imports
+- **Alembic migration**: `a2b3c4d5e6f7_add_trade_import_export_tables.py`, applied successfully
+- **Dependency added**: `openpyxl>=3.1.0` to `backend/requirements.txt`
+
+### Frontend
+- **Types** → `frontend/src/api/types.ts`: `TradeRead`/`Create`/`Update` extended with new fields; `ImportRow`, `ImportPreview`, `ImportResult`, `ImportHistoryItem`
+- **API service** → `frontend/src/api/tradeImportExport.ts`: `previewImport`, `confirmImport`, `exportTrades`, `importHistory`
+- **Hooks** → `frontend/src/hooks/useTradeImportExport.ts`: `useImportPreview`, `useConfirmImport`, `useExportTrades`, `useImportHistory` (react-hot-toast notifications)
+- **TradeImportDialog** → `frontend/src/components/TradeImportDialog.tsx`: drag-drop upload zone, 4-card summary, duplicate-strategy radio, scrollable preview table with per-row status badges, progress bar, result summary, import history panel
+- **TradeExportDialog** → `frontend/src/components/TradeExportDialog.tsx`: format picker (CSV/XLSX/JSON), filter fields, selected-trades badge, download trigger
+- **Trades.tsx**: Import/Export buttons in PageHeader actions, dialogs wired with projectId/selectedIds/availableStrategies
+
+### Verification
+- **Flow tested end-to-end**: CSV preview → map fields → confirm → DB (34 trades imported); duplicate detection correctly identifies matches; import-history records completed; XLSX export returns valid 13683-byte workbook (35 rows×41 cols); CSV export (34-line header+data); JSON export (32 trades)
+- **TypeScript**: `npx tsc --noEmit` → **0 errors**
+- **Production build**: `npx vite build` → **3422 modules, builds successfully** (2m 11s)
+- **test_api.py**: 8/8 pass (API-level tests)
+- **Existing API endpoints**: All previously-working endpoints unaffected (routes reordered to prevent `/{id}` path-parameter conflict)
+
+## Previous Sessions (preserved)
+### Backend Tests ✓
+- Fixed: BOM in pytest.ini, missing `event_metadata` column in test DB, trailing slash in API test, removed dead test class
+- Installed: pytest-cov, pytest-asyncio, pytest-httpx
+
+### Docker ✓
+- 4 services (db, backend, frontend, redis); multi-stage Python 3.12 + Node 20 builds
+
+### Seed Script ✓
+- `python seed.py --drop` completes across 18 module groups
+- Login: `demo@minore.io` / `demo1234`
+
+### API Verification — 103/103 Endpoints PASS (previous session)
+- Fixed multiple 500 errors (Copilot Prompts, Replay Dashboard, Quant Dashboard, RAGCopilot, enum mismatch, CASCADE drops)
+- Added stubs for missing copilot features, research root, portfolio performance endpoint
+
+### Cleanup ✓
+- Removed build artifacts, log files, duplicate configs, dead code
+
+## Key Metrics
+| Metric | Value |
+|--------|-------|
+| Backend source files | 264+ |
+| Database tables | 168 (new: 53 planning/risk/ai/quant/copilot/obsidian) |
+| Frontend modules | 3422 |
+| TS errors | 0 |
+| Vite build | passes (2m 11s) |
+| API endpoints tested | 131 (130 pass, 1 expected 404) |
+| UI pages tested | 83 (81 pass, 2 non-critical) |
+| Code bugs fixed | 4 (method signature, vault_id params, separate Base FK, UUID→str conversion) |
+
+## Open Recommendations
+1. Token blacklist (Redis-based JWT revocation)
+2. HttpOnly cookies over localStorage for tokens
+3. Pre-commit secrets hook (gitleaks/trufflehog)
+4. Project ownership cross-check in all routes

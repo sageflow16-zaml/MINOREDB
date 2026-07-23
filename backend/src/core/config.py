@@ -15,17 +15,15 @@ class Settings(BaseSettings):
         if host in ("db",):
             raise ValueError(
                 f"DATABASE_URL points to Docker Compose host '{host}' which does not exist "
-                "outside docker-compose. Use Railway's DATABASE_URL environment variable."
+                "outside docker-compose. Use your DATABASE_URL environment variable (Neon/Render)."
             )
-        # Railway injects postgresql:// without +driver. Only psycopg[binary] (v3) is
-        # installed (psycopg2 was removed). Rewrite to postgresql+psycopg:// so
-        # SQLAlchemy loads the psycopg (v3) dialect instead of failing with
-        # "Can't load plugin: sqlalchemy.dialects:postgresql".
+        # Convert bare postgresql:// to postgresql+psycopg:// for SQLAlchemy.
+        # psycopg 3 (binary) is the installed driver.
         if value.startswith("postgresql://") and "postgresql+" not in value:
             value = value.replace("postgresql://", "postgresql+psycopg://", 1)
         return value
 
-    # Port the uvicorn server binds to (Railway injects this dynamically).
+    # Port the uvicorn server binds to (Render injects this dynamically).
     PORT: int = 8000
 
     # Runtime environment: "development" | "production" | "test"
@@ -34,8 +32,8 @@ class Settings(BaseSettings):
     # CORS: comma-separated list of allowed origins.
     CORS_ORIGINS: str = ""
     CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: str = "*"
-    CORS_ALLOW_HEADERS: str = "*"
+    CORS_ALLOW_METHODS: str = "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+    CORS_ALLOW_HEADERS: str = "Authorization,Content-Type,Accept,X-API-Key,X-Request-ID"
 
     # TrustedHost: comma-separated list of allowed Host headers.
     ALLOWED_HOSTS: str = ""
@@ -50,16 +48,19 @@ class Settings(BaseSettings):
     HSTS_PRELOAD: bool = True
 
     # Rate limiting (in-memory, per client IP). Disabled when 0.
-    RATE_LIMIT_PER_MINUTE: int = 0
+    # For production multi-instance deployments, use a shared store (Redis) or gateway limiter.
+    RATE_LIMIT_PER_MINUTE: int = 60
 
     # Request body size limits in bytes. 0 = unlimited.
-    MAX_REQUEST_SIZE: int = 0
+    MAX_REQUEST_SIZE: int = 10 * 1024 * 1024  # 10 MiB
     MAX_UPLOAD_SIZE: int = 5 * 1024 * 1024  # 5 MiB
 
     # Pagination: hard cap on `limit` query params.
     MAX_PAGE_SIZE: int = 1000
 
     # JWT authentication
+    # WARNING: JWT_SECRET_KEY must be at least 32 characters and unique per deployment.
+    # The default below is INSECURE — always override via environment variable.
     JWT_SECRET_KEY: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -68,6 +69,18 @@ class Settings(BaseSettings):
     # Optional shared API key for machine-to-machine access
     API_KEY: Optional[str] = None
     WEBHOOK_SECRET: Optional[str] = None
+
+    @field_validator("JWT_SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, value: str) -> str:
+        if value in ("change-me-in-production", "change-me-to-a-random-secret-at-least-32-chars-long", ""):
+            import warnings
+            warnings.warn(
+                "JWT_SECRET_KEY is set to a weak/default value. "
+                "Generate a secure key with: openssl rand -hex 32",
+                RuntimeWarning,
+            )
+        return value
 
     @field_validator('API_KEY', mode='before')
     def empty_str_to_none(cls, value: str | None) -> str | None:
@@ -92,7 +105,7 @@ class Settings(BaseSettings):
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "https://project-minore.vercel.app",
-            "https://project-minore-production.up.railway.app",
+            "https://project-minore.onrender.com",
         ]
 
     @property

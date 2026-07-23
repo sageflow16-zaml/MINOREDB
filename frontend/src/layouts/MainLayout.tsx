@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Sidebar } from '../components/Sidebar';
 import { Topbar } from '../components/Topbar';
@@ -9,13 +9,11 @@ import { ErrorFallback } from '../components/ui/ErrorFallback';
 import { PageLoader } from '../components/ui/Spinner';
 import { useProject } from '../context/ProjectContext';
 import {
-  LayoutDashboard,
-  BarChart3,
-  TrendingUp,
-  Notebook,
-  Plus,
-  Sparkles,
-  Search,
+  LayoutDashboard, BarChart3, TrendingUp, Notebook, Plus, Sparkles,
+  Search, CandlestickChart, LineChart, Target, Network,
+  Layers, MessageSquare, AlertTriangle, Lightbulb, PieChart, Globe, Zap,
+  Database, Settings as SettingsIcon, Activity, FileText, RefreshCw,
+  Library,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -28,12 +26,76 @@ interface QuickAction {
   action: () => void;
 }
 
+interface NavEntry {
+  id: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  shortcut?: string;
+  action: () => void;
+}
+
+const allPageRoutes: { section: string; items: { label: string; path: string; icon: LucideIcon; shortcut?: string }[] }[] = [
+  {
+    section: 'Workspace',
+    items: [{ label: 'Dashboard', path: 'dashboard', icon: LayoutDashboard, shortcut: 'D' }],
+  },
+  {
+    section: 'Trading',
+    items: [
+      { label: 'Trades', path: 'trades', icon: BarChart3, shortcut: 'T' },
+      { label: 'Journal', path: 'learning', icon: Notebook, shortcut: 'G J' },
+      { label: 'Strategies', path: 'knowledge', icon: Lightbulb },
+      { label: 'Replay', path: 'replay', icon: RefreshCw },
+    ],
+  },
+  {
+    section: 'Research',
+    items: [
+      { label: 'Market Structure', path: 'market-structure', icon: CandlestickChart },
+      { label: 'AI Analyst', path: 'analyst', icon: Sparkles, shortcut: 'A' },
+      { label: 'Research Engine', path: 'research', icon: Search },
+      { label: 'Similarity', path: 'similarity', icon: LineChart },
+      { label: 'Decision Support', path: 'decision', icon: Target },
+      { label: 'Knowledge Graph', path: 'knowledge-graph', icon: Network },
+    ],
+  },
+  {
+    section: 'Knowledge',
+    items: [
+      { label: 'Sources', path: 'sources', icon: FileText },
+      { label: 'Claims', path: 'claims', icon: Layers },
+      { label: 'Interpretations', path: 'interpretations', icon: MessageSquare },
+      { label: 'Conflicts', path: 'conflicts', icon: AlertTriangle },
+      { label: 'Hypotheses', path: 'hypotheses', icon: Lightbulb },
+      { label: 'Knowledge Center', path: 'knowledge-center', icon: Library },
+      { label: 'Trader Intelligence', path: 'trader-intelligence', icon: Zap },
+    ],
+  },
+  {
+    section: 'Analytics',
+    items: [
+      { label: 'Statistics', path: 'statistics', icon: PieChart, shortcut: 'G S' },
+      { label: 'Analytics', path: 'analytics', icon: Activity },
+      { label: 'Macro', path: 'macro', icon: Globe },
+    ],
+  },
+  {
+    section: 'System',
+    items: [
+      { label: 'Settings', path: 'settings', icon: SettingsIcon },
+      { label: 'Integrations (MT5)', path: 'mt5', icon: Database },
+      { label: 'Global Search', path: 'search', icon: Search },
+      { label: 'Collectors', path: 'collectors', icon: Zap },
+    ],
+  },
+];
+
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { projectId } = useProject();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const go = useCallback(
     (path: string) => {
@@ -46,7 +108,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     [projectId, navigate]
   );
 
-  const quickActions: QuickAction[] = [
+  const quickActions = useMemo<QuickAction[]>(() => [
     {
       id: 'new-trade',
       label: 'New Trade',
@@ -95,9 +157,9 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       shortcut: 'G S',
       action: () => go('statistics'),
     },
-  ];
+  ], [go]);
 
-  const commandGroups = projectId
+  const commandGroups = useMemo(() => projectId
     ? [
         {
           label: 'Quick Actions',
@@ -110,19 +172,19 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             onSelect: a.action,
           })),
         },
-        {
-          label: 'Navigate',
-          items: [
-            { id: 'nav-dashboard', label: 'Dashboard', icon: LayoutDashboard, onSelect: () => go('dashboard') },
-            { id: 'nav-trades', label: 'Trades', icon: BarChart3, onSelect: () => go('trades') },
-            { id: 'nav-journal', label: 'Journal', icon: Notebook, onSelect: () => go('learning') },
-            { id: 'nav-analyst', label: 'AI Analyst', icon: Sparkles, onSelect: () => go('analyst') },
-            { id: 'nav-statistics', label: 'Statistics', icon: TrendingUp, onSelect: () => go('statistics') },
-            { id: 'nav-search', label: 'Search', icon: Search, onSelect: () => go('search') },
-          ],
-        },
+        ...allPageRoutes.map((section) => ({
+          label: section.section,
+          items: section.items.map((item) => ({
+            id: `nav-${item.path}`,
+            label: item.label,
+            description: `Navigate to ${item.label}`,
+            icon: item.icon,
+            shortcut: item.shortcut,
+            onSelect: () => go(item.path),
+          })),
+        })),
       ]
-    : [];
+    : [], [projectId, go]);
 
   useEffect(() => {
     const onResize = () => {
@@ -132,13 +194,11 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
-      // ⌘K / Ctrl+K → command palette
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setPaletteOpen((v) => !v);
@@ -147,7 +207,6 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
       if (!projectId) return;
 
-      // Single-key shortcuts (not typing in inputs)
       if (!e.metaKey && !e.ctrlKey && !e.altKey) {
         switch (e.key.toLowerCase()) {
           case 'd':
@@ -169,7 +228,6 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
-      // ⌘1-9 → project routes
       if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '9') {
         e.preventDefault();
         const routes = ['dashboard', 'trades', 'learning', 'analyst', 'statistics', 'market-structure', 'sources', 'knowledge-graph', 'settings'];
@@ -182,7 +240,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   }, [projectId, go]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background select-none">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
@@ -202,19 +260,16 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         </main>
       </div>
 
-      {/* Command Palette */}
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         groups={commandGroups}
       />
 
-      {/* Toast Container */}
       <Toaster />
 
-      {/* Quick Action FAB (mobile) */}
       {projectId && (
-        <div className="fixed bottom-6 right-6 z-40 lg:hidden">
+        <div className="fixed bottom-6 right-6 z-fixed lg:hidden">
           <button
             onClick={() => go('trades')}
             className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all"

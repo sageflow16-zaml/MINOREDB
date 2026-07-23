@@ -1,0 +1,23 @@
+/* Minore Trading OS — Obsidian Plugin Styles */
+
+.minore-settings .setting-item {
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 8px 0;
+}
+
+.minore-status {
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.minore-status.connected {
+  background: var(--color-green);
+  color: white;
+}
+
+.minore-status.disconnected {
+  background: var(--color-red);
+  color: white;
+}

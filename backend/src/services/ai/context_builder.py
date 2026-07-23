@@ -1,254 +1,963 @@
-"""Merge retrieved evidence into a single structured context, ordered by relevance."""
+"""Enhanced context builder — assembles comprehensive trading copilot context from all data sources."""
 
 from uuid import UUID
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+
+from src.models.trade import Trade
+from src.models.strategy import Strategy
+from src.models.planning import TradingPlan, Goal
+from src.models.risk import RiskRule, RiskSnapshot
+from src.models.learning import LearningEvent, KnowledgeSnapshot
+from src.models.trader_intelligence import (
+    TradeDebrief, PersonalPattern, PersonalRule, TraderProfile,
+)
+from src.models.trade_memory import TradeMemory
+from src.models.knowledge_graph import KnowledgeNode, KnowledgeEdge, KnowledgeGraphSnapshot
+from src.models.knowledge import KnowledgeConcept
+from src.models.market_intelligence import (
+    MarketRegime, EconomicEvent, MarketAlert, MarketTimeline,
+)
+from src.models.concept import Concept
+from src.models.ai_foundation import AIProfile, DetectedPattern
+from src.services.ai_foundation import build_context, get_patterns
 
 
-# Max total characters for the context sent to the LLM
-MAX_CONTEXT_CHARS = 12000
+class ContextBuilder:
+    """Aggregates context from all data sources for the AI trading copilot."""
 
-EVIDENCE_WEIGHTS: dict[str, int] = {
-    "trade_debrief": 10,
-    "trade_memory": 10,
-    "personal_rule": 10,
-    "trader_profile": 10,
-    "personal_pattern": 9,
-    "knowledge_rules": 9,
-    "similarity": 8,
-    "patterns": 8,
-    "knowledge_graph": 7,
-    "statistics": 6,
-    "macro": 5,
-    "learning": 4,
-    "institutional_knowledge": 9,
-}
+    def __init__(self, db: Session):
+        self.db = db
 
+    # ──────────────────────────────────────────────
+    # PUBLIC: build_full_context
+    # ──────────────────────────────────────────────
 
-def _truncate(obj, char_limit: int) -> str:
-    """Convert object to string and truncate."""
-    text = str(obj)
-    if len(text) > char_limit:
-        return text[:char_limit] + "... [truncated]"
-    return text
+    def build_full_context(self, project_id: UUID, options: dict | None = None) -> dict:
+        opts = {
+            "include_trades": True,
+            "include_journal": True,
+            "include_strategies": True,
+            "include_risk": True,
+            "include_planning": True,
+            "include_market": True,
+            "include_knowledge": True,
+            "include_psychology": True,
+            "max_recent_trades": 20,
+            "days_back": 7,
+            **(options or {}),
+        }
+        ctx = {"project_id": str(project_id), "generated_at": datetime.utcnow().isoformat()}
 
+        if opts.get("include_trades"):
+            ctx["trading"] = self.build_trading_context(project_id, opts.get("days_back", 7))
+        if opts.get("include_journal"):
+            ctx["journal"] = self.build_journal_context(project_id, opts.get("days_back", 7))
+        if opts.get("include_strategies"):
+            ctx["strategies"] = self.build_strategy_context(project_id)
+        if opts.get("include_risk"):
+            ctx["risk"] = self.build_risk_context(project_id)
+        if opts.get("include_planning"):
+            ctx["planning"] = self.build_planning_context(project_id)
+        if opts.get("include_market"):
+            ctx["market"] = self.build_market_context(project_id)
+        if opts.get("include_knowledge"):
+            ctx["knowledge"] = self.build_knowledge_context(project_id)
+        if opts.get("include_psychology"):
+            ctx["psychology"] = self.build_psychology_context(project_id)
+        if opts.get("include_performance", True):
+            ctx["performance"] = self.build_performance_context(project_id)
 
-def build_context(evidence: dict[str, object], question: str) -> str:
-    """Merge all evidence into a ranked, formatted context string."""
-    ranked = sorted(
-        evidence.items(),
-        key=lambda kv: EVIDENCE_WEIGHTS.get(kv[0], 0),
-        reverse=True,
-    )
+        ctx["summary"] = self._generate_summary(ctx)
+        return ctx
 
-    parts = [f"User Question: {question}", ""]
-    total_chars = len(parts[0])
+    # ──────────────────────────────────────────────
+    # DOMAIN BUILDERS
+    # ──────────────────────────────────────────────
 
-    for name, data in ranked:
-        if not data:
-            continue
-        if name == "statistics":
-            section = _format_statistics(data)
-        elif name == "knowledge_rules":
-            section = _format_rules(data)
-        elif name == "knowledge_graph":
-            section = _format_graph(data)
-        elif name == "patterns":
-            section = _format_patterns(data)
-        elif name == "trade_memory":
-            section = _format_memories(data)
-        elif name == "similarity":
-            section = _format_similarity(data)
-        elif name == "macro":
-            section = _format_macro(data)
-        elif name == "institutional_knowledge":
-            section = _format_institutional(data)
-        elif name == "learning":
-            section = _format_learning(data)
-        elif name == "trade_debrief":
-            section = _format_trade_debriefs(data)
-        elif name == "personal_pattern":
-            section = _format_personal_patterns(data)
-        elif name == "personal_rule":
-            section = _format_personal_rules(data)
-        elif name == "trader_profile":
-            section = _format_trader_profile(data)
+    def build_trading_context(self, project_id: UUID, days: int = 7) -> dict:
+        since = datetime.utcnow() - timedelta(days=days)
+        trades = (
+            self.db.query(Trade)
+            .filter(
+                Trade.project_id == project_id,
+                Trade.created_at >= since,
+                Trade.status.in_(["closed", "win", "loss", "breakeven"]),
+            )
+            .order_by(Trade.created_at.desc())
+            .limit(100)
+            .all()
+        )
+        if not trades:
+            return {"message": "No recent trading activity", "trades": [], "metrics": {}}
+
+        total = len(trades)
+        wins = [t for t in trades if (t.pnl or 0) > 0]
+        losses = [t for t in trades if (t.pnl or 0) < 0]
+        total_pnl = sum(t.pnl or 0 for t in trades)
+
+        return {
+            "period_days": days,
+            "total_trades": total,
+            "wins": len(wins),
+            "losses": len(losses),
+            "win_rate": round(len(wins) / total * 100, 1) if total else 0,
+            "total_pnl": round(total_pnl, 2),
+            "avg_pnl": round(total_pnl / total, 2) if total else 0,
+            "avg_rr": round(sum(t.rr or 0 for t in trades) / total, 2) if total else 0,
+            "best_trade": round(max((t.pnl or 0) for t in trades), 2) if trades else 0,
+            "worst_trade": round(min((t.pnl or 0) for t in trades), 2) if trades else 0,
+            "avg_risk_percent": round(sum(abs(t.risk_percent or 0) for t in trades) / total, 2) if total else 0,
+            "pairs_traded": list({t.pair for t in trades if t.pair}),
+            "recent_trades": [
+                {
+                    "id": str(t.id),
+                    "pair": t.pair,
+                    "direction": t.direction,
+                    "entry": t.entry_price,
+                    "exit": t.exit_price,
+                    "pnl": t.pnl,
+                    "rr": t.rr,
+                    "result": t.result,
+                    "emotion": t.emotion,
+                    "risk_percent": t.risk_percent,
+                    "date": t.created_at.isoformat() if t.created_at else None,
+                }
+                for t in trades[:20]
+            ],
+        }
+
+    def build_performance_context(self, project_id: UUID) -> dict:
+        trades = (
+            self.db.query(Trade)
+            .filter(
+                Trade.project_id == project_id,
+                Trade.status.in_(["closed", "win", "loss", "breakeven"]),
+            )
+            .order_by(Trade.created_at.desc())
+            .limit(500)
+            .all()
+        )
+        if not trades:
+            return {"message": "No performance data available"}
+
+        total = len(trades)
+        wins = [t for t in trades if (t.pnl or 0) > 0]
+        losses = [t for t in trades if (t.pnl or 0) < 0]
+        total_pnl = sum(t.pnl or 0 for t in trades)
+
+        running = 0
+        peak = 0
+        max_drawdown = 0
+        for t in reversed(trades):
+            running += t.pnl or 0
+            peak = max(peak, running)
+            dd = (peak - running) / peak * 100 if peak > 0 else 0
+            max_drawdown = max(max_drawdown, dd)
+
+        win_rates = []
+        monthly_pnl = {}
+        pair_pnl = {}
+        session_pnl = {"london": 0, "newyork": 0, "asian": 0}
+        session_wins = {"london": 0, "newyork": 0, "asian": 0}
+        session_counts = {"london": 0, "newyork": 0, "asian": 0}
+        emotion_pnl = {}
+
+        for t in trades:
+            month_key = t.created_at.strftime("%Y-%m") if t.created_at else "unknown"
+            monthly_pnl[month_key] = monthly_pnl.get(month_key, 0) + (t.pnl or 0)
+            pair = t.pair or "unknown"
+            pair_pnl[pair] = pair_pnl.get(pair, 0) + (t.pnl or 0)
+            emotion = t.emotion or "unknown"
+            emotion_pnl[emotion] = emotion_pnl.get(emotion, 0) + (t.pnl or 0)
+
+            for sess in ["london", "newyork", "asian"]:
+                val = getattr(t, f"{sess}_session", None)
+                if val and str(val).lower() in ("yes", "true", "1", "active"):
+                    session_counts[sess] += 1
+                    session_pnl[sess] += t.pnl or 0
+                    if (t.pnl or 0) > 0:
+                        session_wins[sess] += 1
+
+        # Rolling win rate (last 50)
+        for i in range(0, total, 10):
+            batch = trades[i : i + 50]
+            if len(batch) >= 10:
+                batch_wins = sum(1 for t in batch if (t.pnl or 0) > 0)
+                win_rates.append(round(batch_wins / len(batch) * 100, 1))
+
+        session_metrics = {}
+        for sess in ["london", "newyork", "asian"]:
+            if session_counts[sess] >= 3:
+                session_metrics[sess] = {
+                    "trades": session_counts[sess],
+                    "pnl": round(session_pnl[sess], 2),
+                    "win_rate": round(session_wins[sess] / session_counts[sess] * 100, 1) if session_counts[sess] else 0,
+                }
+
+        return {
+            "total_trades": total,
+            "wins": len(wins),
+            "losses": len(losses),
+            "win_rate": round(len(wins) / total * 100, 1) if total else 0,
+            "total_pnl": round(total_pnl, 2),
+            "avg_pnl": round(total_pnl / total, 2) if total else 0,
+            "avg_rr": round(sum(t.rr or 0 for t in trades) / total, 2) if total else 0,
+            "max_drawdown_pct": round(max_drawdown, 2),
+            "profit_factor": round(abs(sum(t.pnl or 0 for t in wins if t.pnl)) / max(abs(sum(t.pnl or 0 for t in losses if t.pnl or 0)), 0.01), 2) if wins else 0,
+            "expectancy": round((sum(t.pnl or 0 for t in trades) / total), 2) if total else 0,
+            "avg_win": round(sum(t.pnl or 0 for t in wins) / len(wins), 2) if wins else 0,
+            "avg_loss": round(sum(t.pnl or 0 for t in losses) / len(losses), 2) if losses else 0,
+            "best_trade": round(max((t.pnl or 0) for t in trades), 2) if trades else 0,
+            "worst_trade": round(min((t.pnl or 0) for t in trades), 2) if trades else 0,
+            "consecutive_wins": self._max_consecutive(trades, lambda t: (t.pnl or 0) > 0),
+            "consecutive_losses": self._max_consecutive(trades, lambda t: (t.pnl or 0) < 0),
+            "monthly_pnl": {k: round(v, 2) for k, v in sorted(monthly_pnl.items())},
+            "pair_pnl": {k: round(v, 2) for k, v in sorted(pair_pnl.items(), key=lambda x: abs(x[1]), reverse=True)[:10]},
+            "session_metrics": session_metrics,
+            "emotion_pnl": {k: round(v, 2) for k, v in sorted(emotion_pnl.items(), key=lambda x: abs(x[1]), reverse=True)},
+            "rolling_win_rates": win_rates[-10:],
+        }
+
+    def build_strategy_context(self, project_id: UUID) -> dict:
+        strategies = (
+            self.db.query(Strategy)
+            .filter(Strategy.project_id == project_id)
+            .all()
+        )
+        if not strategies:
+            return {"message": "No strategies defined", "strategies": []}
+
+        result = []
+        for s in strategies:
+            trades = (
+                self.db.query(Trade)
+                .filter(
+                    Trade.project_id == project_id,
+                    Trade.strategy_id == s.id,
+                    Trade.status.in_(["closed", "win", "loss", "breakeven"]),
+                )
+                .all()
+            )
+            total = len(trades)
+            wins = [t for t in trades if (t.pnl or 0) > 0]
+            result.append({
+                "id": str(s.id),
+                "name": s.name,
+                "category": s.category,
+                "status": s.status,
+                "version": s.version,
+                "market_bias": s.market_bias,
+                "total_trades": total,
+                "wins": len(wins),
+                "win_rate": round(len(wins) / total * 100, 1) if total else 0,
+                "total_pnl": round(sum(t.pnl or 0 for t in trades), 2),
+                "avg_rr": round(sum(t.rr or 0 for t in trades) / total, 2) if total else 0,
+            })
+
+        active = [s for s in result if s["status"] and s["status"].lower() == "active"]
+        best = max(result, key=lambda s: s["win_rate"]) if result and max(s["win_rate"] for s in result) > 0 else None
+
+        return {
+            "total_strategies": len(strategies),
+            "active_strategies": len(active),
+            "strategies": result,
+            "best_performing": best,
+            "recommended_strategy": best["name"] if best else None,
+        }
+
+    def build_risk_context(self, project_id: UUID) -> dict:
+        rules = (
+            self.db.query(RiskRule)
+            .filter(RiskRule.project_id == project_id, RiskRule.is_active == True)
+            .all()
+        )
+        latest_snapshot = (
+            self.db.query(RiskSnapshot)
+            .filter(RiskSnapshot.project_id == project_id)
+            .order_by(RiskSnapshot.created_at.desc())
+            .first()
+        )
+
+        result = {}
+        if rules:
+            result["rules"] = [
+                {
+                    "name": r.name,
+                    "rule_type": r.rule_type,
+                    "limit_value": r.limit_value,
+                    "current_value": r.current_value,
+                    "severity": r.severity,
+                    "violation_count": r.violation_count,
+                    "is_active": r.is_active,
+                }
+                for r in rules
+            ]
+            result["active_rule_count"] = len(rules)
+            result["violations"] = sum(r.violation_count for r in rules)
+            breached = [r for r in rules if r.current_value > r.limit_value]
+            result["breached_rules"] = [
+                {"name": r.name, "current": r.current_value, "limit": r.limit_value} for r in breached
+            ]
         else:
-            section = f"[{name}]\n{_truncate(data, 2000)}"
+            result["rules"] = []
+            result["active_rule_count"] = 0
+            result["message"] = "No risk rules configured"
 
-        if total_chars + len(section) > MAX_CONTEXT_CHARS:
-            continue
-        parts.append(section)
-        total_chars += len(section)
+        if latest_snapshot:
+            result["snapshot"] = {
+                "account_balance": latest_snapshot.account_balance,
+                "equity": latest_snapshot.equity,
+                "daily_pnl": latest_snapshot.daily_pnl,
+                "weekly_pnl": latest_snapshot.weekly_pnl,
+                "monthly_pnl": latest_snapshot.monthly_pnl,
+                "current_risk_percent": latest_snapshot.current_risk_percent,
+                "open_risk": latest_snapshot.open_risk,
+                "available_risk": latest_snapshot.available_risk,
+                "max_drawdown": latest_snapshot.max_drawdown,
+                "current_drawdown": latest_snapshot.current_drawdown,
+                "recovery_progress": latest_snapshot.recovery_progress,
+                "open_positions": latest_snapshot.open_positions,
+                "total_exposure": latest_snapshot.total_exposure,
+                "taken_at": latest_snapshot.created_at.isoformat() if latest_snapshot.created_at else None,
+            }
+        else:
+            result["snapshot"] = None
 
-    return "\n".join(parts)
+        return result
 
+    def build_planning_context(self, project_id: UUID, date: str | None = None) -> dict:
+        target_date = date or datetime.utcnow().strftime("%Y-%m-%d")
+        plan = (
+            self.db.query(TradingPlan)
+            .filter(
+                TradingPlan.project_id == project_id,
+                TradingPlan.plan_date == target_date,
+            )
+            .first()
+        )
+        goals = (
+            self.db.query(Goal)
+            .filter(Goal.project_id == project_id, Goal.status == "active")
+            .all()
+        )
 
-def _format_statistics(data: dict) -> str:
-    o = data.get("overview", {})
-    r = data.get("risk", {})
-    lines = ["[STATISTICS]"]
-    if o.get("total_trades"):
-        lines.append(f"Total trades: {o['total_trades']} | Wins: {o.get('wins',0)} | Losses: {o.get('losses',0)}")
-        wr = o.get('win_rate', 0) or 0
-        if wr > 1:
-            wr = wr / 100
-        lines.append(f"Win rate: {wr*100:.1f}% | Avg R:R: {o.get('avg_rr') or 0:.2f}")
-        lines.append(f"Expectancy: {o.get('expectancy') or 0:.2f} | Profit factor: {r.get('profit_factor') or 0:.2f}")
-        lines.append(f"Total P&L: {o.get('total_pnl') or 0:.2f} | Max drawdown: {r.get('max_drawdown') or 0:.2f}")
-    return "\n".join(lines)
+        result = {"date": target_date}
 
+        if plan:
+            result["plan"] = {
+                "market_bias": plan.market_bias,
+                "watchlist": plan.watchlist,
+                "pairs_to_avoid": plan.pairs_to_avoid,
+                "key_levels": plan.key_levels,
+                "liquidity_areas": plan.liquidity_areas,
+                "expected_scenarios": plan.expected_scenarios,
+                "invalidation_levels": plan.invalidation_levels,
+                "session_goals": plan.session_goals,
+                "risk_allocation": plan.risk_allocation,
+                "notes": plan.notes,
+                "status": plan.status,
+                "is_completed": plan.is_completed,
+            }
+        else:
+            result["plan"] = None
+            result["message"] = "No trading plan for today"
 
-def _format_rules(data: list) -> str:
-    lines = ["[KNOWLEDGE RULES]"]
-    for r in data[:5]:
-        wr = (r.get("win_rate", 0) or 0) * 100
-        lines.append(f"- {r.get('title','?')}: {r.get('occurrences',0)} occurrences, {wr:.0f}% WR, avg R:R {r.get('avg_rr') or 0:.2f}, confidence {r.get('confidence') or 0:.1f}")
-    return "\n".join(lines)
+        if goals:
+            result["goals"] = [
+                {
+                    "title": g.title,
+                    "goal_type": g.goal_type,
+                    "target": g.target_value,
+                    "current": g.current_value,
+                    "unit": g.unit,
+                    "priority": g.priority,
+                    "status": g.status,
+                    "progress_pct": round((g.current_value or 0) / max(g.target_value or 1, 1) * 100, 1) if g.target_value else None,
+                }
+                for g in goals
+            ]
+        else:
+            result["goals"] = []
 
+        return result
 
-def _format_graph(data: dict) -> str:
-    lines = ["[KNOWLEDGE GRAPH]"]
-    lines.append(f"Nodes: {data.get('total_nodes',0)} | Edges: {data.get('total_edges',0)}")
-    snap = data.get("snapshot")
-    if snap and snap.get("summary"):
-        lines.append(f"Summary: {snap['summary']}")
-    return "\n".join(lines)
+    def build_journal_context(self, project_id: UUID, days: int = 7) -> dict:
+        since = datetime.utcnow() - timedelta(days=days)
 
+        events = (
+            self.db.query(LearningEvent)
+            .filter(
+                LearningEvent.project_id == project_id,
+                LearningEvent.created_at >= since,
+            )
+            .order_by(LearningEvent.created_at.desc())
+            .limit(50)
+            .all()
+        )
+        snapshots = (
+            self.db.query(KnowledgeSnapshot)
+            .filter(
+                KnowledgeSnapshot.project_id == project_id,
+                KnowledgeSnapshot.created_at >= since,
+            )
+            .order_by(KnowledgeSnapshot.created_at.desc())
+            .limit(10)
+            .all()
+        )
 
-def _format_patterns(data: list) -> str:
-    lines = ["[PATTERNS]"]
-    for p in data[:5]:
-        wr = (p.get("win_rate", 0) or 0) * 100
-        lines.append(f"- {p.get('name','?')}: {p.get('total_occurrences',0)} occurrences, {wr:.0f}% WR, expectancy {p.get('expectancy') or 0:.2f}, confidence {p.get('confidence_score') or 0:.1f}")
-    return "\n".join(lines)
+        result = {"period_days": days}
 
+        if events:
+            result["learning_events"] = [
+                {
+                    "event_type": e.event_type,
+                    "entity_type": e.entity_type,
+                    "status": e.status,
+                    "summary": e.summary,
+                    "date": e.created_at.isoformat() if e.created_at else None,
+                }
+                for e in events
+            ]
+            event_types = {}
+            for e in events:
+                event_types[e.event_type] = event_types.get(e.event_type, 0) + 1
+            result["event_summary"] = event_types
+        else:
+            result["learning_events"] = []
+            result["message"] = "No recent journal entries"
 
-def _format_memories(data: list) -> str:
-    lines = ["[TRADE MEMORIES]"]
-    for m in data[:5]:
-        lines.append(f"- {m.get('pair','?')} {m.get('direction','?')} | Session: {m.get('session','?')} | Result: {m.get('result','?')}")
-        lines.append(f"  RR: {m.get('rr','?')} | P&L: {m.get('pnl','?')} | Confidence: {m.get('confidence','?')}")
-        if m.get("summary"):
-            lines.append(f"  Summary: {m['summary']}")
-    return "\n".join(lines)
+        if snapshots:
+            result["snapshots"] = [
+                {
+                    "total_trades": s.total_trades,
+                    "total_patterns": s.total_patterns,
+                    "total_claims": s.total_claims,
+                    "total_concepts": s.total_concepts,
+                    "total_sources": s.total_sources,
+                    "win_rate": s.win_rate,
+                    "avg_rr": s.avg_rr,
+                    "expectancy": s.expectancy,
+                    "knowledge_growth": s.knowledge_growth,
+                    "date": s.created_at.isoformat() if s.created_at else None,
+                }
+                for s in snapshots
+            ]
+            if snapshots:
+                latest = snapshots[0]
+                result["latest_snapshot"] = {
+                    "total_trades": latest.total_trades,
+                    "win_rate": latest.win_rate,
+                    "avg_rr": latest.avg_rr,
+                    "knowledge_growth": latest.knowledge_growth,
+                }
+        else:
+            result["snapshots"] = []
 
+        return result
 
-def _format_similarity(data: list) -> str:
-    lines = ["[SIMILAR TRADES]"]
-    for s in data[:3]:
-        lines.append(f"- Trade {s.get('trade_id','?')[:8]}... | Score: {s.get('similarity_score') or 0:.2f} | Result: {s.get('trade_result','?')} | RR: {s.get('rr','?')}")
-    return "\n".join(lines)
+    def build_market_context(self, project_id: UUID) -> dict:
+        active_regimes = (
+            self.db.query(MarketRegime)
+            .filter(
+                MarketRegime.project_id == project_id,
+                MarketRegime.is_active == True,
+            )
+            .all()
+        )
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today_events = (
+            self.db.query(EconomicEvent)
+            .filter(
+                EconomicEvent.project_id == project_id,
+                EconomicEvent.event_date == today,
+            )
+            .order_by(EconomicEvent.impact.desc())
+            .limit(20)
+            .all()
+        )
+        active_alerts = (
+            self.db.query(MarketAlert)
+            .filter(
+                MarketAlert.project_id == project_id,
+                MarketAlert.is_dismissed == False,
+            )
+            .order_by(MarketAlert.created_at.desc())
+            .limit(20)
+            .all()
+        )
 
+        result = {}
 
-def _format_macro(data: dict) -> str:
-    lines = ["[MACRO EVENTS]"]
-    for e in data.get("recent_events", [])[:5]:
-        lines.append(f"- {e.get('event_name','?')} ({e.get('country','?')}) importance={e.get('importance','?')} actual={e.get('actual','?')} forecast={e.get('forecast','?')}")
-    return "\n".join(lines)
+        if active_regimes:
+            result["regimes"] = [
+                {
+                    "regime_type": r.regime_type,
+                    "regime_value": r.regime_value,
+                    "symbol": r.symbol,
+                    "timeframe": r.timeframe,
+                    "confidence": r.confidence,
+                    "description": r.description,
+                }
+                for r in active_regimes
+            ]
+        else:
+            result["regimes"] = []
 
+        if today_events:
+            result["today_events"] = [
+                {
+                    "event_name": e.event_name,
+                    "country": e.country,
+                    "currency": e.currency,
+                    "impact": e.impact,
+                    "category": e.category,
+                    "event_time": e.event_time,
+                    "actual": e.actual_value,
+                    "forecast": e.forecast_value,
+                    "previous": e.previous_value,
+                }
+                for e in today_events
+            ]
+            high_impact = [e for e in today_events if e.impact == "high"]
+            result["high_impact_count"] = len(high_impact)
+        else:
+            result["today_events"] = []
+            result["message"] = "No economic events today"
 
-def _format_institutional(data: dict) -> str:
-    lines = ["[INSTITUTIONAL KNOWLEDGE]"]
-    results = data.get("results", [])
-    if results:
-        for r in results[:5]:
-            lines.append(f"- {r.get('title','?')} [{r.get('category','?')}]: {r.get('summary','') or r.get('definition','')}")
-    rels = data.get("relationships", [])
-    if rels:
-        lines.append("")
-        lines.append("Relationships:")
-        for r in rels[:5]:
-            lines.append(f"  {r.get('source','?')} --[{r.get('relationship_type','?')}]--> {r.get('target','?')}")
-    examples = data.get("examples", [])
-    if examples:
-        lines.append("")
-        lines.append("Examples:")
-        for e in examples[:3]:
-            lines.append(f"  {e.get('title','?')} ({e.get('pair','?')} {e.get('timeframe','?')})")
-    summary = data.get("summary", {})
-    if summary:
-        lines.append(f"Total published concepts: {summary.get('total_concepts',0)}")
-    return "\n".join(lines)
+        if active_alerts:
+            result["alerts"] = [
+                {
+                    "alert_type": a.alert_type,
+                    "title": a.title,
+                    "message": a.message,
+                    "symbol": a.symbol,
+                    "severity": a.severity,
+                }
+                for a in active_alerts
+            ]
+        else:
+            result["alerts"] = []
 
+        return result
 
-def _format_learning(data: dict) -> str:
-    lines = ["[LEARNING EVENTS]"]
-    for e in data.get("events", [])[:3]:
-        lines.append(f"- {e.get('event_type','?')}: {e.get('summary','?')} (status={e.get('status','?')})")
-    snap = data.get("latest_snapshot")
-    if snap:
-        lines.append(f"Snapshot: {snap.get('total_trades',0)} trades, {snap.get('win_rate',0)*100:.0f}% WR, growth={snap.get('knowledge_growth',0)}")
-    return "\n".join(lines)
+    def build_knowledge_context(self, project_id: UUID) -> dict:
+        nodes = (
+            self.db.query(KnowledgeNode)
+            .filter(KnowledgeNode.project_id == project_id)
+            .count()
+        )
+        edges = (
+            self.db.query(KnowledgeEdge)
+            .filter(KnowledgeEdge.project_id == project_id)
+            .count()
+        )
+        latest_snapshot = (
+            self.db.query(KnowledgeGraphSnapshot)
+            .filter(KnowledgeGraphSnapshot.project_id == project_id)
+            .order_by(KnowledgeGraphSnapshot.created_at.desc())
+            .first()
+        )
+        concepts = (
+            self.db.query(KnowledgeConcept)
+            .count()
+        )
+        top_nodes = (
+            self.db.query(KnowledgeNode)
+            .filter(KnowledgeNode.project_id == project_id)
+            .order_by(KnowledgeNode.occurrences.desc())
+            .limit(10)
+            .all()
+        )
+        patterns = (
+            self.db.query(DetectedPattern)
+            .filter(
+                DetectedPattern.project_id == project_id,
+                DetectedPattern.is_active == True,
+            )
+            .order_by(DetectedPattern.confidence.desc())
+            .limit(10)
+            .all()
+        )
 
+        result = {
+            "graph": {
+                "total_nodes": nodes,
+                "total_edges": edges,
+                "density": round(edges / max(nodes, 1), 4),
+            },
+            "top_nodes": [
+                {"name": n.name, "type": n.type, "category": n.category, "occurrences": n.occurrences}
+                for n in top_nodes
+            ],
+        }
 
-def _format_trade_debriefs(data: list) -> str:
-    lines = ["[PERSONAL TRADE DEBRIEFS]"]
-    for d in data[:3]:
-        lines.append(f"- Trade {d.get('trade_id','?')[:8]}... | Rating: {d.get('overall_rating','?')}/10")
-        if d.get("summary"):
-            lines.append(f"  Summary: {d['summary']}")
-        if d.get("lessons_learned"):
-            lessons = d["lessons_learned"]
-            if isinstance(lessons, list):
-                for l in lessons[:2]:
-                    lines.append(f"  Lesson: {l}")
-        if d.get("mistakes"):
-            mistakes = d["mistakes"]
-            if isinstance(mistakes, list):
-                for m in mistakes[:2]:
-                    lines.append(f"  Mistake: {m}")
-        if d.get("improvements"):
-            improvements = d["improvements"]
-            if isinstance(improvements, list):
-                for i in improvements[:2]:
-                    lines.append(f"  Improvement: {i}")
-    return "\n".join(lines)
+        if latest_snapshot:
+            result["graph"]["latest_snapshot"] = {
+                "total_nodes": latest_snapshot.total_nodes,
+                "total_edges": latest_snapshot.total_edges,
+                "most_connected_type": latest_snapshot.most_connected_type,
+                "summary": latest_snapshot.summary,
+            }
 
+        if concepts:
+            result["total_concepts"] = concepts
 
-def _format_personal_patterns(data: list) -> str:
-    lines = ["[PERSONAL PATTERNS]"]
-    for p in data[:5]:
-        wr = (p.get("win_count", 0) / max(p.get("occurrence_count", 1), 1)) * 100
-        lines.append(f"- {p.get('name','?')} ({p.get('category','?')}): {p.get('occurrence_count',0)} occurrences, {wr:.0f}% WR, avg R:R {p.get('avg_rr') or 0:.2f}, confidence {p.get('confidence') or 0:.1f}")
-    return "\n".join(lines)
+        if patterns:
+            result["detected_patterns"] = [
+                {
+                    "pattern_type": p.pattern_type,
+                    "pattern_key": p.pattern_key,
+                    "pattern_value": p.pattern_value,
+                    "confidence": p.confidence,
+                    "sample_size": p.sample_size,
+                    "win_rate": p.win_rate,
+                    "description": p.description,
+                    "is_positive": p.is_positive,
+                }
+                for p in patterns
+            ]
 
+        if not nodes and not edges and not patterns:
+            result["message"] = "No knowledge graph data available"
 
-def _format_personal_rules(data: list) -> str:
-    lines = ["[PERSONAL RULES]"]
-    for r in data[:5]:
-        status = r.get("status", "?")
-        lines.append(f"- {r.get('title','?')} [{r.get('category','?')}] v{r.get('version',1)} ({status})")
-        if r.get("description"):
-            lines.append(f"  {r['description']}")
-        stats = r.get("supporting_stats") or {}
-        if stats:
-            lines.append(f"  WR: {stats.get('win_rate', '?')}, R:R: {stats.get('avg_rr', '?')}, confidence: {stats.get('confidence', '?')}")
-    return "\n".join(lines)
+        return result
 
+    def build_psychology_context(self, project_id: UUID) -> dict:
+        profile = (
+            self.db.query(AIProfile)
+            .filter(AIProfile.project_id == project_id)
+            .first()
+        )
+        trader_profile = (
+            self.db.query(TraderProfile)
+            .filter(TraderProfile.project_id == project_id)
+            .first()
+        )
 
-def _format_trader_profile(data: dict) -> str:
-    lines = ["[TRADER PROFILE]"]
-    if data.get("strengths"):
-        strengths = data["strengths"]
-        if isinstance(strengths, list):
-            lines.append(f"Strengths: {', '.join(strengths[:3])}")
-    if data.get("weaknesses"):
-        weaknesses = data["weaknesses"]
-        if isinstance(weaknesses, list):
-            lines.append(f"Weaknesses: {', '.join(weaknesses[:3])}")
-    if data.get("discipline_score") is not None:
-        lines.append(f"Discipline score: {data['discipline_score']:.1f}/100")
-    if data.get("rule_adherence"):
-        ra = data["rule_adherence"]
-        if isinstance(ra, dict):
-            lines.append(f"Rule adherence: {ra}")
-    if data.get("performance_trends"):
-        pt = data["performance_trends"]
-        if isinstance(pt, dict):
-            lines.append(f"Performance trends: {pt}")
-    lines.append(f"Trades analyzed: {data.get('total_trades_analyzed',0)} | Debriefs: {data.get('total_debriefs',0)} | Active patterns: {data.get('active_patterns',0)} | Approved rules: {data.get('approved_rules',0)}")
-    if data.get("improvement_suggestions"):
-        suggestions = data["improvement_suggestions"]
-        if isinstance(suggestions, list):
-            for s in suggestions[:3]:
-                lines.append(f"Suggestion: {s}")
-    return "\n".join(lines)
+        result = {}
+
+        if profile:
+            result["ai_profile"] = {
+                "style": profile.trading_style,
+                "preferred_sessions": profile.preferred_sessions,
+                "preferred_timeframes": profile.preferred_timeframes,
+                "preferred_pairs": profile.preferred_pairs,
+                "risk_profile": profile.risk_profile,
+                "avg_rr": profile.avg_rr,
+                "avg_risk_per_trade": profile.avg_risk_per_trade,
+                "max_drawdown_pct": profile.max_drawdown_pct,
+                "overall_score": profile.overall_score,
+                "psychological_patterns": profile.psychological_patterns,
+                "most_common_mistakes": profile.most_common_mistakes,
+                "most_successful_behaviors": profile.most_successful_behaviors,
+                "best_conditions": profile.best_conditions,
+                "worst_conditions": profile.worst_conditions,
+                "learning_progress": profile.learning_progress,
+            }
+
+        if trader_profile:
+            result["trader_profile"] = {
+                "strengths": trader_profile.strengths,
+                "weaknesses": trader_profile.weaknesses,
+                "discipline_score": trader_profile.discipline_score,
+                "rule_adherence": trader_profile.rule_adherence,
+                "performance_trends": trader_profile.performance_trends,
+                "total_trades_analyzed": trader_profile.total_trades_analyzed,
+                "total_debriefs": trader_profile.total_debriefs,
+                "active_patterns": trader_profile.active_patterns,
+                "approved_rules": trader_profile.approved_rules,
+                "improvement_suggestions": trader_profile.improvement_suggestions,
+            }
+
+        if not profile and not trader_profile:
+            return {"message": "No psychology profile available"}
+
+        return result
+
+    # ──────────────────────────────────────────────
+    # FORMATTER
+    # ──────────────────────────────────────────────
+
+    def format_context_for_prompt(self, context: dict, max_tokens: int = 3000) -> str:
+        sections = []
+        char_budget = max_tokens * 4
+
+        sections.append("# Trading Context")
+        sections.append(f"Generated: {context.get('generated_at', 'now')}")
+        sections.append("")
+
+        remaining = char_budget
+
+        def add_section(title: str, content: str) -> bool:
+            nonlocal remaining
+            block = f"## {title}\n\n{content}\n"
+            if len(block) > remaining:
+                return False
+            sections.append(block)
+            remaining -= len(block)
+            return True
+
+        # Performance
+        perf = context.get("performance") or context.get("trading", {})
+        if perf and "message" not in perf:
+            lines = []
+            if perf.get("total_trades"):
+                lines.append(
+                    f"Trades: {perf.get('total_trades', 0)} | "
+                    f"Win Rate: {perf.get('win_rate', 0)}% | "
+                    f"P&L: ${perf.get('total_pnl', 0):.2f} | "
+                    f"Avg R:R: {perf.get('avg_rr', 0):.2f}"
+                )
+            if perf.get("max_drawdown_pct") is not None:
+                lines.append(
+                    f"Max Drawdown: {perf.get('max_drawdown_pct', 0)}% | "
+                    f"Profit Factor: {perf.get('profit_factor', 0):.2f} | "
+                    f"Expectancy: ${perf.get('expectancy', 0):.2f}"
+                )
+            if perf.get("consecutive_wins"):
+                lines.append(
+                    f"Best Streak: {perf.get('consecutive_wins', 0)} wins | "
+                    f"Worst Streak: {perf.get('consecutive_losses', 0)} losses"
+                )
+            if perf.get("avg_pnl") is not None:
+                lines.append(
+                    f"Avg Win: ${perf.get('avg_win', 0):.2f} | "
+                    f"Avg Loss: ${perf.get('avg_loss', 0):.2f}"
+                )
+            if lines:
+                add_section("Recent Performance", "\n".join(lines))
+
+        # Trading
+        trading = context.get("trading", {})
+        if trading and "message" not in trading and trading is not perf:
+            lines = [
+                f"Period: {trading.get('period_days', 7)} days | "
+                f"Trades: {trading.get('total_trades', 0)} | "
+                f"Wins: {trading.get('wins', 0)} / Losses: {trading.get('losses', 0)}",
+                f"Win Rate: {trading.get('win_rate', 0)}% | "
+                f"Total P&L: ${trading.get('total_pnl', 0):.2f} | "
+                f"Avg R:R: {trading.get('avg_rr', 0):.2f}",
+            ]
+            if trading.get("recent_trades"):
+                lines.append("Recent trades:")
+                for t in trading["recent_trades"][:5]:
+                    lines.append(
+                        f"  {t.get('pair','?')} {t.get('direction','?')} | "
+                        f"P&L: ${t.get('pnl',0):.2f} | R:R: {t.get('rr','?')} | "
+                        f"{t.get('result','?')} | Emotion: {t.get('emotion','?')}"
+                    )
+            add_section("Recent Trading", "\n".join(lines))
+
+        # Strategies
+        strats = context.get("strategies", {})
+        if strats and "message" not in strats:
+            lines = [
+                f"Total: {strats.get('total_strategies', 0)} | "
+                f"Active: {strats.get('active_strategies', 0)}"
+            ]
+            if strats.get("best_performing"):
+                lines.append(f"Best: {strats['best_performing'].get('name','?')} "
+                             f"({strats['best_performing'].get('win_rate',0)}% WR)")
+            if strats.get("strategies"):
+                for s in strats["strategies"][:5]:
+                    lines.append(
+                        f"  {s.get('name','?')} [{s.get('status','?')}] | "
+                        f"{s.get('total_trades',0)} trades | "
+                        f"{s.get('win_rate',0)}% WR | "
+                        f"${s.get('total_pnl',0):.2f}"
+                    )
+            add_section("Strategies", "\n".join(lines))
+
+        # Risk
+        risk = context.get("risk", {})
+        if risk and "message" not in risk:
+            lines = []
+            snap = risk.get("snapshot")
+            if snap:
+                lines.append(
+                    f"Balance: ${snap.get('account_balance',0):.2f} | "
+                    f"Equity: ${snap.get('equity',0):.2f} | "
+                    f"Daily P&L: ${snap.get('daily_pnl',0):.2f}"
+                )
+                lines.append(
+                    f"Drawdown: {snap.get('current_drawdown',0)}% | "
+                    f"Max DD: {snap.get('max_drawdown',0)}% | "
+                    f"Open: {snap.get('open_positions',0)} | "
+                    f"Risk: {snap.get('current_risk_percent',0)}%"
+                )
+            if risk.get("breached_rules"):
+                for br in risk["breached_rules"]:
+                    lines.append(f"BREACH: {br.get('name','?')} "
+                                 f"(current={br.get('current',0)}, limit={br.get('limit',0)})")
+            if risk.get("active_rule_count", 0) > 0:
+                lines.append(f"Active rules: {risk['active_rule_count']} | "
+                             f"Total violations: {risk.get('violations',0)}")
+            if lines:
+                add_section("Risk Status", "\n".join(lines))
+
+        # Planning
+        planning = context.get("planning", {})
+        if planning and ("plan" in planning or "goals" in planning):
+            lines = []
+            plan = planning.get("plan")
+            if plan:
+                lines.append(f"Date: {planning.get('date','?')}")
+                lines.append(f"Bias: {plan.get('market_bias','none')} | "
+                             f"Status: {plan.get('status','?')}")
+                if plan.get("watchlist"):
+                    lines.append(f"Watchlist: {', '.join(str(w) for w in plan['watchlist'][:5])}")
+                if plan.get("key_levels"):
+                    lines.append(f"Key levels: {', '.join(str(k) for k in plan['key_levels'][:5])}")
+            goals = planning.get("goals", [])
+            if goals:
+                for g in goals[:3]:
+                    pct = g.get("progress_pct", 0)
+                    lines.append(f"Goal: {g.get('title','?')} — "
+                                 f"{g.get('current','0')}/{g.get('target','?')} {g.get('unit','')} "
+                                 f"({pct}%)")
+            add_section("Today's Plan", "\n".join(lines))
+
+        # Journal
+        journal = context.get("journal", {})
+        if journal and "message" not in journal:
+            lines = []
+            snap = journal.get("latest_snapshot")
+            if snap:
+                lines.append(
+                    f"Trades: {snap.get('total_trades',0)} | "
+                    f"WR: {snap.get('win_rate',0)}% | "
+                    f"Growth: {snap.get('knowledge_growth',0)}"
+                )
+            events = journal.get("learning_events", [])
+            if events:
+                for e in events[:3]:
+                    lines.append(f"  [{e.get('event_type','?')}] {e.get('summary','?')} — {e.get('status','?')}")
+            if lines:
+                add_section("Journal / Learning", "\n".join(lines))
+
+        # Market
+        market = context.get("market", {})
+        if market and "message" not in market:
+            lines = []
+            regimes = market.get("regimes", [])
+            if regimes:
+                for r in regimes[:3]:
+                    lines.append(f"  {r.get('regime_type','?')}: {r.get('regime_value','?')} "
+                                 f"(confidence={r.get('confidence',0):.2f})")
+            events = market.get("today_events", [])
+            if events:
+                high = [e for e in events if e.get("impact") == "high"]
+                lines.append(f"Today's events: {len(events)} total, "
+                             f"{len(high)} high impact")
+                for e in events[:3]:
+                    lines.append(f"  {e.get('event_name','?')} ({e.get('country','?')}) — "
+                                 f"impact={e.get('impact','?')}, forecast={e.get('forecast','?')}")
+            if lines:
+                add_section("Market Intelligence", "\n".join(lines))
+
+        # Knowledge
+        knowledge = context.get("knowledge", {})
+        if knowledge and "message" not in knowledge:
+            lines = []
+            graph = knowledge.get("graph", {})
+            if graph:
+                lines.append(f"Graph: {graph.get('total_nodes',0)} nodes, "
+                             f"{graph.get('total_edges',0)} edges")
+            top = knowledge.get("top_nodes", [])
+            if top:
+                lines.append("Top concepts:")
+                for n in top[:5]:
+                    lines.append(f"  {n.get('name','?')} ({n.get('type','?')}) — "
+                                 f"{n.get('occurrences',0)} occurrences")
+            total_concepts = knowledge.get("total_concepts", 0)
+            if total_concepts:
+                lines.append(f"Knowledge concepts: {total_concepts}")
+            patterns = knowledge.get("detected_patterns", [])
+            if patterns:
+                lines.append("Detected patterns:")
+                for p in patterns[:3]:
+                    lines.append(f"  {p.get('description','?')} "
+                                 f"(confidence={p.get('confidence',0):.2f})")
+            if lines:
+                add_section("Knowledge Graph", "\n".join(lines))
+
+        # Psychology
+        psych = context.get("psychology", {})
+        if psych and "message" not in psych:
+            lines = []
+            ai_p = psych.get("ai_profile", {})
+            if ai_p:
+                lines.append(
+                    f"Style: {ai_p.get('style','?')} | "
+                    f"Risk: {ai_p.get('risk_profile','?')} | "
+                    f"Score: {ai_p.get('overall_score','?')}"
+                )
+                if ai_p.get("preferred_sessions"):
+                    lines.append(f"Sessions: {', '.join(ai_p['preferred_sessions'])}")
+            tp = psych.get("trader_profile", {})
+            if tp:
+                if tp.get("strengths"):
+                    lines.append(f"Strengths: {', '.join(tp['strengths'][:3])}")
+                if tp.get("weaknesses"):
+                    lines.append(f"Weaknesses: {', '.join(tp['weaknesses'][:3])}")
+                if tp.get("discipline_score") is not None:
+                    lines.append(f"Discipline: {tp['discipline_score']:.1f}/100")
+                if tp.get("improvement_suggestions"):
+                    for s in tp["improvement_suggestions"][:2]:
+                        lines.append(f"  Suggestion: {s}")
+            if lines:
+                add_section("Psychology Profile", "\n".join(lines))
+
+        # Summary
+        summary = context.get("summary", "")
+        if summary and remaining > 200:
+            add_section("Summary", summary)
+
+        return "\n".join(sections)
+
+    # ──────────────────────────────────────────────
+    # INTERNAL HELPERS
+    # ──────────────────────────────────────────────
+
+    @staticmethod
+    def _max_consecutive(trades: list, predicate) -> int:
+        best = 0
+        curr = 0
+        for t in sorted(trades, key=lambda x: x.created_at or datetime.min):
+            if predicate(t):
+                curr += 1
+                best = max(best, curr)
+            else:
+                curr = 0
+        return best
+
+    @staticmethod
+    def _generate_summary(ctx: dict) -> str:
+        parts = []
+        perf = ctx.get("performance") or ctx.get("trading", {})
+        if perf and perf.get("total_trades"):
+            parts.append(
+                f"{perf['total_trades']} trades, {perf.get('win_rate',0)}% WR, "
+                f"${perf.get('total_pnl',0):.2f} P&L"
+            )
+        risk = ctx.get("risk", {})
+        snap = risk.get("snapshot") if risk else None
+        if snap:
+            parts.append(
+                f"DD: {snap.get('current_drawdown',0)}%, "
+                f"Risk: {snap.get('current_risk_percent',0)}%"
+            )
+        planning = ctx.get("planning", {})
+        plan = planning.get("plan") if planning else None
+        if plan:
+            parts.append(f"Bias: {plan.get('market_bias','?')}")
+        market = ctx.get("market", {})
+        if market and market.get("high_impact_count"):
+            parts.append(f"{market['high_impact_count']} high-impact events today")
+        knowledge = ctx.get("knowledge", {})
+        graph = knowledge.get("graph", {}) if knowledge else {}
+        if graph:
+            parts.append(f"KG: {graph.get('total_nodes',0)}N/{graph.get('total_edges',0)}E")
+        return " | ".join(parts) if parts else "No summary data available"

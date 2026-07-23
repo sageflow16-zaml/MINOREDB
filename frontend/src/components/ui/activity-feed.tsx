@@ -40,6 +40,7 @@ export function ActivityItem({
       className={cn(
         'flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors w-full text-left',
         onClick && 'hover:bg-muted/20 cursor-pointer',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         className,
       )}
     >

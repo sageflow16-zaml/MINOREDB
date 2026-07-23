@@ -29,6 +29,7 @@ class KnowledgeRule(Base):
         PG_UUID(as_uuid=True),
         ForeignKey("project.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     project: Mapped["Project"] = relationship("Project")
 

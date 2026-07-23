@@ -118,7 +118,7 @@ export default function ProjectsPage() {
       {!projects || projects.length === 0 ? (
         <EmptyState
           message="No projects yet"
-          description="Create your first project to start tracking trades and research."
+          description="Create your first project to start organizing your trading research."
           action={
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="mr-1.5 h-4 w-4" /> Create Project
@@ -170,7 +170,7 @@ export default function ProjectsPage() {
                       {project.description}
                     </p>
                   )}
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {formatDate(project.created_at)}

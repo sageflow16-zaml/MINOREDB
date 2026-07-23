@@ -13,7 +13,7 @@ class CollectorStatus(Base):
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="idle")
@@ -38,7 +38,7 @@ class CollectorLog(Base):
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False, index=True
     )
     collector_name: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False)
@@ -60,7 +60,7 @@ class CollectorSchedule(Base):
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True), ForeignKey("project.id", ondelete="CASCADE"), nullable=False, index=True
     )
     collector_name: Mapped[str] = mapped_column(String, nullable=False)
     interval_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=60)

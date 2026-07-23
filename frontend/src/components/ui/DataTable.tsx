@@ -150,6 +150,7 @@ export function DataTable<T>({
                       col.className
                     )}
                     onClick={() => col.sortable && typeof col.accessor === 'string' && handleSort(col.accessor)}
+                    aria-sort={col.sortable && sortKey === col.accessor ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
                   >
                     <div className="flex items-center gap-1">
                       <span>{col.header}</span>
@@ -189,6 +190,8 @@ export function DataTable<T>({
                   <TableRow
                     key={getKey(row, index)}
                     onClick={() => onRowClick?.(row)}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter') { e.preventDefault(); onRowClick(row); } } : undefined}
                     className={cn(
                       onRowClick && 'cursor-pointer',
                       compact && '[&_td]:py-2 [&_td]:text-xs'
@@ -231,19 +234,19 @@ export function DataTable<T>({
             </select>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(0)} disabled={page === 0}>
+            <Button variant="ghost" size="icon-sm" onClick={() => setPage(0)} disabled={page === 0} aria-label="First page">
               <ChevronsLeft className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(page - 1)} disabled={page === 0}>
+            <Button variant="ghost" size="icon-sm" onClick={() => setPage(page - 1)} disabled={page === 0} aria-label="Previous page">
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
             <span className="min-w-[40px] text-center text-[11px] text-muted-foreground">
               {page + 1} / {totalPages}
             </span>
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1}>
+            <Button variant="ghost" size="icon-sm" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1} aria-label="Next page">
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>
+            <Button variant="ghost" size="icon-sm" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1} aria-label="Last page">
               <ChevronsRight className="h-3.5 w-3.5" />
             </Button>
           </div>

@@ -30,7 +30,7 @@ export default function InterpretationsPage() {
       />
 
       {!interpretations || interpretations.length === 0 ? (
-        <EmptyState message="No interpretations found." />
+        <EmptyState message="No interpretations found." description="Analyze your claims to generate interpretations." />
       ) : (
         <div className="grid gap-3">
           {interpretations.map((row, i) => (
@@ -40,7 +40,7 @@ export default function InterpretationsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
             >
-              <Card>
+              <Card className="hover:shadow-md hover:border-primary/20 transition-all duration-200">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 min-w-0">
@@ -52,9 +52,9 @@ export default function InterpretationsPage() {
                           {row.interpretation_statement?.slice(0, 80) || 'Interpretation'}
                         </CardTitle>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-muted-foreground">Concept: {row.concept_id?.slice(0, 12)}...</span>
+                          <span className="text-xs text-muted-foreground">Concept: {row.concept_id?.slice(0, 12)}...</span>
                           {row.interpretation_foundation && (
-                            <span className="text-[10px] text-muted-foreground">Foundation: {row.interpretation_foundation}</span>
+                            <span className="text-xs text-muted-foreground">Foundation: {row.interpretation_foundation}</span>
                           )}
                         </div>
                       </div>

@@ -64,6 +64,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             },
         )
         response.headers["X-Request-ID"] = request_id
+        response.headers["X-Response-Time"] = str(round(process_time * 1000))
         return response
 
 

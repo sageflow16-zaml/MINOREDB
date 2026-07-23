@@ -1,0 +1,15 @@
+2026-07-21 01:16:31,723 - src.broker.providers.registry - INFO - Registered broker provider: metatrader4 (MetaTrader 4)
+2026-07-21 01:16:31,750 - src.broker.providers.registry - INFO - Registered broker provider: metatrader5 (MetaTrader 5)
+2026-07-21 01:16:31,762 - src.broker.providers.registry - INFO - Registered broker provider: ctrader (cTrader)
+2026-07-21 01:16:31,775 - src.broker.providers.registry - INFO - Registered broker provider: dxtrade (DXtrade)
+2026-07-21 01:16:31,787 - src.broker.providers.registry - INFO - Registered broker provider: interactive_brokers (Interactive Brokers)
+2026-07-21 01:16:31,789 - src.broker.providers.registry - INFO - Registered broker provider: oanda (OANDA)
+2026-07-21 01:16:31,790 - src.broker.providers.registry - INFO - Registered broker provider: tradelocker (TradeLocker)
+2026-07-21 01:16:31,791 - src.broker.providers.registry - INFO - Registered broker provider: binance (Binance)
+2026-07-21 01:16:31,791 - src.broker.providers.registry - INFO - Registered broker provider: bybit (Bybit)
+2026-07-21 01:16:31,792 - src.broker.providers.registry - INFO - Registered broker provider: kraken (Kraken)
+2026-07-21 01:16:31,793 - src.broker.providers.registry - INFO - Registered broker provider: custom_rest (Custom REST API)
+2026-07-21 01:16:35,332 - src.main - INFO - Application starting up
+2026-07-21 01:16:35,355 - src.main - INFO - Intelligence agents registered
+2026-07-21 01:16:35,357 - src.main - INFO - Registered routes
+2026-07-21 01:16:35,487 - src.main - INFO - Application shutting down; disposing DB engine

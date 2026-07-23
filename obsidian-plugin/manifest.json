@@ -1,0 +1,11 @@
+{
+  "id": "minore-trading",
+  "name": "Minore Trading OS",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Bidirectional sync between Obsidian and Project Minore — AI-powered trading knowledge platform",
+  "author": "Minore",
+  "authorUrl": "https://minore.io",
+  "fundingUrl": "https://minore.io/funding",
+  "isDesktopOnly": false
+}

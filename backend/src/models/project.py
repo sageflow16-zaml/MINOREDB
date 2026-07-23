@@ -3,9 +3,9 @@ from uuid import UUID, uuid4
 from sqlalchemy import String, DateTime, ForeignKey, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from src.db.session import Base
+from src.db.session import Base, SoftDeleteMixin
 
-class Project(Base):
+class Project(Base, SoftDeleteMixin):
     __tablename__ = "project"
 
     id: Mapped[UUID] = mapped_column(

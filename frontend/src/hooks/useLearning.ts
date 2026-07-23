@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { learningService } from '../api/learning';
 
-export const useLearningEvents = (projectId: string) => {
+export const useLearningEvents = (projectId: string, limit?: number) => {
   return useQuery({
-    queryKey: ['learning', projectId, 'events'],
-    queryFn: () => learningService.events(projectId),
+    queryKey: ['learning', projectId, 'events', limit],
+    queryFn: () => learningService.events(projectId, limit),
     enabled: !!projectId,
   });
 };

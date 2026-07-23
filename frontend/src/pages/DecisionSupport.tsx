@@ -12,21 +12,10 @@ import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
 import { useDecisionCurrent, useDecisionTrade, useDecisionHistory } from '../hooks/useDecision';
 import { BarChart3, TrendingUp, Target, Scale, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { FormField } from '../components/ui/form-field';
 import type { DecisionResponse, DecisionEnvironment } from '../api/types';
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
-
-function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-medium text-muted-foreground">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-        <option value="">Any</option>
-        {options.map((o) => (<option key={o} value={o}>{o}</option>))}
-      </select>
-    </div>
-  );
-}
 
 export default function DecisionPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -109,21 +98,21 @@ export default function DecisionPage() {
         <CardContent className="space-y-4">
           {compareMode === 'current' && (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-              <SelectField label="Pair" value={env.pair || ''} onChange={(v) => setEnv({ ...env, pair: v })} options={['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD', 'USDCHF']} />
-              <SelectField label="Direction" value={env.direction || ''} onChange={(v) => setEnv({ ...env, direction: v })} options={['BUY', 'SELL']} />
-              <SelectField label="Weekly Bias" value={env.weekly_bias || ''} onChange={(v) => setEnv({ ...env, weekly_bias: v })} options={['BULLISH', 'BEARISH', 'NEUTRAL']} />
-              <SelectField label="Daily Bias" value={env.daily_bias || ''} onChange={(v) => setEnv({ ...env, daily_bias: v })} options={['BULLISH', 'BEARISH', 'NEUTRAL']} />
-              <SelectField label="H4 Bias" value={env.h4_bias || ''} onChange={(v) => setEnv({ ...env, h4_bias: v })} options={['BULLISH', 'BEARISH', 'NEUTRAL']} />
-              <SelectField label="Market Phase" value={env.market_phase || ''} onChange={(v) => setEnv({ ...env, market_phase: v })} options={['ACCUMULATION', 'MARKUP', 'DISTRIBUTION', 'MARKDOWN']} />
-              <SelectField label="Trend" value={env.trend || ''} onChange={(v) => setEnv({ ...env, trend: v })} options={['UPTREND', 'DOWNTREND', 'RANGING']} />
-              <SelectField label="Liquidity Sweep" value={env.liquidity_sweep || ''} onChange={(v) => setEnv({ ...env, liquidity_sweep: v })} options={['YES', 'NO']} />
-              <SelectField label="MSS" value={env.mss || ''} onChange={(v) => setEnv({ ...env, mss: v })} options={['YES', 'NO']} />
-              <SelectField label="FVG" value={env.fvg || ''} onChange={(v) => setEnv({ ...env, fvg: v })} options={['YES', 'NO']} />
+              <FormField label="Pair" value={env.pair || ''} onChange={(v) => setEnv({ ...env, pair: v })} options={['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD', 'USDCHF']} />
+              <FormField label="Direction" value={env.direction || ''} onChange={(v) => setEnv({ ...env, direction: v })} options={['BUY', 'SELL']} />
+              <FormField label="Weekly Bias" value={env.weekly_bias || ''} onChange={(v) => setEnv({ ...env, weekly_bias: v })} options={['BULLISH', 'BEARISH', 'NEUTRAL']} />
+              <FormField label="Daily Bias" value={env.daily_bias || ''} onChange={(v) => setEnv({ ...env, daily_bias: v })} options={['BULLISH', 'BEARISH', 'NEUTRAL']} />
+              <FormField label="H4 Bias" value={env.h4_bias || ''} onChange={(v) => setEnv({ ...env, h4_bias: v })} options={['BULLISH', 'BEARISH', 'NEUTRAL']} />
+              <FormField label="Market Phase" value={env.market_phase || ''} onChange={(v) => setEnv({ ...env, market_phase: v })} options={['ACCUMULATION', 'MARKUP', 'DISTRIBUTION', 'MARKDOWN']} />
+              <FormField label="Trend" value={env.trend || ''} onChange={(v) => setEnv({ ...env, trend: v })} options={['UPTREND', 'DOWNTREND', 'RANGING']} />
+              <FormField label="Liquidity Sweep" value={env.liquidity_sweep || ''} onChange={(v) => setEnv({ ...env, liquidity_sweep: v })} options={['YES', 'NO']} />
+              <FormField label="MSS" value={env.mss || ''} onChange={(v) => setEnv({ ...env, mss: v })} options={['YES', 'NO']} />
+              <FormField label="FVG" value={env.fvg || ''} onChange={(v) => setEnv({ ...env, fvg: v })} options={['YES', 'NO']} />
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-medium text-muted-foreground">Sessions</label>
+                <label className="text-xs font-medium text-muted-foreground">Sessions</label>
                 <div className="flex gap-2">
                   {(['Asian', 'London', 'NY'] as const).map((s) => (
-                    <label key={s} className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer">
+                    <label key={s} className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer">
                       <input type="checkbox" className="rounded border-input" checked={s === 'Asian' ? (env.asian_session || false) : s === 'London' ? (env.london_session || false) : (env.newyork_session || false)}
                         onChange={(e) => setEnv({ ...env, [s === 'Asian' ? 'asian_session' : s === 'London' ? 'london_session' : 'newyork_session']: e.target.checked })}
                       />
@@ -206,7 +195,7 @@ export default function DecisionPage() {
               <CardContent className="py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Target className="h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] text-muted-foreground">Market Alignment</p>
+                  <p className="text-xs text-muted-foreground">Market Alignment</p>
                 </div>
                 <p className="text-lg font-bold text-foreground">{ma?.score || 0}%</p>
               </CardContent>
@@ -215,7 +204,7 @@ export default function DecisionPage() {
               <CardContent className="py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Activity className="h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] text-muted-foreground">Similar Trades</p>
+                  <p className="text-xs text-muted-foreground">Similar Trades</p>
                 </div>
                 <p className="text-lg font-bold text-foreground">{String(sim?.matches_found || 0)}</p>
               </CardContent>
@@ -224,7 +213,7 @@ export default function DecisionPage() {
               <CardContent className="py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp className="h-3.5 w-3.5 text-success" />
-                  <p className="text-[10px] text-muted-foreground">Hist. Win Rate</p>
+                  <p className="text-xs text-muted-foreground">Hist. Win Rate</p>
                 </div>
                 <p className="text-lg font-bold text-foreground">{sim?.average_win_rate || 0}%</p>
               </CardContent>
@@ -233,7 +222,7 @@ export default function DecisionPage() {
               <CardContent className="py-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Scale className="h-3.5 w-3.5 text-chart-1" />
-                  <p className="text-[10px] text-muted-foreground">Hist. RR</p>
+                  <p className="text-xs text-muted-foreground">Hist. RR</p>
                 </div>
                 <p className="text-lg font-bold text-foreground">{(sim?.average_rr || 0).toFixed(2)}</p>
               </CardContent>
@@ -327,14 +316,14 @@ export default function DecisionPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <div><span className="text-[10px] text-muted-foreground">Name</span><div className="text-sm font-medium text-foreground">{pat.name}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Win Rate</span><div className="text-sm font-medium text-foreground">{pat.win_rate}%</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Expectancy</span><div className="text-sm font-medium text-foreground">{pat.expectancy}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Occurrences</span><div className="text-sm font-medium text-foreground">{pat.occurrences}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Avg RR</span><div className="text-sm font-medium text-foreground">{pat.avg_rr}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Profit Factor</span><div className="text-sm font-medium text-foreground">{pat.profit_factor}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Confidence</span><div className="text-sm font-medium text-foreground">{pat.confidence}%</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Match Score</span><div className="text-sm font-medium text-foreground">{pat.match_score}%</div></div>
+                  <div><span className="text-xs text-muted-foreground">Name</span><div className="text-sm font-medium text-foreground">{pat.name}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Win Rate</span><div className="text-sm font-medium text-foreground">{pat.win_rate}%</div></div>
+                  <div><span className="text-xs text-muted-foreground">Expectancy</span><div className="text-sm font-medium text-foreground">{pat.expectancy}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Occurrences</span><div className="text-sm font-medium text-foreground">{pat.occurrences}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Avg RR</span><div className="text-sm font-medium text-foreground">{pat.avg_rr}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Profit Factor</span><div className="text-sm font-medium text-foreground">{pat.profit_factor}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Confidence</span><div className="text-sm font-medium text-foreground">{pat.confidence}%</div></div>
+                  <div><span className="text-xs text-muted-foreground">Match Score</span><div className="text-sm font-medium text-foreground">{pat.match_score}%</div></div>
                 </div>
               </CardContent>
             </Card>
@@ -347,12 +336,12 @@ export default function DecisionPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <div><span className="text-[10px] text-muted-foreground">Overall Win Rate</span><div className="text-sm font-medium text-foreground">{st.overall_win_rate}%</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Avg RR</span><div className="text-sm font-medium text-foreground">{st.overall_avg_rr}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Expectancy</span><div className="text-sm font-medium text-foreground">{st.overall_expectancy}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Total Trades</span><div className="text-sm font-medium text-foreground">{st.overall_total_trades}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Profit Factor</span><div className="text-sm font-medium text-foreground">{st.overall_profit_factor}</div></div>
-                  <div><span className="text-[10px] text-muted-foreground">Max Drawdown</span><div className="text-sm font-medium text-foreground">{st.overall_max_drawdown}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Overall Win Rate</span><div className="text-sm font-medium text-foreground">{st.overall_win_rate}%</div></div>
+                  <div><span className="text-xs text-muted-foreground">Avg RR</span><div className="text-sm font-medium text-foreground">{st.overall_avg_rr}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Expectancy</span><div className="text-sm font-medium text-foreground">{st.overall_expectancy}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Total Trades</span><div className="text-sm font-medium text-foreground">{st.overall_total_trades}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Profit Factor</span><div className="text-sm font-medium text-foreground">{st.overall_profit_factor}</div></div>
+                  <div><span className="text-xs text-muted-foreground">Max Drawdown</span><div className="text-sm font-medium text-foreground">{st.overall_max_drawdown}</div></div>
                 </div>
               </CardContent>
             </Card>
@@ -377,7 +366,7 @@ export default function DecisionPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-xs font-medium uppercase text-muted-foreground">
                   <th className="px-4 py-2.5">Pair</th>
                   <th className="px-4 py-2.5">Direction</th>
                   <th className="px-4 py-2.5">Result</th>

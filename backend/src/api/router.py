@@ -31,11 +31,26 @@ from src.api.routes import (
     research,
     replay,
     trader_intelligence,
+    strategy,
+    risk,
+    planning,
+    ai_foundation,
+    obsidian,
+    market_intelligence,
+    rag_copilot,
+    quant_research,
+    automation,
+    portfolio,
+    broker,
+    ict,
+    brain,
+    agents,
 )
 
 api_router = APIRouter()
 
 api_router.include_router(project.router, prefix="/projects", tags=["Projects"])
+api_router.include_router(strategy.router, prefix="/projects/{project_id}/strategies", tags=["Strategies"])
 api_router.include_router(dashboard.router, prefix="/projects/{project_id}/dashboard", tags=["Dashboard"])
 api_router.include_router(source.router, prefix="/projects/{project_id}/sources", tags=["Sources"])
 api_router.include_router(claim.router, prefix="/projects/{project_id}/claims", tags=["Claims"])
@@ -66,3 +81,16 @@ api_router.include_router(trader_intelligence.router, prefix="/projects/{project
 api_router.include_router(macro.router, prefix="/macro", tags=["Macro Intelligence"])
 api_router.include_router(mt5.router, prefix="/mt5", tags=["MT5 Integration"])
 api_router.include_router(tradingview.router, prefix="/tradingview", tags=["TradingView"])
+api_router.include_router(risk.router, prefix="/projects/{project_id}/risk", tags=["Risk Management"])
+api_router.include_router(planning.router, prefix="/projects/{project_id}/planning", tags=["Planning & Calendar"])
+api_router.include_router(ai_foundation.router, prefix="/projects/{project_id}/ai", tags=["AI Foundation"])
+api_router.include_router(obsidian.router, prefix="/projects/{project_id}/obsidian", tags=["Obsidian Integration"])
+api_router.include_router(market_intelligence.router, prefix="/projects/{project_id}/market-intel", tags=["Market Intelligence"])
+api_router.include_router(rag_copilot.router, prefix="/projects/{project_id}/copilot", tags=["AI Research Copilot"])
+api_router.include_router(quant_research.router, prefix="/projects/{project_id}/quant-research", tags=["Quantitative Research"])
+api_router.include_router(automation.router, prefix="/projects/{project_id}/automation", tags=["Automation & Workflow"])
+api_router.include_router(portfolio.router, prefix="/projects/{project_id}/portfolio", tags=["Portfolio Management"])
+api_router.include_router(broker.router, prefix="/projects/{project_id}/broker", tags=["Broker Integration"])
+api_router.include_router(brain.router, prefix="/projects/{project_id}/brain", tags=["AI Trading Brain"])
+api_router.include_router(ict.router, prefix="/projects/{project_id}/ict", tags=["ICT Smart Engine"])
+api_router.include_router(agents.router, prefix="/projects/{project_id}/agents", tags=["Intelligence Agents"])

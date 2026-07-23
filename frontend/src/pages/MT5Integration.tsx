@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
+import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useMT5Status, useMT5Logs, useMT5Connect, useMT5Disconnect, useMT5Sync } from '../hooks/useMT5';
-import { Wifi, WifiOff, RefreshCw, Database, Clock } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, Database } from 'lucide-react';
 
 
 const statusVariant: Record<string, 'success' | 'info' | 'default' | 'destructive' | 'warning'> = {
@@ -32,6 +32,18 @@ export default function MT5IntegrationPage() {
   if (status.isError) return <ErrorState message="Error loading MT5 status." onRetry={() => status.refetch()} />;
 
   const data = status.data;
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="MT5 Integration" description="Connect and sync with MetaTrader 5" />
+        <EmptyState
+          message="No MT5 connection"
+          description="Connect your MetaTrader 5 account to sync your trading data."
+        />
+      </div>
+    );
+  }
   const logData = logs.data || [];
 
   const handleConnect = () => { if (!account || !server) return; connect.mutate({ account, server, terminal_path: terminalPath }); };

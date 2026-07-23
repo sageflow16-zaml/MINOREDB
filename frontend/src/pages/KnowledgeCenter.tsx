@@ -21,7 +21,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <motion.div variants={item} className="rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md">
       <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
     </motion.div>
   );
 }
@@ -34,7 +34,7 @@ function CategoryCard({ cat, onClick }: { cat: KnowledgeCategory; onClick: () =>
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm">{cat.icon || '📚'}</div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{cat.name}</p>
-          {cat.description && <p className="text-[10px] text-muted-foreground truncate mt-0.5">{cat.description}</p>}
+          {cat.description && <p className="text-xs text-muted-foreground truncate mt-0.5">{cat.description}</p>}
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
       </div>
@@ -49,7 +49,7 @@ function ConceptCard({ concept, onClick }: { concept: KnowledgeConcept; onClick:
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground truncate">{concept.title}</p>
-          {concept.summary && <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{concept.summary}</p>}
+          {concept.summary && <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{concept.summary}</p>}
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
           {concept.difficulty && <Badge variant={DIFFICULTY_VARIANT[concept.difficulty] || 'default'} size="sm">{concept.difficulty}</Badge>}
@@ -76,7 +76,7 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
     if (!children) return null;
     return (
       <div className="mb-4 last:mb-0">
-        <h4 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h4>
+        <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h4>
         <div className="text-xs text-foreground leading-relaxed">{children}</div>
       </div>
     );
@@ -88,16 +88,16 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <button onClick={onBack} className="mb-2 inline-flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors">
+              <button onClick={onBack} className="mb-2 inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
                 <ArrowLeft className="h-3 w-3" /> Back to concepts
               </button>
               <h2 className="text-base font-bold text-foreground">{concept.title}</h2>
-              {concept.category && <p className="text-[10px] text-muted-foreground mt-0.5">{concept.category.name}</p>}
+              {concept.category && <p className="text-xs text-muted-foreground mt-0.5">{concept.category.name}</p>}
             </div>
             {concept.tags && concept.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 shrink-0">
                 {concept.tags.map((t: any) => (
-                  <span key={t.id} className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">{t.name}</span>
+                  <span key={t.id} className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{t.name}</span>
                 ))}
               </div>
             )}
@@ -110,7 +110,7 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
           <Section title="Market Context">{concept.market_context}</Section>
           {concept.rules && (
             <Section title="Rules">
-              <pre className="whitespace-pre-wrap rounded-lg bg-muted/30 p-3 text-[10px] text-muted-foreground overflow-x-auto">{JSON.stringify(concept.rules, null, 2)}</pre>
+              <pre className="whitespace-pre-wrap rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground overflow-x-auto">{JSON.stringify(concept.rules, null, 2)}</pre>
             </Section>
           )}
           <Section title="Conditions">{concept.conditions}</Section>
@@ -124,8 +124,8 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
                 {concept.examples.map((e: any) => (
                   <div key={e.id} className="rounded-lg border border-border bg-muted/20 p-3">
                     <p className="text-xs font-medium text-foreground">{e.title}</p>
-                    {(e.pair || e.timeframe) && <p className="text-[10px] text-muted-foreground">{e.pair} {e.timeframe}</p>}
-                    {e.description && <p className="mt-1 text-[10px] text-muted-foreground">{e.description}</p>}
+                    {(e.pair || e.timeframe) && <p className="text-xs text-muted-foreground">{e.pair} {e.timeframe}</p>}
+                    {e.description && <p className="mt-1 text-xs text-muted-foreground">{e.description}</p>}
                   </div>
                 ))}
               </div>
@@ -135,7 +135,7 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
             <Section title={`References (${concept.references.length})`}>
               <div className="space-y-1">
                 {concept.references.map((r: any) => (
-                  <div key={r.id} className="text-[10px] text-muted-foreground">
+                  <div key={r.id} className="text-xs text-muted-foreground">
                     {r.title} {r.author && `by ${r.author}`} {r.source_type && `(${r.source_type})`}
                   </div>
                 ))}
@@ -146,14 +146,14 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
             <Section title={`Relationships (${(concept.relationships_outgoing?.length || 0) + (concept.relationships_incoming?.length || 0)})`}>
               <div className="space-y-1">
                 {concept.relationships_outgoing?.map((r: any) => (
-                  <div key={r.id} className="flex items-center gap-1.5 text-[10px]">
+                  <div key={r.id} className="flex items-center gap-1.5 text-xs">
                     <span className="font-medium text-primary">{concept.title}</span>
                     <span className="text-muted-foreground">—[{r.relationship_type}]→</span>
                     <span className="font-medium text-primary">{r.target_concept?.title || r.target_concept_id}</span>
                   </div>
                 ))}
                 {concept.relationships_incoming?.map((r: any) => (
-                  <div key={r.id} className="flex items-center gap-1.5 text-[10px]">
+                  <div key={r.id} className="flex items-center gap-1.5 text-xs">
                     <span className="font-medium text-primary">{r.source_concept?.title || r.source_concept_id}</span>
                     <span className="text-muted-foreground">—[{r.relationship_type}]→</span>
                     <span className="font-medium text-primary">{concept.title}</span>
@@ -257,7 +257,7 @@ export default function KnowledgeCenter() {
                     <option value="">All Categories</option>
                     {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                   </select>
-                  <span className="text-[11px] text-muted-foreground">{filteredConcepts.length} concepts</span>
+                  <span className="text-xs text-muted-foreground">{filteredConcepts.length} concepts</span>
                 </div>
                 {selectedConcept ? (
                   <ConceptDetailView conceptId={selectedConcept} onBack={() => setSelectedConcept(null)} />
@@ -285,12 +285,12 @@ export default function KnowledgeCenter() {
                             className="font-medium text-primary hover:text-primary/80 truncate max-w-[120px] transition-colors">
                             {r.source_concept?.title || r.source_concept_id.slice(0, 8)}
                           </button>
-                          <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground shrink-0">{r.relationship_type}</span>
+                          <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">{r.relationship_type}</span>
                           <button onClick={() => { setSelectedConcept(r.target_concept_id); setActiveTab('concepts'); }}
                             className="font-medium text-primary hover:text-primary/80 truncate max-w-[120px] transition-colors">
                             {r.target_concept?.title || r.target_concept_id.slice(0, 8)}
                           </button>
-                          {r.strength && <span className="text-[10px] text-muted-foreground ml-auto shrink-0">strength: {r.strength.toFixed(1)}</span>}
+                          {r.strength && <span className="text-xs text-muted-foreground ml-auto shrink-0">strength: {r.strength.toFixed(1)}</span>}
                         </div>
                       ))}
                     </div>
@@ -317,7 +317,7 @@ export default function KnowledgeCenter() {
                         <span className="text-sm font-medium text-primary">{r.title}</span>
                         <Badge variant="secondary" size="sm">{r.category_name || r.match_type}</Badge>
                       </div>
-                      {r.summary && <p className="mt-1 text-[10px] text-muted-foreground">{r.summary}</p>}
+                      {r.summary && <p className="mt-1 text-xs text-muted-foreground">{r.summary}</p>}
                     </button>
                   ))}
                 </div>

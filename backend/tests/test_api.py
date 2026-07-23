@@ -35,7 +35,7 @@ class TestHealthEndpoints:
 
 class TestAPIRoutes:
     def test_projects_list(self, client):
-        response = client.get("/api/v1/projects")
+        response = client.get("/api/v1/projects/")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
 

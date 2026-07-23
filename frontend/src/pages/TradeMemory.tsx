@@ -5,7 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { Brain, TrendingUp, TrendingDown, Target, Lightbulb, AlertTriangle, Layers, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, TrendingUp, TrendingDown, Lightbulb, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function TradeMemoryPage() {
@@ -46,7 +46,7 @@ export default function TradeMemoryPage() {
                       <CardTitle className="text-sm font-semibold">
                         {m.pair || 'Unknown'} — {m.direction || 'N/A'}
                       </CardTitle>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {m.session && `Session: ${m.session.replace(/_/g, ' / ')}`}
                         {m.created_at && ` — ${new Date(m.created_at).toLocaleDateString()}`}
                       </p>
@@ -121,7 +121,7 @@ export default function TradeMemoryPage() {
                       </div>
                       <ul className="space-y-1">
                         {m.strengths.map((s, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
                             <CheckCircle className="h-3 w-3 text-success shrink-0 mt-0.5" />
                             {s}
                           </li>
@@ -137,7 +137,7 @@ export default function TradeMemoryPage() {
                       </div>
                       <ul className="space-y-1">
                         {m.weaknesses.map((w, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
                             <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
                             {w}
                           </li>
@@ -153,7 +153,7 @@ export default function TradeMemoryPage() {
                       </div>
                       <ul className="space-y-1">
                         {m.mistakes.map((mist, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
                             <AlertTriangle className="h-3 w-3 text-warning shrink-0 mt-0.5" />
                             {mist}
                           </li>
@@ -169,7 +169,7 @@ export default function TradeMemoryPage() {
                       </div>
                       <ul className="space-y-1">
                         {m.lessons.map((l, i) => (
-                          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
                             <Lightbulb className="h-3 w-3 text-chart-1 shrink-0 mt-0.5" />
                             {l}
                           </li>

@@ -10,10 +10,20 @@ from datetime import datetime, timezone, timedelta
 from uuid import UUID, uuid4
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session, joinedload
-from src.models.replay import MarketCandle, ReplaySession, ReplayTrade, ReplayBookmark
+from src.models.replay import (
+    MarketCandle, ReplaySession, ReplayTrade, ReplayBookmark,
+    ReplayAnnotation, ReplayTimelineEvent, ReplayReview, ReplayMistake, ReplayScreenshot,
+)
 from src.models.trade import Trade
 from src.schemas.trade import TradeCreate
-from src.schemas.replay import ReplaySessionCreate, ReplayTradeCreate, ReplayBookmarkCreate
+from src.schemas.replay import (
+    ReplaySessionCreate, ReplayTradeCreate, ReplayBookmarkCreate,
+    ReplayAnnotationCreate, ReplayAnnotationUpdate,
+    ReplayTimelineEventCreate,
+    ReplayReviewCreate, ReplayReviewUpdate,
+    ReplayMistakeCreate, ReplayMistakeUpdate,
+    ReplayScreenshotCreate, ReplayScreenshotUpdate,
+)
 from src.crud import trade as trade_crud
 
 
@@ -183,11 +193,59 @@ def _get_session_bookmarks(db: Session, session_id: UUID) -> list[ReplayBookmark
     )
 
 
+def _get_session_annotations(db: Session, session_id: UUID) -> list[ReplayAnnotation]:
+    return db.query(ReplayAnnotation).filter(ReplayAnnotation.session_id == session_id).order_by(ReplayAnnotation.candle_index.asc()).all()
+
+
+def _get_session_timeline_events(db: Session, session_id: UUID) -> list[ReplayTimelineEvent]:
+    return db.query(ReplayTimelineEvent).filter(ReplayTimelineEvent.session_id == session_id).order_by(ReplayTimelineEvent.candle_index.asc()).all()
+
+
+def _get_session_review(db: Session, session_id: UUID) -> ReplayReview | None:
+    return db.query(ReplayReview).filter(ReplayReview.session_id == session_id).first()
+
+
+def _get_session_mistakes(db: Session, session_id: UUID) -> list[ReplayMistake]:
+    return db.query(ReplayMistake).filter(ReplayMistake.session_id == session_id).order_by(ReplayMistake.created_at.desc()).all()
+
+
+def _get_session_screenshots(db: Session, session_id: UUID) -> list[ReplayScreenshot]:
+    return db.query(ReplayScreenshot).filter(ReplayScreenshot.session_id == session_id).order_by(ReplayScreenshot.candle_index.asc()).all()
+
+
+def _serialize_model(obj) -> dict:
+    if obj is None:
+        return None
+    d = {}
+    for col in getattr(obj, '__table__', {}).columns if hasattr(obj, '__table__') else []:
+        val = getattr(obj, col.name, None)
+        if isinstance(val, datetime):
+            d[col.name] = val.isoformat()
+        elif isinstance(val, UUID):
+            d[col.name] = str(val)
+        else:
+            d[col.name] = val
+    if not d:
+        d = obj.__dict__.copy()
+        d.pop('_sa_instance_state', None)
+        for k, v in d.items():
+            if isinstance(v, datetime):
+                d[k] = v.isoformat()
+            elif isinstance(v, UUID):
+                d[k] = str(v)
+    return d
+
+
 def _build_navigate_response(db: Session, session: ReplaySession) -> dict:
     candle = _get_current_candle(db, session)
     visible = _get_visible_candles(db, session)
     trades = _get_session_trades(db, session.id)
     bookmarks = _get_session_bookmarks(db, session.id)
+    annotations = _get_session_annotations(db, session.id)
+    timeline_events = _get_session_timeline_events(db, session.id)
+    review = _get_session_review(db, session.id)
+    mistakes = _get_session_mistakes(db, session.id)
+    screenshots = _get_session_screenshots(db, session.id)
 
     return {
         "session": {
@@ -262,6 +320,11 @@ def _build_navigate_response(db: Session, session: ReplaySession) -> dict:
             }
             for b in bookmarks
         ],
+        "annotations": [_serialize_model(a) for a in annotations],
+        "timeline_events": [_serialize_model(e) for e in timeline_events],
+        "review": _serialize_model(review),
+        "mistakes": [_serialize_model(m) for m in mistakes],
+        "screenshots": [_serialize_model(s) for s in screenshots],
     }
 
 
@@ -582,3 +645,146 @@ def get_dashboard_stats(db: Session, project_id: UUID) -> dict:
         "learning_progress": total_trades,
         "knowledge_growth": latest_snap.knowledge_growth if latest_snap else 0,
     }
+
+
+# ---------------------------------------------------------------------------
+# Annotations
+# ---------------------------------------------------------------------------
+
+
+def create_annotation(db: Session, session_id: UUID, data: ReplayAnnotationCreate) -> ReplayAnnotation:
+    annotation = ReplayAnnotation(id=uuid4(), session_id=session_id, **data.model_dump())
+    db.add(annotation)
+    db.commit()
+    db.refresh(annotation)
+    return annotation
+
+
+def update_annotation(db: Session, annotation_id: UUID, data: ReplayAnnotationUpdate) -> ReplayAnnotation | None:
+    annotation = db.get(ReplayAnnotation, annotation_id)
+    if not annotation:
+        return None
+    update_data = data.model_dump(exclude_unset=True)
+    for field in update_data:
+        setattr(annotation, field, update_data[field])
+    db.commit()
+    db.refresh(annotation)
+    return annotation
+
+
+def delete_annotation(db: Session, annotation_id: UUID) -> bool:
+    annotation = db.get(ReplayAnnotation, annotation_id)
+    if not annotation:
+        return False
+    db.delete(annotation)
+    db.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Timeline Events
+# ---------------------------------------------------------------------------
+
+
+def create_timeline_event(db: Session, session_id: UUID, data: ReplayTimelineEventCreate) -> ReplayTimelineEvent:
+    event = ReplayTimelineEvent(id=uuid4(), session_id=session_id, **data.model_dump())
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+def delete_timeline_event(db: Session, event_id: UUID) -> bool:
+    event = db.get(ReplayTimelineEvent, event_id)
+    if not event:
+        return False
+    db.delete(event)
+    db.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Review
+# ---------------------------------------------------------------------------
+
+
+def upsert_review(db: Session, session_id: UUID, data: ReplayReviewCreate | ReplayReviewUpdate) -> ReplayReview:
+    review = db.query(ReplayReview).filter(ReplayReview.session_id == session_id).first()
+    if review:
+        update_data = data.model_dump(exclude_unset=True)
+        for field in update_data:
+            setattr(review, field, update_data[field])
+    else:
+        review = ReplayReview(id=uuid4(), session_id=session_id, **data.model_dump())
+        db.add(review)
+    db.commit()
+    db.refresh(review)
+    return review
+
+
+# ---------------------------------------------------------------------------
+# Mistakes
+# ---------------------------------------------------------------------------
+
+
+def create_mistake(db: Session, session_id: UUID, data: ReplayMistakeCreate) -> ReplayMistake:
+    mistake = ReplayMistake(id=uuid4(), session_id=session_id, **data.model_dump())
+    db.add(mistake)
+    db.commit()
+    db.refresh(mistake)
+    return mistake
+
+
+def update_mistake(db: Session, mistake_id: UUID, data: ReplayMistakeUpdate) -> ReplayMistake | None:
+    mistake = db.get(ReplayMistake, mistake_id)
+    if not mistake:
+        return None
+    update_data = data.model_dump(exclude_unset=True)
+    for field in update_data:
+        setattr(mistake, field, update_data[field])
+    db.commit()
+    db.refresh(mistake)
+    return mistake
+
+
+def delete_mistake(db: Session, mistake_id: UUID) -> bool:
+    mistake = db.get(ReplayMistake, mistake_id)
+    if not mistake:
+        return False
+    db.delete(mistake)
+    db.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Screenshots
+# ---------------------------------------------------------------------------
+
+
+def create_screenshot(db: Session, session_id: UUID, data: ReplayScreenshotCreate) -> ReplayScreenshot:
+    screenshot = ReplayScreenshot(id=uuid4(), session_id=session_id, **data.model_dump())
+    db.add(screenshot)
+    db.commit()
+    db.refresh(screenshot)
+    return screenshot
+
+
+def update_screenshot(db: Session, screenshot_id: UUID, data: ReplayScreenshotUpdate) -> ReplayScreenshot | None:
+    screenshot = db.get(ReplayScreenshot, screenshot_id)
+    if not screenshot:
+        return None
+    update_data = data.model_dump(exclude_unset=True)
+    for field in update_data:
+        setattr(screenshot, field, update_data[field])
+    db.commit()
+    db.refresh(screenshot)
+    return screenshot
+
+
+def delete_screenshot(db: Session, screenshot_id: UUID) -> bool:
+    screenshot = db.get(ReplayScreenshot, screenshot_id)
+    if not screenshot:
+        return False
+    db.delete(screenshot)
+    db.commit()
+    return True

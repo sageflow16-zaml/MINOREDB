@@ -16,6 +16,15 @@ from src.services.research.engine import run_research, get_session, get_history
 router = APIRouter()
 
 
+@router.get("/", response_model=list[ResearchSessionResponse])
+def list_research_sessions(
+    project_id: str,
+    project: Project = Depends(get_project_or_404),
+    db: Session = Depends(get_db),
+):
+    return get_history(db, project_id)
+
+
 @router.post("/run", response_model=ResearchRunResponse)
 def run_research_endpoint(
     project_id: str,

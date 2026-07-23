@@ -45,6 +45,7 @@ function show(variant: ToastVariant, message: string, description?: string) {
         </div>
         <button
           onClick={() => hotToast.dismiss(t.id)}
+          aria-label="Dismiss notification"
           className="shrink-0 rounded-md p-1 text-muted-foreground/50 hover:text-foreground transition-colors"
         >
           <X className="h-3.5 w-3.5" />

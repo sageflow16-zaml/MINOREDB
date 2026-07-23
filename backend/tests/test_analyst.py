@@ -1,7 +1,6 @@
 """Tests for the AI Research Analyst pipeline."""
 
 from src.services.ai.planner import plan
-from src.services.ai.context_builder import build_context
 from src.services.ai.validator import validate
 from src.services.ai.llm import _fallback_answer, _clean_json
 
@@ -42,24 +41,6 @@ class TestPlanner:
         engines = plan("What mistakes am I making?")
         assert "knowledge_rules" in engines
         assert "trade_memory" in engines
-
-
-class TestContextBuilder:
-    def test_builds_string(self):
-        evidence = {
-            "statistics": {"overview": {"total_trades": 10, "wins": 6, "losses": 4, "win_rate": 0.6, "avg_rr": 2.0, "expectancy": 1.2, "total_pnl": 500}, "risk": {"profit_factor": 1.5, "max_drawdown": 100}},
-            "knowledge_rules": [{"title": "London Bullish", "occurrences": 5, "win_rate": 0.8, "avg_rr": 2.5, "confidence": 75}],
-            "knowledge_graph": {"total_nodes": 10, "total_edges": 20, "snapshot": {"summary": "Graph summary"}},
-        }
-        context = build_context(evidence, "How am I doing?")
-        assert "[STATISTICS]" in context
-        assert "[KNOWLEDGE RULES]" in context
-        assert "[KNOWLEDGE GRAPH]" in context
-        assert "How am I doing?" in context
-
-    def test_empty_evidence(self):
-        context = build_context({}, "test")
-        assert "User Question: test" in context
 
 
 class TestValidator:

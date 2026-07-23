@@ -29,11 +29,11 @@ export default function ClaimsPage() {
       />
 
       {!claims || claims.length === 0 ? (
-        <EmptyState message="No claims extracted yet." />
+        <EmptyState message="No claims extracted yet." description="Upload and process sources to extract claims automatically." />
       ) : (
         <div className="grid gap-3">
           {claims.map((row) => (
-            <Card key={row.id}>
+            <Card key={row.id} className="hover:shadow-md hover:border-primary/20 transition-all duration-200">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">

@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { AlertCircle, Inbox, RefreshCw, SearchX } from 'lucide-react';
+import { cn } from '../../lib/utils';
 import { Button } from './Button';
+import { useReducedMotion } from '../../lib/animate';
 
 interface LoadingSpinnerProps {
   message?: string;
@@ -28,9 +30,10 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({ message = 'Something went wrong', description, onRetry }: ErrorStateProps) {
+  const prefersReduced = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={prefersReduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-16 text-muted-foreground"
     >
@@ -57,11 +60,12 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, description, message, action }: EmptyStateProps) {
+  const prefersReduced = useReducedMotion();
   const displayTitle = title || message || 'No data';
   const displayDesc = description || '';
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={prefersReduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-16 text-muted-foreground"
     >
@@ -75,6 +79,4 @@ export function EmptyState({ icon, title, description, message, action }: EmptyS
   );
 }
 
-function cn(...classes: (string | undefined | false | null)[]) {
-  return classes.filter(Boolean).join(' ');
-}
+

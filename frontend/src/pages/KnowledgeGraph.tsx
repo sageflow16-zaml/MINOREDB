@@ -27,20 +27,29 @@ const NODE_TYPES = [
   { value: 'confidence_level', label: 'Confidence' },
 ];
 
+function getCSS(v: string, fallback = '#6b7280'): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fallback;
+}
+
+function resolveCSS(color: string): string {
+  const m = color.match(/var\((--[\w-]+)\)/);
+  return m ? getCSS(m[1]) : color;
+}
+
 const TYPE_COLORS: Record<string, string> = {
-  session: '#6366f1',
-  weekly_bias: '#8b5cf6',
-  daily_bias: '#a78bfa',
-  h4_bias: '#c4b5fd',
-  market_phase: '#f59e0b',
-  market_trend: '#f97316',
-  entry_model: '#10b981',
-  liquidity_type: '#06b6d4',
-  execution_model: '#3b82f6',
-  result: '#ef4444',
-  pair: '#ec4899',
-  direction: '#14b8a6',
-  confidence_level: '#84cc16',
+  session: 'hsl(var(--chart-1))',
+  weekly_bias: 'hsl(var(--chart-2))',
+  daily_bias: 'hsl(var(--chart-2))',
+  h4_bias: 'hsl(var(--chart-2))',
+  market_phase: 'hsl(var(--chart-3))',
+  market_trend: 'hsl(var(--chart-3))',
+  entry_model: 'hsl(var(--chart-4))',
+  liquidity_type: 'hsl(var(--chart-1))',
+  execution_model: 'hsl(var(--chart-1))',
+  result: 'hsl(var(--chart-5))',
+  pair: 'hsl(var(--chart-5))',
+  direction: 'hsl(var(--chart-4))',
+  confidence_level: 'hsl(var(--chart-4))',
 };
 
 interface SimNode extends KnowledgeNode {
@@ -177,7 +186,7 @@ export default function KnowledgeGraphPage() {
         ctx.beginPath();
         ctx.moveTo(src.x, src.y);
         ctx.lineTo(tgt.x, tgt.y);
-        ctx.strokeStyle = connectedEdgeIds.has(e.id) ? '#818cf8' : '#374151';
+        ctx.strokeStyle = connectedEdgeIds.has(e.id) ? getCSS('--chart-1') : getCSS('--border', '#374151');
         ctx.lineWidth = connectedEdgeIds.has(e.id) ? 2 : Math.max(0.5, (e.confidence || 0.5) * 3);
         ctx.globalAlpha = connectedEdgeIds.has(e.id) ? 0.9 : 0.3;
         ctx.stroke();
@@ -187,9 +196,9 @@ export default function KnowledgeGraphPage() {
       for (const n of nodes) {
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
-        ctx.fillStyle = TYPE_COLORS[n.type] || '#6b7280';
+        ctx.fillStyle = resolveCSS(TYPE_COLORS[n.type]) || getCSS('--muted-foreground');
         ctx.fill();
-        ctx.strokeStyle = selectedNode?.id === n.id ? '#fff' : '#1f2937';
+        ctx.strokeStyle = selectedNode?.id === n.id ? '#fff' : getCSS('--foreground', '#1f2937');
         ctx.lineWidth = selectedNode?.id === n.id ? 3 : 1;
         ctx.stroke();
 
@@ -346,8 +355,8 @@ export default function KnowledgeGraphPage() {
                 <div>
                   <CardTitle className="text-sm font-semibold">{selectedNode.name}</CardTitle>
                   <span
-                    className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                    style={{ backgroundColor: TYPE_COLORS[selectedNode.type] || '#6b7280' }}
+                    className="mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                    style={{ backgroundColor: TYPE_COLORS[selectedNode.type] || 'hsl(var(--muted-foreground))' }}
                   >
                     {selectedNode.type}
                   </span>
@@ -376,7 +385,7 @@ export default function KnowledgeGraphPage() {
                   </div>
                 </div>
                 <div className="mt-4 border-t border-border pt-3">
-                  <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Connected Edges</h4>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Connected Edges</h4>
                   <div className="max-h-40 space-y-1 overflow-y-auto">
                     {edgeRef.current
                       .filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
@@ -385,7 +394,7 @@ export default function KnowledgeGraphPage() {
                         const otherId = e.source === selectedNode.id ? e.target : e.source;
                         const other = simRef.current.find((n) => n.id === otherId);
                         return (
-                          <div key={e.id} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1 text-[10px]">
+                          <div key={e.id} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1 text-xs">
                             <span className="text-foreground/80">{other?.name || '?'}</span>
                             <span className="text-muted-foreground">c:{e.confidence != null ? e.confidence.toFixed(2) : '—'}</span>
                           </div>

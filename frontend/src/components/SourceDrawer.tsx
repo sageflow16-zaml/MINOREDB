@@ -1,7 +1,7 @@
 import { SourceRead } from '../types';
 
 export const SourceDrawer = ({ source, onClose }: { source: SourceRead; onClose: () => void }) => (
-  <div className="fixed inset-0 bg-black/50 z-overlay flex justify-end">
+  <div className="fixed inset-0 bg-black/50 z-40 flex justify-end">
     <div className="bg-card text-card-foreground w-full max-w-lg p-6 shadow-xl overflow-y-auto border-l border-border">
       <div className="flex justify-between mb-4">
         <h3 className="text-xl font-bold">Source Details</h3>

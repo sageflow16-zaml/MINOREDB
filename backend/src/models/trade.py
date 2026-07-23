@@ -1,12 +1,12 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 from sqlalchemy import String, Float, DateTime, Text, text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from src.db.session import Base
+from src.db.session import Base, SoftDeleteMixin
 
 
-class Trade(Base):
+class Trade(Base, SoftDeleteMixin):
     __tablename__ = "trade"
 
     id: Mapped[UUID] = mapped_column(
@@ -28,8 +28,15 @@ class Trade(Base):
         PG_UUID(as_uuid=True),
         ForeignKey("project.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     project: Mapped["Project"] = relationship("Project")
+    strategy_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("strategy.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    strategy: Mapped["Strategy | None"] = relationship("Strategy", back_populates="trades", foreign_keys=[strategy_id])
     market_structure_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("market_structure.id", ondelete="SET NULL"),
@@ -46,8 +53,17 @@ class Trade(Base):
     risk_percent: Mapped[float | None] = mapped_column(Float, nullable=True)
     rr: Mapped[float | None] = mapped_column(Float, nullable=True)
     pnl: Mapped[float | None] = mapped_column(Float, nullable=True)
+    commission: Mapped[float | None] = mapped_column(Float, nullable=True)
+    swap: Mapped[float | None] = mapped_column(Float, nullable=True)
     result: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
+    broker_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    timeframe: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    open_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    close_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    tags: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
 
     weekly_bias: Mapped[str | None] = mapped_column(String, nullable=True)
     daily_bias: Mapped[str | None] = mapped_column(String, nullable=True)
