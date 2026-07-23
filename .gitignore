@@ -1,61 +1,70 @@
-# Environment
+# ── Environment ───────────────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
 
-# Python
-.venv
-venv/
+# ── Python ─────────────────────────────────────────────────────────────────
 __pycache__/
-*.pyc
-.pytest_cache/
+*.py[cod]
 *.egg-info/
+*.egg
 dist/
 build/
 *.db
 *.sqlite
+.coverage
+coverage/
+coverage.xml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv
+venv/
 
-# Node
+# ── Node ───────────────────────────────────────────────────────────────────
 node_modules/
 frontend/dist/
-extension/dist/
+frontend/.vite/
+*.tsbuildinfo
+*.tsbuildinfo.*
 
-# IDE
+# ── IDE / Editors ──────────────────────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
 *.swo
+*~
+.project
+.classpath
+.settings/
 
-# OS
+# ── OS ─────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+Desktop.ini
+ehthumbs.db
 
-# Logs
+# ── Logs ───────────────────────────────────────────────────────────────────
 *.log
 logs/
 
-# Backend
-backend/.venv/
-backend/__pycache__/
-backend/*.egg-info/
-backend/.env
-backend/.env.*
-
-# Railway / deployment
-railway.json
-
-# Log files checked into repo accidentally
-backend_stdout.log
-backend_stderr.log
-*.log
-
-# Docker
+# ── Docker ─────────────────────────────────────────────────────────────────
 pgdata/
 
-# Backups
+# ── Backups ────────────────────────────────────────────────────────────────
 backups/
+*.bak
+*.backup
 
-# Archives
+# ── Archives ───────────────────────────────────────────────────────────────
 *.zip
 *.tar
 *.gz
+*.tgz
+*.rar
+*.7z
+
+# ── Misc artifacts ─────────────────────────────────────────────────────────
+railway.json
+*.err
+*.out
