@@ -1360,8 +1360,8 @@ class AuditService:
         self.db.refresh(entry)
         return _dict(entry)
 
-    def list(self, event_type: str | None = None, source: str | None = None,
-             limit: int = 100, offset: int = 0) -> list[dict]:
+    def list_logs(self, event_type: str | None = None, source: str | None = None,
+                  limit: int = 100, offset: int = 0) -> list[dict]:
         q = self.db.query(AuditLog).filter(AuditLog.project_id == self.project_id)
         if event_type:
             q = q.filter(AuditLog.event_type == event_type)
@@ -1377,7 +1377,7 @@ class AuditService:
         return [{"event_type": k, "count": v} for k, v in q]
 
     def get_recent(self, limit: int = 20) -> list[dict]:
-        return self.list(limit=limit)
+        return self.list_logs(limit=limit)
 
 
 # ═══════════════════════════════════════════════════════
@@ -1855,7 +1855,7 @@ class AutomationEngine:
     # ── Audit ──
 
     def list_audit_logs(self, event_type: str | None = None, source: str | None = None, limit: int = 100) -> list[dict]:
-        return self.audit.list(event_type, source, limit)
+        return self.audit.list_logs(event_type, source, limit)
 
     def get_audit_summary(self) -> list[dict]:
         return self.audit.count_by_event_type()
