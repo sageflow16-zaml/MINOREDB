@@ -1,18 +1,9 @@
-import api from '../services/api';
+import { callEdgeFunction } from '../lib/edgeFunctions';
+import type { AnalystResponse, EvidenceItem } from './types';
 
-export interface EvidenceItem {
-  source: string;
-  data: unknown;
-}
-
-export interface AnalystResponse {
-  answer: string;
-  confidence: number;
-  sources: string[];
-  evidence: EvidenceItem[];
-}
+export type { AnalystResponse, EvidenceItem };
 
 export const analystService = {
-  query: (projectId: string, question: string) =>
-    api.post<AnalystResponse>(`/projects/${projectId}/analyst/query`, { question }).then((r) => r.data),
+  query: (projectId: string, question: string): Promise<AnalystResponse> =>
+    callEdgeFunction('ai', { operation: 'rag-chat', project_id: projectId, data: { conversation_id: '', message: question } }),
 };

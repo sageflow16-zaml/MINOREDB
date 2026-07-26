@@ -1,17 +1,38 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type { ResearchQuestionRead } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/questions`;
-
 export const researchQuestionService = {
-  list: (projectId: string) =>
-    api.get<ResearchQuestionRead[]>(`${base(projectId)}/`).then((r) => r.data),
-  get: (projectId: string, id: string) =>
-    api.get<ResearchQuestionRead>(`${base(projectId)}/${id}`).then((r) => r.data),
-  remove: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/${id}`).then((r) => r.data),
-  generateHypothesis: (projectId: string, questionId: string) =>
-    api
-      .post(`${base(projectId)}/${questionId}/generate-hypothesis`)
-      .then((r) => r.data),
+  list: async (projectId: string): Promise<ResearchQuestionRead[]> => {
+    const { data, error } = await supabase
+      .from('research_question')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as ResearchQuestionRead[];
+  },
+
+  get: async (projectId: string, id: string): Promise<ResearchQuestionRead> => {
+    const { data, error } = await supabase
+      .from('research_question')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as ResearchQuestionRead;
+  },
+
+  remove: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('research_question')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
+
+  generateHypothesis: async (projectId: string, questionId: string) =>
+    callEdgeFunction('ai', { operation: 'generate-hypothesis', project_id: projectId, data: { research_question_id: questionId } }),
 };

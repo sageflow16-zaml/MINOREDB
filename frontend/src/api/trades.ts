@@ -1,17 +1,64 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
 import type { TradeRead, TradeCreate, TradeUpdate } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/trades`;
-
 export const tradeService = {
-  list: (projectId: string) =>
-    api.get<TradeRead[]>(`${base(projectId)}/`).then((r) => r.data),
-  get: (projectId: string, id: string) =>
-    api.get<TradeRead>(`${base(projectId)}/${id}`).then((r) => r.data),
-  create: (projectId: string, data: TradeCreate) =>
-    api.post<TradeRead>(`${base(projectId)}/`, data).then((r) => r.data),
-  update: (projectId: string, id: string, data: TradeUpdate) =>
-    api.put<TradeRead>(`${base(projectId)}/${id}`, data).then((r) => r.data),
-  remove: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/${id}`).then((r) => r.data),
+  list: async (projectId: string): Promise<TradeRead[]> => {
+    const { data, error } = await supabase
+      .from('trade')
+      .select('*')
+      .eq('project_id', projectId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) throw error;
+    return (data ?? []) as TradeRead[];
+  },
+
+  get: async (projectId: string, id: string): Promise<TradeRead> => {
+    const { data, error } = await supabase
+      .from('trade')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .is('deleted_at', null)
+      .single();
+
+    if (error) throw error;
+    return data as TradeRead;
+  },
+
+  create: async (projectId: string, data: TradeCreate): Promise<TradeRead> => {
+    const { data: row, error } = await supabase
+      .from('trade')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return row as TradeRead;
+  },
+
+  update: async (projectId: string, id: string, data: TradeUpdate): Promise<TradeRead> => {
+    const { data: row, error } = await supabase
+      .from('trade')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return row as TradeRead;
+  },
+
+  remove: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('trade')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('project_id', projectId);
+
+    if (error) throw error;
+  },
 };

@@ -16,7 +16,7 @@ interface ChatMessage {
   question?: string;
   answer?: string;
   confidence?: number;
-  sources?: string[];
+  sources?: any;
   evidence?: EvidenceItem[];
 }
 
@@ -37,8 +37,8 @@ function getConfidenceVariant(confidence: number) {
   return 'destructive';
 }
 
-function SourceBadge({ source }: { source: string }) {
-  const config = SOURCE_CONFIG[source] || SOURCE_CONFIG.learning;
+function SourceBadge({ source }: { source?: string }) {
+  const config = (source && SOURCE_CONFIG[source]) || SOURCE_CONFIG.learning;
   const Icon = config.icon;
   return (
     <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', config.color)}>
@@ -197,7 +197,7 @@ export default function AnalystPage() {
                             Confidence: {msg.confidence}%
                           </Badge>
                         )}
-                        {msg.sources?.map((s) => (
+                        {msg.sources?.map((s: any) => (
                           <SourceBadge key={s} source={s} />
                         ))}
                       </div>

@@ -1,6 +1,17 @@
+# Docker Compose is no longer needed for production.
+# Minore is now 100% Supabase-native.
+# - Frontend: Vercel (static SPA)
+# - Database: Supabase PostgreSQL
+# - Auth: Supabase Auth
+# - AI/API: Supabase Edge Functions
+# - Storage: Supabase Storage
+# - Realtime: Supabase Realtime
+#
+# This file is kept only for local Supabase development.
+# Use `supabase start` for local development instead.
 version: "3.9"
-
 services:
+  # Local development only — Supabase replaces this entire stack
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -12,62 +23,5 @@ services:
       POSTGRES_PASSWORD: minore
     ports:
       - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U minore"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql+psycopg://minore:minore@db:5432/minore
-      JWT_SECRET_KEY: change-me-in-production-use-openssl-rand-hex-32
-      ENVIRONMENT: development
-      DOCS_ENABLED: "True"
-      RATE_LIMIT_PER_MINUTE: "0"
-      LOG_FORMAT: human
-      CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-
-  frontend:
-    build:
-      context: frontend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    environment:
-      VITE_API_URL: http://localhost:8000
-    depends_on:
-      backend:
-        condition: service_started
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
 volumes:
   postgres_data:

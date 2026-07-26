@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { getToken, setToken, clearToken, setRefreshToken, getRefreshToken, clearRefreshToken, clearAllTokens } from './tokenStorage';
+import { supabase } from '../lib/supabase';
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { clearAllTokens } from './tokenStorage';
 import api from '../services/api';
 
 export interface User {
@@ -12,92 +14,138 @@ export interface AuthContextValue {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  isRecovery: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+async function syncWithFastAPI(session: Session): Promise<User | null> {
+  try {
+    const response = await api.post('/auth/supabase-sync', {}, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    return response.data;
+  } catch {
+    return null;
+  }
+}
+
+function mapSupabaseUser(supabaseUser: SupabaseUser): User {
+  return {
+    id: supabaseUser.id,
+    email: supabaseUser.email ?? '',
+    name: supabaseUser.user_metadata?.name ?? supabaseUser.email?.split('@')[0],
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setTokenState] = useState<string | null>(() => getToken());
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
-    const onStorage = () => setTokenState(getToken());
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      if (currentSession?.user) {
+        const localUser = await syncWithFastAPI(currentSession);
+        setUser(localUser ?? mapSupabaseUser(currentSession.user));
+      }
+      setIsLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+
+        if (event === 'SIGNED_IN' && currentSession?.user) {
+          setIsRecovery(false);
+          const localUser = await syncWithFastAPI(currentSession);
+          setUser(localUser ?? mapSupabaseUser(currentSession.user));
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setIsRecovery(false);
+          clearAllTokens();
+        } else if (event === 'PASSWORD_RECOVERY') {
+          setIsRecovery(true);
+          if (currentSession?.user) {
+            setUser(mapSupabaseUser(currentSession.user));
+          }
+        } else if (event === 'USER_UPDATED' && currentSession?.user) {
+          setUser(mapSupabaseUser(currentSession.user));
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    const data = response.data;
-    setToken(data.access_token);
-    setRefreshToken(data.refresh_token);
-    setTokenState(data.access_token);
-    setUser(data.user);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
   }, []);
 
   const register = useCallback(async (email: string, password: string, name?: string) => {
-    const response = await api.post('/auth/register', { email, password, name });
-    const data = response.data;
-    setToken(data.access_token);
-    setRefreshToken(data.refresh_token);
-    setTokenState(data.access_token);
-    setUser(data.user);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    });
+    if (error) throw error;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     clearAllTokens();
-    setTokenState(null);
     setUser(null);
-    api.post('/auth/logout').catch(() => {});
-  }, []);
-
-  const refreshToken = useCallback(async (): Promise<boolean> => {
-    const stored = getRefreshToken();
-    if (!stored) return false;
+    setSession(null);
+    setIsRecovery(false);
     try {
-      const response = await api.post('/auth/refresh', { refresh_token: stored });
-      const data = response.data;
-      setToken(data.access_token);
-      setRefreshToken(data.refresh_token);
-      setTokenState(data.access_token);
-      return true;
+      await supabase.auth.signOut();
     } catch {
-      clearAllTokens();
-      setTokenState(null);
-      setUser(null);
-      return false;
+      // Ensure clean state even if network request fails
     }
   }, []);
 
-  // Attempt to load user info if token exists but user is null
-  useEffect(() => {
-    if (!token || user) return;
-    const controller = new AbortController();
-    api.get('/auth/me', { signal: controller.signal })
-      .then(res => { if (!controller.signal.aborted) setUser(res.data); })
-      .catch((err) => {
-        if (controller.signal.aborted) return;
-        clearAllTokens();
-        setTokenState(null);
-      });
-    return () => controller.abort();
-  }, [token, user]);
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    const { data, error } = await supabase.auth.refreshSession();
+    return !error && !!data.session;
+  }, []);
+
+  const resetPassword = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    setIsRecovery(false);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      token,
-      isAuthenticated: Boolean(token),
+      token: session?.access_token ?? null,
+      isAuthenticated: Boolean(session),
+      isLoading,
+      isRecovery,
       login,
       register,
       logout,
       refreshToken,
+      resetPassword,
+      updatePassword,
     }),
-    [user, token, login, register, logout, refreshToken]
+    [user, session, isLoading, isRecovery, login, register, logout, refreshToken, resetPassword, updatePassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

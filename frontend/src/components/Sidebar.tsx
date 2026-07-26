@@ -17,7 +17,6 @@ import type { LucideIcon } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { useNavigate as useNavigate_ } from 'react-router-dom';
 import { useProjects } from '../hooks/useProjects';
-import { clearAllTokens } from '../auth/tokenStorage';
 import { cn } from '../lib/utils';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -218,7 +217,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
   const prefersReduced = useReducedMotion();
   const { projectId, setProjectId } = useProject();
   const { data: projects = [] } = useProjects();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => {
@@ -581,8 +580,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                 className="text-sidebar-foreground/30 hover:text-sidebar-foreground/60 transition-colors opacity-0 group-hover:opacity-100"
                 aria-label="Logout"
                 onClick={() => {
-                  clearAllTokens();
-                  window.location.href = '/login';
+                  logout();
                 }}
               >
                 <LogOut className="h-4 w-4" />

@@ -1,15 +1,17 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type { DecisionResponse, DecisionEnvironment, DecisionHistoryEntry } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/decision`;
-
 export const decisionService = {
-  evaluateCurrent: (projectId: string, env: DecisionEnvironment) =>
-    api.post<DecisionResponse>(`${base(projectId)}/current`, env).then((r) => r.data),
+  evaluateCurrent: async (projectId: string, env: DecisionEnvironment): Promise<DecisionResponse> =>
+    callEdgeFunction('ai', { operation: 'evaluate-current', project_id: projectId, data: { environment: env } }),
 
-  evaluateTrade: (projectId: string, tradeId: string) =>
-    api.post<DecisionResponse>(`${base(projectId)}/trade/${tradeId}`).then((r) => r.data),
+  evaluateTrade: async (projectId: string, tradeId: string): Promise<DecisionResponse> =>
+    callEdgeFunction('ai', { operation: 'analyze-trade', project_id: projectId, data: { trade_id: tradeId } }),
 
-  history: (projectId: string, limit: number = 20) =>
-    api.get<DecisionHistoryEntry[]>(`${base(projectId)}/history`, { params: { limit } }).then((r) => r.data),
+  history: async (_projectId: string, limit: number = 20): Promise<DecisionHistoryEntry[]> => {
+    const { data, error } = await supabase.from('trade_evaluation').select('*, trade:trade_id(*)').order('evaluated_at', { ascending: false }).limit(limit);
+    if (error) throw error;
+    return (data ?? []) as unknown as DecisionHistoryEntry[];
+  },
 };

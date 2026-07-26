@@ -1,9 +1,10 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
 import type { DashboardStats } from './types';
 
 export const dashboardService = {
-  // Backend exposes dashboard at /dashboard and expects a required `project_id` query param.
-  // Call the backend endpoint with the project_id as a query parameter to match the router.
-  stats: (projectId: string) =>
-    api.get<DashboardStats>(`/projects/${projectId}/dashboard/`).then((r) => r.data),
+  stats: async (projectId: string): Promise<DashboardStats> => {
+    const { data, error } = await supabase.rpc('get_dashboard_stats', { p_project_id: projectId });
+    if (error) throw error;
+    return data as unknown as DashboardStats;
+  },
 };

@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { useAuth } from '../auth/AuthContext';
 
+
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -79,7 +80,12 @@ export default function Login() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground">Password</label>
+                <Link to="/forgot-password" className="text-[10px] font-medium text-primary hover:text-primary/80 transition-colors">
+                  Forgot?
+                </Link>
+              </div>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}

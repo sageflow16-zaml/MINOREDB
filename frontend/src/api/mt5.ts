@@ -1,27 +1,20 @@
-import api from '../services/api';
-import type {
-  BrokerConnection,
-  TradeSyncLog,
-  MT5StatusResponse,
-  MT5ConnectRequest,
-  MT5SyncResponse,
-} from './types';
-
-const BASE = '/mt5';
+import { callEdgeFunction } from '../lib/edgeFunctions';
+import type { MT5StatusResponse, MT5ConnectRequest, BrokerConnection, MT5SyncResponse, TradeSyncLog } from './types';
 
 export const mt5Service = {
-  status: () =>
-    api.get<MT5StatusResponse>(`${BASE}/status`).then((r) => r.data),
+  status: (): Promise<MT5StatusResponse> =>
+    callEdgeFunction('mt5', { operation: 'status' }),
 
-  connect: (req: MT5ConnectRequest) =>
-    api.post<BrokerConnection>(`${BASE}/connect`, req).then((r) => r.data),
+  connect: (req: MT5ConnectRequest): Promise<BrokerConnection> =>
+    callEdgeFunction('mt5', { operation: 'connect', data: req as any }),
 
-  disconnect: () =>
-    api.post<BrokerConnection | null>(`${BASE}/disconnect`).then((r) => r.data),
+  disconnect: (): Promise<BrokerConnection | null> =>
+    callEdgeFunction('mt5', { operation: 'disconnect' }),
 
-  sync: (projectId: string, mode: string = 'incremental') =>
-    api.post<MT5SyncResponse>(`${BASE}/sync`, { mode }, { params: { project_id: projectId } }).then((r) => r.data),
+  sync: (projectId: string, mode: string = 'incremental'): Promise<MT5SyncResponse> =>
+    callEdgeFunction('mt5', { operation: 'sync', project_id: projectId, data: { mode } }),
 
-  logs: (limit: number = 100) =>
-    api.get<TradeSyncLog[]>(`${BASE}/logs`, { params: { limit } }).then((r) => r.data),
+  logs: (_limit: number = 100): Promise<TradeSyncLog[]> => {
+    throw new Error('MT5 logs require Edge Function deployment');
+  },
 };

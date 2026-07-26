@@ -21,7 +21,7 @@ export const useResearchSession = (projectId: string, sessionId: string | null) 
     enabled: !!sessionId,
     refetchInterval: (query) => {
       const data = query.state.data;
-      if (data && (data.session.status === 'completed' || data.session.status === 'failed')) {
+      if (data?.session && (data.session.status === 'completed' || data.session.status === 'failed')) {
         return false;
       }
       return 2000;

@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { ConceptRead } from '../types';
+import type { ConceptRead, ClaimRead, InterpretationRead } from '../types';
 import { useConceptClaims, useConceptInterpretations } from '../hooks/useConcepts';
 import { LoadingSpinner, EmptyState } from './ui/Feedback';
 
@@ -23,14 +23,14 @@ export const ConceptDrawer = ({ concept, onClose }: { concept: ConceptRead; onCl
           <div>
             <h4 className="font-semibold">Associated Claims</h4>
             {claimsLoading ? <LoadingSpinner /> : claims && claims.length > 0 ? (
-                <ul className="text-sm list-disc pl-4">{claims.map(c => <li key={c.id}>{(c.verbatim_text ? c.verbatim_text.substring(0,50) : '') + '...'}</li>)}</ul>
+                <ul className="text-sm list-disc pl-4">{claims.map((c: ClaimRead) => <li key={c.id}>{(c.verbatim_text ? c.verbatim_text.substring(0,50) : '') + '...'}</li>)}</ul>
             ) : <EmptyState message="No claims associated." />}
           </div>
 
           <div>
             <h4 className="font-semibold">Associated Interpretations</h4>
             {interpsLoading ? <LoadingSpinner /> : interpretations && interpretations.length > 0 ? (
-                <ul className="text-sm list-disc pl-4">{interpretations.map(i => <li key={i.id}>{i.interpretation_statement}</li>)}</ul>
+                <ul className="text-sm list-disc pl-4">{interpretations.map((i: InterpretationRead) => <li key={i.id}>{i.interpretation_statement}</li>)}</ul>
             ) : <EmptyState message="No interpretations found." />}
           </div>
         </div>

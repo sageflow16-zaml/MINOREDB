@@ -1,13 +1,34 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
 import type { HypothesisRead } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/hypotheses`;
-
 export const hypothesisService = {
-  list: (projectId: string) =>
-    api.get<HypothesisRead[]>(`${base(projectId)}/`).then((r) => r.data),
-  get: (projectId: string, id: string) =>
-    api.get<HypothesisRead>(`${base(projectId)}/${id}`).then((r) => r.data),
-  remove: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/${id}`).then((r) => r.data),
+  list: async (projectId: string): Promise<HypothesisRead[]> => {
+    const { data, error } = await supabase
+      .from('hypothesis')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as HypothesisRead[];
+  },
+
+  get: async (projectId: string, id: string): Promise<HypothesisRead> => {
+    const { data, error } = await supabase
+      .from('hypothesis')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as HypothesisRead;
+  },
+
+  remove: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('hypothesis')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 };

@@ -8,12 +8,14 @@ import { useAuth } from '../auth/AuthContext';
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,8 +33,8 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      await register(email, password);
-      navigate('/', { replace: true });
+      await register(email, password, name || undefined);
+      setNeedsConfirmation(true);
     } catch (err: unknown) {
       const msg =
         err instanceof Error
@@ -44,6 +46,28 @@ export default function Register() {
       setIsLoading(false);
     }
   };
+
+  if (needsConfirmation) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
+        </div>
+        <div className="relative w-full max-w-sm">
+          <div className="rounded-xl border border-border bg-card p-8 shadow-lg text-center">
+            <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" />
+            <h1 className="text-xl font-bold tracking-tight text-foreground mb-2">Check your email</h1>
+            <p className="text-sm text-muted-foreground mb-6">
+              We sent a confirmation link to <strong>{email}</strong>. Please click it to activate your account.
+            </p>
+            <Link to="/login" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+              Go to sign in
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
@@ -75,6 +99,17 @@ export default function Register() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Full name</label>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                autoComplete="name"
+              />
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Email</label>
               <Input

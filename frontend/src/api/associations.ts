@@ -1,17 +1,56 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
 import type { AssociationRead, AssociationCreate, AssociationUpdate } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/associations`;
-
 export const associationService = {
-  list: (projectId: string) =>
-    api.get<AssociationRead[]>(`${base(projectId)}/`).then((r) => r.data),
-  get: (projectId: string, id: string) =>
-    api.get<AssociationRead>(`${base(projectId)}/${id}`).then((r) => r.data),
-  create: (projectId: string, data: AssociationCreate) =>
-    api.post<AssociationRead>(`${base(projectId)}/`, data).then((r) => r.data),
-  update: (projectId: string, id: string, data: AssociationUpdate) =>
-    api.put<AssociationRead>(`${base(projectId)}/${id}`, data).then((r) => r.data),
-  remove: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/${id}`).then((r) => r.data),
+  list: async (projectId: string): Promise<AssociationRead[]> => {
+    const { data, error } = await supabase
+      .from('association')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as AssociationRead[];
+  },
+
+  get: async (projectId: string, id: string): Promise<AssociationRead> => {
+    const { data, error } = await supabase
+      .from('association')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as AssociationRead;
+  },
+
+  create: async (projectId: string, data: AssociationCreate): Promise<AssociationRead> => {
+    const { data: row, error } = await supabase
+      .from('association')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as AssociationRead;
+  },
+
+  update: async (projectId: string, id: string, data: AssociationUpdate): Promise<AssociationRead> => {
+    const { data: row, error } = await supabase
+      .from('association')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return row as AssociationRead;
+  },
+
+  remove: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('association')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 };

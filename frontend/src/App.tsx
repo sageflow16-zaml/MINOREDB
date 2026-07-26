@@ -8,6 +8,8 @@ import { OfflineBanner } from './components/OfflineBanner';
 
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ServerError = lazy(() => import('./pages/ServerError'));
 
@@ -22,6 +24,8 @@ export const App = () => {
       <Routes>
         <Route path="/login" element={withSuspense(<Login />)} />
         <Route path="/register" element={withSuspense(<Register />)} />
+        <Route path="/forgot-password" element={withSuspense(<ForgotPassword />)} />
+        <Route path="/reset-password" element={withSuspense(<ResetPassword />)} />
         <Route path="/500" element={withSuspense(<ServerError />)} />
 
         <Route element={<ProtectedRoute />}>

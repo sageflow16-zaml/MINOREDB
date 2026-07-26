@@ -324,11 +324,11 @@ function DebriefsTab({ debriefs, selected, onSelect, searchQuery, onSearch, onGe
                 <p className="text-xs text-foreground">{selected.summary}</p>
               </div>
             )}
-            {selected.lessons_learned && selected.lessons_learned.length > 0 && (
+            {selected.lessons_learned && (Array.isArray(selected.lessons_learned) ? selected.lessons_learned.length > 0 : selected.lessons_learned.length > 0) && (
               <div>
                 <p className="mb-2 text-xs font-medium text-muted-foreground">Lessons Learned</p>
                 <ul className="space-y-1">
-                  {selected.lessons_learned.map((l, i) => (
+                  {(Array.isArray(selected.lessons_learned) ? selected.lessons_learned : [selected.lessons_learned]).map((l: any, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-foreground/80">
                       <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
                       {l}
@@ -436,14 +436,14 @@ function PatternsTab({ patterns, onDetect, generating }: { patterns: PersonalPat
                     <p className="font-medium text-foreground">{p.loss_count}</p>
                   </div>
                 </div>
-                {p.confidence !== null && (
+                  {p.confidence != null && (
                   <div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Confidence</span>
-                      <span>{p.confidence.toFixed(0)}%</span>
+                      <span>{p.confidence?.toFixed(0) ?? 'N/A'}%</span>
                     </div>
                     <div className="mt-1 h-1.5 rounded-full bg-muted">
-                      <div className="h-1.5 rounded-full bg-primary" style={{ width: `${p.confidence}%` }} />
+                      <div className="h-1.5 rounded-full bg-primary" style={{ width: `${p.confidence ?? 0}%` }} />
                     </div>
                   </div>
                 )}

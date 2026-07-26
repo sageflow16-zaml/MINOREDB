@@ -78,7 +78,7 @@ All routes except auth are grouped under `/api/v1/` with project-scoping:
 | `/projects/{id}/strategies` | Trading strategies |
 | `/projects/{id}/dashboard` | Dashboard data |
 | `/projects/{id}/trades` | Trade journal |
-| `/projects/{id}/market-structures` | Market structure |
+| ~~`/projects/{id}/market-structures`~~ | Market structure (moved to Supabase) |
 | `/projects/{id}/ict` | ICT smart engine |
 | `/projects/{id}/brain` | AI trading brain |
 | `/projects/{id}/broker` | Broker integration |

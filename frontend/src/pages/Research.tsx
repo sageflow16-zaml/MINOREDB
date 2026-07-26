@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRunResearch, useResearchSession, useResearchHistory } from '../hooks/useResearch';
+import type { ResearchSession } from '../api/types';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
@@ -277,7 +278,7 @@ export default function ResearchPage() {
               <EmptyState title="No research sessions yet" description="Ask a question above to begin." icon={<Brain className="h-6 w-6" />} />
             ) : (
               <div className="space-y-2">
-                {history.map((s: { id: string; question: string; status: string; duration: number | null; created_at: string }) => (
+                {history.map((s: ResearchSession) => (
                   <button
                     key={s.id}
                     onClick={() => setActiveSessionId(s.id)}
@@ -290,7 +291,7 @@ export default function ResearchPage() {
                     <div className="mt-1.5 flex items-center gap-3 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {new Date(s.created_at).toLocaleString()}
+                        {s.created_at ? new Date(s.created_at).toLocaleString() : ''}
                       </span>
                       {s.duration && <span>{s.duration.toFixed(1)}s</span>}
                     </div>

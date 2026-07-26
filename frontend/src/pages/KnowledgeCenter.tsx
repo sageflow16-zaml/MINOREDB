@@ -142,7 +142,7 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
               </div>
             </Section>
           )}
-          {(concept.relationships_outgoing?.length > 0 || concept.relationships_incoming?.length > 0) && (
+          {((concept.relationships_outgoing?.length ?? 0) > 0 || (concept.relationships_incoming?.length ?? 0) > 0) && (
             <Section title={`Relationships (${(concept.relationships_outgoing?.length || 0) + (concept.relationships_incoming?.length || 0)})`}>
               <div className="space-y-1">
                 {concept.relationships_outgoing?.map((r: any) => (

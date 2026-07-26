@@ -3513,6 +3513,304 @@ export interface BrokerOrder {
   comment: string | null;
 }
 
+// ── Trader Intelligence Types ──────────────
+
+export interface TradeDebrief {
+  id: string;
+  project_id: string;
+  trade_id: string;
+  created_at: string;
+  updated_at?: string;
+  summary?: string;
+  lessons_learned?: string | string[];
+  mistakes_identified?: string | string[];
+  improvements?: string | string[];
+  emotional_state?: string;
+  discipline_score?: number;
+  overall_rating?: number;
+  entry_review?: string;
+  execution_review?: string;
+  exit_review?: string;
+  psychology_review?: string;
+  strengths?: string[];
+  tags?: string[];
+  ai_analysis?: Record<string, unknown>;
+}
+
+export interface PersonalPattern {
+  id: string;
+  project_id: string;
+  created_at: string;
+  updated_at?: string;
+  name?: string;
+  pattern_type: string;
+  category?: string;
+  description?: string;
+  occurrence_count: number;
+  win_count?: number;
+  loss_count?: number;
+  win_rate?: number;
+  avg_pnl?: number;
+  confidence?: number;
+  active: boolean;
+  related_trade_ids?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface PersonalRule {
+  id: string;
+  project_id: string;
+  created_at: string;
+  updated_at?: string;
+  title: string;
+  description?: string;
+  category?: string;
+  rule_type?: string;
+  condition?: string;
+  action?: string;
+  status: string;
+  version?: string;
+  confidence?: number;
+  supporting_stats?: Record<string, unknown>;
+  rejection_reason?: string;
+  approved_at?: string;
+  rejected_at?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TraderProfile {
+  id: string;
+  project_id: string;
+  created_at: string;
+  updated_at?: string;
+  trading_style?: string;
+  preferred_sessions?: string[];
+  preferred_pairs?: string[];
+  preferred_timeframes?: string[];
+  risk_tolerance?: string;
+  avg_holding_period?: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  trading_psychology_notes?: string;
+  goals?: string[];
+  experience_level?: string;
+  preferred_models?: string[];
+  discipline_score?: number;
+  rule_adherence?: Record<string, unknown>;
+  improvement_suggestions?: string[];
+  total_trades_analyzed?: number;
+  active_patterns?: number;
+  approved_rules?: number;
+  ai_generated: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TraderProfileSnapshot {
+  id: string;
+  project_id: string;
+  created_at: string;
+  snapshot_date: string;
+  win_rate?: number;
+  avg_rr?: number;
+  expectancy?: number;
+  total_trades: number;
+  profit_factor?: number;
+  max_drawdown?: number;
+  sharpe_ratio?: number;
+  discipline_score?: number;
+  psychology_score?: number;
+  top_improvements?: string[];
+  areas_to_focus?: string[];
+  profile_summary?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DashboardData {
+  debrief_count: number;
+  pattern_count: number;
+  rule_count: number;
+  approved_rule_count: number;
+  profile: TraderProfile | null;
+  recent_debriefs: TradeDebrief[];
+}
+
+export interface AnalystResponse {
+  answer: string;
+  sources?: Array<{ title: string; url?: string; relevance?: number }> | string[];
+  confidence?: number;
+  follow_up_questions?: string[];
+  evidence?: EvidenceItem[];
+}
+
+export interface EvidenceItem {
+  id: string;
+  title: string;
+  source?: string;
+  content?: string;
+  data?: Record<string, unknown>;
+  relevance?: number;
+  created_at?: string;
+}
+
+export interface ResearchDetail {
+  id: string;
+  project_id: string;
+  question: string;
+  status: string;
+  answer?: string;
+  sources?: string[];
+  session?: any;
+  tasks?: any;
+  report?: any;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ResearchSession {
+  id: string;
+  project_id: string;
+  title?: string;
+  question?: string;
+  duration?: number | null;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface KnowledgeCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  sort_order?: number;
+  created_at?: string;
+}
+
+export interface KnowledgeTag {
+  id: string;
+  name: string;
+  slug?: string;
+  color?: string;
+  created_at?: string;
+}
+
+export interface KnowledgeConcept {
+  id: string;
+  name: string;
+  title?: string;
+  description?: string;
+  summary?: string;
+  difficulty?: string;
+  category_id?: string;
+  tags?: any[];
+  status?: string;
+  confidence?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface KnowledgeConceptDetail extends KnowledgeConcept {
+  category?: { id?: string; name?: string };
+  definition?: string;
+  purpose?: string;
+  market_context?: string;
+  rules?: any;
+  conditions?: string;
+  confirmations?: string;
+  invalidations?: string;
+  common_mistakes?: string;
+  best_practices?: string;
+  examples?: any[];
+  references?: any[];
+  relationships_outgoing?: any[];
+  relationships_incoming?: any[];
+  relationships?: KnowledgeRelationship[];
+}
+
+export interface KnowledgeRelationship {
+  id: string;
+  source_concept_id: string;
+  target_concept_id: string;
+  relationship_type: string;
+  description?: string;
+  strength?: number;
+  source_concept?: { id?: string; title?: string; name?: string };
+  target_concept?: { id?: string; title?: string; name?: string };
+  title?: string;
+  created_at?: string;
+}
+
+export interface KnowledgeExample {
+  id: string;
+  concept_id: string;
+  title?: string;
+  content?: string;
+  source?: string;
+  created_at?: string;
+}
+
+export interface KnowledgeReference {
+  id: string;
+  concept_id: string;
+  title?: string;
+  url?: string;
+  author?: string;
+  source_type?: string;
+  created_at?: string;
+}
+
+export interface KnowledgeStats {
+  total_categories: number;
+  total_concepts: number;
+  total_relationships: number;
+  total_examples: number;
+  total_references: number;
+}
+
+export interface KnowledgeSearchResult {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+  relevance?: number;
+  category?: string;
+  tags?: string[];
+}
+
+// ── Context Service Types ───────────────────
+
+export interface ContextRequest {
+  symbols: string[];
+  timeframes?: string[];
+  include_news?: boolean;
+  include_macro?: boolean;
+  include_technical?: boolean;
+  include_sentiment?: boolean;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface ContextAnalysis {
+  symbol: string;
+  timeframe?: string;
+  timestamp: string;
+  bias?: string;
+  strength?: number;
+  market_phase?: string;
+  trend?: string;
+  support_levels?: number[];
+  resistance_levels?: number[];
+  key_events?: string[];
+  news_sentiment?: string;
+  macro_context?: string;
+  technical_summary?: string;
+  risk_assessment?: string;
+  confidence_score?: number;
+  raw_data?: Record<string, unknown>;
+}
+
 // ── ICT Smart Engine Types ──────────────────────────────────────────────
 
 export interface OHLCBar {

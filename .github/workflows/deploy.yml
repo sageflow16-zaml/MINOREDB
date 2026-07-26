@@ -1,26 +1,64 @@
-name: Deploy to Vercel
+name: Deploy
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  deploy:
-    name: Deploy Frontend + Backend → Vercel
+  lint-and-typecheck:
+    name: Lint & TypeCheck
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
+  deploy-supabase:
+    name: Deploy Supabase
+    needs: [lint-and-typecheck]
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Link project
+        run: supabase link --project-ref $SUPABASE_PROJECT_ID
+      - name: Run migrations
+        run: supabase db push
+      - name: Deploy Edge Functions
+        run: |
+          supabase functions deploy ai
+          supabase functions deploy collector
+          supabase functions deploy broker-sync
+          supabase functions deploy automation-connector
+          supabase functions deploy obsidian-sync
+          supabase functions deploy replay-data
+          supabase functions deploy mt5
+          supabase functions deploy tv-webhook
+
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    needs: [deploy-supabase]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: --prod
+          working-directory: frontend

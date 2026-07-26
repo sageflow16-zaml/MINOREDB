@@ -1,23 +1,40 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
   LearningEventRead,
   KnowledgeSnapshotRead,
-  LearningStatus,
-  LearningRebuildResponse,
 } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/learning`;
-
 export const learningService = {
-  events: (projectId: string, limit: number = 50) =>
-    api.get<LearningEventRead[]>(`${base(projectId)}/events`, { params: { limit } }).then((r) => r.data),
+  events: async (projectId: string, limit: number = 50): Promise<LearningEventRead[]> => {
+    const { data, error } = await supabase
+      .from('learning_event')
+      .select('id, created_at, event_type, entity_type, entity_id, duration_ms, status, summary')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-  snapshots: (projectId: string, limit: number = 30) =>
-    api.get<KnowledgeSnapshotRead[]>(`${base(projectId)}/snapshots`, { params: { limit } }).then((r) => r.data),
+    if (error) throw error;
+    return (data ?? []) as LearningEventRead[];
+  },
 
-  rebuild: (projectId: string) =>
-    api.post<LearningRebuildResponse>(`${base(projectId)}/rebuild`, { event_type: "manual_rebuild" }).then((r) => r.data),
+  snapshots: async (projectId: string, limit: number = 30): Promise<KnowledgeSnapshotRead[]> => {
+    const { data, error } = await supabase
+      .from('knowledge_snapshot')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-  status: (projectId: string) =>
-    api.get<LearningStatus>(`${base(projectId)}/status`).then((r) => r.data),
+    if (error) throw error;
+    return (data ?? []) as KnowledgeSnapshotRead[];
+  },
+
+  status: async (projectId: string) =>
+    callEdgeFunction('ai', { operation: 'learning-status', project_id: projectId }),
+
+  rebuild: async (projectId: string) =>
+    callEdgeFunction('ai', { operation: 'rebuild-learning', project_id: projectId }),
 };
+
+export { learningService as learningApi };

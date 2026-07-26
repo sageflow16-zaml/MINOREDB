@@ -1,46 +1,69 @@
-import api from '../services/api';
-import type {
-  ICTAnalysisRequest, ICTAnalysisResponse,
-  ICTMarketBias, ICTExecutionSignal, AIContext, ICTFullContext,
-} from './types';
+import { supabase } from '../lib/supabase';
+import type { ICTAnalysisRequest, ICTAnalysisResponse, ICTMarketBias, ICTExecutionSignal, AIContext, ICTFullContext } from './types';
 
 export const ictApi = {
-  analyze: (projectId: string, data: ICTAnalysisRequest) =>
-    api.post<ICTAnalysisResponse>(`/projects/${projectId}/ict/analyze`, data),
+  analyze: async (_projectId: string, _data: ICTAnalysisRequest): Promise<{ data: ICTAnalysisResponse }> => {
+    throw new Error('ICT analysis requires AI Edge Function deployment');
+  },
 
-  getStructures: (projectId: string, symbol?: string, limit = 50) =>
-    api.get<Record<string, unknown>[]>(`/projects/${projectId}/ict/structures`, { params: { symbol, limit } }),
+  getStructures: async (projectId: string, symbol?: string, limit = 50): Promise<{ data: Record<string, unknown>[] }> => {
+    let query = supabase.from('market_structure_point').select('*').eq('project_id', projectId);
+    if (symbol) query = query.eq('symbol', symbol);
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(limit);
+    if (error) throw error;
+    return { data: data ?? [] };
+  },
 
-  getEvents: (projectId: string, symbol?: string, eventType?: string, limit = 50) =>
-    api.get<Record<string, unknown>[]>(`/projects/${projectId}/ict/events`, { params: { symbol, event_type: eventType, limit } }),
+  getEvents: async (projectId: string, symbol?: string, eventType?: string, limit = 50): Promise<{ data: Record<string, unknown>[] }> => {
+    let query = supabase.from('market_timeline').select('*').eq('project_id', projectId);
+    if (symbol) query = query.eq('symbol', symbol);
+    if (eventType) query = query.eq('event_type', eventType);
+    const { data, error } = await query.order('event_time', { ascending: false }).limit(limit);
+    if (error) throw error;
+    return { data: data ?? [] };
+  },
 
-  getFVGs: (projectId: string, symbol?: string, status?: string, limit = 50) =>
-    api.get<Record<string, unknown>[]>(`/projects/${projectId}/ict/fvgs`, { params: { symbol, status, limit } }),
+  getFVGs: async (_projectId: string, _symbol?: string, _status?: string, _limit = 50): Promise<{ data: Record<string, unknown>[] }> => {
+    throw new Error('FVG data requires ICT analysis engine');
+  },
 
-  getOrderBlocks: (projectId: string, symbol?: string, blockType?: string, limit = 50) =>
-    api.get<Record<string, unknown>[]>(`/projects/${projectId}/ict/order-blocks`, { params: { symbol, block_type: blockType, limit } }),
+  getOrderBlocks: async (_projectId: string, _symbol?: string, _blockType?: string, _limit = 50): Promise<{ data: Record<string, unknown>[] }> => {
+    throw new Error('Order blocks require ICT analysis engine');
+  },
 
-  getLiquidityZones: (projectId: string, symbol?: string, liquidityType?: string, limit = 50) =>
-    api.get<Record<string, unknown>[]>(`/projects/${projectId}/ict/liquidity`, { params: { symbol, liquidity_type: liquidityType, limit } }),
+  getLiquidityZones: async (_projectId: string, _symbol?: string, _liquidityType?: string, _limit = 50): Promise<{ data: Record<string, unknown>[] }> => {
+    throw new Error('Liquidity zones require ICT analysis engine');
+  },
 
-  getSetups: (projectId: string, symbol?: string, modelType?: string, status?: string, limit = 50) =>
-    api.get<Record<string, unknown>[]>(`/projects/${projectId}/ict/setups`, { params: { symbol, model_type: modelType, status, limit } }),
+  getSetups: async (_projectId: string, _symbol?: string, _modelType?: string, _status?: string, _limit = 50): Promise<{ data: Record<string, unknown>[] }> => {
+    throw new Error('ICT setups require analysis engine');
+  },
 
-  getSetup: (projectId: string, setupId: string) =>
-    api.get<Record<string, unknown>>(`/projects/${projectId}/ict/setups/${setupId}`),
+  getSetup: async (_projectId: string, _setupId: string): Promise<{ data: Record<string, unknown> }> => {
+    throw new Error('ICT setup detail requires analysis engine');
+  },
 
-  getSessions: (projectId: string, symbol?: string, date?: string, limit = 50) =>
-    api.get<Record<string, unknown>[]>(`/projects/${projectId}/ict/sessions`, { params: { symbol, date, limit } }),
+  getSessions: async (projectId: string, symbol?: string, _date?: string, limit = 50): Promise<{ data: Record<string, unknown>[] }> => {
+    let query = supabase.from('session_analysis').select('*').eq('project_id', projectId);
+    if (symbol) query = query.eq('symbol', symbol);
+    const { data, error } = await query.order('date', { ascending: false }).limit(limit);
+    if (error) throw error;
+    return { data: data ?? [] };
+  },
 
-  getMarketBias: (projectId: string, symbol = 'EURUSD') =>
-    api.get<ICTMarketBias>(`/projects/${projectId}/ict/bias`, { params: { symbol } }),
+  getMarketBias: async (_projectId: string, _symbol = 'EURUSD'): Promise<{ data: ICTMarketBias }> => {
+    throw new Error('Market bias requires AI analysis');
+  },
 
-  getSignals: (projectId: string, symbol?: string, status?: string, limit = 50) =>
-    api.get<ICTExecutionSignal[]>(`/projects/${projectId}/ict/signals`, { params: { symbol, status, limit } }),
+  getSignals: async (_projectId: string, _symbol?: string, _status?: string, _limit = 50): Promise<{ data: ICTExecutionSignal[] }> => {
+    throw new Error('ICT signals require analysis engine');
+  },
 
-  getAIContext: (projectId: string, symbol = 'EURUSD') =>
-    api.get<AIContext>(`/projects/${projectId}/ict/ai-context`, { params: { symbol } }),
+  getAIContext: async (_projectId: string, _symbol = 'EURUSD'): Promise<{ data: AIContext }> => {
+    throw new Error('AI context requires analysis engine');
+  },
 
-  getFullContext: (projectId: string, symbol = 'EURUSD') =>
-    api.get<ICTFullContext>(`/projects/${projectId}/ict/context`, { params: { symbol } }),
+  getFullContext: async (_projectId: string, _symbol = 'EURUSD'): Promise<{ data: ICTFullContext }> => {
+    throw new Error('Full context requires analysis engine');
+  },
 };

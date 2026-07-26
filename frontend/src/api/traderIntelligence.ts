@@ -1,175 +1,145 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
+import type { TradeDebrief, PersonalPattern, PersonalRule, TraderProfile, TraderProfileSnapshot, DashboardData } from './types';
 
-export interface TradeDebrief {
-  id: string;
-  project_id: string;
-  trade_id: string;
-  entry_review: string | null;
-  execution_review: string | null;
-  exit_review: string | null;
-  psychology_review: string | null;
-  lessons_learned: string[] | null;
-  strengths: string[] | null;
-  weaknesses: string[] | null;
-  mistakes: string[] | null;
-  improvements: string[] | null;
-  overall_rating: number | null;
-  summary: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PersonalPattern {
-  id: string;
-  project_id: string;
-  name: string;
-  category: string;
-  signature: Record<string, unknown> | null;
-  description: string | null;
-  trade_ids: string[] | null;
-  occurrence_count: number;
-  win_count: number;
-  loss_count: number;
-  total_pnl: number | null;
-  avg_rr: number | null;
-  confidence: number | null;
-  active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PersonalRule {
-  id: string;
-  project_id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  status: string;
-  version: number;
-  evidence: Record<string, unknown> | null;
-  supporting_stats: Record<string, unknown> | null;
-  approved_at: string | null;
-  rejected_at: string | null;
-  rejection_reason: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TraderProfile {
-  id: string;
-  project_id: string;
-  strengths: string[] | null;
-  weaknesses: string[] | null;
-  trading_habits: Record<string, unknown> | null;
-  discipline_score: number | null;
-  rule_adherence: Record<string, unknown> | null;
-  performance_trends: Record<string, unknown> | null;
-  total_trades_analyzed: number;
-  total_debriefs: number;
-  active_patterns: number;
-  approved_rules: number;
-  improvement_suggestions: string[] | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TraderProfileSnapshot {
-  id: string;
-  project_id: string;
-  snapshot_date: string;
-  strengths: string[] | null;
-  weaknesses: string[] | null;
-  discipline_score: number | null;
-  rule_adherence: Record<string, unknown> | null;
-  total_trades_analyzed: number;
-  total_debriefs: number;
-  active_patterns: number;
-  approved_rules: number;
-  created_at: string;
-}
-
-export interface DashboardData {
-  debrief_count: number;
-  pattern_count: number;
-  rule_count: number;
-  approved_rule_count: number;
-  profile: TraderProfile | null;
-  recent_debriefs: TradeDebrief[];
-}
-
-const base = (projectId: string) => `/projects/${projectId}/trader-intelligence`;
+export type { TradeDebrief, PersonalPattern, PersonalRule, TraderProfile, TraderProfileSnapshot, DashboardData };
 
 export const traderIntelligenceService = {
-  dashboard: (projectId: string) =>
-    api.get<DashboardData>(`${base(projectId)}/dashboard`).then((r) => r.data),
+  dashboard: async (projectId: string): Promise<DashboardData> => {
+    const { data: profile } = await supabase.from('trader_profile').select('*').eq('project_id', projectId).maybeSingle();
+    const { data: debriefs } = await supabase.from('trade_debrief').select('*').eq('project_id', projectId).order('created_at', { ascending: false }).limit(5);
+    const { count: debriefCount } = await supabase.from('trade_debrief').select('*', { count: 'exact', head: true }).eq('project_id', projectId);
+    const { count: patternCount } = await supabase.from('personal_pattern').select('*', { count: 'exact', head: true }).eq('project_id', projectId).eq('active', true);
+    const { count: ruleCount } = await supabase.from('personal_rule').select('*', { count: 'exact', head: true }).eq('project_id', projectId);
+    const { count: approvedRuleCount } = await supabase.from('personal_rule').select('*', { count: 'exact', head: true }).eq('project_id', projectId).eq('status', 'approved');
+    return { debrief_count: debriefCount ?? 0, pattern_count: patternCount ?? 0, rule_count: ruleCount ?? 0, approved_rule_count: approvedRuleCount ?? 0, profile: profile as TraderProfile | null, recent_debriefs: (debriefs ?? []) as TradeDebrief[] };
+  },
 
-  listDebriefs: (projectId: string, params?: { skip?: number; limit?: number; trade_id?: string }) =>
-    api.get<TradeDebrief[]>(`${base(projectId)}/debriefs`, { params }).then((r) => r.data),
+  listDebriefs: async (projectId: string, params?: { skip?: number; limit?: number; trade_id?: string }): Promise<TradeDebrief[]> => {
+    let query = supabase.from('trade_debrief').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (params?.trade_id) query = query.eq('trade_id', params.trade_id);
+    if (params?.limit) query = query.range(params.skip ?? 0, (params.skip ?? 0) + params.limit - 1);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as TradeDebrief[];
+  },
 
-  getDebrief: (projectId: string, debriefId: string) =>
-    api.get<TradeDebrief>(`${base(projectId)}/debriefs/${debriefId}`).then((r) => r.data),
+  getDebrief: async (projectId: string, debriefId: string): Promise<TradeDebrief> => {
+    const { data, error } = await supabase.from('trade_debrief').select('*').eq('id', debriefId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as TradeDebrief;
+  },
 
-  searchDebriefs: (projectId: string, q: string, limit?: number) =>
-    api.get<TradeDebrief[]>(`${base(projectId)}/debriefs/search`, { params: { q, limit } }).then((r) => r.data),
+  searchDebriefs: async (projectId: string, q: string, limit?: number): Promise<TradeDebrief[]> => {
+    const { data, error } = await supabase.from('trade_debrief').select('*').eq('project_id', projectId).or(`summary.ilike.%${q}%,lessons_learned.ilike.%${q}%`).order('created_at', { ascending: false }).limit(limit ?? 20);
+    if (error) throw error;
+    return (data ?? []) as TradeDebrief[];
+  },
 
-  generateDebrief: (projectId: string, tradeId: string) =>
-    api.post<{ debrief: TradeDebrief; message: string }>(
-      `${base(projectId)}/debriefs/generate`,
-      { trade_id: tradeId }
-    ).then((r) => r.data),
+  generateDebrief: (projectId: string, tradeId: string): Promise<{ debrief: TradeDebrief; message: string }> =>
+    callEdgeFunction('ai', { operation: 'generate-debrief', project_id: projectId, data: { trade_id: tradeId } }),
 
-  updateDebrief: (projectId: string, debriefId: string, data: Partial<TradeDebrief>) =>
-    api.put<TradeDebrief>(`${base(projectId)}/debriefs/${debriefId}`, data).then((r) => r.data),
+  updateDebrief: async (projectId: string, debriefId: string, data: Partial<TradeDebrief>): Promise<TradeDebrief> => {
+    const { data: row, error } = await supabase.from('trade_debrief').update(data).eq('id', debriefId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as TradeDebrief;
+  },
 
-  deleteDebrief: (projectId: string, debriefId: string) =>
-    api.delete(`${base(projectId)}/debriefs/${debriefId}`),
+  deleteDebrief: async (projectId: string, debriefId: string): Promise<void> => {
+    const { error } = await supabase.from('trade_debrief').delete().eq('id', debriefId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  listPatterns: (projectId: string, params?: { skip?: number; limit?: number; category?: string; active?: boolean }) =>
-    api.get<PersonalPattern[]>(`${base(projectId)}/patterns`, { params }).then((r) => r.data),
+  listPatterns: async (projectId: string, params?: { skip?: number; limit?: number; category?: string; active?: boolean }): Promise<PersonalPattern[]> => {
+    let query = supabase.from('personal_pattern').select('*').eq('project_id', projectId).order('occurrence_count', { ascending: false });
+    if (params?.category) query = query.eq('category', params.category);
+    if (params?.active !== undefined) query = query.eq('active', params.active);
+    if (params?.limit) query = query.range(params.skip ?? 0, (params.skip ?? 0) + params.limit - 1);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as PersonalPattern[];
+  },
 
-  getPattern: (projectId: string, patternId: string) =>
-    api.get<PersonalPattern>(`${base(projectId)}/patterns/${patternId}`).then((r) => r.data),
+  getPattern: async (projectId: string, patternId: string): Promise<PersonalPattern> => {
+    const { data, error } = await supabase.from('personal_pattern').select('*').eq('id', patternId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as PersonalPattern;
+  },
 
-  detectPatterns: (projectId: string, limit?: number) =>
-    api.post<PersonalPattern[]>(`${base(projectId)}/patterns/detect`, null, { params: { limit } }).then((r) => r.data),
+  detectPatterns: (projectId: string, _limit?: number): Promise<PersonalPattern[]> =>
+    callEdgeFunction('ai', { operation: 'detect-patterns', project_id: projectId }),
 
-  updatePattern: (projectId: string, patternId: string, data: Partial<PersonalPattern>) =>
-    api.put<PersonalPattern>(`${base(projectId)}/patterns/${patternId}`, data).then((r) => r.data),
+  updatePattern: async (projectId: string, patternId: string, data: Partial<PersonalPattern>): Promise<PersonalPattern> => {
+    const { data: row, error } = await supabase.from('personal_pattern').update(data).eq('id', patternId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as PersonalPattern;
+  },
 
-  deletePattern: (projectId: string, patternId: string) =>
-    api.delete(`${base(projectId)}/patterns/${patternId}`),
+  deletePattern: async (projectId: string, patternId: string): Promise<void> => {
+    const { error } = await supabase.from('personal_pattern').delete().eq('id', patternId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  listRules: (projectId: string, params?: { skip?: number; limit?: number; status?: string; category?: string }) =>
-    api.get<PersonalRule[]>(`${base(projectId)}/rules`, { params }).then((r) => r.data),
+  listRules: async (projectId: string, params?: { skip?: number; limit?: number; status?: string; category?: string }): Promise<PersonalRule[]> => {
+    let query = supabase.from('personal_rule').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (params?.status) query = query.eq('status', params.status);
+    if (params?.category) query = query.eq('category', params.category);
+    if (params?.limit) query = query.range(params.skip ?? 0, (params.skip ?? 0) + params.limit - 1);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as PersonalRule[];
+  },
 
-  getRulesForApproval: (projectId: string, limit?: number) =>
-    api.get<PersonalRule[]>(`${base(projectId)}/rules/for-approval`, { params: { limit } }).then((r) => r.data),
+  getRulesForApproval: async (projectId: string, limit?: number): Promise<PersonalRule[]> => {
+    const { data, error } = await supabase.from('personal_rule').select('*').eq('project_id', projectId).eq('status', 'draft').order('created_at', { ascending: false }).limit(limit ?? 50);
+    if (error) throw error;
+    return (data ?? []) as PersonalRule[];
+  },
 
-  getRule: (projectId: string, ruleId: string) =>
-    api.get<PersonalRule>(`${base(projectId)}/rules/${ruleId}`).then((r) => r.data),
+  getRule: async (projectId: string, ruleId: string): Promise<PersonalRule> => {
+    const { data, error } = await supabase.from('personal_rule').select('*').eq('id', ruleId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as PersonalRule;
+  },
 
-  generateRules: (projectId: string) =>
-    api.post<{ rules: PersonalRule[]; message: string }>(`${base(projectId)}/rules/generate`).then((r) => r.data),
+  generateRules: (projectId: string): Promise<{ rules: PersonalRule[]; message: string }> =>
+    callEdgeFunction('ai', { operation: 'generate-rules', project_id: projectId }),
 
-  approveRule: (projectId: string, ruleId: string, notes?: string) =>
-    api.post<PersonalRule>(`${base(projectId)}/rules/${ruleId}/approve`, { notes }).then((r) => r.data),
+  approveRule: async (projectId: string, ruleId: string, notes?: string): Promise<PersonalRule> => {
+    const { data: row, error } = await supabase.from('personal_rule').update({ status: 'approved', approved_at: new Date().toISOString(), rejection_reason: notes || null }).eq('id', ruleId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as PersonalRule;
+  },
 
-  rejectRule: (projectId: string, ruleId: string, reason: string) =>
-    api.post<PersonalRule>(`${base(projectId)}/rules/${ruleId}/reject`, { reason }).then((r) => r.data),
+  rejectRule: async (projectId: string, ruleId: string, reason: string): Promise<PersonalRule> => {
+    const { data: row, error } = await supabase.from('personal_rule').update({ status: 'rejected', rejected_at: new Date().toISOString(), rejection_reason: reason }).eq('id', ruleId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as PersonalRule;
+  },
 
-  updateRule: (projectId: string, ruleId: string, data: Partial<PersonalRule>) =>
-    api.put<PersonalRule>(`${base(projectId)}/rules/${ruleId}`, data).then((r) => r.data),
+  updateRule: async (projectId: string, ruleId: string, data: Partial<PersonalRule>): Promise<PersonalRule> => {
+    const { data: row, error } = await supabase.from('personal_rule').update(data).eq('id', ruleId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as PersonalRule;
+  },
 
-  deleteRule: (projectId: string, ruleId: string) =>
-    api.delete(`${base(projectId)}/rules/${ruleId}`),
+  deleteRule: async (projectId: string, ruleId: string): Promise<void> => {
+    const { error } = await supabase.from('personal_rule').delete().eq('id', ruleId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  getProfile: (projectId: string) =>
-    api.get<TraderProfile>(`${base(projectId)}/profile`).then((r) => r.data),
+  getProfile: async (projectId: string): Promise<TraderProfile> => {
+    const { data, error } = await supabase.from('trader_profile').select('*').eq('project_id', projectId).maybeSingle();
+    if (error) throw error;
+    return data as TraderProfile;
+  },
 
-  buildProfile: (projectId: string) =>
-    api.post<TraderProfile>(`${base(projectId)}/profile/build`).then((r) => r.data),
+  buildProfile: (projectId: string): Promise<TraderProfile> =>
+    callEdgeFunction('ai', { operation: 'build-profile', project_id: projectId }),
 
-  getSnapshots: (projectId: string, limit?: number) =>
-    api.get<TraderProfileSnapshot[]>(`${base(projectId)}/profile/snapshots`, { params: { limit } }).then((r) => r.data),
+  getSnapshots: async (projectId: string, limit?: number): Promise<TraderProfileSnapshot[]> => {
+    const { data, error } = await supabase.from('trader_profile_snapshot').select('*').eq('project_id', projectId).order('snapshot_date', { ascending: false }).limit(limit ?? 20);
+    if (error) throw error;
+    return (data ?? []) as TraderProfileSnapshot[];
+  },
 };

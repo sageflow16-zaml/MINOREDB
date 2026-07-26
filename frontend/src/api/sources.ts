@@ -1,29 +1,81 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type { SourceRead, SourceCreate, SourceUpdate } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/sources`;
-
 export const sourceService = {
-  list: (projectId: string) =>
-    api.get<SourceRead[]>(`${base(projectId)}/`).then((r) => r.data),
-  get: (projectId: string, id: string) =>
-    api.get<SourceRead>(`${base(projectId)}/${id}`).then((r) => r.data),
-  create: (projectId: string, data: SourceCreate) =>
-    api.post<SourceRead>(`${base(projectId)}/`, data).then((r) => r.data),
-  update: (projectId: string, id: string, data: SourceUpdate) =>
-    api.put<SourceRead>(`${base(projectId)}/${id}`, data).then((r) => r.data),
-  remove: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/${id}`).then((r) => r.data),
-  upload: (projectId: string, formData: FormData) =>
-    api
-      .post<SourceRead>(`${base(projectId)}/upload`, formData)
-      .then((r) => r.data),
-  extractClaims: (projectId: string, sourceId: string) =>
-    api
-      .post(`${base(projectId)}/${sourceId}/extract-claims`)
-      .then((r) => r.data),
-  detectConflicts: (projectId: string, sourceId: string) =>
-    api
-      .post(`${base(projectId)}/${sourceId}/detect-conflicts`)
-      .then((r) => r.data),
+  list: async (projectId: string): Promise<SourceRead[]> => {
+    const { data, error } = await supabase
+      .from('source')
+      .select('*')
+      .eq('project_id', projectId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as SourceRead[];
+  },
+
+  get: async (projectId: string, id: string): Promise<SourceRead> => {
+    const { data, error } = await supabase
+      .from('source')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .is('deleted_at', null)
+      .single();
+    if (error) throw error;
+    return data as SourceRead;
+  },
+
+  create: async (projectId: string, data: SourceCreate): Promise<SourceRead> => {
+    const { data: row, error } = await supabase
+      .from('source')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as SourceRead;
+  },
+
+  update: async (projectId: string, id: string, data: SourceUpdate): Promise<SourceRead> => {
+    const { data: row, error } = await supabase
+      .from('source')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return row as SourceRead;
+  },
+
+  remove: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('source')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
+
+  upload: async (projectId: string, formData: FormData): Promise<SourceRead> => {
+    const file = formData.get('file') as File;
+    const filePath = `${projectId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('sources')
+      .upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data: row, error } = await supabase
+      .from('source')
+      .insert({ project_id: projectId, file_path: filePath, original_name: file.name })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as SourceRead;
+  },
+
+  extractClaims: async (projectId: string, sourceId: string) =>
+    callEdgeFunction('ai', { operation: 'extract-claims', project_id: projectId, data: { source_id: sourceId } }),
+
+  detectConflicts: async (projectId: string, sourceId: string) =>
+    callEdgeFunction('ai', { operation: 'detect-conflicts', project_id: projectId, data: { source_id: sourceId } }),
 };

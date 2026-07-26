@@ -1,26 +1,34 @@
-import api from '../services/api';
-import type {
-  MacroEvent,
-  MarketSnapshot,
-  MacroRefreshResponse,
-  MarketState,
-} from './types';
-
-const BASE = '/macro';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
+import type { MacroEvent, MarketSnapshot, MacroRefreshResponse, MarketState } from './types';
 
 export const macroService = {
-  snapshot: () =>
-    api.get<MarketSnapshot | null>(`${BASE}/snapshot`).then((r) => r.data),
+  snapshot: async (): Promise<MarketSnapshot | null> => {
+    const { data, error } = await supabase.from('market_snapshot').select('*').order('snapshot_time', { ascending: false }).limit(1).maybeSingle();
+    if (error) throw error;
+    return data as MarketSnapshot | null;
+  },
 
-  events: (limit: number = 50, importance?: string) =>
-    api.get<MacroEvent[]>(`${BASE}/events`, { params: { limit, importance } }).then((r) => r.data),
+  events: async (limit: number = 50, importance?: string): Promise<MacroEvent[]> => {
+    let query = supabase.from('macro_event').select('*').order('event_date', { ascending: false }).limit(limit);
+    if (importance) query = query.eq('importance', parseInt(importance));
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as MacroEvent[];
+  },
 
-  calendar: () =>
-    api.get<MacroEvent[]>(`${BASE}/calendar`).then((r) => r.data),
+  calendar: async (): Promise<MacroEvent[]> => {
+    const { data, error } = await supabase.from('macro_event').select('*').gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(50);
+    if (error) throw error;
+    return (data ?? []) as MacroEvent[];
+  },
 
-  state: () =>
-    api.get<MarketState>(`${BASE}/state`).then((r) => r.data),
+  state: async (): Promise<MarketState> => {
+    const { data: snap } = await supabase.from('market_snapshot').select('*').order('snapshot_time', { ascending: false }).limit(1).maybeSingle();
+    const { data: events } = await supabase.from('macro_event').select('*').gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(10);
+    return { snapshot: snap as MarketSnapshot | null, events: (events ?? []) as MacroEvent[], events_today: [], high_impact_events: [], recent_releases: [], upcoming_events: [] } as MarketState;
+  },
 
-  refresh: () =>
-    api.post<MacroRefreshResponse>(`${BASE}/refresh`).then((r) => r.data),
+  refresh: async (): Promise<MacroRefreshResponse> =>
+    callEdgeFunction('collector', { operation: 'run', data: { collector_name: 'economic_calendar' } }),
 };

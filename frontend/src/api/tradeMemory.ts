@@ -1,11 +1,25 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
 import type { TradeMemory } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/memories`;
-
 export const tradeMemoryService = {
-  list: (projectId: string) =>
-    api.get<TradeMemory[]>(`${base(projectId)}/`).then((r) => r.data),
-  get: (projectId: string, tradeId: string) =>
-    api.get<TradeMemory>(`${base(projectId)}/${tradeId}`).then((r) => r.data),
+  list: async (projectId: string): Promise<TradeMemory[]> => {
+    const { data, error } = await supabase
+      .from('trade_memory')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as TradeMemory[];
+  },
+
+  get: async (projectId: string, tradeId: string): Promise<TradeMemory> => {
+    const { data, error } = await supabase
+      .from('trade_memory')
+      .select('*')
+      .eq('trade_id', tradeId)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as TradeMemory;
+  },
 };
