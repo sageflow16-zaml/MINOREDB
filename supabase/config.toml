@@ -1,115 +1,102 @@
-[project]
-# ---------------------------------------------------------------
-# MINORE — Supabase Configuration
-# After linking, `supabase link --project-ref <ref>` fills project_id.
-# ---------------------------------------------------------------
-# plan = "pro"                              # uncomment for paid tier
-# experimental.orientdb_version = "latest"  # not used
+project_id = "wlpukdzvcidbwwwehiql"
 
-[auth]
-enabled = true
-# ----- providers -----
-[auth.external]
-enabled = false
-[auth.email]
-enabled = true
-enable_confirmations = false               # email confirm off for dev;
-                                            # set true in production
-
-# ----- session / security -----
-auth.session.access_token_exp = 3600        # 1 hour
-auth.session.refresh_token_exp = 2592000    # 30 days
-auth.sessions_timebox = false
-
-# ----- rate limiting -----
-[auth.rate_limit]
-# defaults are fine
-
-# =====================================================================
-# API GATEWAY
-# =====================================================================
 [api]
 enabled = true
 port = 54321
 schemas = ["public", "graphql_public"]
-extra_search_path = ["public"]
-# max_request_size = 10_000_000   # 10 MB (default)
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
 
-# =====================================================================
-# DATABASE
-# =====================================================================
+[api.tls]
+enabled = false
+
 [db]
-# postgres-meta will apply migrations; this file is for Supabase Studio
-# and CLI awareness.
+port = 54322
+shadow_port = 54320
+major_version = 15
+health_timeout = "2m"
 
-# ----- extensions to enable -----
-[db.extensions]
-pgvector = { schema = "extensions", version = "0.7.0" }
-pgcrypto = { schema = "extensions", version = "1.3" }
-pg_stat_statements = { schema = "extensions", version = "1.10" }
+[db.pooler]
+enabled = false
 
-# =====================================================================
-# STORAGE
-# =====================================================================
-[storage]
+[db.migrations]
 enabled = true
 
-[storage.buckets]
-# Trade screenshots
+[db.seed]
+enabled = true
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
 [storage.buckets.trade-images]
 public = false
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
 file_size_limit = "10MB"
 
-# User avatars
 [storage.buckets.avatars]
 public = true
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
 file_size_limit = "2MB"
 
-# Replay session screenshots
 [storage.buckets.replay-screenshots]
 public = false
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
 file_size_limit = "10MB"
 
-# Knowledge / concept images
 [storage.buckets.knowledge-images]
 public = false
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
 file_size_limit = "5MB"
 
-# =====================================================================
-# EDGE FUNCTIONS
-# =====================================================================
-[functions]
+[auth]
 enabled = true
-# verify_jwt = true                       # enforce JWT on all functions
-# Deno import map — if needed for shared deps
-# import_map = "./functions/_shared/import_map.json"
+site_url = "http://127.0.0.1:3000"
+jwt_expiry = 3600
+enable_signup = true
+minimum_password_length = 6
 
-# ----- Individual function config -----
-[functions.ai]
-verify_jwt = false                        # uses its own auth header
-# env vars set via dashboard or `supabase secrets set`
+[auth.email]
+enable_signup = true
+enable_confirmations = false
 
-[functions.collector]
-verify_jwt = true
+[auth.sessions]
+timebox = "24h"
 
-[functions.broker-sync]
-verify_jwt = true
+[auth.rate_limit]
+email_sent = 2
+sms_sent = 30
+token_refresh = 150
+sign_in_sign_ups = 30
 
-[functions.automation-connector]
-verify_jwt = true
+[auth.mfa]
+max_enrolled_factors = 10
 
-[functions.obsidian-sync]
-verify_jwt = true
+[auth.mfa.totp]
+enroll_enabled = false
+verify_enabled = false
 
-[functions.replay-data]
-verify_jwt = true
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
 
-[functions.mt5]
-verify_jwt = true
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+inspector_port = 8083
+deno_version = 2
 
-[functions.tv-webhook]
-verify_jwt = false                        # signed by TradingView secret, not user JWT
+[analytics]
+enabled = true
+port = 54327
+backend = "postgres"
+
+[experimental]
+orioledb_version = ""
