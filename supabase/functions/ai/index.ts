@@ -545,8 +545,6 @@ async function refreshKnowledgeGraph(supabase: ReturnType<typeof createClient>, 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    if (!openaiApiKey) return errorResponse('AI API key not configured', 500);
-
     const { operation, project_id, data } = await req.json() as { operation: string; project_id: string; data?: Record<string, any> };
     if (!operation) return errorResponse('Missing operation');
     if (!project_id) return errorResponse('Missing project_id');
@@ -647,6 +645,68 @@ serve(async (req) => {
       case 'refresh-knowledge-graph': {
         const result = await refreshKnowledgeGraph(supabase, project_id);
         return successResponse(result);
+      }
+      case 'learning-status': {
+        const [trades, sources, claims, concepts, interpretations, patterns, mstructs, events, lastEvent, lastSnapshot] = await Promise.all([
+          supabase.from('trade').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('source').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('claim').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('concept').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('interpretation').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('personal_pattern').select('id').eq('project_id', project_id),
+          supabase.from('market_structure').select('id').eq('project_id', project_id),
+          supabase.from('learning_event').select('id').eq('project_id', project_id),
+          supabase.from('learning_event').select('event_type, status, created_at').eq('project_id', project_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+          supabase.from('knowledge_snapshot').select('created_at, knowledge_growth').eq('project_id', project_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        ]);
+        return successResponse({
+          total_trades: (trades.data || []).length,
+          total_sources: (sources.data || []).length,
+          total_claims: (claims.data || []).length,
+          total_concepts: (concepts.data || []).length,
+          total_interpretations: (interpretations.data || []).length,
+          total_patterns: (patterns.data || []).length,
+          total_market_structures: (mstructs.data || []).length,
+          total_events: (events.data || []).length,
+          last_event: lastEvent.data || null,
+          last_snapshot: lastSnapshot.data || null,
+        });
+      }
+      case 'rebuild-learning': {
+        const [tRes, sRes, clRes, coRes, iRes, pRes, mRes] = await Promise.all([
+          supabase.from('trade').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('source').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('claim').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('concept').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('interpretation').select('id').eq('project_id', project_id).is('deleted_at', null),
+          supabase.from('personal_pattern').select('id').eq('project_id', project_id),
+          supabase.from('market_structure').select('id').eq('project_id', project_id),
+        ]);
+        const totals = {
+          total_trades: (tRes.data || []).length,
+          total_patterns: (pRes.data || []).length,
+          total_claims: (clRes.data || []).length,
+          total_concepts: (coRes.data || []).length,
+          total_sources: (sRes.data || []).length,
+          total_interpretations: (iRes.data || []).length,
+          total_similarities: 0,
+        };
+        const startedAt = Date.now();
+        const { data: snapshot } = await supabase.from('knowledge_snapshot').insert({
+          project_id,
+          ...totals,
+          win_rate: 0, avg_rr: 0, expectancy: 0, knowledge_growth: 0,
+        }).select().single();
+        const { data: event } = await supabase.from('learning_event').insert({
+          project_id, event_type: 'rebuild', entity_type: 'knowledge_snapshot', status: 'SUCCESS', duration_ms: Date.now() - startedAt, summary: `Rebuilt knowledge: ${JSON.stringify(totals)}`,
+        }).select().single();
+        return successResponse({
+          event_id: event?.id || '',
+          status: 'SUCCESS',
+          duration_ms: Date.now() - startedAt,
+          steps_completed: ['count_trades', 'count_sources', 'count_claims', 'count_concepts', 'count_interpretations', 'count_patterns', 'count_market_structures', 'create_snapshot', 'log_event'],
+          errors: [],
+        });
       }
       default:
         return errorResponse(`Unknown operation: ${operation}`);
