@@ -247,15 +247,15 @@ export default function PlanningPage() {
             <KpiCard title="Active Goals" value={dash.active_goals_count} icon={Target} variant="info" size="sm" />
             <KpiCard title="Goals Complete" value={`${dash.goal_progress}%`} icon={CheckCircle} variant={dash.goal_progress >= 50 ? 'success' : 'warning'} size="sm" />
             <KpiCard title="Active Reminders" value={dash.active_reminders.length} icon={Bell} variant="info" size="sm" />
-            <KpiCard title="Today's Events" value={dash.today_events.length} icon={Calendar} variant="info" size="sm" />
-            <KpiCard title="Upcoming Sessions" value={dash.upcoming_sessions.length} icon={Clock} variant="info" size="sm" />
+            <KpiCard title="Today's Events" value={(dash.today_events ?? []).length} icon={Calendar} variant="info" size="sm" />
+            <KpiCard title="Upcoming Sessions" value={(dash.upcoming_sessions ?? []).length} icon={Clock} variant="info" size="sm" />
           </motion.div>
 
           <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader><CardTitle className="text-sm font-medium">Upcoming Sessions</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                {dash.upcoming_sessions.map((s, i) => (
+                {(dash.upcoming_sessions ?? []).map((s, i) => (
                   <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                     <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /><span className="text-sm">{s.name}</span></div>
                     <span className="text-xs font-mono text-muted-foreground">{s.time}</span>
@@ -282,7 +282,7 @@ export default function PlanningPage() {
               <CardContent>
                 {dash.today_events.length > 0 ? (
                   <div className="space-y-2">
-                    {dash.today_events.map((ev, i) => (
+                    {(dash.today_events ?? []).map((ev, i) => (
                       <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20">
                         {'impact_level' in ev ? (
                           <>

@@ -255,7 +255,7 @@ function DashboardTab({ dashboard }: { dashboard: DashboardData | null }) {
         </Card>
       )}
 
-      {dashboard.recent_debriefs.length > 0 && (
+      {(dashboard.recent_debriefs ?? []).length > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Recent Debriefs</CardTitle>

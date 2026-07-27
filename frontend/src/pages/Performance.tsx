@@ -515,7 +515,7 @@ export default function PerformancePage() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={pnlDist ? pnlDist.bins.slice(0, -1).map((bin, i) => ({ bin: bin.toFixed(2), count: pnlDist.counts[i] || 0 })) : []}>
+                    <BarChart data={pnlDist ? (pnlDist.bins ?? []).slice(0, -1).map((bin, i) => ({ bin: bin.toFixed(2), count: pnlDist.counts[i] || 0 })) : []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
                       <XAxis dataKey="bin" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
@@ -534,7 +534,7 @@ export default function PerformancePage() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={rrDist ? rrDist.bins.slice(0, -1).map((bin, i) => ({ bin: bin.toFixed(2), count: rrDist.counts[i] || 0 })) : []}>
+                    <BarChart data={rrDist ? (rrDist.bins ?? []).slice(0, -1).map((bin, i) => ({ bin: bin.toFixed(2), count: rrDist.counts[i] || 0 })) : []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
                       <XAxis dataKey="bin" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
