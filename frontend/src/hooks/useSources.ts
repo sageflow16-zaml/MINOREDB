@@ -19,7 +19,7 @@ export const useUploadSource = (projectId: string) => {
       queryClient.invalidateQueries({ queryKey: ['sources', projectId] });
       toast.success('Source uploaded successfully');
     },
-    onError: () => toast.error('Upload failed'),
+    onError: (err) => toast.error(`Upload failed: ${(err as Error)?.message ?? 'Unknown error'}`),
   });
 };
 

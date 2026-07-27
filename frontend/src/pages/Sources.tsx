@@ -24,6 +24,7 @@ export default function SourcesPage() {
   const deleteSource = useDeleteSource(projectId!);
 
   const [file, setFile] = useState<File | null>(null);
+  const [inputKey, setInputKey] = useState(0);
   const [viewSource, setViewSource] = useState<SourceRead | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ export default function SourcesPage() {
     if (!file) return;
     const formData = new FormData();
     formData.append('file', file);
-    uploadSource.mutate(formData, { onSuccess: () => setFile(null) });
+    uploadSource.mutate(formData, { onSettled: () => { setFile(null); setInputKey(k => k + 1); } });
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -46,8 +47,9 @@ export default function SourcesPage() {
           <div className="flex items-center gap-2">
             <input
               type="file"
-              accept=".txt,.pdf,.docx"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              key={inputKey}
+              accept=".txt,.pdf,.docx,.png,.jpg,.jpeg,.gif"
+              onChange={(e) => { setFile(e.target.files?.[0] || null); }}
               className="text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent max-w-[200px]"
             />
             <Button
@@ -70,9 +72,10 @@ export default function SourcesPage() {
           action={
             <div className="flex items-center gap-2">
               <input
+                key={inputKey}
                 type="file"
-                accept=".txt,.pdf,.docx"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                accept=".txt,.pdf,.docx,.png,.jpg,.jpeg,.gif"
+                onChange={(e) => { setFile(e.target.files?.[0] || null); }}
                 className="text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent max-w-[200px]"
               />
               <Button onClick={handleUpload} disabled={!file} size="sm">
