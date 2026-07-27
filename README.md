@@ -6,6 +6,43 @@ Project Minore is a production-grade platform for retail traders who want to ana
 
 ---
 
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Vercel (Hosting)                          │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                   Frontend (React SPA)                    │   │
+│  │  React 18 + TypeScript + Vite + Tailwind CSS             │   │
+│  │  shadcn/ui + TanStack Query + Recharts + Framer Motion   │   │
+│  │  React Router v6 + Lightweight Charts                    │   │
+│  └──────────┬───────────────────────────────────────────────┘   │
+└─────────────┼─────────────────────────────────────────────────────┘
+              │ supabase-js SDK
+              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                        Supabase Platform                         │
+│                                                                  │
+│  ┌─────────────────┐  ┌──────────────────────────────────────┐  │
+│  │   PostgreSQL 16  │  │         Edge Functions (Deno)        │  │
+│  │  + Row Level     │  │  ┌──────┐ ┌──────────┐ ┌─────────┐ │  │
+│  │    Security      │  │  │  ai  │ │ broker-  │ │ obsidian│ │  │
+│  │  + 29 Migrations │  │  │      │ │ sync     │ │ -sync   │ │  │
+│  │  + SQL RPCs      │  │  ├──────┤ ├──────────┤ ├─────────┤ │  │
+│  │                  │  │  │replay│ │automation│ │collector│ │  │
+│  │  51 API modules  │  │  │-data │ │-connector│ │         │ │  │
+│  │  (supabase-js)   │  │  ├──────┤ ├──────────┤ ├─────────┤ │  │
+│  │                  │  │  │ mt5  │ │tv-webhook│ │ context │ │  │
+│  │  Auth (email/    │  │  └──────┘ └──────────┘ └─────────┘ │  │
+│  │   password)      │  └──────────────────────────────────────┘  │
+│  │  + RLS Policies  │                                            │
+│  │  + Storage       │                                            │
+│  └─────────────────┘                                            │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Features
 
 - **Trade Journaling** — Log trades manually or auto-detect from FXReplay via the browser extension
@@ -22,42 +59,14 @@ Project Minore is a production-grade platform for retail traders who want to ana
 - **Multi-Broker Integration** — Connect MT4, MT5, cTrader, OANDA, Binance, and more
 - **ICT Smart Engine** — Fair Value Gaps, Order Blocks, Liquidity Zones, and Session Analysis
 - **Obsidian Integration** — Bidirectional sync between trading notes and knowledge base
+- **Quant Research** — Backtesting, walk-forward analysis, simulation labs, experiment tracking
+- **Automation** — Rule-based workflows, scheduled tasks, webhook triggers, notification engine
+- **Copilot** — AI-assisted workspace for trade analysis and decision support
+- **Intelligence Agents** — Automated agent pipeline for ongoing market and trade analysis
 
 ---
 
-## Architecture
-
-```
-┌──────────────┐     ┌──────────────┐     ┌───────────────────┐
-│   Frontend   │────▶│   Backend    │────▶│    PostgreSQL     │
-│  React + Vite│     │  FastAPI     │     │   + Alembic       │
-│  shadcn/ui   │     │  SQLAlchemy  │     │                   │
-│  TanStack    │     │  Pydantic v2 │     │  168 tables       │
-│  Query       │     │  JWT Auth    │     │                   │
-└──────────────┘     └──────┬───────┘     └───────────────────┘
-                            │
-                    ┌───────▼────────┐
-                    │   AI Engines    │
-                    │  Knowledge Graph│
-                    │  Pattern Match  │
-                    │  RAG Pipeline   │
-                    │  ICT Analysis   │
-                    └────────────────┘
-```
-
 ## Tech Stack
-
-### Backend
-| Category | Technology |
-|----------|-----------|
-| Runtime | Python 3.12 |
-| Framework | FastAPI |
-| ORM | SQLAlchemy 2.0 + Alembic |
-| Validation | Pydantic v2 / pydantic-settings |
-| Auth | JWT (PyJWT) + bcrypt |
-| Server | Uvicorn (dev) / Gunicorn (prod) |
-| Database | PostgreSQL 16 |
-| AI/ML | NumPy, custom pattern engines |
 
 ### Frontend
 | Category | Technology |
@@ -69,17 +78,26 @@ Project Minore is a production-grade platform for retail traders who want to ana
 | State | TanStack Query (React Query) |
 | Charts | Recharts, Lightweight Charts |
 | Routing | React Router v6 |
-| HTTP | Axios |
 | Animation | Framer Motion |
+
+### Backend (Supabase)
+| Category | Technology |
+|----------|-----------|
+| Database | PostgreSQL 16 |
+| Auth | Supabase Auth (email/password) |
+| Row Security | Row Level Security (RLS) |
+| API Layer | supabase-js (client-side) |
+| Edge Functions | Deno / TypeScript |
+| Storage | Supabase Storage (S3-compatible) |
+| Migrations | 29 SQL migrations |
 
 ### Infrastructure
 | Category | Technology |
 |----------|-----------|
-| Hosting | Vercel (frontend) / Render (backend) |
-| Database | Neon PostgreSQL |
+| Frontend Hosting | Vercel |
+| Backend Platform | Supabase |
 | CI/CD | GitHub Actions |
-| Container | Docker / Docker Compose |
-| Monitoring | Prometheus metrics |
+| Monitoring | Supabase Dashboard, Vercel Analytics |
 
 ---
 
@@ -87,97 +105,37 @@ Project Minore is a production-grade platform for retail traders who want to ana
 
 ### Prerequisites
 
-- Python 3.12+
 - Node.js 20+
-- PostgreSQL 16+
+- Supabase account (free tier)
+- Vercel account (free tier)
 
-### Backend Setup
+### Environment Variables
 
-```bash
-cd backend
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-# macOS/Linux
-# source .venv/bin/activate
-
-pip install -r requirements.txt
-cp .env.example .env
-```
-
-Edit `backend/.env`:
-- Set `DATABASE_URL` to your PostgreSQL connection string
-- Generate a `JWT_SECRET_KEY`: `python -c "import secrets; print(secrets.token_hex(32))"`
-
-```bash
-alembic upgrade head
-uvicorn src.main:app --reload --port 8000
-```
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anonymous public key |
 
 ### Frontend Setup
 
 ```bash
 cd frontend
 npm install
+cp .env.example .env
+```
+
+Edit `frontend/.env` with your Supabase project credentials:
+
+```
+VITE_SUPABASE_URL=https://<your-project>.supabase.co
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
+```
+
+```bash
 npm run dev
 ```
 
 Open http://localhost:5173 in your browser.
-
-### Verify
-
-```bash
-curl http://localhost:8000/health
-# → {"status":"healthy","version":"1.1.0","environment":"development"}
-```
-
-### Docker (Full Stack)
-
-```bash
-docker compose up --build
-```
-
-Starts PostgreSQL, Redis, backend (port 8000), and frontend (port 80).
-
----
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-| Variable | Required | Description | Default |
-|----------|----------|-------------|---------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string | — |
-| `JWT_SECRET_KEY` | Yes | JWT signing key (min 32 chars) | — |
-| `ENVIRONMENT` | No | `development` / `production` / `test` | `development` |
-| `PORT` | No | Server port | `8000` |
-| `CORS_ORIGINS` | No | Allowed CORS origins (comma-separated) | `http://localhost:5173` |
-| `CORS_ALLOW_CREDENTIALS` | No | Allow credentials in CORS | `true` |
-| `CORS_ALLOW_METHODS` | No | Allowed HTTP methods | `GET,POST,PUT,DELETE,PATCH,OPTIONS` |
-| `CORS_ALLOW_HEADERS` | No | Allowed HTTP headers | `Authorization,Content-Type,...` |
-| `ALLOWED_HOSTS` | No | Allowed Host headers | `*` |
-| `RATE_LIMIT_PER_MINUTE` | No | Max requests per minute per IP | `60` |
-| `MAX_REQUEST_SIZE` | No | Max request body size (bytes) | `10485760` |
-| `MAX_UPLOAD_SIZE` | No | Max file upload size (bytes) | `5242880` |
-| `MAX_PAGE_SIZE` | No | Hard cap on pagination limit | `1000` |
-| `DOCS_ENABLED` | No | Enable Swagger/ReDoc | `true` |
-| `HSTS_ENABLED` | No | Enable HSTS headers | `false` |
-| `HSTS_MAX_AGE` | No | HSTS max-age in seconds | `31536000` |
-| `HSTS_INCLUDE_SUBDOMAINS` | No | Include subdomains in HSTS | `true` |
-| `HSTS_PRELOAD` | No | Allow HSTS preload | `true` |
-| `API_KEY` | No | Machine-to-machine API key | — |
-| `WEBHOOK_SECRET` | No | Webhook signing secret | — |
-| `JWT_ALGORITHM` | No | JWT signing algorithm | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | Access token lifetime | `30` |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | No | Refresh token lifetime | `7` |
-
-### Frontend (`frontend/.env`)
-
-| Variable | Required | Description | Default |
-|----------|----------|-------------|---------|
-| `VITE_API_URL` | Yes | Backend API base URL | `/api/v1` |
-| `VITE_API_PROXY` | No | Vite dev proxy target (local only) | `http://127.0.0.1:8000` |
 
 ---
 
@@ -185,47 +143,39 @@ Starts PostgreSQL, Redis, backend (port 8000), and frontend (port 80).
 
 ```
 project-minore/
-├── backend/                  # FastAPI application
-│   ├── src/
-│   │   ├── agents/           # Intelligence agents (coach, curator, etc.)
-│   │   ├── api/              # HTTP routes, middleware, dependencies
-│   │   ├── brain/            # AI brain (DNA, learning, reasoning engines)
-│   │   ├── broker/           # Broker integration providers (14+ brokers)
-│   │   ├── collectors/       # Data collectors (macro, market data)
-│   │   ├── core/             # Config, security, crypto, logging
-│   │   ├── crud/             # Database CRUD operations
-│   │   ├── db/               # Database session, base, migrations
-│   │   ├── ict/              # ICT trading engine (FVG, OB, liquidity)
-│   │   ├── models/           # SQLAlchemy ORM models
-│   │   ├── schemas/          # Pydantic request/response schemas
-│   │   └── services/         # Business logic + AI/ML services
-│   ├── tests/                # Pytest test suite
-│   └── alembic/              # Database migrations
 ├── frontend/                 # React + Vite SPA
 │   ├── src/
-│   │   ├── api/              # API client services (axios)
+│   │   ├── api/              # 51 API service modules (supabase-js)
 │   │   ├── components/       # Reusable UI components
 │   │   ├── hooks/            # Custom React hooks (TanStack Query)
-│   │   ├── pages/            # Route page components (70+)
+│   │   ├── pages/            # 100+ route page components
 │   │   ├── layouts/          # Layout components
 │   │   ├── context/          # React context providers
-│   │   └── lib/              # Utility functions
-│   └── public/               # Static assets
+│   │   ├── lib/              # Utility functions, supabase client
+│   │   ├── types/            # TypeScript type definitions
+│   │   ├── auth/             # Auth components and guards
+│   │   └── theme/            # Theme configuration
+│   ├── public/               # Static assets
+│   └── tests/                # Vitest test suite
+├── supabase/                 # Supabase configuration
+│   ├── migrations/           # 29 database migrations
+│   ├── functions/            # 9 Edge Functions (Deno)
+│   │   ├── ai/               # AI analysis engine
+│   │   ├── broker-sync/      # Broker integration sync
+│   │   ├── obsidian-sync/    # Obsidian vault sync
+│   │   ├── replay-data/      # Historical trade replay
+│   │   ├── automation-connector/  # Automation triggers
+│   │   ├── collector/        # Economic data collection
+│   │   ├── mt5/              # MetaTrader 5 bridge
+│   │   ├── tv-webhook/       # TradingView webhook receiver
+│   │   └── context/          # Context enrichment
+│   └── config.toml           # Supabase local config
 ├── extension/                # Chrome Extension (Manifest V3)
-├── docs/                     # Documentation
-│   ├── api/                  # API reference
-│   ├── architecture/         # Architecture decisions
-│   ├── backend/              # Backend guides
-│   ├── deployment/           # Deployment guides
-│   ├── devops/               # CI/CD, monitoring
-│   ├── frontend/             # Frontend guides
-│   ├── security/             # Security audit, production config
-│   └── testing/              # Testing guide
 ├── obsidian-plugin/          # Obsidian vault plugin
-├── scripts/                  # Utility scripts (backup, version bump)
+├── docs/                     # Documentation
+├── scripts/                  # Utility scripts
 ├── .github/workflows/        # CI/CD pipelines
-├── vercel.json               # Vercel deployment config
-└── render.yaml               # Render deployment blueprint
+└── vercel.json               # Vercel deployment config
 ```
 
 ---
@@ -233,42 +183,67 @@ project-minore/
 ## Testing
 
 ```bash
-# Backend (requires PostgreSQL with minore_test database)
-cd backend
-pytest
-
-# Frontend
+# Frontend unit tests
 cd frontend
 npm test
 
-# API verification
-python test_all_apis.py
+# TypeScript type checking
+npm run lint
+
+# Production build verification
+npm run build
 ```
 
 ---
 
 ## Deployment
 
-The application is designed for free-tier deployment:
+### Frontend (Vercel)
 
-| Service | Component | Plan |
-|---------|-----------|------|
-| Vercel | Frontend (React) | Free |
-| Render | Backend (FastAPI) | Free |
-| Neon | PostgreSQL database | Free |
+```bash
+# Install Vercel CLI
+npm i -g vercel
 
-See `docs/deployment/` for detailed deployment instructions.
+# Login and link
+vercel login
+vercel link
+
+# Set environment variables
+vercel env add VITE_SUPABASE_URL
+vercel env add VITE_SUPABASE_ANON_KEY
+
+# Deploy
+vercel --prod
+```
+
+Or connect your GitHub repository in the Vercel dashboard:
+1. Go to **https://vercel.com/new**
+2. Import `sageflow16-zaml/minore`
+3. Framework preset: **Vite**
+4. Root directory: `frontend`
+5. Build command: `npm run build`
+6. Output directory: `dist`
+7. Add environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+8. Deploy
+
+### Backend (Supabase)
+
+See [MIGRATION_DESIGN.md](./MIGRATION_DESIGN.md) for the full deployment guide including:
+- Creating a Supabase project
+- Running migrations (`supabase db push`)
+- Deploying Edge Functions (`supabase functions deploy`)
+- Configuring Auth settings
+- Setting up Storage buckets and RLS policies
 
 ---
 
 ## Documentation
 
-- `docs/api/OVERVIEW.md` — API reference
-- `docs/backend/AUTH.md` — Authentication flow
-- `docs/database/OVERVIEW.md` — Database schema
-- `docs/deployment/LOCAL.md` — Local development setup
-- `docs/security/PRODUCTION_CONFIG.md` — Production security configuration
-- `docs/testing/OVERVIEW.md` — Testing guide
+- `MIGRATION_DESIGN.md` — Supabase deployment and setup guide
+- `docs/architecture/` — Architecture decisions
+- `docs/frontend/` — Frontend development guides
+- `docs/deployment/` — Deployment instructions
+- `docs/security/` — Security configuration
 
 ---
 

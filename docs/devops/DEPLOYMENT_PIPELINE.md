@@ -1,41 +1,32 @@
-# Deployment Pipeline
+# Deployment Pipeline (v1.0)
 
 ## Overview
 
-Project Minore uses a containerized deployment pipeline with GitHub Actions for CI/CD.
+Project Minore v1.0 uses Supabase for backend services and Vercel for frontend hosting. No Docker containers or Python backend are deployed.
 
 ```
-Developer → GitHub (push) → CI (test, build) → Release (tag) → CD (deploy)
+Developer → GitHub (push) → Vercel auto-deploy (frontend) → Supabase (backend)
 ```
 
 ## Environments
 
-| Environment | URL | Purpose |
-|------------|-----|---------|
-| Development | `localhost:5173` (Vite) / `localhost:8000` (API) | Local development with hot-reload |
-| Staging | TBD | Pre-production validation |
-| Production | TBD | Live production |
+| Environment | Frontend URL | Backend | Purpose |
+|------------|-------------|---------|---------|
+| Development | `localhost:5173` | `supabase start` (local) | Hot-reload local dev |
+| Production | Vercel deployment | Supabase Cloud | Live production |
 
-## CI Pipeline (`.github/workflows/ci.yml`)
+## CI Pipeline
 
-Triggers: push to `main`/`develop`, PR to `main`
+Triggers: push to `main`, PR to `main`
 
-### Jobs
+### Jobs (configured via GitHub Actions)
 
 | Job | Description |
 |-----|-------------|
-| `frontend` | TypeScript type check, vitest tests + coverage, npm audit |
-| `backend` | Pytest with PostgreSQL service container, pip cache |
-| `security` | npm audit, secrets grep, outdated deps check |
-| `build` | Vite production build |
+| `frontend` | TypeScript type check, vitest tests, lint |
+| `build` | Vite production build verification |
 
-### Fast Feedback
-
-- Jobs run in parallel where possible
-- `concurrency` grouping cancels stale runs on same branch
-- Frontend `--coverage` reports uploaded as artifacts
-
-## Release Pipeline (`.github/workflows/release.yml`)
+## Release Pipeline
 
 Triggers: tag push `v*.*.*`
 
@@ -43,63 +34,63 @@ Triggers: tag push `v*.*.*`
 
 | Job | Description |
 |-----|-------------|
-| `check-version` | Ensures VERSION file matches git tag |
-| `docker-build` | Builds & pushes `backend` + `frontend` images to GHCR |
+| `check-version` | Ensures package.json version matches git tag |
 | `create-release` | Creates GitHub Release with changelog excerpt |
 
 ### Versioning
 
 - Follows [Semantic Versioning 2.0](https://semver.org/)
-- Version stored in `VERSION` file at repo root
 - Tag format: `v{major}.{minor}.{patch}`
-- Bump with: `python scripts/bump_version.py {patch|minor|major}`
 
-## Docker Images
-
-Published to `ghcr.io/<org>/project-minore-{backend,frontend}`.
-
-### Tagging Strategy
-
-| Tag | Example | Use |
-|-----|---------|-----|
-| `1.2.3` | `ghcr.io/org/minore-backend:1.2.3` | Exact version |
-| `1.2` | `ghcr.io/org/minore-backend:1.2` | Latest patch in minor line |
-| `sha-<hash>` | `ghcr.io/org/minore-backend:sha-a1b2c3d` | Development builds |
-
-### Image Features
-
-- **Backend**: Python 3.12-slim, non-root `appuser`, health check, multi-stage build
-- **Frontend**: nginx:alpine, gzip, security headers (CSP, HSTS, X-Frame-Options), static caching
-
-## Local Development with Docker Compose
+## Frontend Deployment (Vercel)
 
 ```bash
-docker compose up --build
+cd frontend
+npm run build
+vercel --prod
 ```
 
-This starts:
-- PostgreSQL 16
-- Backend API on `:8000`
-- Frontend on `:80`
-- Redis 7 (optional, for token blacklist)
+Or connect GitHub repo for auto-deploy on push to `main`.
 
-## Production Checklist
+### Environment Variables
 
-See [PRODUCTION_CONFIG.md](../security/PRODUCTION_CONFIG.md) for full checklist.
+| Variable | Source |
+|----------|--------|
+| `VITE_SUPABASE_URL` | Supabase project dashboard → Settings → API |
+| `VITE_SUPABASE_ANON_KEY` | Supabase project dashboard → Settings → API |
 
-### Critical Production Steps
+## Backend Deployment (Supabase)
 
-1. Generate strong `JWT_SECRET_KEY`: `openssl rand -hex 32`
-2. Set `ENVIRONMENT=production`
-3. Configure PostgreSQL with SSL
-4. Enable rate limiting (`RATE_LIMIT_PER_MINUTE=60`)
-5. Set `CORS_ORIGINS` to your domain
-6. Disable docs in production (`DOCS_ENABLED=False`)
-7. Use a reverse proxy (nginx) with TLS termination
+### Database
+
+```bash
+supabase link --project-ref <your-ref>
+supabase db push
+```
+
+### Edge Functions
+
+```bash
+supabase functions deploy ai
+supabase functions deploy broker-sync
+supabase functions deploy obsidian-sync
+supabase functions deploy replay-data
+supabase functions deploy automation-connector
+supabase functions deploy collector
+supabase functions deploy mt5
+supabase functions deploy tv-webhook
+supabase functions deploy context
+```
+
+### Edge Function Secrets
+
+```bash
+supabase secrets set OPENAI_API_KEY=<key>
+supabase secrets set ALPHAVANTAGE_API_KEY=<key>
+```
 
 ## Rollback Procedure
 
-1. **Revert code**: `git revert <commit>` or `git checkout <previous-tag>`
-2. **Redeploy**: Push to trigger CI, or re-tag previous Docker image
-3. **Database**: Run `alembic downgrade -1` if migration rollback needed
-4. **Verify health**: Check `/health` and `/readiness` endpoints
+1. **Frontend**: Re-deploy previous Vercel deployment from dashboard
+2. **Database**: `supabase db diff` to review changes, then revert migration
+3. **Edge Functions**: `supabase functions deploy <name> --version <previous-version>`
