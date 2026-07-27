@@ -46,13 +46,19 @@ export const getBrainDashboard = async (projectId: string): Promise<BrainDashboa
   if (coaching.error) throw coaching.error;
   if (decisions.error) throw decisions.error;
   if (observations.error) throw observations.error;
+  const allInsights = (insights.data ?? []) as PersonalInsight[];
+  const allCoaching = (coaching.data ?? []) as BrainCoaching[];
+  const allDecisions = (decisions.data ?? []) as BrainDecision[];
+  const allObservations = (observations.data ?? []) as LearningObservation[];
   return {
-    insights: (insights.data ?? []) as PersonalInsight[],
-    coaching: (coaching.data ?? []) as BrainCoaching[],
-    decisions: (decisions.data ?? []) as BrainDecision[],
-    observations: (observations.data ?? []) as LearningObservation[],
-    dna: null, recent_activity: [], performance_summary: null,
-  } as unknown as BrainDashboard;
+    dna: null,
+    recent_decisions: allDecisions,
+    top_insights: allInsights,
+    active_observations: allObservations,
+    latest_coaching: allCoaching.length > 0 ? allCoaching[0] : null,
+    memory_summary: { total: 0, by_type: {}, importance_distribution: {}, expired: 0, active: 0 },
+    today_intelligence: { style: null, best_session: null, overall_score: 0, psychology_score: 0, risk_behavior: null, insights: [] },
+  } as BrainDashboard;
 };
 
 export const createBrainMemory = async (projectId: string, data: BrainMemoryCreate): Promise<BrainMemory> => {
