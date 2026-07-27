@@ -6,7 +6,7 @@ RETURNS JSONB
 LANGUAGE plpgsql SECURITY DEFINER STABLE
 AS $$
 DECLARE
-  result JSONB;
+  v_result JSONB;
 BEGIN
   SELECT JSONB_BUILD_OBJECT(
     'sources', (SELECT COUNT(*) FROM public.source WHERE project_id = p_project_id AND deleted_at IS NULL),
@@ -43,8 +43,8 @@ BEGIN
     'active_collectors', (SELECT COUNT(*) FROM public.collector_status WHERE project_id = p_project_id AND enabled = true),
     'collector_errors', COALESCE((SELECT SUM(errors) FROM public.collector_status WHERE project_id = p_project_id), 0),
     'collector_records', COALESCE((SELECT SUM(records_collected) FROM public.collector_status WHERE project_id = p_project_id), 0)
-  ) INTO result;
-  RETURN result;
+  ) INTO v_result;
+  RETURN v_result;
 END;
 $$;
 
@@ -54,7 +54,7 @@ RETURNS JSONB
 LANGUAGE plpgsql SECURITY DEFINER STABLE
 AS $$
 DECLARE
-  result JSONB;
+  v_result JSONB;
 BEGIN
   WITH trade_filter AS (
     SELECT * FROM public.trade
@@ -81,8 +81,8 @@ BEGIN
     'avg_holding_time_min', ROUND(COALESCE(AVG(EXTRACT(EPOCH FROM (close_time - open_time)) / 60), 0), 0),
     'max_drawdown', ROUND(COALESCE(MAX(drawdown), 0), 2),
     'expectancy', ROUND(COALESCE(AVG(pnl), 0), 2)
-  ) INTO result FROM trade_filter;
-  RETURN result;
+  ) INTO v_result FROM trade_filter;
+  RETURN v_result;
 END;
 $$;
 
@@ -92,7 +92,7 @@ RETURNS JSONB
 LANGUAGE plpgsql SECURITY DEFINER STABLE
 AS $$
 DECLARE
-  result JSONB;
+  v_result JSONB;
 BEGIN
   SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
     'pair', pair,
@@ -103,10 +103,10 @@ BEGIN
     'total_pnl', ROUND(COALESCE(SUM(pnl), 0), 2),
     'avg_rr', ROUND(COALESCE(AVG(rr), 0), 2)
   ) ORDER BY COUNT(*) DESC)
-  INTO result FROM public.trade
+  INTO v_result FROM public.trade
   WHERE project_id = p_project_id AND deleted_at IS NULL AND pair IS NOT NULL
   GROUP BY pair;
-  RETURN COALESCE(result, '[]'::jsonb);
+  RETURN COALESCE(v_result, '[]'::jsonb);
 END;
 $$;
 
@@ -178,7 +178,7 @@ RETURNS JSONB
 LANGUAGE plpgsql SECURITY DEFINER STABLE
 AS $$
 DECLARE
-  result JSONB;
+  v_result JSONB;
 BEGIN
   WITH cumulative AS (
     SELECT close_time, pnl,
@@ -198,8 +198,8 @@ BEGIN
       ELSE 0 END, 2
     )
   ) ORDER BY close_time)
-  INTO result FROM cumulative;
-  RETURN COALESCE(result, '[]'::jsonb);
+  INTO v_result FROM cumulative;
+  RETURN COALESCE(v_result, '[]'::jsonb);
 END;
 $$;
 

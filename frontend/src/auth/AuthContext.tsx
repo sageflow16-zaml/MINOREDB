@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { supabase } from '../lib/supabase';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { clearAllTokens } from './tokenStorage';
-import api from '../services/api';
 
 export interface User {
   id: string;
@@ -26,17 +25,6 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-async function syncWithFastAPI(session: Session): Promise<User | null> {
-  try {
-    const response = await api.post('/auth/supabase-sync', {}, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    return response.data;
-  } catch {
-    return null;
-  }
-}
-
 function mapSupabaseUser(supabaseUser: SupabaseUser): User {
   return {
     id: supabaseUser.id,
@@ -55,8 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       setSession(currentSession);
       if (currentSession?.user) {
-        const localUser = await syncWithFastAPI(currentSession);
-        setUser(localUser ?? mapSupabaseUser(currentSession.user));
+        setUser(mapSupabaseUser(currentSession.user));
       }
       setIsLoading(false);
     });
@@ -67,8 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (event === 'SIGNED_IN' && currentSession?.user) {
           setIsRecovery(false);
-          const localUser = await syncWithFastAPI(currentSession);
-          setUser(localUser ?? mapSupabaseUser(currentSession.user));
+          setUser(mapSupabaseUser(currentSession.user));
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setIsRecovery(false);
