@@ -1,224 +1,753 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
   Workflow, WorkflowExecution, Rule, ScheduledJob, JobExecution,
   Notification, NotificationChannel, AuditLog, Connector,
   AutomationReport, WorkflowTemplate, AutomationDashboardData,
 } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/automation`;
-
 export const automationService = {
   // Dashboard
-  dashboard: (projectId: string) =>
-    api.get<AutomationDashboardData>(`${base(projectId)}/dashboard`).then((r) => r.data),
+  async dashboard(projectId: string): Promise<AutomationDashboardData> {
+    const { data: workflows, error: wfErr } = await supabase
+      .from('automation_workflow')
+      .select('id, status')
+      .eq('project_id', projectId)
+      .is('deleted_at', null);
+    if (wfErr) throw wfErr;
+
+    const { data: rules, error: rulesErr } = await supabase
+      .from('automation_rule')
+      .select('id, enabled')
+      .eq('project_id', projectId);
+    if (rulesErr) throw rulesErr;
+
+    const { count: totalJobs, error: jobsErr } = await supabase
+      .from('automation_scheduled_job')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId);
+    if (jobsErr) throw jobsErr;
+
+    const { count: totalNotifications, error: notifErr } = await supabase
+      .from('automation_notification')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId);
+    if (notifErr) throw notifErr;
+
+    const { count: unreadNotifications, error: unreadErr } = await supabase
+      .from('automation_notification')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+      .eq('is_read', false);
+    if (unreadErr) throw unreadErr;
+
+    const { data: recentExecutions, error: execErr } = await supabase
+      .from('automation_workflow_execution')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (execErr) throw execErr;
+
+    const { data: recentAuditLogs, error: auditErr } = await supabase
+      .from('automation_audit_log')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (auditErr) throw auditErr;
+
+    return {
+      total_workflows: workflows.length,
+      active_workflows: workflows.filter((w) => w.status === 'active').length,
+      total_rules: rules.length,
+      enabled_rules: rules.filter((r) => r.enabled).length,
+      total_jobs: totalJobs ?? 0,
+      active_jobs: 0,
+      total_notifications: totalNotifications ?? 0,
+      unread_notifications: unreadNotifications ?? 0,
+      recent_executions: recentExecutions as WorkflowExecution[],
+      recent_audit_logs: recentAuditLogs as AuditLog[],
+    };
+  },
 
   // Workflows
-  workflows: (projectId: string, params?: { status?: string; category?: string; limit?: number }) =>
-    api.get<Workflow[]>(`${base(projectId)}/workflows`, { params }).then((r) => r.data),
+  async workflows(projectId: string, params?: { status?: string; category?: string; limit?: number }): Promise<Workflow[]> {
+    let query = supabase
+      .from('automation_workflow')
+      .select('*')
+      .eq('project_id', projectId)
+      .is('deleted_at', null);
+    if (params?.status) query = query.eq('status', params.status);
+    if (params?.category) query = query.eq('category', params.category);
+    if (params?.limit) query = query.limit(params.limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as unknown as Workflow[];
+  },
 
-  createWorkflow: (projectId: string, data: Record<string, unknown>) =>
-    api.post<Workflow>(`${base(projectId)}/workflows`, data).then((r) => r.data),
+  async createWorkflow(projectId: string, data: Record<string, unknown>): Promise<Workflow> {
+    const { data: result, error } = await supabase
+      .from('automation_workflow')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as Workflow;
+  },
 
-  getWorkflow: (projectId: string, id: string) =>
-    api.get<Workflow>(`${base(projectId)}/workflows/${id}`).then((r) => r.data),
+  async getWorkflow(projectId: string, id: string): Promise<Workflow> {
+    const { data, error } = await supabase
+      .from('automation_workflow')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as Workflow;
+  },
 
-  updateWorkflow: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<Workflow>(`${base(projectId)}/workflows/${id}`, data).then((r) => r.data),
+  async updateWorkflow(projectId: string, id: string, data: Record<string, unknown>): Promise<Workflow> {
+    const { data: result, error } = await supabase
+      .from('automation_workflow')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as Workflow;
+  },
 
-  deleteWorkflow: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/workflows/${id}`).then((r) => r.data),
+  async deleteWorkflow(projectId: string, id: string): Promise<void> {
+    const { error } = await supabase
+      .from('automation_workflow')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  duplicateWorkflow: (projectId: string, id: string) =>
-    api.post<Workflow>(`${base(projectId)}/workflows/${id}/duplicate`).then((r) => r.data),
+  async duplicateWorkflow(projectId: string, id: string): Promise<Workflow> {
+    const { data: original, error: getErr } = await supabase
+      .from('automation_workflow')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (getErr) throw getErr;
 
-  executeWorkflow: (projectId: string, id: string, triggerData?: Record<string, unknown>) =>
-    api.post<WorkflowExecution>(`${base(projectId)}/workflows/${id}/execute`, triggerData || {}).then((r) => r.data),
+    const { name, description, tags, category, nodes, connections, triggers, actions, conditions, config, metadata, error_handling } = original;
+    const { data: result, error: insertErr } = await supabase
+      .from('automation_workflow')
+      .insert({
+        project_id: projectId,
+        name: `${name} (Copy)`,
+        description,
+        status: 'draft',
+        version: 1,
+        tags,
+        category,
+        nodes,
+        connections,
+        triggers,
+        actions,
+        conditions,
+        config,
+        metadata,
+        error_handling,
+      })
+      .select()
+      .single();
+    if (insertErr) throw insertErr;
+    return result as unknown as Workflow;
+  },
 
-  toggleWorkflow: (projectId: string, id: string) =>
-    api.post<Workflow>(`${base(projectId)}/workflows/${id}/toggle`).then((r) => r.data),
+  async executeWorkflow(projectId: string, id: string, triggerData?: Record<string, unknown>): Promise<WorkflowExecution> {
+    const { data, error } = await supabase
+      .from('automation_workflow_execution')
+      .insert({
+        project_id: projectId,
+        workflow_id: id,
+        status: 'pending',
+        triggered_by: 'manual',
+        input_data: triggerData ?? null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as unknown as WorkflowExecution;
+  },
+
+  async toggleWorkflow(projectId: string, id: string): Promise<Workflow> {
+    const { data: current, error: getErr } = await supabase
+      .from('automation_workflow')
+      .select('status')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (getErr) throw getErr;
+
+    const newStatus = current.status === 'active' ? 'paused' : 'active';
+    const { data: result, error: updateErr } = await supabase
+      .from('automation_workflow')
+      .update({ status: newStatus })
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (updateErr) throw updateErr;
+    return result as unknown as Workflow;
+  },
 
   // Executions
-  executions: (projectId: string, params?: { workflow_id?: string; status?: string; limit?: number }) =>
-    api.get<WorkflowExecution[]>(`${base(projectId)}/executions`, { params }).then((r) => r.data),
+  async executions(projectId: string, params?: { workflow_id?: string; status?: string; limit?: number }): Promise<WorkflowExecution[]> {
+    let query = supabase
+      .from('automation_workflow_execution')
+      .select('*')
+      .eq('project_id', projectId);
+    if (params?.workflow_id) query = query.eq('workflow_id', params.workflow_id);
+    if (params?.status) query = query.eq('status', params.status);
+    if (params?.limit) query = query.limit(params.limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as unknown as WorkflowExecution[];
+  },
 
-  getExecution: (projectId: string, id: string) =>
-    api.get<WorkflowExecution>(`${base(projectId)}/executions/${id}`).then((r) => r.data),
+  async getExecution(projectId: string, id: string): Promise<WorkflowExecution> {
+    const { data, error } = await supabase
+      .from('automation_workflow_execution')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as WorkflowExecution;
+  },
 
   // Rules
-  rules: (projectId: string, enabledOnly?: boolean) =>
-    api.get<Rule[]>(`${base(projectId)}/rules`, { params: { enabled_only: enabledOnly } }).then((r) => r.data),
+  async rules(projectId: string, enabledOnly?: boolean): Promise<Rule[]> {
+    let query = supabase
+      .from('automation_rule')
+      .select('*')
+      .eq('project_id', projectId);
+    if (enabledOnly) query = query.eq('enabled', true);
+    query = query.order('priority', { ascending: true });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as unknown as Rule[];
+  },
 
-  createRule: (projectId: string, data: Record<string, unknown>) =>
-    api.post<Rule>(`${base(projectId)}/rules`, data).then((r) => r.data),
+  async createRule(projectId: string, data: Record<string, unknown>): Promise<Rule> {
+    const { data: result, error } = await supabase
+      .from('automation_rule')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as Rule;
+  },
 
-  getRule: (projectId: string, id: string) =>
-    api.get<Rule>(`${base(projectId)}/rules/${id}`).then((r) => r.data),
+  async getRule(projectId: string, id: string): Promise<Rule> {
+    const { data, error } = await supabase
+      .from('automation_rule')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as Rule;
+  },
 
-  updateRule: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<Rule>(`${base(projectId)}/rules/${id}`, data).then((r) => r.data),
+  async updateRule(projectId: string, id: string, data: Record<string, unknown>): Promise<Rule> {
+    const { data: result, error } = await supabase
+      .from('automation_rule')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as Rule;
+  },
 
-  deleteRule: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/rules/${id}`).then((r) => r.data),
+  async deleteRule(projectId: string, id: string): Promise<void> {
+    const { error } = await supabase
+      .from('automation_rule')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  evaluateRules: (projectId: string, context: Record<string, unknown>) =>
-    api.post<Rule[]>(`${base(projectId)}/rules/evaluate`, { context }).then((r) => r.data),
+  async evaluateRules(projectId: string, context: Record<string, unknown>): Promise<Rule[]> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'evaluate_rules',
+      project_id: projectId,
+      data: { context },
+    });
+  },
 
   // Jobs
-  jobs: (projectId: string, enabledOnly?: boolean) =>
-    api.get<ScheduledJob[]>(`${base(projectId)}/jobs`, { params: { enabled_only: enabledOnly } }).then((r) => r.data),
+  async jobs(projectId: string, enabledOnly?: boolean): Promise<ScheduledJob[]> {
+    let query = supabase
+      .from('automation_scheduled_job')
+      .select('*')
+      .eq('project_id', projectId);
+    if (enabledOnly) query = query.eq('enabled', true);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as unknown as ScheduledJob[];
+  },
 
-  createJob: (projectId: string, data: Record<string, unknown>) =>
-    api.post<ScheduledJob>(`${base(projectId)}/jobs`, data).then((r) => r.data),
+  async createJob(projectId: string, data: Record<string, unknown>): Promise<ScheduledJob> {
+    const { data: result, error } = await supabase
+      .from('automation_scheduled_job')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as ScheduledJob;
+  },
 
-  updateJob: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<ScheduledJob>(`${base(projectId)}/jobs/${id}`, data).then((r) => r.data),
+  async updateJob(projectId: string, id: string, data: Record<string, unknown>): Promise<ScheduledJob> {
+    const { data: result, error } = await supabase
+      .from('automation_scheduled_job')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as ScheduledJob;
+  },
 
-  deleteJob: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/jobs/${id}`).then((r) => r.data),
+  async deleteJob(projectId: string, id: string): Promise<void> {
+    const { error } = await supabase
+      .from('automation_scheduled_job')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  executeJob: (projectId: string, id: string) =>
-    api.post<JobExecution>(`${base(projectId)}/jobs/${id}/execute`).then((r) => r.data),
+  async executeJob(projectId: string, id: string): Promise<JobExecution> {
+    const { data, error } = await supabase
+      .from('automation_job_execution')
+      .insert({
+        project_id: projectId,
+        job_id: id,
+        status: 'pending',
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as unknown as JobExecution;
+  },
 
-  getJobExecutions: (projectId: string, id: string, limit?: number) =>
-    api.get<JobExecution[]>(`${base(projectId)}/jobs/${id}/executions`, { params: { limit } }).then((r) => r.data),
+  async getJobExecutions(projectId: string, id: string, limit?: number): Promise<JobExecution[]> {
+    let query = supabase
+      .from('automation_job_execution')
+      .select('*')
+      .eq('project_id', projectId)
+      .eq('job_id', id);
+    if (limit) query = query.limit(limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as unknown as JobExecution[];
+  },
 
   // Notifications
-  notifications: (projectId: string, params?: { unread_only?: boolean; limit?: number }) =>
-    api.get<Notification[]>(`${base(projectId)}/notifications`, { params }).then((r) => r.data),
+  async notifications(projectId: string, params?: { unread_only?: boolean; limit?: number }): Promise<Notification[]> {
+    let query = supabase
+      .from('automation_notification')
+      .select('*')
+      .eq('project_id', projectId);
+    if (params?.unread_only) query = query.eq('is_read', false);
+    if (params?.limit) query = query.limit(params.limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []).map((n) => ({ ...n, read: n.is_read })) as unknown as Notification[];
+  },
 
-  sendNotification: (projectId: string, data: Record<string, unknown>) =>
-    api.post<Notification>(`${base(projectId)}/notifications`, data).then((r) => r.data),
+  async sendNotification(projectId: string, data: Record<string, unknown>): Promise<Notification> {
+    const { is_read, read, ...rest } = data as any;
+    const { data: result, error } = await supabase
+      .from('automation_notification')
+      .insert({ ...rest, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return { ...result, read: result.is_read } as unknown as Notification;
+  },
 
-  markNotificationRead: (projectId: string, id: string) =>
-    api.put<Notification>(`${base(projectId)}/notifications/${id}/read`).then((r) => r.data),
+  async markNotificationRead(projectId: string, id: string): Promise<Notification> {
+    const { data, error } = await supabase
+      .from('automation_notification')
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return { ...data, read: data.is_read } as unknown as Notification;
+  },
 
-  markAllNotificationsRead: (projectId: string) =>
-    api.post(`${base(projectId)}/notifications/read-all`).then((r) => r.data),
+  async markAllNotificationsRead(projectId: string): Promise<void> {
+    const { error } = await supabase
+      .from('automation_notification')
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq('project_id', projectId)
+      .eq('is_read', false);
+    if (error) throw error;
+  },
 
-  getUnreadCount: (projectId: string) =>
-    api.get<{ count: number }>(`${base(projectId)}/notifications/unread-count`).then((r) => r.data),
+  async getUnreadCount(projectId: string): Promise<{ count: number }> {
+    const { count, error } = await supabase
+      .from('automation_notification')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+      .eq('is_read', false);
+    if (error) throw error;
+    return { count: count ?? 0 };
+  },
 
   // Channels
-  channels: (projectId: string) =>
-    api.get<NotificationChannel[]>(`${base(projectId)}/channels`).then((r) => r.data),
+  async channels(projectId: string): Promise<NotificationChannel[]> {
+    const { data, error } = await supabase
+      .from('automation_notification_channel')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data as unknown as NotificationChannel[];
+  },
 
-  createChannel: (projectId: string, data: Record<string, unknown>) =>
-    api.post<NotificationChannel>(`${base(projectId)}/channels`, data).then((r) => r.data),
+  async createChannel(projectId: string, data: Record<string, unknown>): Promise<NotificationChannel> {
+    const { data: result, error } = await supabase
+      .from('automation_notification_channel')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as NotificationChannel;
+  },
 
-  updateChannel: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<NotificationChannel>(`${base(projectId)}/channels/${id}`, data).then((r) => r.data),
+  async updateChannel(projectId: string, id: string, data: Record<string, unknown>): Promise<NotificationChannel> {
+    const { data: result, error } = await supabase
+      .from('automation_notification_channel')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as NotificationChannel;
+  },
 
-  deleteChannel: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/channels/${id}`).then((r) => r.data),
+  async deleteChannel(projectId: string, id: string): Promise<void> {
+    const { error } = await supabase
+      .from('automation_notification_channel')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  verifyChannel: (projectId: string, id: string) =>
-    api.post<NotificationChannel>(`${base(projectId)}/channels/${id}/verify`).then((r) => r.data),
+  async verifyChannel(projectId: string, id: string): Promise<NotificationChannel> {
+    const { data, error } = await supabase
+      .from('automation_notification_channel')
+      .update({ verified: true, last_verified_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as unknown as NotificationChannel;
+  },
 
   // AI Automation
-  aiSummarizeTrades: (projectId: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/summarize-trades`, context || {}).then((r) => r.data),
+  async aiSummarizeTrades(projectId: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'summarize_trades', project_id: projectId, data: context ?? {} });
+  },
 
-  aiReviewJournal: (projectId: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/review-journal`, context || {}).then((r) => r.data),
+  async aiReviewJournal(projectId: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'review_journal', project_id: projectId, data: context ?? {} });
+  },
 
-  aiAnalyzePsychology: (projectId: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/analyze-psychology`, context || {}).then((r) => r.data),
+  async aiAnalyzePsychology(projectId: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'analyze_psychology', project_id: projectId, data: context ?? {} });
+  },
 
-  aiGenerateReport: (projectId: string, reportType: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/generate-report`, { report_type: reportType, context }).then((r) => r.data),
+  async aiGenerateReport(projectId: string, reportType: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'generate_report', project_id: projectId, data: { report_type: reportType, context } });
+  },
 
-  aiIdentifyWeaknesses: (projectId: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/identify-weaknesses`, context || {}).then((r) => r.data),
+  async aiIdentifyWeaknesses(projectId: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'identify_weaknesses', project_id: projectId, data: context ?? {} });
+  },
 
-  aiSuggestResearch: (projectId: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/suggest-research`, context || {}).then((r) => r.data),
+  async aiSuggestResearch(projectId: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'suggest_research', project_id: projectId, data: context ?? {} });
+  },
 
-  aiCreateDailyPlan: (projectId: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/create-daily-plan`, context || {}).then((r) => r.data),
+  async aiCreateDailyPlan(projectId: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'create_daily_plan', project_id: projectId, data: context ?? {} });
+  },
 
-  aiGenerateCoaching: (projectId: string, context?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/ai/generate-coaching`, context || {}).then((r) => r.data),
+  async aiGenerateCoaching(projectId: string, context?: Record<string, unknown>): Promise<any> {
+    return callEdgeFunction('ai', { operation: 'generate_coaching', project_id: projectId, data: context ?? {} });
+  },
 
   // Reports
-  reports: (projectId: string) =>
-    api.get<AutomationReport[]>(`${base(projectId)}/reports`).then((r) => r.data),
+  async reports(projectId: string): Promise<AutomationReport[]> {
+    const { data, error } = await supabase
+      .from('automation_report')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data as unknown as AutomationReport[];
+  },
 
-  createReport: (projectId: string, data: Record<string, unknown>) =>
-    api.post<AutomationReport>(`${base(projectId)}/reports`, data).then((r) => r.data),
+  async createReport(projectId: string, data: Record<string, unknown>): Promise<AutomationReport> {
+    const { data: result, error } = await supabase
+      .from('automation_report')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as AutomationReport;
+  },
 
-  updateReport: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<AutomationReport>(`${base(projectId)}/reports/${id}`, data).then((r) => r.data),
+  async updateReport(projectId: string, id: string, data: Record<string, unknown>): Promise<AutomationReport> {
+    const { data: result, error } = await supabase
+      .from('automation_report')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as AutomationReport;
+  },
 
-  deleteReport: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/reports/${id}`).then((r) => r.data),
+  async deleteReport(projectId: string, id: string): Promise<void> {
+    const { error } = await supabase
+      .from('automation_report')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  generateReport: (projectId: string, id: string) =>
-    api.post<AutomationReport>(`${base(projectId)}/reports/${id}/generate`).then((r) => r.data),
+  async generateReport(projectId: string, id: string): Promise<AutomationReport> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'generate_report',
+      project_id: projectId,
+      data: { report_id: id },
+    });
+  },
 
-  generateDailyReport: (projectId: string) =>
-    api.post(`${base(projectId)}/reports/generate/daily`).then((r) => r.data),
+  async generateDailyReport(projectId: string): Promise<any> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'generate_daily_report',
+      project_id: projectId,
+    });
+  },
 
-  generateWeeklyReport: (projectId: string) =>
-    api.post(`${base(projectId)}/reports/generate/weekly`).then((r) => r.data),
+  async generateWeeklyReport(projectId: string): Promise<any> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'generate_weekly_report',
+      project_id: projectId,
+    });
+  },
 
-  generateMonthlyReport: (projectId: string) =>
-    api.post(`${base(projectId)}/reports/generate/monthly`).then((r) => r.data),
+  async generateMonthlyReport(projectId: string): Promise<any> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'generate_monthly_report',
+      project_id: projectId,
+    });
+  },
 
-  generatePerformanceReport: (projectId: string) =>
-    api.post(`${base(projectId)}/reports/generate/performance`).then((r) => r.data),
+  async generatePerformanceReport(projectId: string): Promise<any> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'generate_performance_report',
+      project_id: projectId,
+    });
+  },
 
-  generateRiskReport: (projectId: string) =>
-    api.post(`${base(projectId)}/reports/generate/risk`).then((r) => r.data),
+  async generateRiskReport(projectId: string): Promise<any> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'generate_risk_report',
+      project_id: projectId,
+    });
+  },
 
   // Connectors
-  connectors: (projectId: string) =>
-    api.get<Connector[]>(`${base(projectId)}/connectors`).then((r) => r.data),
+  async connectors(projectId: string): Promise<Connector[]> {
+    const { data, error } = await supabase
+      .from('automation_connector')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data as unknown as Connector[];
+  },
 
-  createConnector: (projectId: string, data: Record<string, unknown>) =>
-    api.post<Connector>(`${base(projectId)}/connectors`, data).then((r) => r.data),
+  async createConnector(projectId: string, data: Record<string, unknown>): Promise<Connector> {
+    const { data: result, error } = await supabase
+      .from('automation_connector')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as Connector;
+  },
 
-  updateConnector: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<Connector>(`${base(projectId)}/connectors/${id}`, data).then((r) => r.data),
+  async updateConnector(projectId: string, id: string, data: Record<string, unknown>): Promise<Connector> {
+    const { data: result, error } = await supabase
+      .from('automation_connector')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return result as unknown as Connector;
+  },
 
-  deleteConnector: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/connectors/${id}`).then((r) => r.data),
+  async deleteConnector(projectId: string, id: string): Promise<void> {
+    const { error } = await supabase
+      .from('automation_connector')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  testConnector: (projectId: string, id: string) =>
-    api.post(`${base(projectId)}/connectors/${id}/test`).then((r) => r.data),
+  async testConnector(projectId: string, id: string): Promise<any> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'test_connector',
+      project_id: projectId,
+      data: { connector_id: id },
+    });
+  },
 
-  syncConnector: (projectId: string, id: string) =>
-    api.post(`${base(projectId)}/connectors/${id}/sync`).then((r) => r.data),
+  async syncConnector(projectId: string, id: string): Promise<any> {
+    return callEdgeFunction('automation-connector', {
+      operation: 'sync_connector',
+      project_id: projectId,
+      data: { connector_id: id },
+    });
+  },
 
   // Audit
-  auditLogs: (projectId: string, params?: { event_type?: string; source?: string; limit?: number }) =>
-    api.get<AuditLog[]>(`${base(projectId)}/audit`, { params }).then((r) => r.data),
+  async auditLogs(projectId: string, params?: { event_type?: string; source?: string; limit?: number }): Promise<AuditLog[]> {
+    let query = supabase
+      .from('automation_audit_log')
+      .select('*')
+      .eq('project_id', projectId);
+    if (params?.event_type) query = query.eq('event_type', params.event_type);
+    if (params?.source) query = query.eq('source', params.source);
+    if (params?.limit) query = query.limit(params.limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as unknown as AuditLog[];
+  },
 
-  auditSummary: (projectId: string) =>
-    api.get(`${base(projectId)}/audit/summary`).then((r) => r.data),
+  async auditSummary(projectId: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('automation_audit_log')
+      .select('event_type, severity')
+      .eq('project_id', projectId);
+    if (error) throw error;
+    return data;
+  },
 
   // Templates
-  templates: (projectId: string, category?: string) =>
-    api.get<WorkflowTemplate[]>(`${base(projectId)}/templates`, { params: { category } }).then((r) => r.data),
+  async templates(projectId: string, category?: string): Promise<WorkflowTemplate[]> {
+    let query = supabase
+      .from('automation_workflow_template')
+      .select('*');
+    if (category) query = query.eq('category', category);
+    query = query.order('usage_count', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as unknown as WorkflowTemplate[];
+  },
 
-  createFromTemplate: (projectId: string, templateId: string, name?: string) =>
-    api.post<Workflow>(`${base(projectId)}/templates/${templateId}/create`, null, { params: { name } }).then((r) => r.data),
+  async createFromTemplate(projectId: string, templateId: string, name?: string): Promise<Workflow> {
+    const { data: template, error: getErr } = await supabase
+      .from('automation_workflow_template')
+      .select('*')
+      .eq('id', templateId)
+      .single();
+    if (getErr) throw getErr;
 
-  templateCategories: (projectId: string) =>
-    api.get(`${base(projectId)}/templates/categories`).then((r) => r.data),
+    const { data: result, error: insertErr } = await supabase
+      .from('automation_workflow')
+      .insert({
+        project_id: projectId,
+        name: name ?? template.name,
+        description: template.description,
+        status: 'draft',
+        version: 1,
+        tags: template.tags,
+        category: template.category,
+        nodes: template.nodes_config,
+        connections: template.connections_config,
+        triggers: template.triggers_config,
+        actions: template.actions_config,
+        conditions: template.conditions_config,
+        is_template: false,
+      })
+      .select()
+      .single();
+    if (insertErr) throw insertErr;
+
+    const { error: countErr } = await supabase
+      .from('automation_workflow_template')
+      .update({ usage_count: (template.usage_count ?? 0) + 1 })
+      .eq('id', templateId);
+    if (countErr) throw countErr;
+
+    return result as unknown as Workflow;
+  },
+
+  async templateCategories(projectId: string): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('automation_workflow_template')
+      .select('category')
+      .not('category', 'is', null);
+    if (error) throw error;
+    return [...new Set(data.map((r) => r.category).filter(Boolean))] as string[];
+  },
 
   // Metadata
-  triggerTypes: (projectId: string) =>
-    api.get<string[]>(`${base(projectId)}/trigger-types`).then((r) => r.data),
+  async triggerTypes(projectId: string): Promise<string[]> {
+    return ['time', 'event', 'webhook', 'schedule', 'manual', 'condition', 'alert', 'trade', 'price', 'indicator'];
+  },
 
-  actionTypes: (projectId: string) =>
-    api.get<string[]>(`${base(projectId)}/action-types`).then((r) => r.data),
+  async actionTypes(projectId: string): Promise<string[]> {
+    return ['webhook', 'notification', 'email', 'api_call', 'trade', 'update_record', 'create_record', 'calculate', 'transform', 'alert'];
+  },
 
-  conditionTypes: (projectId: string) =>
-    api.get<string[]>(`${base(projectId)}/condition-types`).then((r) => r.data),
+  async conditionTypes(projectId: string): Promise<string[]> {
+    return ['comparison', 'logical', 'range', 'contains', 'regex', 'time_window', 'aggregate', 'threshold', 'trend'];
+  },
 
-  connectorTypes: (projectId: string) =>
-    api.get<string[]>(`${base(projectId)}/connector-types`).then((r) => r.data),
+  async connectorTypes(projectId: string): Promise<string[]> {
+    return ['discord', 'telegram', 'slack', 'email', 'webhook', 'tradingview', 'mt4', 'mt5', 'custom_api', 'database'];
+  },
 
-  reportTypes: (projectId: string) =>
-    api.get<string[]>(`${base(projectId)}/report-types`).then((r) => r.data),
+  async reportTypes(projectId: string): Promise<string[]> {
+    return ['daily', 'weekly', 'monthly', 'quarterly', 'performance', 'risk', 'research', 'strategy'];
+  },
 };

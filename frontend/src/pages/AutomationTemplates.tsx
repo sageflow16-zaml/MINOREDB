@@ -47,11 +47,11 @@ export default function AutomationTemplates() {
 
       <div className="flex gap-2 flex-wrap">
         <Button size="sm" variant={!category ? 'default' : 'outline'} onClick={() => setCategory(undefined)}>All</Button>
-        {categories.map((c: Record<string, unknown>) => {
-          const Icon = categoryIcons[c.category as string] || GitBranch;
+        {categories.map((c: string) => {
+          const Icon = categoryIcons[c] || GitBranch;
           return (
-            <Button key={c.category as string} size="sm" variant={category === c.category ? 'default' : 'outline'} onClick={() => setCategory(c.category as string)}>
-              <Icon className="w-3.5 h-3.5 mr-1" />{c.category as string} ({c.count as number})
+            <Button key={c} size="sm" variant={category === c ? 'default' : 'outline'} onClick={() => setCategory(c)}>
+              <Icon className="w-3.5 h-3.5 mr-1" />{c}
             </Button>
           );
         })}

@@ -1,121 +1,195 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
-  BrokerHubConnection,
-  BrokerAccount,
-  BrokerDashboardData,
-  BrokerProviderInfo,
-  BrokerAnalytics,
-  SyncHistoryRecord,
-  BrokerLog,
-  BrokerHealth,
-  ImportedTrade,
-  ExecutionAnalysis,
-  TradeStats,
-  BrokerPosition,
-  BrokerOrder,
+  BrokerHubConnection, BrokerAccount, BrokerDashboardData,
+  BrokerProviderInfo, BrokerAnalytics, SyncHistoryRecord,
+  BrokerLog, BrokerHealth, ImportedTrade, ExecutionAnalysis,
+  TradeStats, BrokerPosition, BrokerOrder,
 } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/broker`;
-
 export const brokerService = {
-  // Dashboard
-  dashboard: (projectId: string) =>
-    api.get<BrokerDashboardData>(`${base(projectId)}/dashboard`).then((r) => r.data),
+  dashboard: async (projectId: string): Promise<BrokerDashboardData> => {
+    const [conn, accounts, trades] = await Promise.all([
+      supabase.from('broker_connection_new').select('*').eq('project_id', projectId),
+      supabase.from('broker_account').select('*').eq('project_id', projectId),
+      supabase.from('imported_trade').select('*').eq('project_id', projectId).order('close_time', { ascending: false }).limit(50),
+    ]);
+    if (conn.error) throw conn.error;
+    if (accounts.error) throw accounts.error;
+    if (trades.error) throw trades.error;
+    return {
+      connections: (conn.data ?? []) as BrokerHubConnection[],
+      accounts: (accounts.data ?? []) as BrokerAccount[],
+      recent_trades: (trades.data ?? []) as ImportedTrade[],
+    } as unknown as BrokerDashboardData;
+  },
 
-  // Providers
-  listProviders: (projectId: string) =>
-    api.get<BrokerProviderInfo[]>(`${base(projectId)}/providers`).then((r) => r.data),
+  listProviders: async (projectId: string): Promise<BrokerProviderInfo[]> => {
+    const { data, error } = await supabase.from('broker_connection_new').select('provider').eq('project_id', projectId).not('provider', 'is', null);
+    if (error) throw error;
+    const seen = new Set<string>();
+    return data.filter((r) => { if (seen.has(r.provider)) return false; seen.add(r.provider); return true; }).map((r) => ({ provider: r.provider, name: r.provider }) as unknown as BrokerProviderInfo);
+  },
 
-  // Connections
-  listConnections: (projectId: string) =>
-    api.get<BrokerHubConnection[]>(`${base(projectId)}/connections`).then((r) => r.data),
+  listConnections: async (projectId: string): Promise<BrokerHubConnection[]> => {
+    const { data, error } = await supabase.from('broker_connection_new').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as unknown as BrokerHubConnection[];
+  },
 
-  getConnection: (projectId: string, connectionId: string) =>
-    api.get<BrokerHubConnection>(`${base(projectId)}/connections/${connectionId}`).then((r) => r.data),
+  getConnection: async (projectId: string, connectionId: string): Promise<BrokerHubConnection> => {
+    const { data, error } = await supabase.from('broker_connection_new').select('*').eq('id', connectionId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as unknown as BrokerHubConnection;
+  },
 
-  createConnection: (projectId: string, data: Partial<BrokerHubConnection>) =>
-    api.post<BrokerHubConnection>(`${base(projectId)}/connections`, data).then((r) => r.data),
+  createConnection: async (projectId: string, data: Partial<BrokerHubConnection>): Promise<BrokerHubConnection> => {
+    const { data: row, error } = await supabase.from('broker_connection_new').insert({ ...data, project_id: projectId }).select().single();
+    if (error) throw error;
+    return row as unknown as BrokerHubConnection;
+  },
 
-  updateConnection: (projectId: string, connectionId: string, data: Partial<BrokerHubConnection>) =>
-    api.put<BrokerHubConnection>(`${base(projectId)}/connections/${connectionId}`, data).then((r) => r.data),
+  updateConnection: async (projectId: string, connectionId: string, data: Partial<BrokerHubConnection>): Promise<BrokerHubConnection> => {
+    const { data: row, error } = await supabase.from('broker_connection_new').update(data).eq('id', connectionId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as unknown as BrokerHubConnection;
+  },
 
-  deleteConnection: (projectId: string, connectionId: string) =>
-    api.delete(`${base(projectId)}/connections/${connectionId}`).then((r) => r.data),
+  deleteConnection: async (projectId: string, connectionId: string): Promise<void> => {
+    const { error } = await supabase.from('broker_connection_new').delete().eq('id', connectionId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
   testConnection: (projectId: string, connectionId: string) =>
-    api.post<{ success: boolean; status: string; latency_ms: number | null; message: string }>(
-      `${base(projectId)}/connections/${connectionId}/test`
-    ).then((r) => r.data),
+    callEdgeFunction<{ success: boolean; status: string; latency_ms: number | null; message: string }>('broker-sync', { operation: 'test-connection', project_id: projectId, data: { connection_id: connectionId } }),
 
-  // Broker Accounts
-  listBrokerAccounts: (projectId: string, connectionId: string) =>
-    api.get<BrokerAccount[]>(`${base(projectId)}/connections/${connectionId}/accounts`).then((r) => r.data),
+  listBrokerAccounts: async (projectId: string, connectionId: string): Promise<BrokerAccount[]> => {
+    const { data, error } = await supabase.from('broker_account').select('*').eq('project_id', projectId).eq('connection_id', connectionId);
+    if (error) throw error;
+    return (data ?? []) as unknown as BrokerAccount[];
+  },
 
-  getBrokerAccount: (projectId: string, accountId: string) =>
-    api.get<BrokerAccount>(`${base(projectId)}/accounts/${accountId}`).then((r) => r.data),
+  getBrokerAccount: async (projectId: string, accountId: string): Promise<BrokerAccount> => {
+    const { data, error } = await supabase.from('broker_account').select('*').eq('id', accountId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as unknown as BrokerAccount;
+  },
 
-  updateBrokerAccount: (projectId: string, accountId: string, data: Partial<BrokerAccount>) =>
-    api.put<BrokerAccount>(`${base(projectId)}/accounts/${accountId}`, data).then((r) => r.data),
+  updateBrokerAccount: async (projectId: string, accountId: string, data: Partial<BrokerAccount>): Promise<BrokerAccount> => {
+    const { data: row, error } = await supabase.from('broker_account').update(data).eq('id', accountId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as unknown as BrokerAccount;
+  },
 
-  // Sync
-  listSyncHistory: (projectId: string, connectionId: string, limit?: number) =>
-    api.get<SyncHistoryRecord[]>(`${base(projectId)}/connections/${connectionId}/sync`, { params: { limit } }).then((r) => r.data),
+  listSyncHistory: async (projectId: string, connectionId: string, limit?: number): Promise<SyncHistoryRecord[]> => {
+    let query = supabase.from('sync_history_new').select('*').eq('project_id', projectId).eq('connection_id', connectionId).order('created_at', { ascending: false });
+    if (limit) query = query.limit(limit);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as SyncHistoryRecord[];
+  },
 
   syncConnection: (projectId: string, connectionId: string) =>
-    api.post<{ status: string; accounts_synced: number; created: number; updated: number }>(
-      `${base(projectId)}/connections/${connectionId}/sync`
-    ).then((r) => r.data),
+    callEdgeFunction<{ status: string; accounts_synced: number; created: number; updated: number }>('broker-sync', { operation: 'sync', project_id: projectId, data: { connection_id: connectionId } }),
 
   syncAccountTrades: (projectId: string, connectionId: string, accountId: string) =>
-    api.post<{ status: string; created: number; duplicates: number }>(
-      `${base(projectId)}/connections/${connectionId}/accounts/${accountId}/sync`
-    ).then((r) => r.data),
+    callEdgeFunction<{ status: string; created: number; duplicates: number }>('broker-sync', { operation: 'sync-account', project_id: projectId, data: { connection_id: connectionId, account_id: accountId } }),
 
-  // Trades
-  listTrades: (projectId: string, params?: { connection_id?: string; account_id?: string; symbol?: string; limit?: number; offset?: number }) =>
-    api.get<ImportedTrade[]>(`${base(projectId)}/trades`, { params }).then((r) => r.data),
+  listTrades: async (projectId: string, params?: { connection_id?: string; account_id?: string; symbol?: string; limit?: number; offset?: number }): Promise<ImportedTrade[]> => {
+    let query = supabase.from('imported_trade').select('*').eq('project_id', projectId).order('close_time', { ascending: false });
+    if (params?.connection_id) query = query.eq('connection_id', params.connection_id);
+    if (params?.account_id) query = query.eq('account_id', params.account_id);
+    if (params?.symbol) query = query.eq('symbol', params.symbol);
+    if (params?.limit) query = query.limit(params.limit);
+    if (params?.offset) query = query.range(params.offset, params.offset + (params.limit ?? 50) - 1);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as ImportedTrade[];
+  },
 
-  getTrade: (projectId: string, tradeId: string) =>
-    api.get<ImportedTrade>(`${base(projectId)}/trades/${tradeId}`).then((r) => r.data),
+  getTrade: async (projectId: string, tradeId: string): Promise<ImportedTrade> => {
+    const { data, error } = await supabase.from('imported_trade').select('*').eq('id', tradeId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as unknown as ImportedTrade;
+  },
 
-  getTradeStats: (projectId: string) =>
-    api.get<TradeStats>(`${base(projectId)}/trades/stats`).then((r) => r.data),
+  getTradeStats: async (projectId: string): Promise<TradeStats> => {
+    const { data, error } = await supabase.from('imported_trade').select('profit').eq('project_id', projectId);
+    if (error) throw error;
+    const trades = data ?? [];
+    const profits = trades.map((t) => Number(t.profit ?? 0));
+    const winning = profits.filter((p) => p > 0);
+    const losing = profits.filter((p) => p < 0);
+    return {
+      total_trades: trades.length,
+      winning_trades: winning.length,
+      losing_trades: losing.length,
+      win_rate: trades.length > 0 ? (winning.length / trades.length) * 100 : 0,
+      total_profit: profits.reduce((s, p) => s + p, 0),
+      avg_profit: trades.length > 0 ? profits.reduce((s, p) => s + p, 0) / trades.length : 0,
+      max_drawdown: 0,
+      profit_factor: losing.reduce((s, p) => s + Math.abs(p), 0) > 0 ? winning.reduce((s, p) => s + p, 0) / losing.reduce((s, p) => s + Math.abs(p), 0) : 0,
+    } as unknown as TradeStats;
+  },
 
-  manualImportTrades: (projectId: string, connectionId: string, accountId: string, trades: Record<string, unknown>[]) =>
-    api.post<{ created: number; duplicates: number }>(
-      `${base(projectId)}/connections/${connectionId}/accounts/${accountId}/trades/import`,
-      { trades }
-    ).then((r) => r.data),
+  manualImportTrades: async (projectId: string, connectionId: string, accountId: string, trades: Record<string, unknown>[]): Promise<{ created: number; duplicates: number }> => {
+    const rows = trades.map((t) => ({ ...t, project_id: projectId, connection_id: connectionId, account_id: accountId }));
+    const { error } = await supabase.from('imported_trade').insert(rows as any);
+    if (error) throw error;
+    return { created: rows.length, duplicates: 0 };
+  },
 
-  // Positions & Orders
-  listPositions: (projectId: string, params?: { connection_id?: string; account_id?: string }) =>
-    api.get<BrokerPosition[]>(`${base(projectId)}/positions`, { params }).then((r) => r.data),
+  listPositions: async (projectId: string, params?: { connection_id?: string; account_id?: string }): Promise<BrokerPosition[]> => {
+    let query = supabase.from('broker_position').select('*').eq('project_id', projectId);
+    if (params?.connection_id) query = query.eq('connection_id', params.connection_id);
+    if (params?.account_id) query = query.eq('account_id', params.account_id);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as BrokerPosition[];
+  },
 
-  listOrders: (projectId: string, params?: { connection_id?: string; account_id?: string }) =>
-    api.get<BrokerOrder[]>(`${base(projectId)}/orders`, { params }).then((r) => r.data),
+  listOrders: async (projectId: string, params?: { connection_id?: string; account_id?: string }): Promise<BrokerOrder[]> => {
+    let query = supabase.from('broker_order').select('*').eq('project_id', projectId);
+    if (params?.connection_id) query = query.eq('connection_id', params.connection_id);
+    if (params?.account_id) query = query.eq('account_id', params.account_id);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as BrokerOrder[];
+  },
 
-  // Analytics
-  listBrokerAnalytics: (projectId: string) =>
-    api.get<BrokerAnalytics[]>(`${base(projectId)}/analytics`).then((r) => r.data),
+  listBrokerAnalytics: async (projectId: string): Promise<BrokerAnalytics[]> => {
+    const { data, error } = await supabase.from('broker_analytics').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as unknown as BrokerAnalytics[];
+  },
 
-  getConnectionAnalytics: (projectId: string, connectionId: string) =>
-    api.get<BrokerAnalytics>(`${base(projectId)}/connections/${connectionId}/analytics`).then((r) => r.data),
+  getConnectionAnalytics: async (projectId: string, connectionId: string): Promise<BrokerAnalytics> => {
+    const { data, error } = await supabase.from('broker_analytics').select('*').eq('connection_id', connectionId).eq('project_id', projectId).maybeSingle();
+    if (error) throw error;
+    return data as unknown as BrokerAnalytics;
+  },
 
   getExecutionAnalysis: (projectId: string, connectionId: string) =>
-    api.get<ExecutionAnalysis>(`${base(projectId)}/connections/${connectionId}/execution`).then((r) => r.data),
+    callEdgeFunction<ExecutionAnalysis>('broker-sync', { operation: 'execution-analysis', project_id: projectId, data: { connection_id: connectionId } }),
 
-  // Health
-  getHealth: (projectId: string, connectionId: string) =>
-    api.get<BrokerHealth>(`${base(projectId)}/connections/${connectionId}/health`).then((r) => r.data),
+  getHealth: async (projectId: string, connectionId: string): Promise<BrokerHealth> => {
+    const { data, error } = await supabase.from('broker_health').select('*').eq('connection_id', connectionId).eq('project_id', projectId).maybeSingle();
+    if (error) throw error;
+    return data as unknown as BrokerHealth;
+  },
 
   checkHealth: (projectId: string, connectionId: string) =>
-    api.post<BrokerHealth>(`${base(projectId)}/connections/${connectionId}/health`).then((r) => r.data),
+    callEdgeFunction<BrokerHealth>('broker-sync', { operation: 'check-health', project_id: projectId, data: { connection_id: connectionId } }),
 
-  // Logs
-  listLogs: (projectId: string, connectionId: string, params?: { level?: string; limit?: number }) =>
-    api.get<BrokerLog[]>(`${base(projectId)}/connections/${connectionId}/logs`, { params }).then((r) => r.data),
+  listLogs: async (projectId: string, connectionId: string, params?: { level?: string; limit?: number }): Promise<BrokerLog[]> => {
+    let query = supabase.from('broker_log').select('*').eq('project_id', projectId).eq('connection_id', connectionId).order('created_at', { ascending: false });
+    if (params?.level) query = query.eq('level', params.level);
+    if (params?.limit) query = query.limit(params.limit);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as BrokerLog[];
+  },
 
-  // AI
   aiAsk: (projectId: string, question: string) =>
-    api.post<{ question: string; answer: string }>(`${base(projectId)}/ai/ask`, { question }).then((r) => r.data),
+    callEdgeFunction<{ question: string; answer: string }>('ai', { operation: 'ask', project_id: projectId, data: { question } }),
 };

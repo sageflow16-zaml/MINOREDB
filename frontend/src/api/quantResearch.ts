@@ -1,4 +1,5 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
   QuantExperiment, BacktestRun, BacktestTrade, SimulationRun,
   WalkForwardRun, OptimizationRun, EdgeHealthSnapshot,
@@ -6,159 +7,565 @@ import type {
   AISummaryResponse, AIImproveResponse, ExportResponse,
 } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/quant-research`;
-
 export const quantResearchService = {
   // Dashboard
-  dashboard: (projectId: string) =>
-    api.get<QuantDashboardData>(`${base(projectId)}/dashboard`).then((r) => r.data),
+  dashboard: async (projectId: string): Promise<QuantDashboardData> => {
+    const { data, error } = await supabase
+      .rpc('get_quant_dashboard', { p_project_id: projectId });
+    if (error) throw error;
+    return data as unknown as QuantDashboardData;
+  },
 
   // Experiments
-  experiments: (projectId: string, params?: { status?: string; tags?: string; sort?: string; limit?: number }) =>
-    api.get<QuantExperiment[]>(`${base(projectId)}/experiments`, { params }).then((r) => r.data),
+  experiments: async (projectId: string, params?: { status?: string; tags?: string; sort?: string; limit?: number }): Promise<QuantExperiment[]> => {
+    let query = supabase
+      .from('quant_experiment')
+      .select('*')
+      .eq('project_id', projectId);
 
-  createExperiment: (projectId: string, data: Record<string, unknown>) =>
-    api.post<QuantExperiment>(`${base(projectId)}/experiments`, data).then((r) => r.data),
+    if (params?.status) query = query.eq('status', params.status);
+    if (params?.tags) query = query.contains('tags', [params.tags]);
+    if (params?.sort) {
+      const [col, dir] = params.sort.split(':');
+      query = query.order(col ?? 'created_at', { ascending: dir === 'asc' });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+    if (params?.limit) query = query.limit(params.limit);
 
-  getExperiment: (projectId: string, id: string) =>
-    api.get<QuantExperiment>(`${base(projectId)}/experiments/${id}`).then((r) => r.data),
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as QuantExperiment[];
+  },
 
-  updateExperiment: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<QuantExperiment>(`${base(projectId)}/experiments/${id}`, data).then((r) => r.data),
+  createExperiment: async (projectId: string, data: Record<string, unknown>): Promise<QuantExperiment> => {
+    const { data: row, error } = await supabase
+      .from('quant_experiment')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as QuantExperiment;
+  },
 
-  deleteExperiment: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/experiments/${id}`).then((r) => r.data),
+  getExperiment: async (projectId: string, id: string): Promise<QuantExperiment> => {
+    const { data, error } = await supabase
+      .from('quant_experiment')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as QuantExperiment;
+  },
 
-  duplicateExperiment: (projectId: string, id: string) =>
-    api.post<QuantExperiment>(`${base(projectId)}/experiments/${id}/duplicate`).then((r) => r.data),
+  updateExperiment: async (projectId: string, id: string, data: Record<string, unknown>): Promise<QuantExperiment> => {
+    const { data: row, error } = await supabase
+      .from('quant_experiment')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as QuantExperiment;
+  },
 
-  getExperimentResults: (projectId: string, id: string) =>
-    api.get<Record<string, unknown>>(`${base(projectId)}/experiments/${id}/results`).then((r) => r.data),
+  deleteExperiment: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('quant_experiment')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
+
+  duplicateExperiment: async (projectId: string, id: string): Promise<QuantExperiment> => {
+    const { data: original, error: fetchError } = await supabase
+      .from('quant_experiment')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (fetchError) throw fetchError;
+
+    const { name, ...rest } = original as Record<string, unknown>;
+    const { data: duplicate, error: insertError } = await supabase
+      .from('quant_experiment')
+      .insert({ ...rest, name: `${name} (copy)`, project_id: projectId })
+      .select()
+      .single();
+    if (insertError) throw insertError;
+    return duplicate as unknown as QuantExperiment;
+  },
+
+  getExperimentResults: async (projectId: string, id: string): Promise<Record<string, unknown>> => {
+    const { data, error } = await supabase
+      .from('quant_experiment')
+      .select('config, results_summary')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as Record<string, unknown>;
+  },
 
   // Backtests
-  backtests: (projectId: string, params?: { experiment_id?: string; status?: string; limit?: number }) =>
-    api.get<BacktestRun[]>(`${base(projectId)}/backtests`, { params }).then((r) => r.data),
+  backtests: async (projectId: string, params?: { experiment_id?: string; status?: string; limit?: number }): Promise<BacktestRun[]> => {
+    let query = supabase
+      .from('quant_backtest_run')
+      .select('*')
+      .eq('project_id', projectId);
 
-  runBacktest: (projectId: string, data: Record<string, unknown>) =>
-    api.post<BacktestRun>(`${base(projectId)}/backtests`, data).then((r) => r.data),
+    if (params?.experiment_id) query = query.eq('experiment_id', params.experiment_id);
+    if (params?.status) query = query.eq('status', params.status);
+    query = query.order('created_at', { ascending: false });
+    if (params?.limit) query = query.limit(params.limit);
 
-  getBacktest: (projectId: string, id: string) =>
-    api.get<BacktestRun>(`${base(projectId)}/backtests/${id}`).then((r) => r.data),
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as BacktestRun[];
+  },
 
-  deleteBacktest: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/backtests/${id}`).then((r) => r.data),
+  runBacktest: async (projectId: string, data: Record<string, unknown>): Promise<BacktestRun> => {
+    const { data: row, error } = await supabase
+      .from('quant_backtest_run')
+      .insert({ ...data, project_id: projectId, status: 'pending' })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as BacktestRun;
+  },
 
-  getBacktestTrades: (projectId: string, id: string, page?: number, perPage?: number) =>
-    api.get<{ trades: BacktestTrade[]; total: number; page: number; per_page: number }>(
-      `${base(projectId)}/backtests/${id}/trades`, { params: { page, per_page: perPage } }
-    ).then((r) => r.data),
+  getBacktest: async (projectId: string, id: string): Promise<BacktestRun> => {
+    const { data, error } = await supabase
+      .from('quant_backtest_run')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as BacktestRun;
+  },
 
-  getEquityCurve: (projectId: string, id: string) =>
-    api.get<{ date: string; equity: number; pnl: number }[]>(`${base(projectId)}/backtests/${id}/equity-curve`).then((r) => r.data),
+  deleteBacktest: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('quant_backtest_run')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  getBacktestMetrics: (projectId: string, id: string) =>
-    api.get<Record<string, unknown>>(`${base(projectId)}/backtests/${id}/metrics`).then((r) => r.data),
+  getBacktestTrades: async (projectId: string, id: string, page?: number, perPage?: number): Promise<{ trades: BacktestTrade[]; total: number; page: number; per_page: number }> => {
+    const pageNum = page ?? 1;
+    const perPageNum = perPage ?? 50;
+    const from = (pageNum - 1) * perPageNum;
+    const to = from + perPageNum - 1;
+
+    const { data, error, count } = await supabase
+      .from('quant_backtest_trade')
+      .select('*', { count: 'exact' })
+      .eq('backtest_run_id', id)
+      .eq('project_id', projectId)
+      .order('entry_date', { ascending: true })
+      .range(from, to);
+    if (error) throw error;
+
+    return {
+      trades: (data ?? []) as unknown as BacktestTrade[],
+      total: count ?? 0,
+      page: pageNum,
+      per_page: perPageNum,
+    };
+  },
+
+  getEquityCurve: async (projectId: string, id: string): Promise<{ date: string; equity: number; pnl: number }[]> => {
+    const { data, error } = await supabase
+      .from('quant_backtest_trade')
+      .select('entry_date, profit')
+      .eq('backtest_run_id', id)
+      .eq('project_id', projectId)
+      .order('entry_date', { ascending: true });
+    if (error) throw error;
+
+    let equity = 0;
+    return ((data ?? []) as { entry_date: string; profit: number }[]).map((t) => {
+      equity += (t.profit ?? 0);
+      return { date: t.entry_date, equity, pnl: t.profit ?? 0 };
+    });
+  },
+
+  getBacktestMetrics: async (projectId: string, id: string): Promise<Record<string, unknown>> => {
+    const { data, error } = await supabase
+      .from('quant_backtest_run')
+      .select('metrics')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return (data as unknown as Record<string, unknown>)?.metrics as Record<string, unknown> ?? {};
+  },
 
   // Simulations
-  simulations: (projectId: string, params?: { experiment_id?: string; simulation_type?: string; limit?: number }) =>
-    api.get<SimulationRun[]>(`${base(projectId)}/simulations`, { params }).then((r) => r.data),
+  simulations: async (projectId: string, params?: { experiment_id?: string; simulation_type?: string; limit?: number }): Promise<SimulationRun[]> => {
+    let query = supabase
+      .from('quant_simulation_run')
+      .select('*')
+      .eq('project_id', projectId);
 
-  runSimulation: (projectId: string, data: Record<string, unknown>) =>
-    api.post<SimulationRun>(`${base(projectId)}/simulations`, data).then((r) => r.data),
+    if (params?.experiment_id) query = query.eq('experiment_id', params.experiment_id);
+    if (params?.simulation_type) query = query.eq('simulation_type', params.simulation_type);
+    query = query.order('created_at', { ascending: false });
+    if (params?.limit) query = query.limit(params.limit);
 
-  getSimulation: (projectId: string, id: string) =>
-    api.get<SimulationRun>(`${base(projectId)}/simulations/${id}`).then((r) => r.data),
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as SimulationRun[];
+  },
 
-  deleteSimulation: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/simulations/${id}`).then((r) => r.data),
+  runSimulation: async (projectId: string, data: Record<string, unknown>): Promise<SimulationRun> => {
+    const { data: row, error } = await supabase
+      .from('quant_simulation_run')
+      .insert({ ...data, project_id: projectId, status: 'pending' })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as SimulationRun;
+  },
 
-  getSimulationDistribution: (projectId: string, id: string) =>
-    api.get<{ bucket: number; count: number }[]>(`${base(projectId)}/simulations/${id}/distribution`).then((r) => r.data),
+  getSimulation: async (projectId: string, id: string): Promise<SimulationRun> => {
+    const { data, error } = await supabase
+      .from('quant_simulation_run')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as SimulationRun;
+  },
+
+  deleteSimulation: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('quant_simulation_run')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
+
+  getSimulationDistribution: async (projectId: string, id: string): Promise<{ bucket: number; count: number }[]> => {
+    const { data, error } = await supabase
+      .from('quant_simulation_run')
+      .select('distribution')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return ((data as unknown as Record<string, unknown>)?.distribution as { bucket: number; count: number }[]) ?? [];
+  },
 
   // Walk-Forward
-  walkforwardRuns: (projectId: string, params?: { experiment_id?: string; limit?: number }) =>
-    api.get<WalkForwardRun[]>(`${base(projectId)}/walkforward`, { params }).then((r) => r.data),
+  walkforwardRuns: async (projectId: string, params?: { experiment_id?: string; limit?: number }): Promise<WalkForwardRun[]> => {
+    let query = supabase
+      .from('quant_walk_forward_run')
+      .select('*')
+      .eq('project_id', projectId);
 
-  runWalkforward: (projectId: string, data: Record<string, unknown>) =>
-    api.post<WalkForwardRun>(`${base(projectId)}/walkforward`, data).then((r) => r.data),
+    if (params?.experiment_id) query = query.eq('experiment_id', params.experiment_id);
+    query = query.order('created_at', { ascending: false });
+    if (params?.limit) query = query.limit(params.limit);
 
-  getWalkforwardRun: (projectId: string, id: string) =>
-    api.get<WalkForwardRun>(`${base(projectId)}/walkforward/${id}`).then((r) => r.data),
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as WalkForwardRun[];
+  },
 
-  deleteWalkforwardRun: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/walkforward/${id}`).then((r) => r.data),
+  runWalkforward: async (projectId: string, data: Record<string, unknown>): Promise<WalkForwardRun> => {
+    const { data: row, error } = await supabase
+      .from('quant_walk_forward_run')
+      .insert({ ...data, project_id: projectId, status: 'pending' })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as WalkForwardRun;
+  },
+
+  getWalkforwardRun: async (projectId: string, id: string): Promise<WalkForwardRun> => {
+    const { data, error } = await supabase
+      .from('quant_walk_forward_run')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as WalkForwardRun;
+  },
+
+  deleteWalkforwardRun: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('quant_walk_forward_run')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
   // Optimization
-  optimizations: (projectId: string, params?: { experiment_id?: string; optimization_type?: string; limit?: number }) =>
-    api.get<OptimizationRun[]>(`${base(projectId)}/optimizations`, { params }).then((r) => r.data),
+  optimizations: async (projectId: string, params?: { experiment_id?: string; optimization_type?: string; limit?: number }): Promise<OptimizationRun[]> => {
+    let query = supabase
+      .from('quant_optimization_run')
+      .select('*')
+      .eq('project_id', projectId);
 
-  runOptimization: (projectId: string, data: Record<string, unknown>) =>
-    api.post<OptimizationRun>(`${base(projectId)}/optimizations`, data).then((r) => r.data),
+    if (params?.experiment_id) query = query.eq('experiment_id', params.experiment_id);
+    if (params?.optimization_type) query = query.eq('optimization_type', params.optimization_type);
+    query = query.order('created_at', { ascending: false });
+    if (params?.limit) query = query.limit(params.limit);
 
-  getOptimization: (projectId: string, id: string) =>
-    api.get<OptimizationRun>(`${base(projectId)}/optimizations/${id}`).then((r) => r.data),
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as OptimizationRun[];
+  },
 
-  deleteOptimization: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/optimizations/${id}`).then((r) => r.data),
+  runOptimization: async (projectId: string, data: Record<string, unknown>): Promise<OptimizationRun> => {
+    const { data: row, error } = await supabase
+      .from('quant_optimization_run')
+      .insert({ ...data, project_id: projectId, status: 'pending' })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as OptimizationRun;
+  },
 
-  getOptimizationHeatmap: (projectId: string, id: string) =>
-    api.get<Record<string, unknown>>(`${base(projectId)}/optimizations/${id}/heatmap`).then((r) => r.data),
+  getOptimization: async (projectId: string, id: string): Promise<OptimizationRun> => {
+    const { data, error } = await supabase
+      .from('quant_optimization_run')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as OptimizationRun;
+  },
+
+  deleteOptimization: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('quant_optimization_run')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
+
+  getOptimizationHeatmap: async (projectId: string, id: string): Promise<Record<string, unknown>> => {
+    const { data, error } = await supabase
+      .from('quant_optimization_run')
+      .select('heatmap_data')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return ((data as unknown as Record<string, unknown>)?.heatmap_data as Record<string, unknown>) ?? {};
+  },
 
   // Edge Health
-  edgeHealthSnapshots: (projectId: string, params?: { experiment_id?: string; limit?: number }) =>
-    api.get<EdgeHealthSnapshot[]>(`${base(projectId)}/edge-health`, { params }).then((r) => r.data),
+  edgeHealthSnapshots: async (projectId: string, params?: { experiment_id?: string; limit?: number }): Promise<EdgeHealthSnapshot[]> => {
+    let query = supabase
+      .from('quant_edge_health_snapshot')
+      .select('*')
+      .eq('project_id', projectId);
 
-  createEdgeSnapshot: (projectId: string, data: Record<string, unknown>) =>
-    api.post<EdgeHealthSnapshot>(`${base(projectId)}/edge-health`, data).then((r) => r.data),
+    if (params?.experiment_id) query = query.eq('experiment_id', params.experiment_id);
+    query = query.order('snapshot_date', { ascending: false });
+    if (params?.limit) query = query.limit(params.limit);
 
-  getCurrentEdgeHealth: (projectId: string, experimentId?: string) =>
-    api.get<EdgeHealthSnapshot>(`${base(projectId)}/edge-health/current`, { params: { experiment_id: experimentId } }).then((r) => r.data),
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as EdgeHealthSnapshot[];
+  },
 
-  deleteEdgeSnapshot: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/edge-health/${id}`).then((r) => r.data),
+  createEdgeSnapshot: async (projectId: string, data: Record<string, unknown>): Promise<EdgeHealthSnapshot> => {
+    const { data: row, error } = await supabase
+      .from('quant_edge_health_snapshot')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as EdgeHealthSnapshot;
+  },
+
+  getCurrentEdgeHealth: async (projectId: string, experimentId?: string): Promise<EdgeHealthSnapshot> => {
+    let query = supabase
+      .from('quant_edge_health_snapshot')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('snapshot_date', { ascending: false })
+      .limit(1);
+
+    if (experimentId) query = query.eq('experiment_id', experimentId);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    if (!data || data.length === 0) throw new Error('No edge health snapshot found');
+    return data[0] as unknown as EdgeHealthSnapshot;
+  },
+
+  deleteEdgeSnapshot: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('quant_edge_health_snapshot')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
   // Statistics
-  describePerformance: (projectId: string, params?: { backtest_run_id?: string }) =>
-    api.get<Record<string, unknown>>(`${base(projectId)}/statistics/describe`, { params }).then((r) => r.data),
+  describePerformance: async (projectId: string, params?: { backtest_run_id?: string }): Promise<Record<string, unknown>> => {
+    return callEdgeFunction('ai', { operation: 'describe-performance', project_id: projectId, data: params ?? {} });
+  },
 
   // AI Research
-  aiResearch: (projectId: string, data: { query: string; experiment_id?: string; context?: Record<string, unknown> }) =>
-    api.post<Record<string, unknown>>(`${base(projectId)}/ai/research`, data).then((r) => r.data),
+  aiResearch: async (projectId: string, data: { query: string; experiment_id?: string; context?: Record<string, unknown> }): Promise<Record<string, unknown>> => {
+    return callEdgeFunction('ai', { operation: 'research', project_id: projectId, data });
+  },
 
-  aiSummarize: (projectId: string, experimentId?: string, backtestRunId?: string) =>
-    api.post<AISummaryResponse>(`${base(projectId)}/ai/summarize`, null, {
-      params: { experiment_id: experimentId, backtest_run_id: backtestRunId },
-    }).then((r) => r.data),
+  aiSummarize: async (projectId: string, experimentId?: string, backtestRunId?: string): Promise<AISummaryResponse> => {
+    return callEdgeFunction<AISummaryResponse>('ai', {
+      operation: 'summarize',
+      project_id: projectId,
+      data: { experiment_id: experimentId, backtest_run_id: backtestRunId },
+    });
+  },
 
-  aiSuggestImprovements: (projectId: string, experimentId: string) =>
-    api.post<AIImproveResponse>(`${base(projectId)}/ai/improve`, null, {
-      params: { experiment_id: experimentId },
-    }).then((r) => r.data),
+  aiSuggestImprovements: async (projectId: string, experimentId: string): Promise<AIImproveResponse> => {
+    return callEdgeFunction<AIImproveResponse>('ai', {
+      operation: 'suggest-improvements',
+      project_id: projectId,
+      data: { experiment_id: experimentId },
+    });
+  },
 
   // Notebooks
-  notebooks: (projectId: string, params?: { experiment_id?: string; content_type?: string }) =>
-    api.get<ResearchNotebook[]>(`${base(projectId)}/notebooks`, { params }).then((r) => r.data),
+  notebooks: async (projectId: string, params?: { experiment_id?: string; content_type?: string }): Promise<ResearchNotebook[]> => {
+    let query = supabase
+      .from('quant_research_notebook')
+      .select('*')
+      .eq('project_id', projectId);
 
-  createNotebookEntry: (projectId: string, data: Record<string, unknown>) =>
-    api.post<ResearchNotebook>(`${base(projectId)}/notebooks`, data).then((r) => r.data),
+    if (params?.experiment_id) query = query.eq('experiment_id', params.experiment_id);
+    query = query.order('created_at', { ascending: false });
 
-  getNotebookEntry: (projectId: string, id: string) =>
-    api.get<ResearchNotebook>(`${base(projectId)}/notebooks/${id}`).then((r) => r.data),
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as ResearchNotebook[];
+  },
 
-  updateNotebookEntry: (projectId: string, id: string, data: Record<string, unknown>) =>
-    api.put<ResearchNotebook>(`${base(projectId)}/notebooks/${id}`, data).then((r) => r.data),
+  createNotebookEntry: async (projectId: string, data: Record<string, unknown>): Promise<ResearchNotebook> => {
+    const { data: row, error } = await supabase
+      .from('quant_research_notebook')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as ResearchNotebook;
+  },
 
-  deleteNotebookEntry: (projectId: string, id: string) =>
-    api.delete(`${base(projectId)}/notebooks/${id}`).then((r) => r.data),
+  getNotebookEntry: async (projectId: string, id: string): Promise<ResearchNotebook> => {
+    const { data, error } = await supabase
+      .from('quant_research_notebook')
+      .select('*')
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .single();
+    if (error) throw error;
+    return data as unknown as ResearchNotebook;
+  },
+
+  updateNotebookEntry: async (projectId: string, id: string, data: Record<string, unknown>): Promise<ResearchNotebook> => {
+    const { data: row, error } = await supabase
+      .from('quant_research_notebook')
+      .update(data)
+      .eq('id', id)
+      .eq('project_id', projectId)
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as ResearchNotebook;
+  },
+
+  deleteNotebookEntry: async (projectId: string, id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('quant_research_notebook')
+      .delete()
+      .eq('id', id)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  },
 
   // Hypothesis Tests
-  hypothesisTests: (projectId: string, params?: { experiment_id?: string; limit?: number }) =>
-    api.get<HypothesisTestResult[]>(`${base(projectId)}/hypothesis-tests`, { params }).then((r) => r.data),
+  hypothesisTests: async (projectId: string, params?: { experiment_id?: string; limit?: number }): Promise<HypothesisTestResult[]> => {
+    let query = supabase
+      .from('quant_hypothesis_test')
+      .select('*')
+      .eq('project_id', projectId);
 
-  createHypothesisTest: (projectId: string, data: Record<string, unknown>) =>
-    api.post<HypothesisTestResult>(`${base(projectId)}/hypothesis-tests`, data).then((r) => r.data),
+    if (params?.experiment_id) query = query.eq('experiment_id', params.experiment_id);
+    query = query.order('created_at', { ascending: false });
+    if (params?.limit) query = query.limit(params.limit);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as unknown as HypothesisTestResult[];
+  },
+
+  createHypothesisTest: async (projectId: string, data: Record<string, unknown>): Promise<HypothesisTestResult> => {
+    const { data: row, error } = await supabase
+      .from('quant_hypothesis_test')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+    if (error) throw error;
+    return row as unknown as HypothesisTestResult;
+  },
 
   // Export
-  exportData: (projectId: string, data: { experiment_id?: string; backtest_run_id?: string; format?: string }) =>
-    api.post<ExportResponse>(`${base(projectId)}/export`, data).then((r) => r.data),
+  exportData: async (projectId: string, data: { experiment_id?: string; backtest_run_id?: string; format?: string }): Promise<ExportResponse> => {
+    const payload: Record<string, unknown> = {};
+    const format = data.format ?? 'json';
+
+    if (data.experiment_id) {
+      const { data: experiment, error: e1 } = await supabase
+        .from('quant_experiment')
+        .select('*')
+        .eq('id', data.experiment_id)
+        .eq('project_id', projectId)
+        .single();
+      if (!e1) payload.experiment = experiment;
+    }
+
+    if (data.backtest_run_id) {
+      const { data: backtest, error: e2 } = await supabase
+        .from('quant_backtest_run')
+        .select('*')
+        .eq('id', data.backtest_run_id)
+        .eq('project_id', projectId)
+        .single();
+      if (!e2) {
+        payload.backtest = backtest;
+        const { data: trades, error: e3 } = await supabase
+          .from('quant_backtest_trade')
+          .select('*')
+          .eq('backtest_run_id', data.backtest_run_id)
+          .eq('project_id', projectId);
+        if (!e3) payload.trades = trades;
+      }
+    }
+
+    return {
+      format,
+      content: JSON.stringify(payload, null, 2),
+      filename: `quant-export-${projectId}-${Date.now()}.${format}`,
+    } as ExportResponse;
+  },
 };

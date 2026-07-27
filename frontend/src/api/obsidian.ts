@@ -1,12 +1,10 @@
-import api from '../services/api';
 import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
   Vault, ObsidianNote, SyncLog, SyncConflict, SyncSettings,
   VaultStatistics, NoteTemplate, SyncDashboardData, ObsidianSearchResult,
-  ParsedMarkdown,
+  ParsedMarkdown, BacklinkRef,
 } from './types';
-
-const base = (projectId: string) => `/projects/${projectId}/obsidian`;
 
 export const obsidianService = {
   // Vaults — Supabase client (vault table migrated)
@@ -67,8 +65,17 @@ export const obsidianService = {
     if (error) throw error;
   },
 
-  checkHealth: (projectId: string, vaultId: string) =>
-    api.get(`${base(projectId)}/vaults/${vaultId}/health`).then((r) => r.data),
+  checkHealth: async (projectId: string, vaultId: string): Promise<{ status: string; message?: string }> => {
+    const { data, error } = await supabase
+      .from('vault')
+      .select('health_status, health_message')
+      .eq('id', vaultId)
+      .eq('project_id', projectId)
+      .single();
+
+    if (error) throw error;
+    return { status: data.health_status, message: data.health_message };
+  },
 
   // Notes — Supabase client (obsidian_note table migrated)
   getNotes: async (projectId: string, vaultId: string, noteType?: string, limit = 100): Promise<ObsidianNote[]> => {
@@ -126,56 +133,198 @@ export const obsidianService = {
     if (error) throw error;
   },
 
-  getBacklinks: (projectId: string, noteId: string) =>
-    api.get<{ id: string; file_path: string; title: string }[]>(`${base(projectId)}/notes/${noteId}/backlinks`).then((r) => r.data),
-  parseMarkdown: (projectId: string, content: string) =>
-    api.post<ParsedMarkdown>(`${base(projectId)}/notes/parse`, null, { params: { content } }).then((r) => r.data),
+  // Backlinks — direct JSONB query
+  getBacklinks: async (projectId: string, noteId: string): Promise<BacklinkRef[]> => {
+    const { data, error } = await supabase
+      .from('obsidian_note')
+      .select('backlinks')
+      .eq('id', noteId)
+      .eq('project_id', projectId)
+      .single();
 
-  // Sync — FastAPI (complex import/export pipeline)
-  syncImport: (projectId: string, vaultId: string, filePaths?: string[], force = false) =>
-    api.post(`${base(projectId)}/sync/import`, { vault_id: vaultId, file_paths: filePaths, force }).then((r) => r.data),
-  syncImportData: (projectId: string, vaultId: string, notes: { file_path: string; content: string; title?: string; tags?: string[] }[]) =>
-    api.post(`${base(projectId)}/sync/import-data`, notes, { params: { vault_id: vaultId } }).then((r) => r.data),
-  syncExport: (projectId: string, vaultId: string, noteIds?: string[]) =>
-    api.post(`${base(projectId)}/sync/export`, { vault_id: vaultId, note_ids: noteIds }).then((r) => r.data),
-  getSyncLogs: (projectId: string, vaultId: string, limit = 20) =>
-    api.get<SyncLog[]>(`${base(projectId)}/sync/logs?vault_id=${vaultId}&limit=${limit}`).then((r) => r.data),
-  autoLink: (projectId: string, vaultId?: string) =>
-    api.post(`${base(projectId)}/sync/auto-link`, null, { params: vaultId ? { vault_id: vaultId } : {} }).then((r) => r.data),
-  createKnowledgeLinks: (projectId: string) =>
-    api.post(`${base(projectId)}/sync/knowledge-links`).then((r) => r.data),
+    if (error) throw error;
+    return (data?.backlinks ?? []) as BacklinkRef[];
+  },
 
-  // Conflicts — FastAPI (sync infrastructure)
-  getConflicts: (projectId: string, vaultId: string) =>
-    api.get<SyncConflict[]>(`${base(projectId)}/conflicts?vault_id=${vaultId}`).then((r) => r.data),
-  resolveConflict: (projectId: string, conflictId: string, resolution: string, mergedContent?: string) =>
-    api.post(`${base(projectId)}/conflicts/resolve`, { conflict_id: conflictId, resolution, merged_content: mergedContent }).then((r) => r.data),
+  // Parse markdown — callEdgeFunction (ai function)
+  parseMarkdown: async (projectId: string, content: string): Promise<ParsedMarkdown> =>
+    callEdgeFunction<ParsedMarkdown>('ai', { operation: 'parse-markdown', project_id: projectId, data: { content } }),
 
-  // Settings — FastAPI
-  getSettings: (projectId: string, vaultId: string) =>
-    api.get<SyncSettings>(`${base(projectId)}/settings?vault_id=${vaultId}`).then((r) => r.data),
-  updateSettings: (projectId: string, vaultId: string, data: Partial<SyncSettings>) =>
-    api.put<SyncSettings>(`${base(projectId)}/settings?vault_id=${vaultId}`, data).then((r) => r.data),
+  // Sync — callEdgeFunction (obsidian-sync function)
+  syncImport: async (projectId: string, vaultId: string, filePaths?: string[], force = false): Promise<any> =>
+    callEdgeFunction('obsidian-sync', { operation: 'import', project_id: projectId, data: { vault_id: vaultId, file_paths: filePaths, force } }),
 
-  // Statistics — FastAPI (aggregates across vaults)
-  getStatistics: (projectId: string, vaultId: string) =>
-    api.get<VaultStatistics>(`${base(projectId)}/statistics?vault_id=${vaultId}`).then((r) => r.data),
+  syncImportData: async (projectId: string, vaultId: string, notes: { file_path: string; content: string; title?: string; tags?: string[] }[]): Promise<any> =>
+    callEdgeFunction('obsidian-sync', { operation: 'import-data', project_id: projectId, data: { vault_id: vaultId, notes } }),
 
-  // Templates — FastAPI (rendering with placeholder substitution)
-  getTemplates: (projectId: string, templateType?: string) =>
-    api.get<NoteTemplate[]>(`${base(projectId)}/templates${templateType ? `?template_type=${templateType}` : ''}`).then((r) => r.data),
-  createTemplate: (projectId: string, data: { name: string; template_type: string; content: string; description?: string; target_folder?: string }) =>
-    api.post<NoteTemplate>(`${base(projectId)}/templates`, data).then((r) => r.data),
-  deleteTemplate: (projectId: string, templateId: string) =>
-    api.delete(`${base(projectId)}/templates/${templateId}`).then((r) => r.data),
-  renderTemplate: (projectId: string, templateId: string, context?: Record<string, string>) =>
-    api.post<{ content: string }>(`${base(projectId)}/templates/${templateId}/render`, context).then((r) => r.data),
+  syncExport: async (projectId: string, vaultId: string, noteIds?: string[]): Promise<any> =>
+    callEdgeFunction('obsidian-sync', { operation: 'export', project_id: projectId, data: { vault_id: vaultId, note_ids: noteIds } }),
 
-  // Search — FastAPI (cross-domain: notes + trades + strategies + rules)
-  search: (projectId: string, query: string, limit = 20) =>
-    api.get<ObsidianSearchResult[]>(`${base(projectId)}/search?q=${encodeURIComponent(query)}&limit=${limit}`).then((r) => r.data),
+  getSyncLogs: async (projectId: string, vaultId: string, limit = 20): Promise<SyncLog[]> => {
+    const { data, error } = await supabase
+      .from('sync_log')
+      .select('*')
+      .eq('vault_id', vaultId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-  // Dashboard — FastAPI (aggregated stats)
-  getDashboard: (projectId: string) =>
-    api.get<SyncDashboardData>(`${base(projectId)}/dashboard`).then((r) => r.data),
+    if (error) throw error;
+    return (data ?? []) as SyncLog[];
+  },
+
+  autoLink: async (projectId: string, vaultId?: string): Promise<any> =>
+    callEdgeFunction('obsidian-sync', { operation: 'auto-link', project_id: projectId, data: { vault_id: vaultId } }),
+
+  createKnowledgeLinks: async (projectId: string): Promise<any> =>
+    callEdgeFunction('obsidian-sync', { operation: 'knowledge-links', project_id: projectId }),
+
+  // Conflicts — direct table queries
+  getConflicts: async (projectId: string, vaultId: string): Promise<SyncConflict[]> => {
+    const { data, error } = await supabase
+      .from('sync_conflict')
+      .select('*')
+      .eq('vault_id', vaultId)
+      .eq('is_resolved', false);
+
+    if (error) throw error;
+    return (data ?? []) as SyncConflict[];
+  },
+
+  resolveConflict: async (projectId: string, conflictId: string, resolution: string, mergedContent?: string): Promise<any> => {
+    const { error } = await supabase
+      .from('sync_conflict')
+      .update({ resolution, resolved_at: new Date().toISOString(), is_resolved: true })
+      .eq('id', conflictId);
+
+    if (error) throw error;
+
+    return callEdgeFunction('obsidian-sync', {
+      operation: 'resolve-conflict',
+      project_id: projectId,
+      data: { conflict_id: conflictId, resolution, merged_content: mergedContent },
+    });
+  },
+
+  // Settings — direct table queries
+  getSettings: async (projectId: string, vaultId: string): Promise<SyncSettings> => {
+    const { data, error } = await supabase
+      .from('sync_settings')
+      .select('*')
+      .eq('vault_id', vaultId)
+      .single();
+
+    if (error) throw error;
+    return data as SyncSettings;
+  },
+
+  updateSettings: async (projectId: string, vaultId: string, data: Partial<SyncSettings>): Promise<SyncSettings> => {
+    const { data: row, error } = await supabase
+      .from('sync_settings')
+      .upsert({ ...data, vault_id: vaultId })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return row as SyncSettings;
+  },
+
+  // Statistics — direct table query
+  getStatistics: async (projectId: string, vaultId: string): Promise<VaultStatistics> => {
+    const { data, error } = await supabase
+      .from('vault_statistics')
+      .select('*')
+      .eq('vault_id', vaultId)
+      .single();
+
+    if (error) throw error;
+    return data as VaultStatistics;
+  },
+
+  // Templates — direct table queries
+  getTemplates: async (projectId: string, templateType?: string): Promise<NoteTemplate[]> => {
+    let query = supabase
+      .from('note_template')
+      .select('*')
+      .eq('project_id', projectId);
+
+    if (templateType) {
+      query = query.eq('template_type', templateType);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as NoteTemplate[];
+  },
+
+  createTemplate: async (projectId: string, data: { name: string; template_type: string; content: string; description?: string; target_folder?: string }): Promise<NoteTemplate> => {
+    const { data: row, error } = await supabase
+      .from('note_template')
+      .insert({ ...data, project_id: projectId })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return row as NoteTemplate;
+  },
+
+  deleteTemplate: async (projectId: string, templateId: string): Promise<void> => {
+    const { error } = await supabase
+      .from('note_template')
+      .delete()
+      .eq('id', templateId)
+      .eq('project_id', projectId);
+
+    if (error) throw error;
+  },
+
+  renderTemplate: async (projectId: string, templateId: string, context?: Record<string, string>): Promise<{ content: string }> =>
+    callEdgeFunction('obsidian-sync', { operation: 'render-template', project_id: projectId, data: { template_id: templateId, context } }),
+
+  // Search — callEdgeFunction (obsidian-sync function)
+  search: async (projectId: string, query: string, limit = 20): Promise<ObsidianSearchResult[]> =>
+    callEdgeFunction('obsidian-sync', { operation: 'search', project_id: projectId, data: { query, limit } }),
+
+  // Dashboard — composed from multiple supabase queries
+  getDashboard: async (projectId: string): Promise<SyncDashboardData> => {
+    const { data: vaults } = await supabase
+      .from('vault')
+      .select('*')
+      .eq('project_id', projectId);
+
+    const vaultIds = (vaults ?? []).map(v => v.id);
+
+    const { data: recentSyncs } = await supabase
+      .from('sync_log')
+      .select('*')
+      .in('vault_id', vaultIds)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    const { data: conflicts } = await supabase
+      .from('sync_conflict')
+      .select('*')
+      .in('vault_id', vaultIds)
+      .eq('is_resolved', false);
+
+    const { data: noteStatuses } = await supabase
+      .from('obsidian_note')
+      .select('sync_status')
+      .in('vault_id', vaultIds)
+      .eq('is_deleted', false);
+
+    const notes = noteStatuses ?? [];
+    const totalNotes = notes.length;
+    const synced = notes.filter(n => n.sync_status === 'synced').length;
+    const pending = notes.filter(n => n.sync_status === 'pending').length;
+
+    return {
+      vaults: (vaults ?? []) as Vault[],
+      recent_syncs: (recentSyncs ?? []) as SyncLog[],
+      active_conflicts: (conflicts ?? []) as SyncConflict[],
+      total_notes: totalNotes,
+      total_synced: synced,
+      total_pending: pending,
+      total_conflicts: conflicts?.length ?? 0,
+    };
+  },
 };

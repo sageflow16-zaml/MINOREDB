@@ -1,4 +1,5 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
   AIConversation, AIMessage, AIChatRequest, AIChatResponse,
   AIPrompt, AIPromptFolder, AIAgentConfig, AIWorkflow,
@@ -6,153 +7,278 @@ import type {
   AISearchResult, AITokenUsage, AIAuditLog,
 } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/copilot`;
-
 export const copilotService = {
-  // Chat
-  chat: (projectId: string, data: AIChatRequest) =>
-    api.post<AIChatResponse>(`${base(projectId)}/chat`, data).then((r) => r.data),
+  chat: async (projectId: string, data: AIChatRequest): Promise<AIChatResponse> =>
+    callEdgeFunction('ai', { operation: 'chat', project_id: projectId, data: data as any }),
 
-  // Conversations
-  conversations: (projectId: string, params?: { agent_type?: string; folder?: string; is_pinned?: boolean; limit?: number }) =>
-    api.get<AIConversation[]>(`${base(projectId)}/conversations`, { params }).then((r) => r.data),
+  conversations: async (projectId: string, params?: { agent_type?: string; folder?: string; is_pinned?: boolean; limit?: number }): Promise<AIConversation[]> => {
+    let query = supabase.from('ai_conversation').select('*').eq('project_id', projectId);
+    if (params?.agent_type) query = query.eq('agent_type', params.agent_type);
+    if (params?.folder) query = query.eq('folder', params.folder);
+    if (params?.is_pinned !== undefined) query = query.eq('is_pinned', params.is_pinned);
+    if (params?.limit) query = query.limit(params.limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  createConversation: (projectId: string, data: { title: string; agent_type?: string; folder?: string; tags?: string[] }) =>
-    api.post<AIConversation>(`${base(projectId)}/conversations`, data).then((r) => r.data),
+  createConversation: async (projectId: string, data: { title: string; agent_type?: string; folder?: string; tags?: string[] }): Promise<AIConversation> => {
+    const { data: row, error } = await supabase.from('ai_conversation').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  getConversation: (projectId: string, conversationId: string) =>
-    api.get<AIConversation>(`${base(projectId)}/conversations/${conversationId}`).then((r) => r.data),
+  getConversation: async (projectId: string, conversationId: string): Promise<AIConversation> => {
+    const { data, error } = await supabase.from('ai_conversation').select('*').eq('id', conversationId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data;
+  },
 
-  updateConversation: (projectId: string, conversationId: string, data: { title?: string; folder?: string; tags?: string[] }) =>
-    api.put<AIConversation>(`${base(projectId)}/conversations/${conversationId}`, data).then((r) => r.data),
+  updateConversation: async (projectId: string, conversationId: string, data: { title?: string; folder?: string; tags?: string[] }): Promise<AIConversation> => {
+    const { data: row, error } = await supabase.from('ai_conversation').update(data).eq('id', conversationId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  deleteConversation: (projectId: string, conversationId: string) =>
-    api.delete(`${base(projectId)}/conversations/${conversationId}`).then((r) => r.data),
+  deleteConversation: async (projectId: string, conversationId: string): Promise<void> => {
+    const { error } = await supabase.from('ai_conversation').delete().eq('id', conversationId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  pinConversation: (projectId: string, conversationId: string) =>
-    api.put<AIConversation>(`${base(projectId)}/conversations/${conversationId}/pin`).then((r) => r.data),
+  pinConversation: async (projectId: string, conversationId: string): Promise<AIConversation> => {
+    const { data, error } = await supabase.from('ai_conversation').update({ is_pinned: true }).eq('id', conversationId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return data;
+  },
 
-  unpinConversation: (projectId: string, conversationId: string) =>
-    api.put<AIConversation>(`${base(projectId)}/conversations/${conversationId}/unpin`).then((r) => r.data),
+  unpinConversation: async (projectId: string, conversationId: string): Promise<AIConversation> => {
+    const { data, error } = await supabase.from('ai_conversation').update({ is_pinned: false }).eq('id', conversationId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return data;
+  },
 
-  archiveConversation: (projectId: string, conversationId: string) =>
-    api.put(`${base(projectId)}/conversations/${conversationId}/archive`).then((r) => r.data),
+  archiveConversation: async (projectId: string, conversationId: string): Promise<void> => {
+    const { error } = await supabase.from('ai_conversation').update({ is_archived: true }).eq('id', conversationId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  messages: (projectId: string, conversationId: string) =>
-    api.get<AIMessage[]>(`${base(projectId)}/conversations/${conversationId}/messages`).then((r) => r.data),
+  messages: async (projectId: string, conversationId: string): Promise<AIMessage[]> => {
+    const { data, error } = await supabase.from('ai_message').select('*').eq('conversation_id', conversationId).order('created_at', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  exportConversation: (projectId: string, conversationId: string, format?: string) =>
-    api.get<string>(`${base(projectId)}/conversations/${conversationId}/export`, { params: { format } }).then((r) => r.data),
+  exportConversation: async (projectId: string, conversationId: string, _format?: string): Promise<string> => {
+    const { data: conversation, error: convErr } = await supabase.from('ai_conversation').select('*').eq('id', conversationId).eq('project_id', projectId).single();
+    if (convErr) throw convErr;
+    const { data: msgs, error: msgErr } = await supabase.from('ai_message').select('*').eq('conversation_id', conversationId).order('created_at', { ascending: true });
+    if (msgErr) throw msgErr;
+    return JSON.stringify({ conversation, messages: msgs ?? [] });
+  },
 
-  conversationStats: (projectId: string) =>
-    api.get(`${base(projectId)}/conversations/stats`).then((r) => r.data),
+  conversationStats: async (projectId: string): Promise<Record<string, unknown>> => {
+    const { data, error } = await supabase.from('ai_conversation').select('*').eq('project_id', projectId);
+    if (error) throw error;
+    const total = data?.length ?? 0;
+    const pinned = data?.filter((c) => c.is_pinned).length ?? 0;
+    const archived = data?.filter((c) => c.is_archived).length ?? 0;
+    return { total, pinned, archived };
+  },
 
-  searchConversations: (projectId: string, q: string) =>
-    api.get<AIConversation[]>(`${base(projectId)}/conversations/search`, { params: { q } }).then((r) => r.data),
+  searchConversations: async (projectId: string, q: string): Promise<AIConversation[]> => {
+    const { data, error } = await supabase.from('ai_conversation').select('*').eq('project_id', projectId).ilike('title', `%${q}%`).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  // Prompts
-  prompts: (projectId: string, params?: { category?: string; agent_type?: string }) =>
-    api.get<AIPrompt[]>(`${base(projectId)}/prompts`, { params }).then((r) => r.data),
+  prompts: async (projectId: string, params?: { category?: string; agent_type?: string }): Promise<AIPrompt[]> => {
+    let query = supabase.from('ai_saved_prompt').select('*').eq('project_id', projectId);
+    if (params?.category) query = query.eq('category', params.category);
+    if (params?.agent_type) query = query.eq('agent_type', params.agent_type);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  createPrompt: (projectId: string, data: Partial<AIPrompt>) =>
-    api.post<AIPrompt>(`${base(projectId)}/prompts`, data).then((r) => r.data),
+  createPrompt: async (projectId: string, data: Partial<AIPrompt>): Promise<AIPrompt> => {
+    const { data: row, error } = await supabase.from('ai_saved_prompt').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  updatePrompt: (projectId: string, promptId: string, data: Partial<AIPrompt>) =>
-    api.put<AIPrompt>(`${base(projectId)}/prompts/${promptId}`, data).then((r) => r.data),
+  updatePrompt: async (projectId: string, promptId: string, data: Partial<AIPrompt>): Promise<AIPrompt> => {
+    const { data: row, error } = await supabase.from('ai_saved_prompt').update(data).eq('id', promptId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  deletePrompt: (projectId: string, promptId: string) =>
-    api.delete(`${base(projectId)}/prompts/${promptId}`).then((r) => r.data),
+  deletePrompt: async (projectId: string, promptId: string): Promise<void> => {
+    const { error } = await supabase.from('ai_saved_prompt').delete().eq('id', promptId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  usePrompt: (projectId: string, promptId: string) =>
-    api.post(`${base(projectId)}/prompts/${promptId}/use`).then((r) => r.data),
+  usePrompt: async (projectId: string, promptId: string): Promise<void> => {
+    const { data: prompt } = await supabase.from('ai_saved_prompt').select('usage_count').eq('id', promptId).eq('project_id', projectId).single();
+    const { error } = await supabase.from('ai_saved_prompt').update({ usage_count: (prompt?.usage_count ?? 0) + 1, last_used_at: new Date().toISOString() }).eq('id', promptId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  promptCategories: (projectId: string) =>
-    api.get<string[]>(`${base(projectId)}/prompts/categories`).then((r) => r.data),
+  promptCategories: async (projectId: string): Promise<string[]> => {
+    const { data, error } = await supabase.from('ai_saved_prompt').select('category').eq('project_id', projectId).not('category', 'is', null);
+    if (error) throw error;
+    return [...new Set(data?.map((r) => r.category).filter(Boolean) as string[])];
+  },
 
-  promptFolders: (projectId: string) =>
-    api.get<AIPromptFolder[]>(`${base(projectId)}/prompts/folders`).then((r) => r.data),
+  promptFolders: async (projectId: string): Promise<AIPromptFolder[]> => {
+    const { data, error } = await supabase.from('ai_prompt_folder').select('*').eq('project_id', projectId).order('sort_order', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  createPromptFolder: (projectId: string, data: { name: string; parent_id?: string }) =>
-    api.post<AIPromptFolder>(`${base(projectId)}/prompts/folders`, data).then((r) => r.data),
+  createPromptFolder: async (projectId: string, data: { name: string; parent_id?: string }): Promise<AIPromptFolder> => {
+    const { data: row, error } = await supabase.from('ai_prompt_folder').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  deletePromptFolder: (projectId: string, folderId: string) =>
-    api.delete(`${base(projectId)}/prompts/folders/${folderId}`).then((r) => r.data),
+  deletePromptFolder: async (projectId: string, folderId: string): Promise<void> => {
+    const { error } = await supabase.from('ai_prompt_folder').delete().eq('id', folderId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  // Agents
-  agents: (projectId: string) =>
-    api.get<AIAgentConfig[]>(`${base(projectId)}/agents`).then((r) => r.data),
+  agents: async (projectId: string): Promise<AIAgentConfig[]> => {
+    const { data, error } = await supabase.from('ai_agent_config').select('*').eq('project_id', projectId).order('sort_order', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  getAgent: (projectId: string, agentType: string) =>
-    api.get<AIAgentConfig>(`${base(projectId)}/agents/${agentType}`).then((r) => r.data),
+  getAgent: async (projectId: string, agentType: string): Promise<AIAgentConfig> => {
+    const { data, error } = await supabase.from('ai_agent_config').select('*').eq('project_id', projectId).eq('name', agentType).single();
+    if (error) throw error;
+    return data;
+  },
 
-  updateAgent: (projectId: string, agentType: string, data: Partial<AIAgentConfig>) =>
-    api.put<AIAgentConfig>(`${base(projectId)}/agents/${agentType}`, data).then((r) => r.data),
+  updateAgent: async (projectId: string, agentType: string, data: Partial<AIAgentConfig>): Promise<AIAgentConfig> => {
+    const { data: row, error } = await supabase.from('ai_agent_config').update(data).eq('project_id', projectId).eq('name', agentType).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  // Workflows
-  workflows: (projectId: string) =>
-    api.get<AIWorkflow[]>(`${base(projectId)}/workflows`).then((r) => r.data),
+  workflows: async (projectId: string): Promise<AIWorkflow[]> => {
+    const { data, error } = await supabase.from('ai_workflow').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  createWorkflow: (projectId: string, data: Partial<AIWorkflow>) =>
-    api.post<AIWorkflow>(`${base(projectId)}/workflows`, data).then((r) => r.data),
+  createWorkflow: async (projectId: string, data: Partial<AIWorkflow>): Promise<AIWorkflow> => {
+    const { data: row, error } = await supabase.from('ai_workflow').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  updateWorkflow: (projectId: string, workflowId: string, data: Partial<AIWorkflow>) =>
-    api.put<AIWorkflow>(`${base(projectId)}/workflows/${workflowId}`, data).then((r) => r.data),
+  updateWorkflow: async (projectId: string, workflowId: string, data: Partial<AIWorkflow>): Promise<AIWorkflow> => {
+    const { data: row, error } = await supabase.from('ai_workflow').update(data).eq('id', workflowId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  deleteWorkflow: (projectId: string, workflowId: string) =>
-    api.delete(`${base(projectId)}/workflows/${workflowId}`).then((r) => r.data),
+  deleteWorkflow: async (projectId: string, workflowId: string): Promise<void> => {
+    const { error } = await supabase.from('ai_workflow').update({ is_active: false }).eq('id', workflowId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  executeWorkflow: (projectId: string, workflowId: string) =>
-    api.post<AIWorkflowExecution>(`${base(projectId)}/workflows/${workflowId}/execute`).then((r) => r.data),
+  executeWorkflow: async (projectId: string, workflowId: string): Promise<AIWorkflowExecution> =>
+    callEdgeFunction('ai', { operation: 'execute-workflow', project_id: projectId, data: { workflow_id: workflowId } }),
 
-  workflowExecutions: (projectId: string, params?: { workflow_id?: string; status?: string }) =>
-    api.get<AIWorkflowExecution[]>(`${base(projectId)}/workflows/executions`, { params }).then((r) => r.data),
+  workflowExecutions: async (projectId: string, params?: { workflow_id?: string; status?: string }): Promise<AIWorkflowExecution[]> => {
+    let query = supabase.from('ai_workflow_execution').select('*').eq('project_id', projectId);
+    if (params?.workflow_id) query = query.eq('workflow_id', params.workflow_id);
+    if (params?.status) query = query.eq('status', params.status);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  getExecution: (projectId: string, executionId: string) =>
-    api.get<AIWorkflowExecution>(`${base(projectId)}/workflows/executions/${executionId}`).then((r) => r.data),
+  getExecution: async (projectId: string, executionId: string): Promise<AIWorkflowExecution> => {
+    const { data, error } = await supabase.from('ai_workflow_execution').select('*').eq('id', executionId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data;
+  },
 
-  // Tools
-  tools: (projectId: string) =>
-    api.get<AITool[]>(`${base(projectId)}/tools`).then((r) => r.data),
+  tools: async (projectId: string): Promise<AITool[]> =>
+    callEdgeFunction('ai', { operation: 'list-tools', project_id: projectId }),
 
-  executeTool: (projectId: string, toolName: string, params: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/tools/${toolName}/execute`, { params }).then((r) => r.data),
+  executeTool: async (projectId: string, toolName: string, params: Record<string, unknown>): Promise<unknown> =>
+    callEdgeFunction('ai', { operation: 'execute-tool', project_id: projectId, data: { tool_name: toolName, params } }),
 
-  // RAG
-  searchRag: (projectId: string, q: string, sourceType?: string, limit?: number) =>
-    api.get<AISearchResult[]>(`${base(projectId)}/search`, { params: { q, source_type: sourceType, limit } }).then((r) => r.data),
+  searchRag: async (projectId: string, q: string, sourceType?: string, limit?: number): Promise<AISearchResult[]> =>
+    callEdgeFunction('ai', { operation: 'search', project_id: projectId, data: { query: q, source_type: sourceType, limit } }),
 
-  ingestAll: (projectId: string) =>
-    api.post<Record<string, number>>(`${base(projectId)}/ingest`).then((r) => r.data),
+  ingestAll: async (projectId: string): Promise<Record<string, number>> =>
+    callEdgeFunction('ai', { operation: 'ingest', project_id: projectId }),
 
-  ingestStatus: (projectId: string) =>
-    api.get<AIDocumentIngestion[]>(`${base(projectId)}/ingest/status`).then((r) => r.data),
+  ingestStatus: async (projectId: string): Promise<AIDocumentIngestion[]> => {
+    const { data, error } = await supabase.from('ai_document_ingestion').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  // Memory
-  memories: (projectId: string, params?: { memory_type?: string; query?: string; limit?: number }) =>
-    api.get<AIMemoryEntry[]>(`${base(projectId)}/memory`, { params }).then((r) => r.data),
+  memories: async (projectId: string, params?: { memory_type?: string; query?: string; limit?: number }): Promise<AIMemoryEntry[]> => {
+    let query = supabase.from('ai_memory').select('*').eq('project_id', projectId);
+    if (params?.memory_type) query = query.eq('memory_type', params.memory_type);
+    if (params?.query) query = query.ilike('key', `%${params.query}%`);
+    if (params?.limit) query = query.limit(params.limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  storeMemory: (projectId: string, data: { memory_type: string; key: string; value?: Record<string, unknown>; text_value?: string; importance?: number; tags?: string[] }) =>
-    api.post<AIMemoryEntry>(`${base(projectId)}/memory`, data).then((r) => r.data),
+  storeMemory: async (projectId: string, data: { memory_type: string; key: string; value?: Record<string, unknown>; text_value?: string; importance?: number; tags?: string[] }): Promise<AIMemoryEntry> => {
+    const { data: row, error } = await supabase.from('ai_memory').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row;
+  },
 
-  deleteMemory: (projectId: string, memoryType: string, key: string) =>
-    api.delete(`${base(projectId)}/memory`, { params: { memory_type: memoryType, key } }).then((r) => r.data),
+  deleteMemory: async (projectId: string, memoryType: string, key: string): Promise<void> => {
+    const { error } = await supabase.from('ai_memory').delete().eq('project_id', projectId).eq('memory_type', memoryType).eq('key', key);
+    if (error) throw error;
+  },
 
-  relevantMemories: (projectId: string, context: string) =>
-    api.get<AIMemoryEntry[]>(`${base(projectId)}/memory/relevant`, { params: { context } }).then((r) => r.data),
+  relevantMemories: async (projectId: string, context: string): Promise<AIMemoryEntry[]> =>
+    callEdgeFunction('ai', { operation: 'relevant-memories', project_id: projectId, data: { context } }),
 
-  // Citations
-  citations: (projectId: string, messageId: string) =>
-    api.get(`${base(projectId)}/citations/${messageId}`).then((r) => r.data),
+  citations: async (projectId: string, messageId: string): Promise<unknown> =>
+    callEdgeFunction('ai', { operation: 'citations', project_id: projectId, data: { message_id: messageId } }),
 
-  // Context
-  context: (projectId: string, options?: Record<string, unknown>) =>
-    api.get(`${base(projectId)}/context`, { params: { options: JSON.stringify(options) } }).then((r) => r.data),
+  context: async (projectId: string, options?: Record<string, unknown>): Promise<unknown> =>
+    callEdgeFunction('ai', { operation: 'context', project_id: projectId, data: { options } }),
 
-  // Token usage
-  usage: (projectId: string, params?: { provider?: string; model?: string; days?: number }) =>
-    api.get<AITokenUsage[]>(`${base(projectId)}/usage`, { params }).then((r) => r.data),
+  usage: async (projectId: string, params?: { provider?: string; model?: string; days?: number }): Promise<AITokenUsage[]> => {
+    let query = supabase.from('ai_token_usage').select('*').eq('project_id', projectId);
+    if (params?.provider) query = query.eq('provider', params.provider);
+    if (params?.model) query = query.eq('model', params.model);
+    if (params?.days) {
+      const since = new Date();
+      since.setDate(since.getDate() - params.days);
+      query = query.gte('created_at', since.toISOString());
+    }
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  },
 
-  // Audit
-  audit: (projectId: string, params?: { action?: string; status?: string; limit?: number }) =>
-    api.get<AIAuditLog[]>(`${base(projectId)}/audit`, { params }).then((r) => r.data),
+  audit: async (projectId: string, params?: { action?: string; status?: string; limit?: number }): Promise<AIAuditLog[]> => {
+    let query = supabase.from('ai_audit_log').select('*').eq('project_id', projectId);
+    if (params?.action) query = query.eq('action', params.action);
+    if (params?.status) query = query.eq('severity', params.status);
+    if (params?.limit) query = query.limit(params.limit);
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  },
 };

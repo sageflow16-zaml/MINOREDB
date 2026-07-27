@@ -24,9 +24,10 @@ export default function PortfolioRiskPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [aiResult, setAiResult] = useState<string | null>(null);
 
-  const { data: risk, isLoading, isError, refetch } = usePortfolioRiskAssessment(projectId!);
+  const { data: dashboard, isLoading, isError, refetch } = usePortfolioRiskAssessment(projectId!);
   const { data: accounts } = useAccounts(projectId!);
   const askAI = usePortfolioAskAI(projectId!);
+  const risk = dashboard?.risk;
 
   const handleRiskAssessment = async () => {
     try {

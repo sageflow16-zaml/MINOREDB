@@ -8,7 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import { useVaults, useNotes, useNote, useBacklinks, useAutoLink } from '../hooks/useObsidian';
 import { FileText, ArrowLeft, Link2, Tag, Calendar, RefreshCw, ChevronRight } from 'lucide-react';
-import type { ObsidianNote } from '../api/types';
+import type { ObsidianNote, BacklinkRef } from '../api/types';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
@@ -92,7 +92,7 @@ export default function NoteExplorerPage() {
   );
 }
 
-function NoteDetail({ note, backlinks, onBack }: { note: ObsidianNote; backlinks: { id: string; file_path: string; title: string }[]; onBack: () => void }) {
+function NoteDetail({ note, backlinks, onBack }: { note: ObsidianNote; backlinks: BacklinkRef[]; onBack: () => void }) {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item}>
@@ -155,8 +155,8 @@ function NoteDetail({ note, backlinks, onBack }: { note: ObsidianNote; backlinks
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs font-semibold mb-2">Backlinks ({backlinks.length})</p>
-                <ul className="space-y-1">{backlinks.map((b) => (
-                  <li key={b.id} className="text-xs text-primary cursor-pointer hover:underline">{b.title || b.file_path}</li>
+                <ul className="space-y-1">{backlinks.map((b, i) => (
+                  <li key={i} className="text-xs text-primary cursor-pointer hover:underline">{b.link_text || b.source_path}</li>
                 ))}</ul>
               </CardContent>
             </Card>

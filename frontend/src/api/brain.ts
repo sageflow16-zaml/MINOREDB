@@ -1,106 +1,147 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
-  BrainAskResponse,
-  BrainDashboard,
-  BrainDecision,
-  BrainCoaching,
-  PersonalInsight,
-  LearningObservation,
-  TraderDNA,
-  BrainMemory,
+  BrainAskResponse, BrainDashboard, BrainDecision, BrainCoaching,
+  PersonalInsight, LearningObservation, TraderDNA, BrainMemory,
 } from './types';
 
 export interface BrainAskRequest {
-  question: string;
-  context?: Record<string, unknown>;
-  include_steps?: string[];
-  skip_steps?: string[];
+  question: string; context?: Record<string, unknown>;
+  include_steps?: string[]; skip_steps?: string[];
 }
-
 export interface BrainMemoryCreate {
-  memory_type: string;
-  key: string;
-  title?: string;
-  content?: Record<string, unknown>;
-  text_content?: string;
-  importance?: string;
-  tags?: string[];
-  source_entity_type?: string;
-  source_entity_id?: string;
+  memory_type: string; key: string; title?: string;
+  content?: Record<string, unknown>; text_content?: string;
+  importance?: string; tags?: string[];
+  source_entity_type?: string; source_entity_id?: string;
 }
-
 export interface BrainCoachingRequest {
-  coaching_type?: string;
-  period_start?: string;
-  period_end?: string;
+  coaching_type?: string; period_start?: string; period_end?: string;
 }
-
 export interface SimilaritySearchRequest {
-  pair?: string;
-  direction?: string;
-  session?: string;
-  entry_model?: string;
-  weekly_bias?: string;
-  daily_bias?: string;
-  limit?: number;
+  pair?: string; direction?: string; session?: string;
+  entry_model?: string; weekly_bias?: string; daily_bias?: string; limit?: number;
 }
 
-export const brainAsk = (projectId: string, data: BrainAskRequest) =>
-  api.post<BrainAskResponse>(`/projects/${projectId}/brain/ask`, data).then(r => r.data).catch(() => null as unknown as BrainAskResponse);
+export const brainAsk = (projectId: string, data: BrainAskRequest): Promise<BrainAskResponse> =>
+  callEdgeFunction('ai', { operation: 'ask', project_id: projectId, data: data as any });
 
-export const getDNA = (projectId: string) =>
-  api.get<TraderDNA>(`/projects/${projectId}/brain/dna`).then(r => r.data).catch(() => null as unknown as TraderDNA);
+export const getDNA = async (projectId: string): Promise<TraderDNA> => {
+  const { data, error } = await supabase.from('ai_profile').select('*').eq('project_id', projectId).maybeSingle();
+  if (error) throw error;
+  return data as unknown as TraderDNA;
+};
 
-export const refreshDNA = (projectId: string) =>
-  api.post<TraderDNA>(`/projects/${projectId}/brain/dna/refresh`).then(r => r.data).catch(() => null as unknown as TraderDNA);
+export const refreshDNA = (projectId: string): Promise<TraderDNA> =>
+  callEdgeFunction('ai', { operation: 'build-profile', project_id: projectId });
 
-export const getBrainDashboard = (projectId: string) =>
-  api.get<BrainDashboard>(`/projects/${projectId}/brain/dashboard`).then(r => r.data).catch(() => null as unknown as BrainDashboard);
+export const getBrainDashboard = async (projectId: string): Promise<BrainDashboard> => {
+  const [insights, coaching, decisions, observations] = await Promise.all([
+    supabase.from('ai_insight').select('*').eq('project_id', projectId).order('created_at', { ascending: false }).limit(10),
+    supabase.from('coaching_session').select('*').eq('project_id', projectId).order('created_at', { ascending: false }).limit(5),
+    supabase.from('brain_decision').select('*').eq('project_id', projectId).order('created_at', { ascending: false }).limit(10),
+    supabase.from('learning_observation').select('*').eq('project_id', projectId).eq('is_dismissed', false).order('created_at', { ascending: false }),
+  ]);
+  if (insights.error) throw insights.error;
+  if (coaching.error) throw coaching.error;
+  if (decisions.error) throw decisions.error;
+  if (observations.error) throw observations.error;
+  return {
+    insights: (insights.data ?? []) as PersonalInsight[],
+    coaching: (coaching.data ?? []) as BrainCoaching[],
+    decisions: (decisions.data ?? []) as BrainDecision[],
+    observations: (observations.data ?? []) as LearningObservation[],
+    dna: null, recent_activity: [], performance_summary: null,
+  } as unknown as BrainDashboard;
+};
 
-export const createBrainMemory = (projectId: string, data: BrainMemoryCreate) =>
-  api.post<BrainMemory>(`/projects/${projectId}/brain/memories`, data).then(r => r.data).catch(() => null as unknown as BrainMemory);
+export const createBrainMemory = async (projectId: string, data: BrainMemoryCreate): Promise<BrainMemory> => {
+  const { data: row, error } = await supabase.from('brain_memory').insert({ project_id: projectId, ...data, tags: data.tags as any, content: data.content as any }).select().single();
+  if (error) throw error;
+  return row as unknown as BrainMemory;
+};
 
-export const searchBrainMemories = (projectId: string, params?: Record<string, string>) =>
-  api.get<BrainMemory[]>(`/projects/${projectId}/brain/memories`, { params }).then(r => r.data).catch(() => []);
+export const searchBrainMemories = async (projectId: string, params?: Record<string, string>): Promise<BrainMemory[]> => {
+  let query = supabase.from('brain_memory').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+  if (params?.memory_type) query = query.eq('memory_type', params.memory_type);
+  if (params?.importance) query = query.eq('importance', params.importance);
+  if (params?.key) query = query.eq('key', params.key);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as unknown as BrainMemory[];
+};
 
-export const deleteBrainMemory = (projectId: string, memoryId: string) =>
-  api.delete(`/projects/${projectId}/brain/memories/${memoryId}`).then(r => r.data).catch(() => null as unknown as void);
+export const deleteBrainMemory = async (projectId: string, memoryId: string): Promise<void> => {
+  const { error } = await supabase.from('brain_memory').delete().eq('id', memoryId).eq('project_id', projectId);
+  if (error) throw error;
+};
 
-export const listDecisions = (projectId: string, limit?: number) =>
-  api.get<BrainDecision[]>(`/projects/${projectId}/brain/decisions`, { params: { limit } }).then(r => r.data).catch(() => []);
+export const listDecisions = async (projectId: string, limit?: number): Promise<BrainDecision[]> => {
+  let query = supabase.from('brain_decision').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+  if (limit) query = query.limit(limit);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as unknown as BrainDecision[];
+};
 
-export const getDecision = (projectId: string, decisionId: string) =>
-  api.get<BrainDecision>(`/projects/${projectId}/brain/decisions/${decisionId}`).then(r => r.data).catch(() => null as unknown as BrainDecision);
+export const getDecision = async (projectId: string, decisionId: string): Promise<BrainDecision> => {
+  const { data, error } = await supabase.from('brain_decision').select('*').eq('id', decisionId).eq('project_id', projectId).single();
+  if (error) throw error;
+  return data as unknown as BrainDecision;
+};
 
-export const trackOutcome = (projectId: string, decisionId: string, outcome: string, feedback?: string) =>
-  api.post(`/projects/${projectId}/brain/decisions/${decisionId}/outcome`, { outcome, feedback }).then(r => r.data).catch(() => null as unknown as void);
+export const trackOutcome = async (projectId: string, decisionId: string, outcome: string, feedback?: string): Promise<void> => {
+  const { error } = await supabase.from('brain_decision').update({ outcome, outcome_feedback: feedback }).eq('id', decisionId).eq('project_id', projectId);
+  if (error) throw error;
+};
 
-export const searchBrainSimilarity = (projectId: string, data: SimilaritySearchRequest) =>
-  api.post(`/projects/${projectId}/brain/similarity`, data).then(r => r.data).catch(() => null as unknown as void);
+export const searchBrainSimilarity = (projectId: string, _data: SimilaritySearchRequest): Promise<any> =>
+  callEdgeFunction('ai', { operation: 'similarity-search', project_id: projectId, data: _data as any });
 
-export const getInsights = (projectId: string, limit?: number) =>
-  api.get<PersonalInsight[]>(`/projects/${projectId}/brain/insights`, { params: { limit } }).then(r => r.data).catch(() => []);
+export const getInsights = async (projectId: string, limit?: number): Promise<PersonalInsight[]> => {
+  let query = supabase.from('ai_insight').select('*').eq('project_id', projectId).eq('is_dismissed', false).order('created_at', { ascending: false });
+  if (limit) query = query.limit(limit);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as unknown as PersonalInsight[];
+};
 
-export const generateInsights = (projectId: string) =>
-  api.post<PersonalInsight[]>(`/projects/${projectId}/brain/insights/generate`).then(r => r.data).catch(() => []);
+export const generateInsights = (projectId: string): Promise<PersonalInsight[]> =>
+  callEdgeFunction('ai', { operation: 'generate-insights', project_id: projectId });
 
-export const dismissInsight = (projectId: string, insightId: string) =>
-  api.post(`/projects/${projectId}/brain/insights/${insightId}/dismiss`).then(r => r.data).catch(() => null as unknown as void);
+export const dismissInsight = async (projectId: string, insightId: string): Promise<void> => {
+  const { error } = await supabase.from('ai_insight').update({ is_dismissed: true }).eq('id', insightId).eq('project_id', projectId);
+  if (error) throw error;
+};
 
-export const getObservations = (projectId: string) =>
-  api.get<LearningObservation[]>(`/projects/${projectId}/brain/observations`).then(r => r.data).catch(() => []);
+export const getObservations = async (projectId: string): Promise<LearningObservation[]> => {
+  const { data, error } = await supabase.from('learning_observation').select('*').eq('project_id', projectId).eq('is_dismissed', false).order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as LearningObservation[];
+};
 
-export const detectObservations = (projectId: string) =>
-  api.post<LearningObservation[]>(`/projects/${projectId}/brain/observations/detect`).then(r => r.data).catch(() => []);
+export const detectObservations = (projectId: string): Promise<LearningObservation[]> =>
+  callEdgeFunction('ai', { operation: 'detect-observations', project_id: projectId });
 
-export const dismissObservation = (projectId: string, observationId: string) =>
-  api.post(`/projects/${projectId}/brain/observations/${observationId}/dismiss`).then(r => r.data).catch(() => null as unknown as void);
+export const dismissObservation = async (projectId: string, observationId: string): Promise<void> => {
+  const { error } = await supabase.from('learning_observation').update({ is_dismissed: true }).eq('id', observationId).eq('project_id', projectId);
+  if (error) throw error;
+};
 
-export const generateCoaching = (projectId: string, data: BrainCoachingRequest) =>
-  api.post<BrainCoaching>(`/projects/${projectId}/brain/coach`, data).then(r => r.data).catch(() => null as unknown as BrainCoaching);
+export const generateCoaching = (projectId: string, data: BrainCoachingRequest): Promise<BrainCoaching> =>
+  callEdgeFunction('ai', { operation: 'generate-coaching', project_id: projectId, data: data as any });
 
-export const listCoachingSessions = (projectId: string, coachingType?: string, limit?: number) =>
-  api.get<BrainCoaching[]>(`/projects/${projectId}/brain/coach`, { params: { coaching_type: coachingType, limit } }).then(r => r.data).catch(() => []);
+export const listCoachingSessions = async (projectId: string, coachingType?: string, limit?: number): Promise<BrainCoaching[]> => {
+  let query = supabase.from('coaching_session').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+  if (coachingType) query = query.eq('session_type', coachingType);
+  if (limit) query = query.limit(limit);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as unknown as BrainCoaching[];
+};
 
-export const getLatestCoaching = (projectId: string) =>
-  api.get<BrainCoaching>(`/projects/${projectId}/brain/coach/latest`).then(r => r.data).catch(() => null as unknown as BrainCoaching);
+export const getLatestCoaching = async (projectId: string): Promise<BrainCoaching> => {
+  const { data, error } = await supabase.from('coaching_session').select('*').eq('project_id', projectId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (error) throw error;
+  return data as unknown as BrainCoaching;
+};

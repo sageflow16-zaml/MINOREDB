@@ -1,4 +1,5 @@
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import type {
   PortfolioDashboardData,
   PortfolioSummary,
@@ -16,136 +17,355 @@ import type {
   BalanceHistoryPoint,
   EquityHistoryPoint,
   AIAnswer,
+  PortfolioSnapshot,
   AccountType,
   AccountStatus,
 } from './types';
 
-const base = (projectId: string) => `/projects/${projectId}/portfolio`;
-
 export const portfolioService = {
-  dashboard: (projectId: string) =>
-    api.get<PortfolioDashboardData>(`${base(projectId)}/dashboard`).then((r) => r.data),
+  dashboard: async (projectId: string): Promise<PortfolioDashboardData> => {
+    const { data, error } = await supabase.rpc('get_portfolio_dashboard', { p_project_id: projectId });
+    if (error) throw error;
+    return data as unknown as PortfolioDashboardData;
+  },
 
-  listAccounts: (projectId: string, params?: { type?: AccountType; status?: AccountStatus; search?: string }) =>
-    api.get<Account[]>(`${base(projectId)}/accounts`, { params }).then((r) => r.data),
+  listAccounts: async (projectId: string, params?: { type?: AccountType; status?: AccountStatus; search?: string }): Promise<Account[]> => {
+    let query = supabase.from('account').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (params?.type) query = query.eq('account_type', params.type);
+    if (params?.status) query = query.eq('status', params.status);
+    if (params?.search) query = query.or(`name.ilike.%${params.search}%,account_number.ilike.%${params.search}%`);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []) as Account[];
+  },
 
-  getAccount: (projectId: string, accountId: string) =>
-    api.get<Account>(`${base(projectId)}/accounts/${accountId}`).then((r) => r.data),
+  getAccount: async (projectId: string, accountId: string): Promise<Account> => {
+    const { data, error } = await supabase.from('account').select('*').eq('id', accountId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as Account;
+  },
 
-  createAccount: (projectId: string, data: Partial<Account>) =>
-    api.post<Account>(`${base(projectId)}/accounts`, data).then((r) => r.data),
+  createAccount: async (projectId: string, data: Partial<Account>): Promise<Account> => {
+    const { data: row, error } = await supabase.from('account').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row as Account;
+  },
 
-  updateAccount: (projectId: string, accountId: string, data: Partial<Account>) =>
-    api.put<Account>(`${base(projectId)}/accounts/${accountId}`, data).then((r) => r.data),
+  updateAccount: async (projectId: string, accountId: string, data: Partial<Account>): Promise<Account> => {
+    const { data: row, error } = await supabase.from('account').update(data).eq('id', accountId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as Account;
+  },
 
-  archiveAccount: (projectId: string, accountId: string) =>
-    api.post(`${base(projectId)}/accounts/${accountId}/archive`).then((r) => r.data),
+  archiveAccount: async (projectId: string, accountId: string): Promise<void> => {
+    const { error } = await supabase.from('account').update({ is_archived: true }).eq('id', accountId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  deleteAccount: (projectId: string, accountId: string) =>
-    api.delete(`${base(projectId)}/accounts/${accountId}`).then((r) => r.data),
+  deleteAccount: async (projectId: string, accountId: string): Promise<void> => {
+    const { error } = await supabase.from('account').delete().eq('id', accountId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  listGroups: (projectId: string) =>
-    api.get<AccountGroup[]>(`${base(projectId)}/groups`).then((r) => r.data),
+  listGroups: async (projectId: string): Promise<AccountGroup[]> => {
+    const { data, error } = await supabase.from('account_group').select('*').eq('project_id', projectId);
+    if (error) throw error;
+    return (data ?? []) as AccountGroup[];
+  },
 
-  createGroup: (projectId: string, data: { name: string; description?: string; color?: string; account_ids?: string[] }) =>
-    api.post<AccountGroup>(`${base(projectId)}/groups`, data).then((r) => r.data),
+  createGroup: async (projectId: string, data: { name: string; description?: string; color?: string; account_ids?: string[] }): Promise<AccountGroup> => {
+    const { data: row, error } = await supabase.from('account_group').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row as AccountGroup;
+  },
 
-  updateGroup: (projectId: string, groupId: string, data: Partial<AccountGroup>) =>
-    api.put<AccountGroup>(`${base(projectId)}/groups/${groupId}`, data).then((r) => r.data),
+  updateGroup: async (projectId: string, groupId: string, data: Partial<AccountGroup>): Promise<AccountGroup> => {
+    const { data: row, error } = await supabase.from('account_group').update(data).eq('id', groupId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as AccountGroup;
+  },
 
-  deleteGroup: (projectId: string, groupId: string) =>
-    api.delete(`${base(projectId)}/groups/${groupId}`).then((r) => r.data),
+  deleteGroup: async (projectId: string, groupId: string): Promise<void> => {
+    const { error } = await supabase.from('account_group').delete().eq('id', groupId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  listBrokers: (projectId: string) =>
-    api.get<BrokerProfile[]>(`${base(projectId)}/brokers`).then((r) => r.data),
+  listBrokers: async (projectId: string): Promise<BrokerProfile[]> => {
+    const { data, error } = await supabase.from('broker_profile').select('*').eq('project_id', projectId);
+    if (error) throw error;
+    return (data ?? []) as BrokerProfile[];
+  },
 
-  createBroker: (projectId: string, data: Partial<BrokerProfile>) =>
-    api.post<BrokerProfile>(`${base(projectId)}/brokers`, data).then((r) => r.data),
+  createBroker: async (projectId: string, data: Partial<BrokerProfile>): Promise<BrokerProfile> => {
+    const { data: row, error } = await supabase.from('broker_profile').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row as BrokerProfile;
+  },
 
-  updateBroker: (projectId: string, brokerId: string, data: Partial<BrokerProfile>) =>
-    api.put<BrokerProfile>(`${base(projectId)}/brokers/${brokerId}`, data).then((r) => r.data),
+  updateBroker: async (projectId: string, brokerId: string, data: Partial<BrokerProfile>): Promise<BrokerProfile> => {
+    const { data: row, error } = await supabase.from('broker_profile').update(data).eq('id', brokerId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as BrokerProfile;
+  },
 
-  deleteBroker: (projectId: string, brokerId: string) =>
-    api.delete(`${base(projectId)}/brokers/${brokerId}`).then((r) => r.data),
+  deleteBroker: async (projectId: string, brokerId: string): Promise<void> => {
+    const { error } = await supabase.from('broker_profile').delete().eq('id', brokerId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  listAllocations: (projectId: string) =>
-    api.get<PortfolioAllocation[]>(`${base(projectId)}/allocations`).then((r) => r.data),
+  listAllocations: async (projectId: string): Promise<PortfolioAllocation[]> => {
+    const { data, error } = await supabase.from('portfolio_allocation').select('*').eq('project_id', projectId);
+    if (error) throw error;
+    return (data ?? []) as PortfolioAllocation[];
+  },
 
-  createAllocation: (projectId: string, data: Partial<PortfolioAllocation>) =>
-    api.post<PortfolioAllocation>(`${base(projectId)}/allocations`, data).then((r) => r.data),
+  createAllocation: async (projectId: string, data: Partial<PortfolioAllocation>): Promise<PortfolioAllocation> => {
+    const { data: row, error } = await supabase.from('portfolio_allocation').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row as PortfolioAllocation;
+  },
 
-  updateAllocation: (projectId: string, allocationId: string, data: Partial<PortfolioAllocation>) =>
-    api.put<PortfolioAllocation>(`${base(projectId)}/allocations/${allocationId}`, data).then((r) => r.data),
+  updateAllocation: async (projectId: string, allocationId: string, data: Partial<PortfolioAllocation>): Promise<PortfolioAllocation> => {
+    const { data: row, error } = await supabase.from('portfolio_allocation').update(data).eq('id', allocationId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as PortfolioAllocation;
+  },
 
-  deleteAllocation: (projectId: string, allocationId: string) =>
-    api.delete(`${base(projectId)}/allocations/${allocationId}`).then((r) => r.data),
+  deleteAllocation: async (projectId: string, allocationId: string): Promise<void> => {
+    const { error } = await supabase.from('portfolio_allocation').delete().eq('id', allocationId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  getRebalanceSuggestions: (projectId: string) =>
-    api.get(`${base(projectId)}/allocations/rebalance-suggestions`).then((r) => r.data),
+  getRebalanceSuggestions: async (projectId: string): Promise<{ symbol: string; current_pct: number; target_pct: number; difference: number }[]> => {
+    const { data, error } = await supabase.from('portfolio_allocation').select('*').eq('project_id', projectId);
+    if (error) throw error;
+    const allocations = (data ?? []) as PortfolioAllocation[];
+    return allocations.map((a) => ({
+      symbol: a.entity_name ?? a.entity_id,
+      current_pct: a.current_percentage ?? 0,
+      target_pct: a.target_percentage ?? 0,
+      difference: (a.target_percentage ?? 0) - (a.current_percentage ?? 0),
+    }));
+  },
 
-  executeRebalance: (projectId: string, data?: Record<string, unknown>) =>
-    api.post(`${base(projectId)}/allocations/rebalance`, data).then((r) => r.data),
+  executeRebalance: async (projectId: string, updates?: { allocation_id: string; target_percentage: number }[]): Promise<void> => {
+    if (updates && updates.length > 0) {
+      const { error } = await supabase.from('portfolio_allocation').upsert(
+        updates.map((u) => ({ id: u.allocation_id, project_id: projectId, target_percentage: u.target_percentage })),
+        { onConflict: 'id' }
+      );
+      if (error) throw error;
+    }
+  },
 
-  listTransfers: (projectId: string) =>
-    api.get<Transfer[]>(`${base(projectId)}/transfers`).then((r) => r.data),
+  listTransfers: async (projectId: string): Promise<Transfer[]> => {
+    const { data, error } = await supabase.from('transfer').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as Transfer[];
+  },
 
-  createTransfer: (projectId: string, data: Partial<Transfer>) =>
-    api.post<Transfer>(`${base(projectId)}/transfers`, data).then((r) => r.data),
+  createTransfer: async (projectId: string, data: Partial<Transfer>): Promise<Transfer> => {
+    const { data: row, error } = await supabase.from('transfer').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row as Transfer;
+  },
 
-  listGoals: (projectId: string) =>
-    api.get<PortfolioGoal[]>(`${base(projectId)}/goals`).then((r) => r.data),
+  listGoals: async (projectId: string): Promise<PortfolioGoal[]> => {
+    const { data, error } = await supabase.from('portfolio_goal').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as PortfolioGoal[];
+  },
 
-  createGoal: (projectId: string, data: Partial<PortfolioGoal>) =>
-    api.post<PortfolioGoal>(`${base(projectId)}/goals`, data).then((r) => r.data),
+  createGoal: async (projectId: string, data: Partial<PortfolioGoal>): Promise<PortfolioGoal> => {
+    const { data: row, error } = await supabase.from('portfolio_goal').insert({ project_id: projectId, ...data }).select().single();
+    if (error) throw error;
+    return row as PortfolioGoal;
+  },
 
-  updateGoal: (projectId: string, goalId: string, data: Partial<PortfolioGoal>) =>
-    api.put<PortfolioGoal>(`${base(projectId)}/goals/${goalId}`, data).then((r) => r.data),
+  updateGoal: async (projectId: string, goalId: string, data: Partial<PortfolioGoal>): Promise<PortfolioGoal> => {
+    const { data: row, error } = await supabase.from('portfolio_goal').update(data).eq('id', goalId).eq('project_id', projectId).select().single();
+    if (error) throw error;
+    return row as PortfolioGoal;
+  },
 
-  deleteGoal: (projectId: string, goalId: string) =>
-    api.delete(`${base(projectId)}/goals/${goalId}`).then((r) => r.data),
+  deleteGoal: async (projectId: string, goalId: string): Promise<void> => {
+    const { error } = await supabase.from('portfolio_goal').delete().eq('id', goalId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  getAccountHealth: (projectId: string, accountId: string) =>
-    api.get<AccountHealth>(`${base(projectId)}/accounts/${accountId}/health`).then((r) => r.data),
+  getAccountHealth: async (projectId: string, accountId: string): Promise<AccountHealth> => {
+    const { data, error } = await supabase.from('account_health').select('*').eq('account_id', accountId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return data as AccountHealth;
+  },
 
-  getAccountRules: (projectId: string, accountId: string) =>
-    api.get<AccountRule[]>(`${base(projectId)}/accounts/${accountId}/rules`).then((r) => r.data),
+  getAccountRules: async (projectId: string, accountId: string): Promise<AccountRule[]> => {
+    const { data, error } = await supabase.from('account_rule').select('*').eq('account_id', accountId).eq('project_id', projectId);
+    if (error) throw error;
+    return (data ?? []) as AccountRule[];
+  },
 
-  checkRules: (projectId: string, accountId: string) =>
-    api.post<{ violations: AccountRule[] }>(`${base(projectId)}/accounts/${accountId}/rules/check`).then((r) => r.data),
+  checkRules: async (projectId: string, accountId: string): Promise<{ violations: AccountRule[] }> => {
+    const { data, error } = await supabase.from('account_rule').select('*').eq('account_id', accountId).eq('project_id', projectId).eq('is_active', true);
+    if (error) throw error;
+    const rules = (data ?? []) as AccountRule[];
+    const violations = rules.filter((r) => {
+      if (r.current_value === undefined || r.current_value === null) return false;
+      if (r.threshold_value === undefined || r.threshold_value === null) return false;
+      return r.current_value >= r.threshold_value;
+    });
+    return { violations };
+  },
 
-  getAccountNotes: (projectId: string, accountId: string) =>
-    api.get<AccountNote[]>(`${base(projectId)}/accounts/${accountId}/notes`).then((r) => r.data),
+  getAccountNotes: async (projectId: string, accountId: string): Promise<AccountNote[]> => {
+    const { data, error } = await supabase.from('account_note').select('*').eq('account_id', accountId).eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as AccountNote[];
+  },
 
-  createAccountNote: (projectId: string, accountId: string, data: Partial<AccountNote>) =>
-    api.post<AccountNote>(`${base(projectId)}/accounts/${accountId}/notes`, data).then((r) => r.data),
+  createAccountNote: async (projectId: string, accountId: string, data: Partial<AccountNote>): Promise<AccountNote> => {
+    const { data: row, error } = await supabase.from('account_note').insert({ project_id: projectId, account_id: accountId, ...data }).select().single();
+    if (error) throw error;
+    return row as AccountNote;
+  },
 
-  deleteAccountNote: (projectId: string, noteId: string) =>
-    api.delete(`${base(projectId)}/notes/${noteId}`).then((r) => r.data),
+  deleteAccountNote: async (projectId: string, noteId: string): Promise<void> => {
+    const { error } = await supabase.from('account_note').delete().eq('id', noteId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  getFundingHistory: (projectId: string, accountId: string) =>
-    api.get<FundingHistory[]>(`${base(projectId)}/accounts/${accountId}/funding`).then((r) => r.data),
+  getFundingHistory: async (projectId: string, accountId: string): Promise<FundingHistory[]> => {
+    const { data, error } = await supabase.from('funding_history').select('*').eq('account_id', accountId).eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as FundingHistory[];
+  },
 
-  getBalanceHistory: (projectId: string, accountId: string) =>
-    api.get<BalanceHistoryPoint[]>(`${base(projectId)}/accounts/${accountId}/balance-history`).then((r) => r.data),
+  getBalanceHistory: async (projectId: string, accountId: string): Promise<BalanceHistoryPoint[]> => {
+    const { data, error } = await supabase.from('balance_history').select('*').eq('account_id', accountId).eq('project_id', projectId).order('record_date', { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as BalanceHistoryPoint[];
+  },
 
-  getEquityHistory: (projectId: string, accountId: string) =>
-    api.get<EquityHistoryPoint[]>(`${base(projectId)}/accounts/${accountId}/equity-history`).then((r) => r.data),
+  getEquityHistory: async (projectId: string, accountId: string): Promise<EquityHistoryPoint[]> => {
+    const { data, error } = await supabase.from('equity_history').select('*').eq('account_id', accountId).eq('project_id', projectId).order('record_date', { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as EquityHistoryPoint[];
+  },
 
-  analytics: (projectId: string) =>
-    api.get(`${base(projectId)}/analytics`).then((r) => r.data),
+  analytics: async (projectId: string): Promise<{
+    summary: PortfolioSummary;
+    snapshots: PortfolioSnapshot[];
+  }> => {
+    const [accountsResult, snapshotsResult] = await Promise.all([
+      supabase.from('account').select('*').eq('project_id', projectId),
+      supabase.from('portfolio_snapshot').select('*').eq('project_id', projectId).order('snapshot_date', { ascending: false }).limit(30),
+    ]);
+    if (accountsResult.error) throw accountsResult.error;
+    if (snapshotsResult.error) throw snapshotsResult.error;
+    const accounts = (accountsResult.data ?? []) as Account[];
+    const totalBalance = accounts.reduce((s, a) => s + (a.current_balance ?? 0), 0);
+    const totalEquity = accounts.reduce((s, a) => s + (a.current_equity ?? 0), 0);
+    const totalOpenPl = accounts.reduce((s, a) => s + (a.open_pnl ?? 0), 0);
+    const totalUsedMargin = accounts.reduce((s, a) => s + (a.used_margin ?? 0), 0);
+    const totalFreeMargin = accounts.reduce((s, a) => s + (a.free_margin ?? 0), 0);
+    const summary: PortfolioSummary = {
+      total_balance: totalBalance,
+      total_equity: totalEquity,
+      total_open_pnl: totalOpenPl,
+      total_used_margin: totalUsedMargin,
+      total_free_margin: totalFreeMargin,
+      daily_pnl: 0,
+      weekly_pnl: 0,
+      monthly_pnl: 0,
+      total_deposits: 0,
+      total_withdrawals: 0,
+      account_count: accounts.length,
+      active_account_count: accounts.filter((a) => a.status === 'active').length,
+      total_trades: 0,
+      win_count: 0,
+      loss_count: 0,
+      win_rate: 0,
+      total_pnl: totalOpenPl,
+      profit_factor: 0,
+      avg_rr: 0,
+      max_drawdown_pct: 0,
+    };
+    const snapshots = (snapshotsResult.data ?? []) as PortfolioSnapshot[];
+    return { summary, snapshots };
+  },
 
-  riskAssessment: (projectId: string) =>
-    api.get(`${base(projectId)}/risk-assessment`).then((r) => r.data),
+  riskAssessment: async (projectId: string): Promise<{
+    risk: PortfolioRisk;
+    health: AccountHealth[];
+  }> => {
+    const [accountsResult, healthResult] = await Promise.all([
+      supabase.from('account').select('*').eq('project_id', projectId),
+      supabase.from('account_health').select('*').eq('project_id', projectId),
+    ]);
+    if (accountsResult.error) throw accountsResult.error;
+    if (healthResult.error) throw healthResult.error;
+    const accounts = (accountsResult.data ?? []) as Account[];
+    const health = (healthResult.data ?? []) as AccountHealth[];
+    const totalBalance = accounts.reduce((s, a) => s + (a.current_balance ?? 0), 0);
+    const totalEquity = accounts.reduce((s, a) => s + (a.current_equity ?? 0), 0);
+    const totalUsedMargin = accounts.reduce((s, a) => s + (a.used_margin ?? 0), 0);
+    const totalFreeMargin = accounts.reduce((s, a) => s + (a.free_margin ?? 0), 0);
+    const risk: PortfolioRisk = {
+      total_exposure: totalUsedMargin + (totalEquity > 0 ? Math.abs(totalEquity - totalBalance) : 0),
+      used_margin: totalUsedMargin,
+      free_margin: totalFreeMargin,
+      margin_ratio: totalEquity > 0 ? (totalUsedMargin / totalEquity) * 100 : 0,
+      margin_level: totalUsedMargin > 0 ? (totalEquity / totalUsedMargin) * 100 : 0,
+      portfolio_drawdown: 0,
+      win_rate: 0,
+      loss_count: 0,
+      concentration_risk: 0,
+      max_symbol_exposure: 0,
+      total_open_positions: 0,
+      risk_score: health.reduce((s, h) => s + (100 - (h.health_score ?? 50)), 0) / Math.max(health.length, 1),
+    };
+    return { risk, health };
+  },
 
-  report: (projectId: string, reportType: string, accountId?: string) =>
-    api.get<{ content: string }>(`${base(projectId)}/reports/${reportType}`, { params: { account_id: accountId } }).then((r) => r.data),
+  report: async (projectId: string, reportType: string, accountId?: string): Promise<{ content: string }> => {
+    const [accountsResult, snapshotsResult] = await Promise.all([
+      supabase.from('account').select('*').eq('project_id', projectId),
+      supabase.from('portfolio_snapshot').select('*').eq('project_id', projectId).order('snapshot_date', { ascending: false }).limit(1),
+    ]);
+    if (accountsResult.error) throw accountsResult.error;
+    if (snapshotsResult.error) throw snapshotsResult.error;
+    const accounts = (accountsResult.data ?? []) as Account[];
+    const snapshot = (snapshotsResult.data ?? [])[0] as PortfolioSnapshot | undefined;
+    const filtered = accountId ? accounts.filter((a) => a.id === accountId) : accounts;
+    const content = [
+      `Report Type: ${reportType}`,
+      `Generated: ${new Date().toISOString()}`,
+      `Accounts: ${filtered.length}`,
+      `Snapshot Balance: ${snapshot?.total_balance ?? 'N/A'}`,
+      `Snapshot Equity: ${snapshot?.total_equity ?? 'N/A'}`,
+    ].join('\n');
+    return { content };
+  },
 
-  addFunding: (projectId: string, accountId: string, data: { amount: number; description?: string }) =>
-    api.post<FundingHistory>(`${base(projectId)}/accounts/${accountId}/funding`, data).then((r) => r.data),
+  addFunding: async (projectId: string, accountId: string, data: { amount: number; description?: string }): Promise<FundingHistory> => {
+    const { data: row, error } = await supabase.from('funding_history').insert({
+      project_id: projectId,
+      account_id: accountId,
+      amount: data.amount,
+      notes: data.description,
+      funding_type: 'deposit',
+      event_date: new Date().toISOString(),
+    }).select().single();
+    if (error) throw error;
+    return row as FundingHistory;
+  },
 
-  updateNotePin: (projectId: string, noteId: string, pinned: boolean) =>
-    api.put(`${base(projectId)}/notes/${noteId}`, { pinned }).then((r) => r.data),
+  updateNotePin: async (projectId: string, noteId: string, pinned: boolean): Promise<void> => {
+    const { error } = await supabase.from('account_note').update({ pinned }).eq('id', noteId).eq('project_id', projectId);
+    if (error) throw error;
+  },
 
-  askAI: (projectId: string, question: string) =>
-    api.post<AIAnswer>(`${base(projectId)}/ai/ask`, { question }).then((r) => r.data),
+  askAI: async (projectId: string, question: string): Promise<AIAnswer> => {
+    return callEdgeFunction<AIAnswer>('ai', { operation: 'ask', project_id: projectId, data: { question } });
+  },
 };
