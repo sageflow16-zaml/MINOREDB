@@ -59,14 +59,15 @@ export const sourceService = {
 
   upload: async (projectId: string, formData: FormData): Promise<SourceRead> => {
     const file = formData.get('file') as File;
-    const filePath = `${projectId}/${Date.now()}_${file.name}`;
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `${projectId}/${Date.now()}_${sanitizedName}`;
     const { error: uploadError } = await supabase.storage
       .from('sources')
       .upload(filePath, file);
     if (uploadError) throw uploadError;
     const { data: row, error } = await supabase
       .from('source')
-      .insert({ project_id: projectId, file_path: filePath, original_name: file.name })
+      .insert({ project_id: projectId, source_metadata: { file_path: filePath, original_name: file.name } })
       .select()
       .single();
     if (error) throw error;

@@ -246,7 +246,7 @@ export default function PlanningPage() {
             <KpiCard title="Today's Plan" value={dash.has_plan ? 'Created' : 'Not Set'} icon={FileText} variant={dash.has_plan ? 'success' : 'warning'} size="sm" />
             <KpiCard title="Active Goals" value={dash.active_goals_count} icon={Target} variant="info" size="sm" />
             <KpiCard title="Goals Complete" value={`${dash.goal_progress}%`} icon={CheckCircle} variant={dash.goal_progress >= 50 ? 'success' : 'warning'} size="sm" />
-            <KpiCard title="Active Reminders" value={dash.active_reminders.length} icon={Bell} variant="info" size="sm" />
+            <KpiCard title="Active Reminders" value={(dash.active_reminders ?? []).length} icon={Bell} variant="info" size="sm" />
             <KpiCard title="Today's Events" value={(dash.today_events ?? []).length} icon={Calendar} variant="info" size="sm" />
             <KpiCard title="Upcoming Sessions" value={(dash.upcoming_sessions ?? []).length} icon={Clock} variant="info" size="sm" />
           </motion.div>
@@ -266,7 +266,7 @@ export default function PlanningPage() {
             <Card>
               <CardHeader><CardTitle className="text-sm font-medium">Active Reminders</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                {dash.active_reminders.length > 0 ? dash.active_reminders.map((r, i) => (
+                {(dash.active_reminders ?? []).length > 0 ? dash.active_reminders.map((r, i) => (
                   <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                     <div className="flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /><span className="text-sm">{r.title}</span></div>
                     <span className="text-xs font-mono text-muted-foreground">{r.reminder_time}</span>
@@ -280,7 +280,7 @@ export default function PlanningPage() {
             <Card>
               <CardHeader><CardTitle className="text-sm font-medium">Today's Events</CardTitle></CardHeader>
               <CardContent>
-                {dash.today_events.length > 0 ? (
+                {(dash.today_events ?? []).length > 0 ? (
                   <div className="space-y-2">
                     {(dash.today_events ?? []).map((ev, i) => (
                       <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20">

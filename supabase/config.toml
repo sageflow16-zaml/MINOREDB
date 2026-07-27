@@ -36,6 +36,11 @@ port = 54323
 enabled = true
 file_size_limit = "50MiB"
 
+[storage.buckets.sources]
+public = false
+allowed_mime_types = ["text/plain", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+file_size_limit = "50MB"
+
 [storage.buckets.trade-images]
 public = false
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]

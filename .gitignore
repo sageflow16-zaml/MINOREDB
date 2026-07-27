@@ -78,3 +78,5 @@ supabase/.temp/
 railway.json
 *.err
 *.out
+
+.vercel

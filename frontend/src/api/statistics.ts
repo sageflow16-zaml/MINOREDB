@@ -22,38 +22,60 @@ async function rpcCached<T>(fnName: string, args: Record<string, unknown>): Prom
 
 export const statisticsService = {
   overview: async (projectId: string): Promise<StatisticsResponse> => {
-    const overview = await rpcCached<any>('get_analytics_overview', { p_project_id: projectId });
-    const breakdowns = await rpcCached<any>('get_analytics_breakdowns', { p_project_id: projectId });
-    const timeSeries = await rpcCached<any>('get_analytics_time_series', { p_project_id: projectId });
+    const overview = (await rpcCached<any>('get_analytics_overview', { p_project_id: projectId })) ?? {};
+    const breakdowns = (await rpcCached<any>('get_analytics_breakdowns', { p_project_id: projectId })) ?? {};
+    const timeSeries = (await rpcCached<any>('get_analytics_time_series', { p_project_id: projectId })) ?? {};
     return {
-      overview: { total_trades: overview.total_trades, closed_trades: overview.closed_trades, wins: overview.wins, losses: overview.losses, breakevens: overview.breakevens, open_trades: overview.open_trades, win_rate: overview.win_rate, avg_rr: overview.avg_rr, total_pnl: overview.total_pnl, expectancy: overview.expectancy, avg_win: overview.avg_win, avg_loss: overview.avg_loss },
-      risk: { max_drawdown: overview.max_drawdown, profit_factor: overview.profit_factor, sharpe_ratio: overview.sharpe_ratio, recovery_factor: overview.recovery_factor },
-      by_result: overview.by_result || {}, by_pair: breakdowns.by_pair || {}, by_direction: breakdowns.by_direction || {}, by_bias: breakdowns.by_bias || {}, by_session: breakdowns.by_session || {}, by_market_phase: {}, by_trend: {}, by_strategy: {}, by_timeframe: breakdowns.by_timeframe || {}, by_news: breakdowns.by_news || {}, by_weekday: breakdowns.by_weekday || {}, by_market_condition: {}, by_volatility: {}, by_setup: {},
-      monthly_returns: timeSeries.monthly_returns || [], weekly_returns: timeSeries.weekly_returns || [], yearly_returns: timeSeries.yearly_returns || [],
-      rolling_10: timeSeries.rolling_10 || [], rolling_50: timeSeries.rolling_50 || [], calendar_heatmap: timeSeries.calendar_heatmap || [],
-      risk_analytics: undefined as any, psychology_analytics: undefined as any, scatter_data: undefined as any,
+      overview: {
+        total_trades: overview.total_trades ?? 0, closed_trades: overview.closed_trades ?? 0,
+        wins: overview.wins ?? 0, losses: overview.losses ?? 0, breakevens: overview.breakevens ?? 0,
+        open_trades: overview.open_trades ?? 0, win_rate: overview.win_rate ?? 0, avg_rr: overview.avg_rr ?? 0,
+        total_pnl: overview.total_pnl ?? 0, expectancy: overview.expectancy ?? 0,
+        avg_win: overview.avg_win ?? 0, avg_loss: overview.avg_loss ?? 0,
+      },
+      risk: {
+        max_drawdown: overview.max_drawdown ?? 0, profit_factor: overview.profit_factor ?? 0,
+        sharpe_ratio: overview.sharpe_ratio ?? 0, recovery_factor: overview.recovery_factor ?? 0,
+      },
+      by_result: overview.by_result ?? {}, by_pair: breakdowns.by_pair ?? {},
+      by_direction: breakdowns.by_direction ?? {}, by_bias: breakdowns.by_bias ?? {},
+      by_session: breakdowns.by_session ?? {}, by_market_phase: {}, by_trend: {}, by_strategy: {},
+      by_timeframe: breakdowns.by_timeframe ?? {}, by_news: breakdowns.by_news ?? {},
+      by_weekday: breakdowns.by_weekday ?? {}, by_market_condition: {}, by_volatility: {}, by_setup: {},
+      monthly_returns: timeSeries.monthly_returns ?? [], weekly_returns: timeSeries.weekly_returns ?? [],
+      yearly_returns: timeSeries.yearly_returns ?? [],
+      rolling_10: timeSeries.rolling_10 ?? {}, rolling_50: timeSeries.rolling_50 ?? {},
+      calendar_heatmap: timeSeries.calendar_heatmap ?? {},
+      risk_analytics: {}, psychology_analytics: {}, scatter_data: {},
     } as StatisticsResponse;
   },
 
   risk: async (projectId: string): Promise<StatisticsRisk> => {
-    const data = await rpcCached<any>('get_analytics_overview', { p_project_id: projectId });
-    return { max_drawdown: data.max_drawdown, profit_factor: data.profit_factor, sharpe_ratio: data.sharpe_ratio, recovery_factor: data.recovery_factor };
+    const data = (await rpcCached<any>('get_analytics_overview', { p_project_id: projectId })) ?? {};
+    return {
+      max_drawdown: data.max_drawdown ?? 0, profit_factor: data.profit_factor ?? 0,
+      sharpe_ratio: data.sharpe_ratio ?? 0, recovery_factor: data.recovery_factor ?? 0,
+    };
   },
 
-  byPair: (projectId: string): Promise<StatisticsByField> =>
-    rpcCached('get_stats_by_pair', { p_project_id: projectId }),
+  byPair: async (projectId: string): Promise<StatisticsByField> => {
+    const r = await rpcCached<any>('get_stats_by_pair', { p_project_id: projectId });
+    return r ?? {};
+  },
 
-  byDirection: (projectId: string): Promise<StatisticsByField> =>
-    rpcCached('get_stats_by_direction', { p_project_id: projectId }),
+  byDirection: async (projectId: string): Promise<StatisticsByField> => {
+    const r = await rpcCached<any>('get_stats_by_direction', { p_project_id: projectId });
+    return r ?? {};
+  },
 
   byBias: (projectId: string): Promise<StatisticsBias> => {
     const result = rpcCached<any>('get_analytics_breakdowns', { p_project_id: projectId });
-    return result.then((r: any) => r.by_bias || {});
+    return result.then((r: any) => r?.by_bias ?? {});
   },
 
   bySession: (projectId: string): Promise<StatisticsSession> => {
     const result = rpcCached<any>('get_analytics_breakdowns', { p_project_id: projectId });
-    return result.then((r: any) => r.by_session || {});
+    return result.then((r: any) => r?.by_session ?? {});
   },
 
   byMarketPhase: async (_projectId: string): Promise<StatisticsByField> => {
@@ -72,21 +94,27 @@ export const statisticsService = {
     return grouped as any as StatisticsByField;
   },
 
-  monthlyReturns: (projectId: string): Promise<MonthlyReturn[]> =>
-    rpcCached('get_monthly_returns', { p_project_id: projectId }),
-
-  rolling: (projectId: string, window: number): Promise<RollingStats> =>
-    rpcCached('get_rolling_stats', { p_project_id: projectId, p_window: window }),
-
-  equityCurve: (projectId: string): Promise<EquityPoint[]> =>
-    rpcCached('get_equity_curve', { p_project_id: projectId }),
-
-  pnlDistribution: (_projectId: string): Promise<DistributionData> => {
-    throw new Error('PnL distribution requires backend compute');
+  monthlyReturns: async (projectId: string): Promise<MonthlyReturn[]> => {
+    const r = await rpcCached<any>('get_monthly_returns', { p_project_id: projectId });
+    return r ?? [];
   },
 
-  rrDistribution: (_projectId: string): Promise<DistributionData> => {
-    throw new Error('RR distribution requires backend compute');
+  rolling: async (projectId: string, window: number): Promise<RollingStats> => {
+    const r = await rpcCached<any>('get_rolling_stats', { p_project_id: projectId, p_window: window });
+    return r ?? { available: false, window, trades: 0, wins: 0, losses: 0, win_rate: 0, pnl: 0 };
+  },
+
+  equityCurve: async (projectId: string): Promise<EquityPoint[]> => {
+    const r = await rpcCached<any>('get_equity_curve', { p_project_id: projectId });
+    return r ?? [];
+  },
+
+  pnlDistribution: async (_projectId: string): Promise<DistributionData> => {
+    return { bins: [], counts: [] };
+  },
+
+  rrDistribution: async (_projectId: string): Promise<DistributionData> => {
+    return { bins: [], counts: [] };
   },
 
   full: (projectId: string): Promise<StatisticsResponse> =>
@@ -108,12 +136,12 @@ export const statisticsService = {
 
   byWeekday: (projectId: string): Promise<Record<string, any>> => {
     const result = rpcCached<any>('get_analytics_breakdowns', { p_project_id: projectId });
-    return result.then((r: any) => r.by_weekday || {});
+    return result.then((r: any) => r?.by_weekday ?? {});
   },
 
   byTimeframe: (projectId: string): Promise<StatisticsByField> => {
     const result = rpcCached<any>('get_analytics_breakdowns', { p_project_id: projectId });
-    return result.then((r: any) => r.by_timeframe || {});
+    return result.then((r: any) => r?.by_timeframe ?? {});
   },
 
   byMarketCondition: async (_projectId: string): Promise<StatisticsByField> => ({}),
@@ -121,37 +149,39 @@ export const statisticsService = {
 
   byNews: (projectId: string): Promise<Record<string, any>> => {
     const result = rpcCached<any>('get_analytics_breakdowns', { p_project_id: projectId });
-    return result.then((r: any) => r.by_news || {});
+    return result.then((r: any) => r?.by_news ?? {});
   },
 
   bySetup: async (_projectId: string): Promise<StatisticsByField> => ({}),
 
   weeklyReturns: (projectId: string): Promise<WeeklyReturn[]> => {
     const result = rpcCached<any>('get_analytics_time_series', { p_project_id: projectId });
-    return result.then((r: any) => r.weekly_returns || []);
+    return result.then((r: any) => r?.weekly_returns ?? []);
   },
 
   yearlyReturns: (projectId: string): Promise<YearlyReturn[]> => {
     const result = rpcCached<any>('get_analytics_time_series', { p_project_id: projectId });
-    return result.then((r: any) => r.yearly_returns || []);
+    return result.then((r: any) => r?.yearly_returns ?? []);
   },
 
   riskAnalytics: (projectId: string): Promise<RiskAnalytics> => {
     const result = rpcCached<any>('get_analytics_detail', { p_project_id: projectId });
-    return result.then((r: any) => r.risk_analytics || {});
+    return result.then((r: any) => r?.risk_analytics ?? {});
   },
 
   psychologyAnalytics: (projectId: string): Promise<PsychologyAnalytics> => {
     const result = rpcCached<any>('get_analytics_detail', { p_project_id: projectId });
-    return result.then((r: any) => r.psychology_analytics || {});
+    return result.then((r: any) => r?.psychology_analytics ?? {});
   },
 
-  calendarHeatmap: (projectId: string): Promise<CalendarHeatmap> =>
-    rpcCached('get_calendar_heatmap', { p_project_id: projectId }),
+  calendarHeatmap: async (projectId: string): Promise<CalendarHeatmap> => {
+    const r = await rpcCached<any>('get_calendar_heatmap', { p_project_id: projectId });
+    return r ?? { daily_pnl: {}, min_date: null, max_date: null };
+  },
 
   scatterData: (projectId: string): Promise<ScatterData> => {
     const result = rpcCached<any>('get_analytics_detail', { p_project_id: projectId });
-    return result.then((r: any) => r.scatter_data || {});
+    return result.then((r: any) => r?.scatter_data ?? {});
   },
 
   filtered: async (projectId: string, startDate?: string, endDate?: string): Promise<StatisticsResponse> => {
