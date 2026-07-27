@@ -1,6 +1,9 @@
 -- Migration 00001: Auth trigger + public.profiles
 -- Creates the profiles table and the auth.users sync trigger
 
+-- 0. Enable pgvector extension (required by later migrations)
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
+
 -- 1. Profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

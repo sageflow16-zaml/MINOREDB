@@ -111,3 +111,7 @@ CREATE POLICY "Users can delete own project knowledge rules"
 CREATE TRIGGER set_knowledge_rule_updated_at
   BEFORE UPDATE ON public.knowledge_rule
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Add knowledge_rule_id FK to trade_memory (table created in 00010, FK added here after knowledge_rule exists)
+ALTER TABLE public.trade_memory ADD COLUMN IF NOT EXISTS knowledge_rule_id UUID REFERENCES public.knowledge_rule(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_trade_memory_knowledge_rule_id ON public.trade_memory(knowledge_rule_id);

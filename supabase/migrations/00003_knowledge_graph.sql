@@ -63,12 +63,14 @@ CREATE TABLE IF NOT EXISTS public.association (
   association_state TEXT,
   ambiguity_metric TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_association_project_id ON public.association(project_id);
 CREATE INDEX IF NOT EXISTS idx_association_claim_id ON public.association(claim_id);
 CREATE INDEX IF NOT EXISTS idx_association_concept_id ON public.association(concept_id);
+CREATE INDEX IF NOT EXISTS idx_association_deleted_at ON public.association(deleted_at);
 
 ALTER TABLE public.association ENABLE ROW LEVEL SECURITY;
 
@@ -90,13 +92,18 @@ ALTER TABLE public.conflict ENABLE ROW LEVEL SECURITY;
 
 -- ============= CLAIM_CONFLICT (join) =============
 CREATE TABLE IF NOT EXISTS public.claim_conflict (
+  project_id UUID NOT NULL REFERENCES public.project(id) ON DELETE CASCADE,
   claim_id UUID NOT NULL REFERENCES public.claim(id) ON DELETE CASCADE,
   conflict_id UUID NOT NULL REFERENCES public.conflict(id) ON DELETE CASCADE,
+  deleted_at TIMESTAMPTZ DEFAULT NULL,
   PRIMARY KEY (claim_id, conflict_id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_claim_conflict_project_id ON public.claim_conflict(project_id);
+
 CREATE INDEX IF NOT EXISTS idx_claim_conflict_claim_id ON public.claim_conflict(claim_id);
 CREATE INDEX IF NOT EXISTS idx_claim_conflict_conflict_id ON public.claim_conflict(conflict_id);
+CREATE INDEX IF NOT EXISTS idx_claim_conflict_deleted_at ON public.claim_conflict(deleted_at);
 
 ALTER TABLE public.claim_conflict ENABLE ROW LEVEL SECURITY;
 
@@ -109,11 +116,13 @@ CREATE TABLE IF NOT EXISTS public.interpretation (
   reasoning_chain TEXT NOT NULL,
   interpretation_foundation TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_interpretation_project_id ON public.interpretation(project_id);
 CREATE INDEX IF NOT EXISTS idx_interpretation_concept_id ON public.interpretation(concept_id);
+CREATE INDEX IF NOT EXISTS idx_interpretation_deleted_at ON public.interpretation(deleted_at);
 
 ALTER TABLE public.interpretation ENABLE ROW LEVEL SECURITY;
 
@@ -127,11 +136,13 @@ CREATE TABLE IF NOT EXISTS public.research_question (
   domain_relevance TEXT NOT NULL,
   substantive_grounding TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_research_question_project_id ON public.research_question(project_id);
 CREATE INDEX IF NOT EXISTS idx_research_question_conflict_id ON public.research_question(conflict_id);
+CREATE INDEX IF NOT EXISTS idx_research_question_deleted_at ON public.research_question(deleted_at);
 
 ALTER TABLE public.research_question ENABLE ROW LEVEL SECURITY;
 
@@ -145,11 +156,13 @@ CREATE TABLE IF NOT EXISTS public.hypothesis (
   measurement_specification TEXT NOT NULL,
   substantive_departure TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_hypothesis_project_id ON public.hypothesis(project_id);
 CREATE INDEX IF NOT EXISTS idx_hypothesis_research_question_id ON public.hypothesis(research_question_id);
+CREATE INDEX IF NOT EXISTS idx_hypothesis_deleted_at ON public.hypothesis(deleted_at);
 
 ALTER TABLE public.hypothesis ENABLE ROW LEVEL SECURITY;
 
@@ -161,10 +174,12 @@ CREATE TABLE IF NOT EXISTS public.reconsideration_trigger (
   trigger_type TEXT NOT NULL,
   trigger_payload JSONB DEFAULT '{}',
   evaluated_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_reconsideration_trigger_project_id ON public.reconsideration_trigger(project_id);
+CREATE INDEX IF NOT EXISTS idx_reconsideration_trigger_deleted_at ON public.reconsideration_trigger(deleted_at);
 
 ALTER TABLE public.reconsideration_trigger ENABLE ROW LEVEL SECURITY;
 

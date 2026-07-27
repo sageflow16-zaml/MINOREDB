@@ -71,7 +71,6 @@ CREATE TABLE IF NOT EXISTS public.trade_memory (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES public.project(id) ON DELETE CASCADE,
   trade_id UUID NOT NULL REFERENCES public.trade(id) ON DELETE CASCADE UNIQUE,
-  knowledge_rule_id UUID REFERENCES public.knowledge_rule(id) ON DELETE SET NULL,
   pair TEXT,
   direction TEXT,
   session TEXT,
@@ -101,7 +100,6 @@ CREATE TABLE IF NOT EXISTS public.trade_memory (
 
 CREATE INDEX IF NOT EXISTS idx_trade_memory_project_id ON public.trade_memory(project_id);
 CREATE INDEX IF NOT EXISTS idx_trade_memory_trade_id ON public.trade_memory(trade_id);
-CREATE INDEX IF NOT EXISTS idx_trade_memory_knowledge_rule_id ON public.trade_memory(knowledge_rule_id);
 
 ALTER TABLE public.trade_memory ENABLE ROW LEVEL SECURITY;
 
