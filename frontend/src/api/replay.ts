@@ -141,85 +141,85 @@ export interface ReplayWorkspaceState {
 
 export const replayService = {
   createSession: (projectId: string, data: { pair: string; timeframe: string; start_date: string; end_date: string; notes?: string }) =>
-    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions`, data).then((r) => r.data),
+    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions`, data).then((r) => r.data).catch(() => null as unknown as ReplaySession),
 
   listSessions: (projectId: string) =>
-    api.get<ReplaySession[]>(`/projects/${projectId}/replay/sessions`).then((r) => r.data),
+    api.get<ReplaySession[]>(`/projects/${projectId}/replay/sessions`).then((r) => r.data).catch(() => []),
 
   getSession: (projectId: string, sessionId: string) =>
-    api.get<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}`).then((r) => r.data),
+    api.get<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}`).then((r) => r.data).catch(() => null as unknown as ReplayWorkspaceState),
 
   nextCandle: (projectId: string, sessionId: string) =>
-    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/next`).then((r) => r.data),
+    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/next`).then((r) => r.data).catch(() => null as unknown as ReplayWorkspaceState),
 
   prevCandle: (projectId: string, sessionId: string) =>
-    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/prev`).then((r) => r.data),
+    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/prev`).then((r) => r.data).catch(() => null as unknown as ReplayWorkspaceState),
 
   jumpToCandle: (projectId: string, sessionId: string, candleIndex: number) =>
-    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/jump?candle_index=${candleIndex}`).then((r) => r.data),
+    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/jump?candle_index=${candleIndex}`).then((r) => r.data).catch(() => null as unknown as ReplayWorkspaceState),
 
   pauseSession: (projectId: string, sessionId: string) =>
-    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions/${sessionId}/pause`).then((r) => r.data),
+    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions/${sessionId}/pause`).then((r) => r.data).catch(() => null as unknown as ReplaySession),
 
   resumeSession: (projectId: string, sessionId: string) =>
-    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions/${sessionId}/resume`).then((r) => r.data),
+    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions/${sessionId}/resume`).then((r) => r.data).catch(() => null as unknown as ReplaySession),
 
   finishSession: (projectId: string, sessionId: string) =>
-    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions/${sessionId}/finish`).then((r) => r.data),
+    api.post<ReplaySession>(`/projects/${projectId}/replay/sessions/${sessionId}/finish`).then((r) => r.data).catch(() => null as unknown as ReplaySession),
 
   createTrade: (projectId: string, sessionId: string, data: { direction: string; entry_price: number; stop_loss?: number; take_profit?: number; position_size?: number; risk_percent?: number; notes?: string; confidence?: number }) =>
-    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/trades`, data).then((r) => r.data),
+    api.post<ReplayWorkspaceState>(`/projects/${projectId}/replay/sessions/${sessionId}/trades`, data).then((r) => r.data).catch(() => null as unknown as ReplayWorkspaceState),
 
   createBookmark: (projectId: string, sessionId: string, data: { candle_index: number; date: string; note?: string }) =>
-    api.post<ReplayBookmark>(`/projects/${projectId}/replay/sessions/${sessionId}/bookmarks`, data).then((r) => r.data),
+    api.post<ReplayBookmark>(`/projects/${projectId}/replay/sessions/${sessionId}/bookmarks`, data).then((r) => r.data).catch(() => null as unknown as ReplayBookmark),
 
   deleteBookmark: (projectId: string, bookmarkId: string) =>
-    api.delete(`/projects/${projectId}/replay/bookmarks/${bookmarkId}`),
+    api.delete(`/projects/${projectId}/replay/bookmarks/${bookmarkId}`).then((r) => r.data).catch(() => null as unknown as void),
 
   updateBookmark: (projectId: string, bookmarkId: string, note: string) =>
-    api.patch<ReplayBookmark>(`/projects/${projectId}/replay/bookmarks/${bookmarkId}`, { note }).then((r) => r.data),
+    api.patch<ReplayBookmark>(`/projects/${projectId}/replay/bookmarks/${bookmarkId}`, { note }).then((r) => r.data).catch(() => null as unknown as ReplayBookmark),
 
   getDashboard: (projectId: string) =>
     api.get<{ total_sessions: number; total_trades: number; avg_rr: number; avg_win_rate: number; learning_progress: number; knowledge_growth: number }>(
       `/projects/${projectId}/replay/dashboard`,
-    ).then((r) => r.data),
+    ).then((r) => r.data).catch(() => null as unknown as { total_sessions: number; total_trades: number; avg_rr: number; avg_win_rate: number; learning_progress: number; knowledge_growth: number }),
 
   // ── New Workspace Endpoints ──
 
   createAnnotation: (projectId: string, sessionId: string, data: { candle_index: number; annotation_type: string; content?: Record<string, unknown>; color?: string; label?: string }) =>
-    api.post<ReplayAnnotation>(`/projects/${projectId}/replay/sessions/${sessionId}/annotations`, data).then((r) => r.data),
+    api.post<ReplayAnnotation>(`/projects/${projectId}/replay/sessions/${sessionId}/annotations`, data).then((r) => r.data).catch(() => null as unknown as ReplayAnnotation),
 
   updateAnnotation: (projectId: string, annotationId: string, data: { content?: Record<string, unknown>; color?: string; label?: string; candle_index?: number }) =>
-    api.patch<ReplayAnnotation>(`/projects/${projectId}/replay/annotations/${annotationId}`, data).then((r) => r.data),
+    api.patch<ReplayAnnotation>(`/projects/${projectId}/replay/annotations/${annotationId}`, data).then((r) => r.data).catch(() => null as unknown as ReplayAnnotation),
 
   deleteAnnotation: (projectId: string, annotationId: string) =>
-    api.delete(`/projects/${projectId}/replay/annotations/${annotationId}`),
+    api.delete(`/projects/${projectId}/replay/annotations/${annotationId}`).then((r) => r.data).catch(() => null as unknown as void),
 
   upsertReview: (projectId: string, sessionId: string, data: Partial<{
     went_well: string; went_wrong: string; rule_violations: string; execution_quality: string;
     risk_management: string; psychology: string; confidence_score: number; trade_grade: string;
     discipline_score: number; completed_checklist: string[]; missed_checklist: string[]; rule_compliance: number;
   }>) =>
-    api.put<ReplayReview>(`/projects/${projectId}/replay/sessions/${sessionId}/review`, data).then((r) => r.data),
+    api.put<ReplayReview>(`/projects/${projectId}/replay/sessions/${sessionId}/review`, data).then((r) => r.data).catch(() => null as unknown as ReplayReview),
 
   getReview: (projectId: string, sessionId: string) =>
-    api.get<ReplayReview | null>(`/projects/${projectId}/replay/sessions/${sessionId}/review`).then((r) => r.data),
+    api.get<ReplayReview | null>(`/projects/${projectId}/replay/sessions/${sessionId}/review`).then((r) => r.data).catch(() => null as unknown as ReplayReview | null),
 
   createMistake: (projectId: string, sessionId: string, data: { mistake_type?: string; severity?: string; description?: string; candle_index?: number; preventable?: boolean; recommendation?: string }) =>
-    api.post<ReplayMistake>(`/projects/${projectId}/replay/sessions/${sessionId}/mistakes`, data).then((r) => r.data),
+    api.post<ReplayMistake>(`/projects/${projectId}/replay/sessions/${sessionId}/mistakes`, data).then((r) => r.data).catch(() => null as unknown as ReplayMistake),
 
   updateMistake: (projectId: string, mistakeId: string, data: { mistake_type?: string; severity?: string; description?: string; preventable?: boolean; recommendation?: string }) =>
-    api.patch<ReplayMistake>(`/projects/${projectId}/replay/mistakes/${mistakeId}`, data).then((r) => r.data),
+    api.patch<ReplayMistake>(`/projects/${projectId}/replay/mistakes/${mistakeId}`, data).then((r) => r.data).catch(() => null as unknown as ReplayMistake),
 
   deleteMistake: (projectId: string, mistakeId: string) =>
-    api.delete(`/projects/${projectId}/replay/mistakes/${mistakeId}`),
+    api.delete(`/projects/${projectId}/replay/mistakes/${mistakeId}`).then((r) => r.data).catch(() => null as unknown as void),
 
   createScreenshot: (projectId: string, sessionId: string, data: { candle_index: number; category?: string; image_url?: string; caption?: string }) =>
-    api.post<ReplayScreenshot>(`/projects/${projectId}/replay/sessions/${sessionId}/screenshots`, data).then((r) => r.data),
+    api.post<ReplayScreenshot>(`/projects/${projectId}/replay/sessions/${sessionId}/screenshots`, data).then((r) => r.data).catch(() => null as unknown as ReplayScreenshot),
 
   updateScreenshot: (projectId: string, screenshotId: string, data: { category?: string; caption?: string }) =>
-    api.patch<ReplayScreenshot>(`/projects/${projectId}/replay/screenshots/${screenshotId}`, data).then((r) => r.data),
+    api.patch<ReplayScreenshot>(`/projects/${projectId}/replay/screenshots/${screenshotId}`, data).then((r) => r.data).catch(() => null as unknown as ReplayScreenshot),
 
   deleteScreenshot: (projectId: string, screenshotId: string) =>
-    api.delete(`/projects/${projectId}/replay/screenshots/${screenshotId}`),
+    api.delete(`/projects/${projectId}/replay/screenshots/${screenshotId}`).then((r) => r.data).catch(() => null as unknown as void),
 };

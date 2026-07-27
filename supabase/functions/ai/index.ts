@@ -646,6 +646,28 @@ serve(async (req) => {
         const result = await refreshKnowledgeGraph(supabase, project_id);
         return successResponse(result);
       }
+      case 'evaluate-current': {
+        const env = data?.environment;
+        if (!env) return errorResponse('Missing environment');
+        const { data: trades } = await supabase.from('trade').select('pair, direction, result, pnl, rr, weekly_bias, daily_bias').eq('project_id', project_id).is('deleted_at', null).limit(50);
+        const envStr = Object.entries(env).map(([k, v]) => `${k}: ${v}`).join(', ');
+        const result = await callAI(
+          'You are a trade decision support AI. Evaluate a potential trade against the trader\'s history. Return ONLY valid JSON with NO markdown formatting, NO code blocks, NO extra text. Return a JSON object with keys: market_alignment (object with score 0-100, details string), ict_components (object with score 0-100, present array, missing array, details string), session_alignment (object with score 0-100, active_sessions array, details string), pattern_match (object with found bool, win_rate number, occurrences number, confidence number, avg_rr number), confidence (object with score 0-100, level string), execution (object with status string, criteria array, satisfied number, total number), explanation (array of strings).',
+          `Trader history: ${JSON.stringify((trades || []).slice(0, 20))}\n\nProposed trade environment: ${envStr}`
+        );
+        const parsed = JSON.parse(result);
+        return successResponse({
+          market_alignment: parsed.market_alignment || { score: 0, details: '' },
+          ict_components: parsed.ict_components || { score: 0, present: [], missing: [], details: '' },
+          session_alignment: parsed.session_alignment || { score: 0, active_sessions: [], details: '' },
+          pattern_match: parsed.pattern_match || { found: false, win_rate: 0, occurrences: 0, confidence: 0, avg_rr: 0 },
+          similarity: parsed.similarity || { matches_found: 0, average_win_rate: 0, average_rr: 0, average_pnl: 0, average_drawdown: 0, top_matches: [] },
+          statistics: parsed.statistics || { overall_win_rate: 0, overall_avg_rr: 0, overall_expectancy: 0, overall_total_trades: 0, overall_profit_factor: 0, overall_max_drawdown: 0 },
+          confidence: parsed.confidence || { score: 0, level: 'unknown' },
+          execution: parsed.execution || { status: 'pending', criteria: [], satisfied: 0, total: 0 },
+          explanation: parsed.explanation || ['Evaluation not available'],
+        });
+      }
       case 'learning-status': {
         const [trades, sources, claims, concepts, interpretations, patterns, mstructs, events, lastEvent, lastSnapshot] = await Promise.all([
           supabase.from('trade').select('id').eq('project_id', project_id).is('deleted_at', null),
