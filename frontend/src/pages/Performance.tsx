@@ -189,25 +189,26 @@ function BreakdownTable({ title, data, icon: Icon }: { title: string; data: Stat
 
 function StrategyAnalyticsCard({ strategy, data }: { strategy: string; data: StrategyStats }) {
   const [expanded, setExpanded] = useState(false);
+  const safe = { trades: 0, wins: 0, losses: 0, pnl: 0, win_rate: 0, expectancy: 0, avg_rr: 0, ...data };
   return (
     <Card className="transition-all hover:shadow-md">
       <CardContent className="p-4">
         <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpanded(!expanded)}>
           <div className="flex items-center gap-3">
-            <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', data.pnl >= 0 ? 'bg-success/10' : 'bg-destructive/10')}>
-              <Target className={cn('h-5 w-5', data.pnl >= 0 ? 'text-success' : 'text-destructive')} />
+            <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', safe.pnl >= 0 ? 'bg-success/10' : 'bg-destructive/10')}>
+              <Target className={cn('h-5 w-5', safe.pnl >= 0 ? 'text-success' : 'text-destructive')} />
             </div>
             <div>
               <h3 className="text-sm font-medium text-foreground">{strategy}</h3>
-              <p className="text-xs text-muted-foreground">{data.trades} trades • {data.win_rate}% win rate</p>
+              <p className="text-xs text-muted-foreground">{safe.trades} trades • {safe.win_rate}% win rate</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className={cn('text-lg font-bold font-mono', data.pnl >= 0 ? 'text-success' : 'text-destructive')}>
-                {data.pnl >= 0 ? '+' : ''}${data.pnl.toFixed(2)}
+              <p className={cn('text-lg font-bold font-mono', safe.pnl >= 0 ? 'text-success' : 'text-destructive')}>
+                {safe.pnl >= 0 ? '+' : ''}${safe.pnl.toFixed(2)}
               </p>
-              <p className="text-xs text-muted-foreground">Expectancy: ${data.expectancy.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Expectancy: ${safe.expectancy.toFixed(2)}</p>
             </div>
             <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', expanded && 'rotate-180')} />
           </div>
@@ -220,22 +221,22 @@ function StrategyAnalyticsCard({ strategy, data }: { strategy: string; data: Str
           >
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-lg bg-muted/30 p-3 text-center">
-                <div className="text-lg font-bold text-foreground">{data.win_rate}%</div>
+                <div className="text-lg font-bold text-foreground">{safe.win_rate}%</div>
                 <div className="text-xs text-muted-foreground">Win Rate</div>
               </div>
               <div className="rounded-lg bg-muted/30 p-3 text-center">
-                <div className="text-lg font-bold text-foreground">{data.avg_rr.toFixed(2)}</div>
+                <div className="text-lg font-bold text-foreground">{safe.avg_rr.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">Avg R:R</div>
               </div>
               <div className="rounded-lg bg-muted/30 p-3 text-center">
-                <div className={cn('text-lg font-bold', data.expectancy >= 0 ? 'text-success' : 'text-warning')}>
-                  ${data.expectancy.toFixed(2)}
+                <div className={cn('text-lg font-bold', safe.expectancy >= 0 ? 'text-success' : 'text-warning')}>
+                  ${safe.expectancy.toFixed(2)}
                 </div>
                 <div className="text-xs text-muted-foreground">Expectancy</div>
               </div>
               <div className="rounded-lg bg-muted/30 p-3 text-center">
-                <div className={cn('text-lg font-bold', data.pnl >= 0 ? 'text-success' : 'text-destructive')}>
-                  {data.pnl >= 0 ? '+' : ''}{data.pnl.toFixed(2)}
+                <div className={cn('text-lg font-bold', safe.pnl >= 0 ? 'text-success' : 'text-destructive')}>
+                  {safe.pnl >= 0 ? '+' : ''}{safe.pnl.toFixed(2)}
                 </div>
                 <div className="text-xs text-muted-foreground">Net P&L</div>
               </div>

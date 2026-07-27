@@ -38,6 +38,111 @@ function generateMockBars(count = 100) {
   return bars;
 }
 
+function normalizeICT(data: ICTAnalysisResponse | null): ICTAnalysisResponse | null {
+  if (!data) return null;
+  return {
+    symbol: data.symbol ?? '',
+    timeframe: data.timeframe ?? '',
+    analysis_time_ms: data.analysis_time_ms ?? 0,
+    structure: {
+      swing_points: data.structure?.swing_points ?? [],
+      structures: data.structure?.structures ?? [],
+      trend: data.structure?.trend ?? 'neutral',
+      current_high: data.structure?.current_high ?? null,
+      current_low: data.structure?.current_low ?? null,
+      protected_high: data.structure?.protected_high ?? null,
+      protected_low: data.structure?.protected_low ?? null,
+      last_bos: data.structure?.last_bos ?? null,
+      last_mss: data.structure?.last_mss ?? null,
+    },
+    fvg: {
+      fvgs: data.fvg?.fvgs ?? [],
+      bullish_count: data.fvg?.bullish_count ?? 0,
+      bearish_count: data.fvg?.bearish_count ?? 0,
+      best_fvg: data.fvg?.best_fvg ?? null,
+    },
+    order_blocks: {
+      order_blocks: data.order_blocks?.order_blocks ?? [],
+      bullish_count: data.order_blocks?.bullish_count ?? 0,
+      bearish_count: data.order_blocks?.bearish_count ?? 0,
+      best_block: data.order_blocks?.best_block ?? null,
+    },
+    liquidity: {
+      zones: data.liquidity?.zones ?? [],
+      buy_side_liquidity: data.liquidity?.buy_side_liquidity ?? [],
+      sell_side_liquidity: data.liquidity?.sell_side_liquidity ?? [],
+      equal_highs: data.liquidity?.equal_highs ?? [],
+      equal_lows: data.liquidity?.equal_lows ?? [],
+      recent_sweeps: data.liquidity?.recent_sweeps ?? [],
+    },
+    sessions: {
+      sessions: data.sessions?.sessions ?? [],
+      current_session: data.sessions?.current_session ?? null,
+      current_kill_zone: data.sessions?.current_kill_zone ?? null,
+      is_silver_bullet_window: data.sessions?.is_silver_bullet_window ?? false,
+      opening_range_high: data.sessions?.opening_range_high ?? null,
+      opening_range_low: data.sessions?.opening_range_low ?? null,
+    },
+    models: data.models ?? [],
+    multi_timeframe: {
+      weekly: data.multi_timeframe?.weekly ?? '',
+      daily: data.multi_timeframe?.daily ?? '',
+      h4: data.multi_timeframe?.h4 ?? '',
+      h1: data.multi_timeframe?.h1 ?? '',
+      m15: data.multi_timeframe?.m15 ?? '',
+      htf_bias: data.multi_timeframe?.htf_bias ?? 'neutral',
+      ltf_confirmation: data.multi_timeframe?.ltf_confirmation ?? 'neutral',
+      confluence_score: data.multi_timeframe?.confluence_score ?? 0,
+      premium_discount: data.multi_timeframe?.premium_discount ?? 'neutral',
+    },
+    scores: {
+      structure_score: data.scores?.structure_score ?? 0,
+      liquidity_score: data.scores?.liquidity_score ?? 0,
+      fvg_score: data.scores?.fvg_score ?? 0,
+      order_block_score: data.scores?.order_block_score ?? 0,
+      risk_score: data.scores?.risk_score ?? 0,
+      session_score: data.scores?.session_score ?? 0,
+      confluence_score: data.scores?.confluence_score ?? 0,
+      overall_quality: data.scores?.overall_quality ?? 0,
+    },
+    execution: {
+      status: data.execution?.status ?? 'unknown',
+      direction: data.execution?.direction ?? null,
+      entry: data.execution?.entry ?? null,
+      stop_loss: data.execution?.stop_loss ?? null,
+      take_profit: data.execution?.take_profit ?? null,
+      risk_amount: data.execution?.risk_amount ?? null,
+      reasoning: data.execution?.reasoning ?? '',
+      scores: {
+        structure_score: data.execution?.scores?.structure_score ?? 0,
+        liquidity_score: data.execution?.scores?.liquidity_score ?? 0,
+        fvg_score: data.execution?.scores?.fvg_score ?? 0,
+        order_block_score: data.execution?.scores?.order_block_score ?? 0,
+        risk_score: data.execution?.scores?.risk_score ?? 0,
+        session_score: data.execution?.scores?.session_score ?? 0,
+        confluence_score: data.execution?.scores?.confluence_score ?? 0,
+        overall_quality: data.execution?.scores?.overall_quality ?? 0,
+      },
+    },
+    market_context: {
+      symbol: data.market_context?.symbol ?? '',
+      current_price: data.market_context?.current_price ?? 0,
+      htf_bias: data.market_context?.htf_bias ?? '',
+      ltf_bias: data.market_context?.ltf_bias ?? '',
+      current_structure: data.market_context?.current_structure ?? null,
+      best_setup: data.market_context?.best_setup ?? null,
+      premium_discount: data.market_context?.premium_discount ?? '',
+      key_levels: data.market_context?.key_levels ?? [],
+      weak_areas: data.market_context?.weak_areas ?? [],
+      invalidation_levels: data.market_context?.invalidation_levels ?? [],
+      confluence: data.market_context?.confluence ?? 0,
+      session_info: data.market_context?.session_info ?? null,
+      recent_events: data.market_context?.recent_events ?? [],
+      reasoning: data.market_context?.reasoning ?? '',
+    },
+  };
+}
+
 export default function ICTSmartEngine() {
   const { projectId } = useParams<{ projectId: string }>();
   const [symbol, setSymbol] = useState('EURUSD');
@@ -66,7 +171,7 @@ export default function ICTSmartEngine() {
         include_sessions: true,
         include_models: includeModels,
       });
-      setAnalysis(result);
+      setAnalysis(normalizeICT(result));
     } catch (err) {
       console.error('Analysis failed:', err);
     } finally {

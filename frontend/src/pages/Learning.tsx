@@ -85,8 +85,8 @@ export default function LearningPage() {
             <CardContent className="py-3">
               <p className="text-xs">
                 <span className="font-medium">Rebuild {rebuild.data.status}</span>
-                <span className="text-muted-foreground"> — {rebuild.data.duration_ms}ms — Steps: {rebuild.data.steps_completed.join(', ')}</span>
-                {rebuild.data.errors.length > 0 && <span className="text-destructive"> — Errors: {rebuild.data.errors.join(', ')}</span>}
+                <span className="text-muted-foreground"> — {rebuild.data.duration_ms ?? '?'}ms — Steps: {(rebuild.data.steps_completed ?? []).join(', ')}</span>
+                {(rebuild.data.errors ?? []).length > 0 && <span className="text-destructive"> — Errors: {(rebuild.data.errors ?? []).join(', ')}</span>}
               </p>
             </CardContent>
           </Card>
