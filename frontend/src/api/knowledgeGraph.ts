@@ -29,7 +29,7 @@ export const knowledgeGraphService = {
   snapshot: async (projectId: string): Promise<GraphSnapshot> => {
     const { data, error } = await supabase.from('knowledge_graph_snapshot').select('*').eq('project_id', projectId).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (error) throw error;
-    return data as GraphSnapshot;
+    return (data ?? {}) as GraphSnapshot;
   },
 
   refresh: (projectId: string): Promise<GraphSnapshot> =>

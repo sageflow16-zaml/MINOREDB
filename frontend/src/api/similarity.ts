@@ -12,7 +12,7 @@ export const similarityService = {
       p_limit: 10,
     });
     if (error) throw error;
-    return { matches: data as any[], summary: { total_matches: (data as any[]).length } } as any;
+    return { matches: (data ?? []) as any[], summary: { total_matches: ((data ?? []) as any[]).length } } as any;
   },
 
   compareTrade: async (projectId: string, tradeId: string): Promise<SimilarityResponse> => {
@@ -23,7 +23,7 @@ export const similarityService = {
       p_weekly_bias: trade.weekly_bias, p_daily_bias: trade.daily_bias, p_limit: 10,
     });
     if (error) throw error;
-    return { matches: data as any[], summary: { total_matches: (data as any[]).length } } as any;
+    return { matches: (data ?? []) as any[], summary: { total_matches: ((data ?? []) as any[]).length } } as any;
   },
 
   comparePattern: async (projectId: string, patternId: string): Promise<SimilarityResponse> => {
@@ -35,7 +35,7 @@ export const similarityService = {
       p_weekly_bias: sig?.weekly_bias ?? null, p_daily_bias: sig?.daily_bias ?? null, p_limit: 10,
     });
     if (error) throw error;
-    return { matches: data as any[], summary: { total_matches: (data as any[]).length } } as any;
+    return { matches: (data ?? []) as any[], summary: { total_matches: ((data ?? []) as any[]).length } } as any;
   },
 
   history: async (projectId: string, limit: number = 50): Promise<SimilarityHistoryEntry[]> => {

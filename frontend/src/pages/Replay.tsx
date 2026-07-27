@@ -45,7 +45,7 @@ const ANNOTATION_TOOLS = [
    CHART COMPONENT
    ════════════════════════════════════════════════ */
 
-function CandlestickChart({ candles, trades, annotations }: { candles: MarketCandle[]; trades: ReplayTrade[]; annotations: ReplayAnnotation[] }) {
+function CandlestickChart({ candles = [], trades = [], annotations = [] }: { candles?: MarketCandle[]; trades?: ReplayTrade[]; annotations?: ReplayAnnotation[] }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -438,8 +438,9 @@ function ScreenshotPanel({ projectId, state, currentCandle }: { projectId: strin
   const deleteScreenshot = useDeleteScreenshot(projectId);
 
   const filtered = useMemo(() => {
-    if (activeTab === 'all') return state.screenshots;
-    return state.screenshots.filter((s) => s.category === activeTab);
+    const shots = state.screenshots ?? [];
+    if (activeTab === 'all') return shots;
+    return shots.filter((s) => s.category === activeTab);
   }, [state.screenshots, activeTab]);
 
   const handleAddScreenshot = () => {

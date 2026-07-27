@@ -29,7 +29,7 @@ export const brainAsk = (projectId: string, data: BrainAskRequest): Promise<Brai
 export const getDNA = async (projectId: string): Promise<TraderDNA> => {
   const { data, error } = await supabase.from('ai_profile').select('*').eq('project_id', projectId).maybeSingle();
   if (error) throw error;
-  return data as unknown as TraderDNA;
+  return (data ?? {}) as unknown as TraderDNA;
 };
 
 export const refreshDNA = (projectId: string): Promise<TraderDNA> =>
@@ -143,5 +143,5 @@ export const listCoachingSessions = async (projectId: string, coachingType?: str
 export const getLatestCoaching = async (projectId: string): Promise<BrainCoaching> => {
   const { data, error } = await supabase.from('coaching_session').select('*').eq('project_id', projectId).order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
-  return data as unknown as BrainCoaching;
+  return (data ?? {}) as unknown as BrainCoaching;
 };

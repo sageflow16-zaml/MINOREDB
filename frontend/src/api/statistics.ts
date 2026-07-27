@@ -157,6 +157,6 @@ export const statisticsService = {
   filtered: async (projectId: string, startDate?: string, endDate?: string): Promise<StatisticsResponse> => {
     const { data, error } = await supabase.rpc('get_trade_statistics', { p_project_id: projectId, p_start_date: startDate || null, p_end_date: endDate || null });
     if (error) throw error;
-    return { overview: data as any } as StatisticsResponse;
+    return { overview: (data ?? {}) as any } as StatisticsResponse;
   },
 };

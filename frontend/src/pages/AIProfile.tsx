@@ -230,7 +230,7 @@ export default function AIProfilePage() {
 
                 {evaluations.data && evaluations.data.length > 0 && (
                   <div className="space-y-3">
-                    {evaluations.data.slice(0, 5).map((ev: TradeEvaluation) => (
+                    {(evaluations.data ?? []).slice(0, 5).map((ev: TradeEvaluation) => (
                       <div key={ev.id} className="flex items-center gap-4 rounded-lg border border-border/50 p-3">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                           <span className="text-sm font-bold text-primary">{ev.overall_quality?.toFixed(0) ?? '—'}</span>

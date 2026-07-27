@@ -6,7 +6,7 @@ export const riskService = {
   dashboard: async (projectId: string): Promise<RiskDashboard> => {
     const { data, error } = await supabase.rpc('get_risk_dashboard', { p_project_id: projectId });
     if (error) throw error;
-    return data as unknown as RiskDashboard;
+    return (data ?? {}) as unknown as RiskDashboard;
   },
 
   drawdown: async (projectId: string): Promise<DrawdownPoint[]> => {
@@ -19,7 +19,7 @@ export const riskService = {
     const since = new Date(Date.now() - days * 86400000).toISOString();
     const { data, error } = await supabase.from('risk_snapshot').select('*').eq('project_id', projectId).gte('snapshot_date', since).order('snapshot_date', { ascending: false });
     if (error) throw error;
-    return data as RiskHistoryPoint[];
+    return (data ?? []) as RiskHistoryPoint[];
   },
 
   rules: async (projectId: string): Promise<RiskRule[]> => {
@@ -77,7 +77,7 @@ export const riskService = {
       p_contract_size: data.contract_size ?? 1,
     });
     if (error) throw error;
-    return result as unknown as PositionSizeResult;
+    return (result ?? {}) as unknown as PositionSizeResult;
   },
 
   violations: async (projectId: string): Promise<RuleViolation[]> => {

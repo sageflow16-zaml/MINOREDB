@@ -13,7 +13,7 @@ export const quantResearchService = {
     const { data, error } = await supabase
       .rpc('get_quant_dashboard', { p_project_id: projectId });
     if (error) throw error;
-    return data as unknown as QuantDashboardData;
+    return (data ?? {}) as unknown as QuantDashboardData;
   },
 
   // Experiments

@@ -331,7 +331,7 @@ export default function PlanningPage() {
                   <CardTitle className="text-sm font-medium">Sessions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {dv.sessions.map((s, i) => (
+                  {(dv.sessions ?? []).map((s, i) => (
                     <div key={i} className={cn('flex items-center justify-between p-2 rounded-lg', s.is_current ? 'bg-primary/10 border border-primary/20' : 'bg-muted/30')}>
                       <div className="flex items-center gap-2">
                         <div className={cn('h-2 w-2 rounded-full', s.is_current ? 'bg-success animate-pulse' : 'bg-muted-foreground/30')} />
@@ -345,7 +345,7 @@ export default function PlanningPage() {
               <Card>
                 <CardHeader><CardTitle className="text-sm font-medium">Economic Events</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
-                  {dv.economic_events.length > 0 ? dv.economic_events.map((ev, i) => (
+                  {(dv.economic_events ?? []).length > 0 ? (dv.economic_events ?? []).map((ev, i) => (
                     <div key={i} className="p-2 rounded-lg bg-muted/20">
                       <div className="flex items-center gap-2">
                         <Badge variant={IMPACT_COLORS[ev.impact_level as keyof typeof IMPACT_COLORS] || 'secondary'} className="text-[10px]">{ev.impact_level}</Badge>
@@ -363,7 +363,7 @@ export default function PlanningPage() {
               <Card>
                 <CardHeader><CardTitle className="text-sm font-medium">Calendar Events</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
-                  {dv.events.length > 0 ? dv.events.map((ev, i) => (
+                  {(dv.events ?? []).length > 0 ? (dv.events ?? []).map((ev, i) => (
                     <div key={i} className="p-2 rounded-lg bg-muted/20">
                       <div className="flex items-center gap-2">
                         <div className="h-3 w-1 rounded-full" style={{ backgroundColor: EVENT_COLORS[i % EVENT_COLORS.length] }} />
@@ -481,7 +481,7 @@ export default function PlanningPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {tmpl.items.map((it, i) => (
+                  {(tmpl.items ?? []).map((it, i) => (
                     <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20">
                       <CheckSquare className="h-4 w-4 text-primary" />
                       <span className="text-sm">{it.label}</span>
@@ -489,7 +489,7 @@ export default function PlanningPage() {
                     </div>
                   ))}
                   <Button size="sm" variant="outline" className="mt-2" onClick={() => {
-                    const completedItems = tmpl.items.map((it) => ({ label: it.label, completed: true }));
+                    const completedItems = (tmpl.items ?? []).map((it) => ({ label: it.label, completed: true }));
                     createChecklistExec.mutate({ template_id: tmpl.id, execution_date: selectedDate, completed_items: completedItems });
                   }}>
                     <Check className="h-4 w-4 mr-1" />Complete All

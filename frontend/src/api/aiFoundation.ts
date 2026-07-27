@@ -23,7 +23,7 @@ export const aiFoundationService = {
       .eq('project_id', projectId)
       .maybeSingle();
     if (error) throw error;
-    return data as AIProfile;
+    return (data ?? {}) as AIProfile;
   },
 
   updateProfile: async (projectId: string, profile: Partial<AIProfile>): Promise<AIProfile> => {
@@ -208,7 +208,7 @@ export const aiFoundationService = {
       .eq('is_default', true)
       .maybeSingle();
     if (error) throw error;
-    return data as AIProviderConfig;
+    return (data ?? {}) as AIProviderConfig;
   },
 
   createProvider: async (provider: Partial<AIProviderConfig>): Promise<AIProviderConfig> => {

@@ -377,7 +377,7 @@ export default function DecisionPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {history.data.map((h) => (
+                {(history.data ?? []).map((h) => (
                   <tr key={h.trade_id} className="hover:bg-muted/20">
                     <td className="px-4 py-2.5 font-medium text-foreground">{h.pair || '—'}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{h.direction || '—'}</td>

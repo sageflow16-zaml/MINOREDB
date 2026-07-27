@@ -62,3 +62,17 @@ export function formatPercent(value?: number | null, decimals = 1): string {
   if (value == null) return '-%';
   return `${(value * 100).toFixed(decimals)}%`;
 }
+
+export function normalizeArray<T>(value: T[] | null | undefined | unknown): T[] {
+  if (Array.isArray(value)) return value;
+  return [];
+}
+
+export function normalizeObject<T extends Record<string, unknown>>(value: T | null | undefined | unknown, defaults: Partial<T> = {}): T {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return { ...defaults, ...value } as T;
+  return { ...defaults } as T;
+}
+
+export function safeArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}

@@ -26,7 +26,7 @@ export const portfolioService = {
   dashboard: async (projectId: string): Promise<PortfolioDashboardData> => {
     const { data, error } = await supabase.rpc('get_portfolio_dashboard', { p_project_id: projectId });
     if (error) throw error;
-    return data as unknown as PortfolioDashboardData;
+    return (data ?? {}) as unknown as PortfolioDashboardData;
   },
 
   listAccounts: async (projectId: string, params?: { type?: AccountType; status?: AccountStatus; search?: string }): Promise<Account[]> => {

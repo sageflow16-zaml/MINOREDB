@@ -66,8 +66,8 @@ export const automationService = {
       active_jobs: 0,
       total_notifications: totalNotifications ?? 0,
       unread_notifications: unreadNotifications ?? 0,
-      recent_executions: recentExecutions as WorkflowExecution[],
-      recent_audit_logs: recentAuditLogs as AuditLog[],
+      recent_executions: (recentExecutions ?? []) as WorkflowExecution[],
+      recent_audit_logs: (recentAuditLogs ?? []) as AuditLog[],
     };
   },
 
@@ -84,7 +84,7 @@ export const automationService = {
     query = query.order('created_at', { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return data as unknown as Workflow[];
+    return (data ?? []) as unknown as Workflow[];
   },
 
   async createWorkflow(projectId: string, data: Record<string, unknown>): Promise<Workflow> {
@@ -213,7 +213,7 @@ export const automationService = {
     query = query.order('created_at', { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return data as unknown as WorkflowExecution[];
+    return (data ?? []) as unknown as WorkflowExecution[];
   },
 
   async getExecution(projectId: string, id: string): Promise<WorkflowExecution> {
@@ -237,7 +237,7 @@ export const automationService = {
     query = query.order('priority', { ascending: true });
     const { data, error } = await query;
     if (error) throw error;
-    return data as unknown as Rule[];
+    return (data ?? []) as unknown as Rule[];
   },
 
   async createRule(projectId: string, data: Record<string, unknown>): Promise<Rule> {
@@ -300,7 +300,7 @@ export const automationService = {
     query = query.order('created_at', { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return data as unknown as ScheduledJob[];
+    return (data ?? []) as unknown as ScheduledJob[];
   },
 
   async createJob(projectId: string, data: Record<string, unknown>): Promise<ScheduledJob> {
@@ -358,7 +358,7 @@ export const automationService = {
     query = query.order('created_at', { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return data as unknown as JobExecution[];
+    return (data ?? []) as unknown as JobExecution[];
   },
 
   // Notifications
@@ -425,7 +425,7 @@ export const automationService = {
       .eq('project_id', projectId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data as unknown as NotificationChannel[];
+    return (data ?? []) as unknown as NotificationChannel[];
   },
 
   async createChannel(projectId: string, data: Record<string, unknown>): Promise<NotificationChannel> {
@@ -512,7 +512,7 @@ export const automationService = {
       .eq('project_id', projectId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data as unknown as AutomationReport[];
+    return (data ?? []) as unknown as AutomationReport[];
   },
 
   async createReport(projectId: string, data: Record<string, unknown>): Promise<AutomationReport> {
@@ -597,7 +597,7 @@ export const automationService = {
       .eq('project_id', projectId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data as unknown as Connector[];
+    return (data ?? []) as unknown as Connector[];
   },
 
   async createConnector(projectId: string, data: Record<string, unknown>): Promise<Connector> {
@@ -659,7 +659,7 @@ export const automationService = {
     query = query.order('created_at', { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return data as unknown as AuditLog[];
+    return (data ?? []) as unknown as AuditLog[];
   },
 
   async auditSummary(projectId: string): Promise<any> {
@@ -668,7 +668,7 @@ export const automationService = {
       .select('event_type, severity')
       .eq('project_id', projectId);
     if (error) throw error;
-    return data;
+    return (data ?? []) as any[];
   },
 
   // Templates
@@ -680,7 +680,7 @@ export const automationService = {
     query = query.order('usage_count', { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return data as unknown as WorkflowTemplate[];
+    return (data ?? []) as unknown as WorkflowTemplate[];
   },
 
   async createFromTemplate(projectId: string, templateId: string, name?: string): Promise<Workflow> {
@@ -727,7 +727,7 @@ export const automationService = {
       .select('category')
       .not('category', 'is', null);
     if (error) throw error;
-    return [...new Set(data.map((r) => r.category).filter(Boolean))] as string[];
+    const cats = (data ?? []).map((r: any) => r.category).filter(Boolean); return [...new Set(cats)] as string[];
   },
 
   // Metadata

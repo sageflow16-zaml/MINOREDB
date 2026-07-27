@@ -131,7 +131,7 @@ export const traderIntelligenceService = {
   getProfile: async (projectId: string): Promise<TraderProfile> => {
     const { data, error } = await supabase.from('trader_profile').select('*').eq('project_id', projectId).maybeSingle();
     if (error) throw error;
-    return data as TraderProfile;
+    return (data ?? {}) as TraderProfile;
   },
 
   buildProfile: (projectId: string): Promise<TraderProfile> =>

@@ -127,7 +127,7 @@ export const copilotService = {
   promptCategories: async (projectId: string): Promise<string[]> => {
     const { data, error } = await supabase.from('ai_saved_prompt').select('category').eq('project_id', projectId).not('category', 'is', null);
     if (error) throw error;
-    return [...new Set(data?.map((r) => r.category).filter(Boolean) as string[])];
+    const cats = (data ?? []).map((r: any) => r.category).filter(Boolean); return [...new Set(cats)] as string[];
   },
 
   promptFolders: async (projectId: string): Promise<AIPromptFolder[]> => {

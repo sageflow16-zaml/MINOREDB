@@ -30,7 +30,7 @@ export const planningService = {
   dashboard: async (projectId: string): Promise<PlanningDashboard> => {
     const { data, error } = await supabase.rpc('get_planning_dashboard', { p_project_id: projectId });
     if (error) throw error;
-    return data as unknown as PlanningDashboard;
+    return (data ?? {}) as unknown as PlanningDashboard;
   },
 
   dayView: async (projectId: string, date: string): Promise<DayViewData> => {

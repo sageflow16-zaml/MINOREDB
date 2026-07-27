@@ -118,10 +118,10 @@ export default function AIDashboardPage() {
 
           {/* KPIs */}
           <motion.div variants={item} className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <KpiCard title="Insights" value={data.latest_insights.length} icon={Lightbulb} />
-            <KpiCard title="Patterns" value={data.detected_patterns.length} icon={Activity} />
-            <KpiCard title="Recommendations" value={data.recommendations.length} icon={Target} />
-            <KpiCard title="Coaching Sessions" value={data.coaching_cards.length} icon={BookOpen} />
+            <KpiCard title="Insights" value={(data.latest_insights ?? []).length} icon={Lightbulb} />
+            <KpiCard title="Patterns" value={(data.detected_patterns ?? []).length} icon={Activity} />
+            <KpiCard title="Recommendations" value={(data.recommendations ?? []).length} icon={Target} />
+            <KpiCard title="Coaching Sessions" value={(data.coaching_cards ?? []).length} icon={BookOpen} />
           </motion.div>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -134,9 +134,9 @@ export default function AIDashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {data.latest_insights.length > 0 ? (
+                  {(data.latest_insights ?? []).length > 0 ? (
                     <div className="space-y-3">
-                      {data.latest_insights.slice(0, 4).map((ins: AIInsight) => (
+                      {(data.latest_insights ?? []).slice(0, 4).map((ins: AIInsight) => (
                         <div key={ins.id} className="flex items-start gap-3 rounded-lg border border-border/50 p-3">
                           <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
                             ins.category === 'positive' ? 'bg-success' : ins.category === 'warning' ? 'bg-warning' : 'bg-destructive'
@@ -167,9 +167,9 @@ export default function AIDashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {data.recommendations.length > 0 ? (
+                  {(data.recommendations ?? []).length > 0 ? (
                     <div className="space-y-3">
-                      {data.recommendations.slice(0, 4).map((rec: AIRecommendation) => (
+                      {(data.recommendations ?? []).slice(0, 4).map((rec: AIRecommendation) => (
                         <div key={rec.id} className="flex items-start gap-3 rounded-lg border border-border/50 p-3">
                           <Badge variant={rec.priority === 'critical' ? 'destructive' : rec.priority === 'high' ? 'warning' : 'secondary'} className="shrink-0 mt-0.5">
                             {rec.priority}
@@ -197,9 +197,9 @@ export default function AIDashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {data.recent_improvements.length > 0 ? (
+                  {(data.recent_improvements ?? []).length > 0 ? (
                     <ul className="space-y-2">
-                      {data.recent_improvements.map((imp, i) => (
+                      {(data.recent_improvements ?? []).map((imp, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
                           <CheckCircle className="h-3.5 w-3.5 mt-0.5 text-success shrink-0" />
                           {imp}
@@ -221,9 +221,9 @@ export default function AIDashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {data.areas_to_improve.length > 0 ? (
+                  {(data.areas_to_improve ?? []).length > 0 ? (
                     <ul className="space-y-2">
-                      {data.areas_to_improve.map((area, i) => (
+                      {(data.areas_to_improve ?? []).map((area, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
                           <AlertTriangle className="h-3.5 w-3.5 mt-0.5 text-warning shrink-0" />
                           {area}

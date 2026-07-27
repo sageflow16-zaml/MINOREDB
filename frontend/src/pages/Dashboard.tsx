@@ -126,14 +126,14 @@ export default function DashboardPage() {
 
   const recentTrades = trades.data?.slice(0, 5) ?? [];
   const openTrades = trades.data?.filter((t: any) => t.status === 'OPEN') ?? [];
-  const weekPnl = trades.data
-    ?.filter((t: any) => {
+  const weekPnl = (trades.data ?? [])
+    .filter((t: any) => {
       const d = new Date(t.created_at);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       return d >= weekAgo;
     })
-    .reduce((sum: number, t: any) => sum + (t.pnl ?? 0), 0) ?? 0;
+    .reduce((sum: number, t: any) => sum + (t.pnl ?? 0), 0);
 
   return (
     <PageLayout>
@@ -239,8 +239,8 @@ export default function DashboardPage() {
         <KpiCard
           title="Today's PnL"
           value={formatCurrency(
-            trades.data
-              ?.filter((t: any) => {
+            (trades.data ?? [])
+              .filter((t: any) => {
                 const d = new Date(t.created_at);
                 return d.toDateString() === today.toDateString();
               })
@@ -248,10 +248,10 @@ export default function DashboardPage() {
           )}
           icon={TrendingUp}
           variant={
-            (trades.data?.filter((t: any) => {
+            ((trades.data ?? []).filter((t: any) => {
               const d = new Date(t.created_at);
               return d.toDateString() === today.toDateString();
-            }).reduce((sum: number, t: any) => sum + (t.pnl ?? 0), 0) ?? 0) >= 0 ? 'success' : 'danger'
+            }).reduce((sum: number, t: any) => sum + (t.pnl ?? 0), 0)) >= 0 ? 'success' : 'danger'
           }
           size="sm"
         />

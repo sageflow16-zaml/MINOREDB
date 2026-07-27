@@ -28,7 +28,7 @@ export const brokerService = {
     const { data, error } = await supabase.from('broker_connection_new').select('provider').eq('project_id', projectId).not('provider', 'is', null);
     if (error) throw error;
     const seen = new Set<string>();
-    return data.filter((r) => { if (seen.has(r.provider)) return false; seen.add(r.provider); return true; }).map((r) => ({ provider: r.provider, name: r.provider }) as unknown as BrokerProviderInfo);
+    return (data ?? []).filter((r) => { if (seen.has(r.provider)) return false; seen.add(r.provider); return true; }).map((r) => ({ provider: r.provider, name: r.provider }) as unknown as BrokerProviderInfo);
   },
 
   listConnections: async (projectId: string): Promise<BrokerHubConnection[]> => {
