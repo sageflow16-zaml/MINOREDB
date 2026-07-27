@@ -14,6 +14,10 @@ serve(async (req) => {
     switch (operation) {
       case 'fetch-candles':
         return successResponse({ message: 'replay-data:fetch-candles not yet implemented' });
+      case 'next-candle':
+      case 'prev-candle':
+      case 'jump-to-candle':
+        return successResponse({ session: null, candle: null, candles_visible: [], trades: [], bookmarks: [], annotations: [], timeline_events: [], review: null, mistakes: [], screenshots: [] });
       default:
         return errorResponse(`Unknown operation: ${operation}`);
     }

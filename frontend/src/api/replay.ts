@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 
 export interface MarketCandle {
   id: string; pair: string; timeframe: string; timestamp: string;
@@ -102,9 +103,12 @@ export const replayService = {
     };
   },
 
-  nextCandle: async (projectId: string, sessionId: string): Promise<ReplayWorkspaceState> => { throw new Error('use replay edge function'); },
-  prevCandle: async (projectId: string, sessionId: string): Promise<ReplayWorkspaceState> => { throw new Error('use replay edge function'); },
-  jumpToCandle: async (projectId: string, sessionId: string, _candleIndex: number): Promise<ReplayWorkspaceState> => { throw new Error('use replay edge function'); },
+  nextCandle: (projectId: string, sessionId: string) =>
+    callEdgeFunction<ReplayWorkspaceState>('replay-data', { operation: 'next-candle', project_id: projectId, data: { session_id: sessionId } }),
+  prevCandle: (projectId: string, sessionId: string) =>
+    callEdgeFunction<ReplayWorkspaceState>('replay-data', { operation: 'prev-candle', project_id: projectId, data: { session_id: sessionId } }),
+  jumpToCandle: (projectId: string, sessionId: string, candleIndex: number) =>
+    callEdgeFunction<ReplayWorkspaceState>('replay-data', { operation: 'jump-to-candle', project_id: projectId, data: { session_id: sessionId, candle_index: candleIndex } }),
   pauseSession: async (projectId: string, sessionId: string): Promise<ReplaySession> => {
     const { data, error } = await supabase.from('replay_session').update({ status: 'paused' }).eq('id', sessionId).eq('project_id', projectId).select().single();
     if (error) throw error;
