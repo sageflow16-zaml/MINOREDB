@@ -4,27 +4,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { Skeleton } from '../components/ui/skeleton';
 import { createChart, CandlestickSeries, ColorType } from 'lightweight-charts';
 import {
   useReplaySessions, useCreateSession, useReplayState,
   useNextCandle, usePrevCandle, useJumpToCandle,
-  usePauseSession, useResumeSession, useFinishSession,
-  useCreateTrade, useCreateBookmark, useDeleteBookmark,
-  useUpdateBookmark, useReplayDashboard,
-  useCreateAnnotation, useUpdateAnnotation, useDeleteAnnotation,
+  useCreateTrade, useCreateBookmark, useReplayDashboard,
   useUpsertReview,
   useCreateMistake, useDeleteMistake,
   useCreateScreenshot, useDeleteScreenshot,
 } from '../hooks/useReplay';
-import type { MarketCandle, ReplaySession, ReplayWorkspaceState, ReplayTrade, ReplayBookmark, ReplayAnnotation, ReplayMistake, ReplayScreenshot } from '../api/replay';
+import type { MarketCandle, ReplayWorkspaceState, ReplayTrade, ReplayAnnotation } from '../api/replay';
 import {
   Play, Pause, SkipBack, SkipForward,
-  Plus, X, Save, Edit3, Trash2, BookOpen,
-  TrendingUp, TrendingDown, Brain, Award, AlertTriangle, CheckCircle2,
-  Clock, Image, Type, ArrowUpRight, Circle, Square,
-  MessageSquare, BarChart3, Maximize2, Minimize2, RotateCcw,
-  Search, SkipBack as Rewind, SkipForward as FastForward,
+  Plus, X, Save, Edit3, BookOpen,
+  TrendingUp, Brain, Award, AlertTriangle,
+  Clock, Image, ArrowUpRight, Circle, Square,
+  MessageSquare, BarChart3, Maximize2, Minimize2,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -68,11 +63,11 @@ function CandlestickChart({ candles, trades, annotations }: { candles?: MarketCa
   return (
     <motion.div layout className={cn('relative rounded-xl border border-[#27272A] bg-[#18181B] overflow-hidden', fullscreen ? 'fixed inset-4 z-50' : 'flex-1 min-h-[400px]')}>
       <div className="absolute top-2 right-2 z-10 flex gap-1">
-        <button onClick={() => setFullscreen(!fullscreen)} className="rounded-lg bg-[#111113]/80 p-1.5 text-[#71717A] hover:text-[#FAFAFA] transition-colors">
+        <button onClick={() => setFullscreen(!fullscreen)} aria-label={fullscreen ? 'Exit fullscreen' : 'Toggle fullscreen'} className="rounded-lg bg-[#111113]/80 p-1.5 text-[#71717A] hover:text-[#FAFAFA] transition-colors">
           {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
       </div>
-      <div ref={chartRef} className="absolute inset-0" />
+      <div ref={chartRef} className="absolute inset-0" role="img" aria-label="Price chart" />
     </motion.div>
   );
 }
@@ -96,7 +91,9 @@ function TimelinePanel({ state, currentCandle, onJump, playbackSpeed, onSpeedCha
     <div className="space-y-3">
       <div className="flex items-center justify-between"><h3 className="text-xs font-medium text-[#FAFAFA]">Timeline</h3><span className="text-[10px] text-[#71717A] font-mono">{currentCandle + 1}/{total}</span></div>
       <div className="relative h-2 rounded-full bg-[#27272A] cursor-pointer"
-        onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const pct = (e.clientX - rect.left) / rect.width; onJump(Math.floor(pct * total)); }}>
+        role="slider" tabIndex={0} aria-valuemin={0} aria-valuemax={total} aria-valuenow={currentCandle}
+        onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const pct = (e.clientX - rect.left) / rect.width; onJump(Math.floor(pct * total)); }}
+        onKeyDown={(e) => { if (e.key === 'ArrowRight') onJump(Math.min(currentCandle + 1, total - 1)); if (e.key === 'ArrowLeft') onJump(Math.max(currentCandle - 1, 0)); }}>
         <div className="absolute left-0 top-0 h-full rounded-full bg-[#4F46E5] transition-all" style={{ width: `${progressPct}%` }} />
         <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#4F46E5] border-2 border-[#18181B]" style={{ left: `calc(${progressPct}% - 6px)` }} />
       </div>
@@ -293,7 +290,11 @@ export default function ReplayPage() {
   const handleNext = useCallback(() => { if (activeSessionId) nextMut.mutate(activeSessionId); }, [activeSessionId, nextMut]);
   const handlePrev = useCallback(() => { if (activeSessionId) prevMut.mutate(activeSessionId); }, [activeSessionId, prevMut]);
 
-  const handleCreateSession = (data: { pair: string; timeframe: string; start_date: string; end_date: string }) => { createSession.mutate(data, { onSuccess: (s: any) => setActiveSessionId(s.id) }); };
+  const handleCreateSession = (data: { pair: string; timeframe: string; start_date: string; end_date: string }) => {
+    createSession.mutate(data, {
+      onSuccess: (s: { id: string }) => setActiveSessionId(s.id),
+    });
+  };
 
   const sessionTrades = state?.trades ?? [];
   const sessionBookmarks = state?.bookmarks ?? [];
@@ -401,9 +402,9 @@ export default function ReplayPage() {
             {/* Playback controls */}
             <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={handlePrev} disabled={!activeSessionId || currentCandleIndex <= 0} className="rounded-lg border border-[#27272A] p-1.5 text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#111113] disabled:opacity-30"><SkipBack className="h-4 w-4" /></button>
-                <button onClick={() => setIsPlaying(!isPlaying)} disabled={!activeSessionId || state.session.status !== 'active'} className={cn('rounded-lg p-1.5 transition-colors disabled:opacity-30', isPlaying ? 'bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20' : 'bg-[#4F46E5]/10 text-[#4F46E5] hover:bg-[#4F46E5]/20')}>{isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
-                <button onClick={handleNext} disabled={!activeSessionId} className="rounded-lg border border-[#27272A] p-1.5 text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#111113] disabled:opacity-30"><SkipForward className="h-4 w-4" /></button>
+                <button onClick={handlePrev} disabled={!activeSessionId || currentCandleIndex <= 0} aria-label="Previous candle" className="rounded-lg border border-[#27272A] p-1.5 text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#111113] disabled:opacity-30"><SkipBack className="h-4 w-4" /></button>
+                <button onClick={() => setIsPlaying(!isPlaying)} disabled={!activeSessionId || state.session.status !== 'active'} aria-label={isPlaying ? 'Pause' : 'Play'} className={cn('rounded-lg p-1.5 transition-colors disabled:opacity-30', isPlaying ? 'bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20' : 'bg-[#4F46E5]/10 text-[#4F46E5] hover:bg-[#4F46E5]/20')}>{isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+                <button onClick={handleNext} disabled={!activeSessionId} aria-label="Next candle" className="rounded-lg border border-[#27272A] p-1.5 text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#111113] disabled:opacity-30"><SkipForward className="h-4 w-4" /></button>
                 <div className="h-4 w-px bg-[#27272A]" />
                 <span className="text-[11px] text-[#71717A] font-mono">{currentCandleIndex + 1}/{state.session.total_candles}</span>
                 <div className="h-4 w-px bg-[#27272A]" />

@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useRunResearch, useResearchSession, useResearchHistory } from '../hooks/useResearch';
 import type { ResearchSession } from '../api/types';
@@ -9,10 +9,9 @@ import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
 import { cn } from '../lib/utils';
 import {
-  Sparkles, Send, History, Clock, CheckCircle, AlertCircle,
+  Sparkles, History, Clock, CheckCircle, AlertCircle,
   BarChart3, Brain, LineChart, BookOpen, Network, Globe, Layers,
-  Lightbulb, Target, Award, ChevronRight, Bookmark, FileText,
-  Search,
+  Lightbulb, Target, Award, ChevronRight,
 } from 'lucide-react';
 
 const TOOL_COLORS: Record<string, string> = {
@@ -78,14 +77,18 @@ export default function ResearchPage() {
   const [question, setQuestion] = useState('');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const runMutation = useRunResearch();
-  const { data: activeSession, isLoading: sessionLoading, isError: sessionError, error: sessionErr } = useResearchSession(projectId!, activeSessionId);
+  const { data: activeSession, isLoading: sessionLoading, isError: sessionError, error: sessionErr, refetch: sessionRefetch } = useResearchSession(projectId!, activeSessionId);
   const { data: history = [], isLoading: historyLoading, isError: historyError, error: historyErr, refetch: refetchHistory } = useResearchHistory(projectId!);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const runResearch = useCallback(() => {
     if (!question.trim() || !projectId) return;
     setActiveSessionId(null);
     runMutation.mutate({ projectId, question: question.trim() }, { onSuccess: (data) => setActiveSessionId(data.session_id) });
+  }, [question, projectId, runMutation]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runResearch();
   };
 
   const isRunning = runMutation.isPending || (activeSession?.session.status === 'running' || activeSession?.session.status === 'planning');
@@ -129,7 +132,7 @@ export default function ResearchPage() {
       {runMutation.isError && (
         <div className="rounded-xl border border-[#EF4444]/20 bg-[#EF4444]/5 p-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-[#EF4444]"><AlertCircle className="h-4 w-4" />{runMutation.error?.message || 'Error running research'}</div>
-          <Button variant="ghost" size="sm" onClick={() => handleSubmit}>Retry</Button>
+          <Button variant="ghost" size="sm" onClick={runResearch}>Retry</Button>
         </div>
       )}
 
@@ -139,7 +142,7 @@ export default function ResearchPage() {
       {sessionError && !sessionLoading && (
         <div className="rounded-xl border border-[#EF4444]/20 bg-[#EF4444]/5 p-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-[#EF4444]"><AlertCircle className="h-4 w-4" />{sessionErr?.message || 'Error loading session'}</div>
-          <Button variant="ghost" size="sm" onClick={() => setActiveSessionId(activeSessionId)}>Retry</Button>
+          <Button variant="ghost" size="sm" onClick={() => sessionRefetch()}>Retry</Button>
         </div>
       )}
 

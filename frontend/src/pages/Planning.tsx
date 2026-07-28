@@ -12,16 +12,13 @@ import {
   useEconomicEvents, useCreateEconomicEvent,
   useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal,
   useReminders, useCreateReminder, useToggleReminder, useDeleteReminder,
-  useCalendarEvents, useCreateCalendarEvent,
+  useCreateCalendarEvent,
   useReviews, useCreateReview,
 } from '../hooks/usePlanning';
-import type { PlanningDashboard, DayViewData, TradingPlan, Goal, Reminder, CalendarEvent, EconomicEvent, ChecklistTemplate, DailyReview } from '../api/types';
+import type { PlanningDashboard, DayViewData, Goal, Reminder, EconomicEvent, ChecklistTemplate, DailyReview } from '../api/types';
 import {
-  Calendar, Target, CheckCircle, Clock, Bell, BellOff, Plus, Trash2,
-  TrendingUp, AlertTriangle, FileText, ChevronLeft, ChevronRight,
-  Eye, Zap, Brain, Shield, BarChart3, ListTodo,
-  ArrowUpRight, ArrowDownRight, Star, Flag, RotateCcw, CheckSquare,
-  Lightbulb, Sparkles, ChevronDown, X,
+  Calendar, Target, CheckCircle, Bell, BellOff, Plus, Trash2,
+  ChevronLeft, ChevronRight, Eye, Brain,
 } from 'lucide-react';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -55,7 +52,6 @@ export default function PlanningPage() {
   const templates = useChecklistTemplates(projectId!);
   const execs = useChecklistExecutions(projectId!, selectedDate);
   const econEvents = useEconomicEvents(projectId!, selectedDate, selectedDate);
-  const calendarEvents = useCalendarEvents(projectId!, selectedDate, selectedDate);
   const reviews = useReviews(projectId!);
 
   const createPlan = useCreatePlan(projectId!);
@@ -71,8 +67,8 @@ export default function PlanningPage() {
   const createChecklistExec = useCreateChecklistExecution(projectId!);
   const createReview = useCreateReview(projectId!);
 
-  const isLoading = dashboard.isLoading;
-  const isError = dashboard.isError;
+  const isLoading = dashboard.isLoading || dayView.isLoading || plans.isLoading || goals.isLoading || reminders.isLoading || econEvents.isLoading || reviews.isLoading;
+  const isError = dashboard.isError || dayView.isError || plans.isError || goals.isError || reminders.isError || econEvents.isError || reviews.isError;
 
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear(); const month = currentMonth.getMonth();

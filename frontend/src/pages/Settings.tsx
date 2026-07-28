@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
@@ -6,8 +6,8 @@ import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
 import {
   User, Monitor, Link, Shield, Bell, Palette, Key, Database,
-  ChevronRight, Save, CheckCircle, AlertTriangle, Globe,
-  Settings as SettingsIcon, Plus, Moon, Sun, Smartphone, Mail, Lock, RefreshCw,
+  Save, CheckCircle,
+  Settings as SettingsIcon, Plus,
 } from 'lucide-react';
 
 type SettingsTab = 'profile' | 'workspace' | 'integrations' | 'security' | 'notifications' | 'appearance' | 'api-keys' | 'data';
@@ -45,8 +45,13 @@ function SettingRow({ label, desc, children }: { label: string; desc?: string; c
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [saved, setSaved] = useState(false);
-
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const handleSave = () => {
+    setSaved(true);
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => setSaved(false), 2000);
+  };
+  useEffect(() => () => clearTimeout(saveTimerRef.current), []);
 
   return (
     <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
@@ -56,19 +61,19 @@ export default function SettingsPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#4F46E5]/10"><SettingsIcon className="h-5 w-5 text-[#4F46E5]" /></div>
           <div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Settings</h1><p className="text-sm text-[#71717A] mt-0.5">Configure your workspace</p></div>
         </div>
-        <Button size="sm" onClick={handleSave} className={saved ? 'bg-[#22C55E]' : ''}>
-          {saved ? <CheckCircle className="h-4 w-4 mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-          {saved ? 'Saved' : 'Save Changes'}
-        </Button>
+          <Button size="sm" onClick={handleSave} variant={saved ? 'success' : 'primary'}>
+            {saved ? <><CheckCircle className="h-4 w-4 mr-1" /> Saved</> : <><Save className="h-4 w-4 mr-1" /> Save Changes</>}
+          </Button>
       </motion.div>
 
       <div className="flex gap-6">
         {/* Sidebar Tabs */}
-        <div className="hidden lg:flex flex-col gap-1 w-48 shrink-0">
+        <div className="hidden lg:flex flex-col gap-1 w-48 shrink-0" role="tablist" aria-label="Settings tabs">
           {tabs.map((t) => {
             const Icon = t.icon;
             return (
-              <button key={t.id} onClick={() => setActiveTab(t.id)}
+              <button key={t.id} role="tab" aria-selected={activeTab === t.id} aria-controls={`panel-${t.id}`}
+                onClick={() => setActiveTab(t.id)}
                 className={cn('flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all text-left', activeTab === t.id ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] hover:text-[#A1A1AA] hover:bg-[#111113]')}>
                 <Icon className="h-4 w-4" />{t.label}
               </button>
@@ -77,11 +82,12 @@ export default function SettingsPage() {
         </div>
 
         {/* Mobile tab bar */}
-        <div className="flex lg:hidden gap-1 overflow-x-auto pb-1">
+        <div className="flex lg:hidden gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Settings tabs">
           {tabs.map((t) => {
             const Icon = t.icon;
             return (
-              <button key={t.id} onClick={() => setActiveTab(t.id)}
+              <button key={t.id} role="tab" aria-selected={activeTab === t.id} aria-controls={`panel-${t.id}`}
+                onClick={() => setActiveTab(t.id)}
                 className={cn('shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1', activeTab === t.id ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] bg-[#111113]')}>
                 <Icon className="h-3.5 w-3.5" />{t.label}
               </button>
@@ -90,7 +96,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 space-y-5">
+        <div className="flex-1 space-y-5" role="tabpanel" id={`panel-${activeTab}`}>
           {activeTab === 'profile' && (
             <>
               <SettingsSection title="Profile" desc="Manage your personal information">
@@ -100,10 +106,10 @@ export default function SettingsPage() {
                     <div><p className="text-sm font-medium text-[#FAFAFA]">Trader Name</p><p className="text-xs text-[#71717A]">trader@example.com</p><Button variant="ghost" size="sm" className="mt-1 text-[11px]">Change Avatar</Button></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="text-xs text-[#71717A] mb-1 block">Name</label><Input defaultValue="Trader" className="text-xs" /></div>
-                    <div><label className="text-xs text-[#71717A] mb-1 block">Email</label><Input defaultValue="trader@example.com" className="text-xs" /></div>
-                    <div><label className="text-xs text-[#71717A] mb-1 block">Trading Style</label><select className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-xs text-[#A1A1AA]"><option>Swing Trader</option><option>Day Trader</option><option>Scalper</option><option>Position Trader</option></select></div>
-                    <div><label className="text-xs text-[#71717A] mb-1 block">Experience</label><select className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-xs text-[#A1A1AA]"><option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>Professional</option></select></div>
+                    <div><label htmlFor="settings-name" className="text-xs text-[#71717A] mb-1 block">Name</label><Input id="settings-name" defaultValue="Trader" className="text-xs" /></div>
+                    <div><label htmlFor="settings-email" className="text-xs text-[#71717A] mb-1 block">Email</label><Input id="settings-email" defaultValue="trader@example.com" className="text-xs" /></div>
+                    <div><label htmlFor="settings-style" className="text-xs text-[#71717A] mb-1 block">Trading Style</label><select id="settings-style" className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-xs text-[#A1A1AA]"><option>Swing Trader</option><option>Day Trader</option><option>Scalper</option><option>Position Trader</option></select></div>
+                    <div><label htmlFor="settings-exp" className="text-xs text-[#71717A] mb-1 block">Experience</label><select id="settings-exp" className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-xs text-[#A1A1AA]"><option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>Professional</option></select></div>
                   </div>
                 </div>
               </SettingsSection>
