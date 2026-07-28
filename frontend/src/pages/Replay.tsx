@@ -93,7 +93,7 @@ function CandlestickChart({ candles = [], trades = [], annotations = [] }: { can
    LEFT PANEL — TIMELINE
    ════════════════════════════════════════════════ */
 
-function TimelinePanel({ state, currentCandle, onJump }: { state: ReplayWorkspaceState; currentCandle: number; onJump: (index: number) => void }) {
+function TimelinePanel({ state, currentCandle, onJump, playbackSpeed, onSpeedChange }: { state: ReplayWorkspaceState; currentCandle: number; onJump: (index: number) => void; playbackSpeed: number; onSpeedChange: (speed: number) => void }) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const total = state.session.total_candles;
 
@@ -138,8 +138,11 @@ function TimelinePanel({ state, currentCandle, onJump }: { state: ReplayWorkspac
       {/* Speed control */}
       <div className="flex items-center gap-2">
         <span className="text-[10px] text-muted-foreground">Speed</span>
-        {['1x', '2x', '5x', '10x'].map((s) => (
-          <button key={s} className="rounded px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">{s}</button>
+        {[1, 2, 5, 10].map((s) => (
+          <button key={s} onClick={() => onSpeedChange(1000 / s)}
+            className={cn('rounded px-2 py-0.5 text-[10px] font-medium transition-colors',
+              1000 / s === playbackSpeed ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            )}>{s}x</button>
         ))}
       </div>
 
@@ -515,6 +518,7 @@ export default function ReplayPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [leftPanel, setLeftPanel] = useState<'timeline' | 'screenshots'>('timeline');
   const [playbackSpeed, setPlaybackSpeed] = useState(1000);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const playIntervalRef = useRef<number | null>(null);
   const [showNewTrade, setShowNewTrade] = useState(false);
@@ -645,7 +649,7 @@ export default function ReplayPage() {
             {leftPanel === 'timeline' ? (
               <Card>
                 <CardContent className="p-3">
-                  <TimelinePanel state={state} currentCandle={currentCandleIndex} onJump={handleJump} />
+                  <TimelinePanel state={state} currentCandle={currentCandleIndex} onJump={handleJump} playbackSpeed={playbackSpeed} onSpeedChange={setPlaybackSpeed} />
                 </CardContent>
               </Card>
             ) : (
@@ -769,7 +773,12 @@ export default function ReplayPage() {
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] font-medium text-muted-foreground mr-1">Draw:</span>
                   {ANNOTATION_TOOLS.map((tool) => (
-                    <button key={tool.type} className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                    <button key={tool.type} onClick={() => setActiveTool(activeTool === tool.type ? null : tool.type)}
+                      className={cn('rounded-lg border p-1.5 transition-colors',
+                        activeTool === tool.type
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                      )}
                       title={tool.label}>
                       <tool.icon className="h-3.5 w-3.5" />
                     </button>

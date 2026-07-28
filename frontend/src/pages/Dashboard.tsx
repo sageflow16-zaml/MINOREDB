@@ -1,4 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from 'recharts';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useDashboard';
 import { useTrades } from '../hooks/useTrades';
@@ -71,6 +72,7 @@ export default function DashboardPage() {
   const stats = useDashboardStats(projectId!);
   const trades = useTrades(projectId!);
   const { data: learningEvents } = useLearningEvents(projectId!, 5);
+  const [equityPeriod, setEquityPeriod] = useState('1M');
 
   if (stats.isLoading) {
     return (
@@ -114,9 +116,13 @@ export default function DashboardPage() {
   const session = getCurrentSession();
   const today = new Date();
 
-  const equityData = Array.from({ length: 20 }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    value: (s?.total_pnl ?? 1000) * (1 + Math.sin(i / 3) * 0.2 + Math.random() * 0.1),
+  const periodDays: Record<string, number> = { '1W': 7, '1M': 20, '3M': 60, 'All': 100 };
+  const days = periodDays[equityPeriod] ?? 20;
+  const equityData = Array.from({ length: days }, (_, i) => ({
+    day: equityPeriod === '1W' ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i % 7] || `Day ${i + 1}`
+      : equityPeriod === 'All' ? `W${Math.floor(i / 5) + 1}`
+      : `Day ${i + 1}`,
+    value: (s?.total_pnl ?? 1000) * (1 + Math.sin(i / (days / 4)) * 0.2 + (Math.random() - 0.5) * 0.1),
   }));
 
   const weeklyData = Array.from({ length: 7 }, (_, i) => ({
@@ -298,12 +304,13 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">Equity Curve</CardTitle>
             </div>
             <div className="flex items-center gap-2">
-              {['1W', '1M', '3M', 'All'].map((period) => (
+              {(['1W', '1M', '3M', 'All'] as const).map((period) => (
                 <button
                   key={period}
+                  onClick={() => setEquityPeriod(period)}
                   className={cn(
                     'rounded-md px-2 py-0.5 text-xs font-medium transition-colors',
-                    period === 'All'
+                    equityPeriod === period
                       ? 'bg-primary/10 text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   )}

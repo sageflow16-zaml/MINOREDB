@@ -288,6 +288,78 @@ export default function PerformancePage() {
   const isLoading = overview.isLoading;
   const isError = overview.isError;
 
+  const exportData = () => {
+    const headers = ['Metric', 'Value'];
+    const rows = [
+      ['Total Trades', String(o?.total_trades ?? '')],
+      ['Win Rate', `${o?.win_rate ?? 0}%`],
+      ['Total P&L', String(o?.total_pnl ?? 0)],
+      ['Avg R:R', String(o?.avg_rr ?? 0)],
+      ['Expectancy', String(o?.expectancy ?? 0)],
+      ['Max Drawdown', `${(r?.max_drawdown ?? 0).toFixed(2)}%`],
+    ];
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'performance-export.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const generateReport = (period: string) => {
+    const headers = ['Metric', period];
+    const rows = [
+      ['Total Trades', String(o?.total_trades ?? '')],
+      ['Period', period],
+      ['Win Rate', `${o?.win_rate ?? 0}%`],
+      ['Total P&L', String(o?.total_pnl ?? 0)],
+      ['Avg R:R', String(o?.avg_rr ?? 0)],
+      ['Max Drawdown', `${(r?.max_drawdown ?? 0).toFixed(2)}%`],
+    ];
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${period.toLowerCase()}-report.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportFormat = (format: string) => {
+    const data = {
+      overview: o,
+      risk: r,
+      byPair: pairData,
+      byDirection: directionData,
+      bySession: sessionData,
+      equity: eq,
+      monthly: monthly,
+      weekly: weekly,
+      yearly: yearly,
+    };
+    let content: string;
+    let mime: string;
+    let ext: string;
+    if (format === 'JSON') {
+      content = JSON.stringify(data, null, 2);
+      mime = 'application/json';
+      ext = 'json';
+    } else {
+      const flatten = (obj: any, prefix = ''): [string, string][] =>
+        Object.entries(obj).flatMap(([k, v]) =>
+          v && typeof v === 'object' ? flatten(v, `${prefix}${k}.`) : [[`${prefix}${k}`, String(v ?? '')]]
+        );
+      const flatData = flatten(data);
+      content = ['Key,Value', ...flatData.map(([k, v]) => `${k},${v}`)].join('\n');
+      mime = 'text/csv';
+      ext = 'csv';
+    }
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `performance.${ext}`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleRetry = () => {
     overview.refetch();
     risk.refetch();
@@ -390,7 +462,7 @@ export default function PerformancePage() {
               <RotateCcw className="h-4 w-4 mr-1" />
               Refresh
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={exportData}>
               <Download className="h-4 w-4 mr-1" />
               Export
             </Button>
@@ -924,7 +996,7 @@ export default function PerformancePage() {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                   {['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly'].map((period) => (
-                    <Button key={period} variant="outline" className="h-24 flex flex-col items-center gap-2">
+                    <Button key={period} variant="outline" className="h-24 flex flex-col items-center gap-2" onClick={() => generateReport(period)}>
                       <FileText className="h-6 w-6 text-muted-foreground" />
                       <span className="text-sm">{period} Report</span>
                     </Button>
@@ -947,7 +1019,7 @@ export default function PerformancePage() {
                     { format: 'PDF', icon: FileText, desc: 'Portable document' },
                     { format: 'JSON', icon: FileText, desc: 'Structured data' },
                   ].map(({ format, icon: Icon, desc }) => (
-                    <Button key={format} variant="outline" className="h-20 flex flex-col items-center gap-1">
+                    <Button key={format} variant="outline" className="h-20 flex flex-col items-center gap-1" onClick={() => exportFormat(format)}>
                       <Icon className="h-5 w-5 text-muted-foreground" />
                       <span className="text-sm font-medium">{format}</span>
                       <span className="text-[10px] text-muted-foreground">{desc}</span>
