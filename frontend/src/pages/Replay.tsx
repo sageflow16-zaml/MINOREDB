@@ -18,7 +18,7 @@ import {
   Play, Pause, SkipBack, SkipForward,
   Plus, X, Save, Edit3, BookOpen,
   TrendingUp, Brain, Award, AlertTriangle,
-  Clock, Image, ArrowUpRight, Circle, Square,
+  Clock, Image, Type, ArrowUpRight, Circle, Square,
   MessageSquare, BarChart3, Maximize2, Minimize2,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
