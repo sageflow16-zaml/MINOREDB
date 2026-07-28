@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Menu, Moon, Sun, LogOut, User, Search as SearchIcon, Command, Bell, Settings, Plus, Keyboard, LayoutDashboard, BarChart3, Notebook, Sparkles } from 'lucide-react';
-import { Breadcrumb } from './ui/Breadcrumb';
+import { Menu, Search as SearchIcon, Command, Bell, LogOut, User, Settings, Keyboard, Plus, LayoutDashboard, Notebook, Sparkles, ChevronRight } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
@@ -16,7 +15,6 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../auth/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useProjects } from '../hooks/useProjects';
-import { cn } from '../lib/utils';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -24,7 +22,6 @@ interface TopbarProps {
 }
 
 export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarProps) => {
-  const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { projectId } = useProject();
   const { data: projects = [] } = useProjects();
@@ -41,9 +38,10 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
     dashboard: 'Dashboard',
     trades: 'Trades',
     learning: 'Journal',
-    knowledge: 'Strategies',
+    strategies: 'Strategies',
     'market-structure': 'Market Structure',
     analyst: 'AI Analyst',
+    ict: 'ICT Engine',
     research: 'Research',
     similarity: 'Similarity',
     decision: 'Decision Support',
@@ -77,42 +75,33 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
     }
   };
 
-  const quickActions = [
-    { label: 'New Trade', icon: Plus, path: 'trades', shortcut: 'T' },
-    { label: 'Dashboard', icon: LayoutDashboard, path: 'dashboard', shortcut: 'D' },
-    { label: 'Journal', icon: Notebook, path: 'learning', shortcut: 'G J' },
-    { label: 'AI Analyst', icon: Sparkles, path: 'analyst', shortcut: 'A' },
-  ];
-
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/50 bg-background/80 px-4 backdrop-blur-xl md:px-6">
+    <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-[#27272A] bg-[#09090B]/80 px-4 backdrop-blur-xl md:px-5">
       <div className="flex items-center gap-3 min-w-0">
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden text-muted-foreground hover:text-foreground"
+          className="lg:hidden text-[#71717A] hover:text-[#FAFAFA]"
           onClick={onToggleSidebar}
           aria-label="Toggle sidebar"
         >
           <Menu className="h-4 w-4" />
         </Button>
 
-        {/* Project context breadcrumb */}
+        {/* Breadcrumb */}
         <div className="flex items-center gap-2 min-w-0">
           {currentProject && (
             <>
-              <span className="hidden sm:inline text-xs font-medium text-muted-foreground/60 truncate max-w-[120px]">
+              <span className="hidden sm:inline text-xs font-medium text-[#71717A] truncate max-w-[120px]">
                 {currentProject.name}
               </span>
-              <span className="hidden sm:inline text-muted-foreground/20">/</span>
+              <ChevronRight className="hidden sm:inline h-3 w-3 text-[#71717A] shrink-0" />
             </>
           )}
-          <span className="text-sm font-medium text-foreground truncate">
-            {pageLabels[currentPage] || 'Minore'}
+          <span className="text-sm font-medium text-[#FAFAFA] truncate">
+            {pageLabels[currentPage] || 'Dashboard'}
           </span>
         </div>
-
-        <Breadcrumb />
       </div>
 
       <div className="flex items-center gap-1">
@@ -120,11 +109,11 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         <button
           onClick={onCommandPalette}
           aria-label="Open command palette"
-          className="hidden md:flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/50 transition-all min-w-[180px] group"
+          className="hidden md:flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#71717A] hover:text-[#A1A1AA] hover:border-[#27272A]/80 transition-all min-w-[160px] group"
         >
           <SearchIcon className="h-3.5 w-3.5 shrink-0" />
           <span className="flex-1 text-left">Search pages...</span>
-          <kbd className="flex items-center gap-0.5 rounded border border-border/40 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/50 shadow-xs group-hover:bg-muted/30 transition-colors">
+          <kbd className="flex items-center gap-0.5 rounded border border-[#27272A] bg-[#09090B] px-1.5 py-0.5 text-[10px] font-medium text-[#71717A] group-hover:text-[#A1A1AA] transition-colors">
             <Command className="h-2.5 w-2.5" />K
           </kbd>
         </button>
@@ -133,29 +122,42 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden text-muted-foreground/70 hover:text-foreground"
+          className="md:hidden text-[#71717A] hover:text-[#FAFAFA]"
           onClick={onCommandPalette}
           aria-label="Search"
         >
           <SearchIcon className="h-4 w-4" />
         </Button>
 
-        {/* Quick Actions (desktop) */}
+        {/* Quick Actions */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground/70 hover:text-foreground" aria-label="Quick actions">
+            <Button variant="ghost" size="icon" className="hidden sm:flex text-[#71717A] hover:text-[#FAFAFA]" aria-label="Quick actions">
               <Plus className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 mt-1">
-            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Quick Actions</DropdownMenuLabel>
-            {quickActions.map((action) => (
-              <DropdownMenuItem key={action.path} onClick={() => go(action.path)}>
-                <action.icon className="mr-2 h-4 w-4" />
-                {action.label}
-                <kbd className="ml-auto text-[10px] text-muted-foreground/50">{action.shortcut}</kbd>
-              </DropdownMenuItem>
-            ))}
+          <DropdownMenuContent align="end" className="w-48 mt-1 border-[#27272A] bg-[#111113]">
+            <DropdownMenuLabel className="text-xs text-[#71717A] font-normal">Quick Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => go('trades')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
+              <Plus className="mr-2 h-4 w-4 text-[#4F46E5]" />
+              New Trade
+              <kbd className="ml-auto text-[10px] text-[#71717A]">T</kbd>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => go('dashboard')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
+              <LayoutDashboard className="mr-2 h-4 w-4 text-[#4F46E5]" />
+              Dashboard
+              <kbd className="ml-auto text-[10px] text-[#71717A]">D</kbd>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => go('learning')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
+              <Notebook className="mr-2 h-4 w-4 text-[#4F46E5]" />
+              Journal
+              <kbd className="ml-auto text-[10px] text-[#71717A]">G J</kbd>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => go('analyst')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
+              <Sparkles className="mr-2 h-4 w-4 text-[#4F46E5]" />
+              AI Analyst
+              <kbd className="ml-auto text-[10px] text-[#71717A]">A</kbd>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -163,59 +165,48 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-muted-foreground/70 hover:text-foreground"
+          className="relative text-[#71717A] hover:text-[#FAFAFA]"
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary shadow-xs shadow-primary/50 animate-pulse-subtle" />
-        </Button>
-
-        {/* Theme toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="text-muted-foreground/70 hover:text-foreground"
-        >
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#4F46E5] shadow-[0_0_6px_rgba(79,70,229,0.4)]" />
         </Button>
 
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full ml-1">
-              <Avatar className="h-7 w-7 ring-2 ring-border/40 ring-offset-2 ring-offset-background">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+              <Avatar className="h-7 w-7 ring-2 ring-[#27272A] ring-offset-2 ring-offset-[#09090B]">
+                <AvatarFallback className="bg-[#4F46E5]/10 text-[#4F46E5] text-xs font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mt-1">
+          <DropdownMenuContent align="end" className="w-56 mt-1 border-[#27272A] bg-[#111113]">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">{displayName}</span>
+                <span className="text-sm font-medium text-[#FAFAFA]">{displayName}</span>
                 {user?.email && (
-                  <span className="text-xs font-normal text-muted-foreground">{user.email}</span>
+                  <span className="text-xs font-normal text-[#71717A]">{user.email}</span>
                 )}
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/projects')}>
+            <DropdownMenuSeparator className="bg-[#27272A]" />
+            <DropdownMenuItem onClick={() => navigate('/projects')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
               <User className="mr-2 h-4 w-4" />
               Projects
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => projectId && navigate(`/projects/${projectId}/settings`)}>
+            <DropdownMenuItem onClick={() => projectId && navigate(`/projects/${projectId}/settings`)} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onCommandPalette}>
+            <DropdownMenuItem onClick={onCommandPalette} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
               <Keyboard className="mr-2 h-4 w-4" />
               Keyboard Shortcuts
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+            <DropdownMenuSeparator className="bg-[#27272A]" />
+            <DropdownMenuItem onClick={handleLogout} className="text-[#EF4444] hover:text-[#EF4444] hover:bg-[#EF4444]/10 focus:bg-[#EF4444]/10 focus:text-[#EF4444]">
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

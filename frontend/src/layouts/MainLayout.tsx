@@ -6,7 +6,6 @@ import { Topbar } from '../components/Topbar';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Toaster } from '../components/ui/toast';
 import { ErrorFallback } from '../components/ui/ErrorFallback';
-import { PageLoader } from '../components/ui/Spinner';
 import { useProject } from '../context/ProjectContext';
 import {
   LayoutDashboard, BarChart3, TrendingUp, Notebook, Plus, Sparkles,
@@ -45,7 +44,7 @@ const allPageRoutes: { section: string; items: { label: string; path: string; ic
     items: [
       { label: 'Trades', path: 'trades', icon: BarChart3, shortcut: 'T' },
       { label: 'Journal', path: 'learning', icon: Notebook, shortcut: 'G J' },
-      { label: 'Strategies', path: 'knowledge', icon: Lightbulb },
+      { label: 'Strategies', path: 'strategies', icon: Lightbulb },
       { label: 'Replay', path: 'replay', icon: RefreshCw },
     ],
   },
@@ -240,7 +239,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   }, [projectId, go]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-[#09090B]">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
@@ -272,7 +271,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="fixed bottom-6 right-6 z-fixed lg:hidden">
           <button
             onClick={() => go('trades')}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-[#4F46E5] text-[#FAFAFA] shadow-lg shadow-[#4F46E5]/30 hover:bg-[#4F46E5]/90 active:scale-95 transition-all"
             aria-label="Quick trade"
           >
             <Plus className="h-5 w-5" />
@@ -283,4 +282,4 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export { PageLoader };
+export { PageLoader } from '../components/ui/Spinner';
