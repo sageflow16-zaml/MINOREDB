@@ -299,41 +299,41 @@ export default function RiskPage() {
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
           {/* Account & P&L */}
           <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <KpiCard title="Account Balance" value={`$${d.account_balance.toLocaleString()}`} icon={Wallet} variant="info" size="sm" />
-            <KpiCard title="Equity" value={`$${d.equity.toLocaleString()}`} icon={DollarSign} variant="info" size="sm" />
-            <KpiCard title="Daily P&L" value={`$${d.daily_pnl.toFixed(2)}`} icon={TrendingDown} variant={d.daily_pnl >= 0 ? 'success' : 'danger'} size="sm" />
-            <KpiCard title="Weekly P&L" value={`$${d.weekly_pnl.toFixed(2)}`} icon={BarChart3} variant={d.weekly_pnl >= 0 ? 'success' : 'danger'} size="sm" />
-            <KpiCard title="Monthly P&L" value={`$${d.monthly_pnl.toFixed(2)}`} icon={Activity} variant={d.monthly_pnl >= 0 ? 'success' : 'danger'} size="sm" />
+            <KpiCard title="Account Balance" value={`$${(d.account_balance ?? 0).toLocaleString()}`} icon={Wallet} variant="info" size="sm" />
+            <KpiCard title="Equity" value={`$${(d.equity ?? 0).toLocaleString()}`} icon={DollarSign} variant="info" size="sm" />
+            <KpiCard title="Daily P&L" value={`$${(d.daily_pnl ?? 0).toFixed(2)}`} icon={TrendingDown} variant={(d.daily_pnl ?? 0) >= 0 ? 'success' : 'danger'} size="sm" />
+            <KpiCard title="Weekly P&L" value={`$${(d.weekly_pnl ?? 0).toFixed(2)}`} icon={BarChart3} variant={(d.weekly_pnl ?? 0) >= 0 ? 'success' : 'danger'} size="sm" />
+            <KpiCard title="Monthly P&L" value={`$${(d.monthly_pnl ?? 0).toFixed(2)}`} icon={Activity} variant={(d.monthly_pnl ?? 0) >= 0 ? 'success' : 'danger'} size="sm" />
           </motion.div>
 
           {/* Risk Usage */}
           <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <KpiCard title="Current Risk %" value={`${d.current_risk_percent.toFixed(2)}%`} icon={Target} variant={d.current_risk_percent > 5 ? 'danger' : 'warning'} size="sm" />
-            <KpiCard title="Open Risk" value={`${d.open_risk.toFixed(2)}%`} icon={AlertTriangle} variant="warning" size="sm" />
-            <KpiCard title="Available Risk" value={`${d.available_risk.toFixed(2)}%`} icon={ShieldCheck} variant="success" size="sm" />
-            <KpiCard title="Daily Risk Left" value={`${d.daily_risk_remaining.toFixed(2)}%`} icon={Clock} variant={d.daily_risk_remaining < 1 ? 'danger' : 'info'} size="sm" />
-            <KpiCard title="Open Positions" value={d.open_positions} icon={Hash} variant="info" size="sm" />
+            <KpiCard title="Current Risk %" value={`${(d.current_risk_percent ?? 0).toFixed(2)}%`} icon={Target} variant={(d.current_risk_percent ?? 0) > 5 ? 'danger' : 'warning'} size="sm" />
+            <KpiCard title="Open Risk" value={`${(d.open_risk ?? 0).toFixed(2)}%`} icon={AlertTriangle} variant="warning" size="sm" />
+            <KpiCard title="Available Risk" value={`${(d.available_risk ?? 0).toFixed(2)}%`} icon={ShieldCheck} variant="success" size="sm" />
+            <KpiCard title="Daily Risk Left" value={`${(d.daily_risk_remaining ?? 0).toFixed(2)}%`} icon={Clock} variant={(d.daily_risk_remaining ?? 0) < 1 ? 'danger' : 'info'} size="sm" />
+            <KpiCard title="Open Positions" value={d.open_positions ?? 0} icon={Hash} variant="info" size="sm" />
           </motion.div>
 
           {/* Drawdown */}
           <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
-            <KpiCard title="Max Drawdown" value={`${d.max_drawdown.toFixed(2)}%`} icon={TrendingDown} variant="danger" size="sm" />
-            <KpiCard title="Current Drawdown" value={`${d.current_drawdown.toFixed(2)}%`} icon={AlertOctagon} variant={d.current_drawdown > 5 ? 'danger' : 'warning'} size="sm" />
-            <KpiCard title="Recovery Progress" value={`${d.recovery_progress.toFixed(1)}%`} icon={RotateCcw} variant={d.recovery_progress > 50 ? 'success' : 'warning'} size="sm" />
+            <KpiCard title="Max Drawdown" value={`${(d.max_drawdown ?? 0).toFixed(2)}%`} icon={TrendingDown} variant="danger" size="sm" />
+            <KpiCard title="Current Drawdown" value={`${(d.current_drawdown ?? 0).toFixed(2)}%`} icon={AlertOctagon} variant={(d.current_drawdown ?? 0) > 5 ? 'danger' : 'warning'} size="sm" />
+            <KpiCard title="Recovery Progress" value={`${(d.recovery_progress ?? 0).toFixed(1)}%`} icon={RotateCcw} variant={(d.recovery_progress ?? 0) > 50 ? 'success' : 'warning'} size="sm" />
           </motion.div>
 
           {/* Alert & Violation Banner */}
-          {(d.active_alerts > 0 || d.rule_violations > 0) && (
+          {((d.active_alerts ?? 0) > 0 || (d.rule_violations ?? 0) > 0) && (
             <motion.div variants={item}>
-              <Card className={cn(d.active_alerts > 0 ? 'border-destructive/50' : 'border-warning/50')}>
+              <Card className={cn((d.active_alerts ?? 0) > 0 ? 'border-destructive/50' : 'border-warning/50')}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', d.active_alerts > 0 ? 'bg-destructive/10' : 'bg-warning/10')}>
-                      {d.active_alerts > 0 ? <AlertOctagon className="h-5 w-5 text-destructive" /> : <AlertTriangle className="h-5 w-5 text-warning" />}
+                    <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', (d.active_alerts ?? 0) > 0 ? 'bg-destructive/10' : 'bg-warning/10')}>
+                      {(d.active_alerts ?? 0) > 0 ? <AlertOctagon className="h-5 w-5 text-destructive" /> : <AlertTriangle className="h-5 w-5 text-warning" />}
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-foreground">
-                        {d.active_alerts} Active Alert{d.active_alerts !== 1 ? 's' : ''} • {d.rule_violations} Rule Violation{d.rule_violations !== 1 ? 's' : ''}
+                        {(d.active_alerts ?? 0)} Active Alert{(d.active_alerts ?? 0) !== 1 ? 's' : ''} • {(d.rule_violations ?? 0)} Rule Violation{(d.rule_violations ?? 0) !== 1 ? 's' : ''}
                       </h3>
                       <p className="text-xs text-muted-foreground">Review your risk settings and open positions</p>
                     </div>
@@ -455,8 +455,8 @@ export default function RiskPage() {
       {activeTab === 'exposure' && (
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
           <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            <KpiCard title="Total Exposure" value={`${d.total_exposure.toFixed(2)}%`} icon={Activity} variant="warning" size="sm" />
-            <KpiCard title="Open Positions" value={d.open_positions} icon={Hash} variant="info" size="sm" />
+            <KpiCard title="Total Exposure" value={`${(d.total_exposure ?? 0).toFixed(2)}%`} icon={Activity} variant="warning" size="sm" />
+            <KpiCard title="Open Positions" value={d.open_positions ?? 0} icon={Hash} variant="info" size="sm" />
             <KpiCard title="Max Single" value={`${(d.exposure?.max_single_exposure || 0).toFixed(2)}%`} icon={Target} variant="info" size="sm" />
             <KpiCard title="Correlation Risk" value={`${(d.exposure?.correlation_risk || 0).toFixed(2)}%`} icon={AlertTriangle} variant="warning" size="sm" />
           </motion.div>

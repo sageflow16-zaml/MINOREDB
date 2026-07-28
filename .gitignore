@@ -80,3 +80,4 @@ railway.json
 *.out
 
 .vercel
+.env*

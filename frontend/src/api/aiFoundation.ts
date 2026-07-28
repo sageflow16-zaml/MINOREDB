@@ -245,7 +245,7 @@ export const aiFoundationService = {
     const [profile, insights, coaching, recommendations, patterns] = await Promise.all([
       supabase.from('ai_profile').select('*').eq('project_id', projectId).maybeSingle(),
       supabase.from('ai_insight').select('*').eq('project_id', projectId).eq('is_dismissed', false).order('created_at', { ascending: false }).limit(5),
-      supabase.from('coaching_session').select('*').eq('project_id', projectId).eq('is_dismissed', false).order('created_at', { ascending: false }).limit(5),
+      supabase.from('coaching_session').select('*').eq('project_id', projectId).eq('is_read', false).order('created_at', { ascending: false }).limit(5),
       supabase.from('ai_recommendation').select('*').eq('project_id', projectId).eq('is_dismissed', false).order('created_at', { ascending: false }).limit(5),
       supabase.from('detected_pattern').select('*').eq('project_id', projectId).eq('is_active', true).order('confidence', { ascending: false }).limit(10),
     ]);

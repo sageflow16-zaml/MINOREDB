@@ -50,7 +50,7 @@ BEGIN
     ), '[]'::jsonb),
     'history', JSONB_BUILD_OBJECT(
       'equity_curve', (SELECT COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(
-        'date', record_date, 'equity', equity, 'balance', balance
+        'date', record_date, 'equity', equity, 'balance', 0
       ) ORDER BY record_date), '[]'::jsonb) FROM public.equity_history WHERE project_id = p_project_id),
       'snapshot_count', (SELECT COUNT(*) FROM public.portfolio_snapshot WHERE project_id = p_project_id)
     )

@@ -189,7 +189,8 @@ function BreakdownTable({ title, data, icon: Icon }: { title: string; data: Stat
 
 function StrategyAnalyticsCard({ strategy, data }: { strategy: string; data: StrategyStats }) {
   const [expanded, setExpanded] = useState(false);
-  const safe = { trades: 0, wins: 0, losses: 0, pnl: 0, win_rate: 0, expectancy: 0, avg_rr: 0, ...data };
+  const safe: StrategyStats = { trades: 0, wins: 0, losses: 0, pnl: 0, win_rate: 0, expectancy: 0, avg_rr: 0 };
+  Object.assign(safe, data);
   return (
     <Card className="transition-all hover:shadow-md">
       <CardContent className="p-4">

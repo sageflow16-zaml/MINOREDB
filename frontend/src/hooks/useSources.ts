@@ -26,7 +26,13 @@ export const useUploadSource = (projectId: string) => {
 export const useExtractClaims = (projectId: string) => {
   return useMutation({
     mutationFn: (sourceId: string) => sourceService.extractClaims(projectId, sourceId),
-    onSuccess: () => toast.success('Claims extracted'),
+    onSuccess: (data) => {
+      if (data?.warning) {
+        toast.error(data.warning);
+      } else {
+        toast.success('Claims extracted');
+      }
+    },
     onError: () => toast.error('Failed to extract claims'),
   });
 };

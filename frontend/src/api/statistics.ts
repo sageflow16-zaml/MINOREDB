@@ -79,11 +79,15 @@ export const statisticsService = {
   },
 
   byMarketPhase: async (_projectId: string): Promise<StatisticsByField> => {
-    const { data, error } = await supabase.from('trade').select('market_phase').not('market_phase', 'is', null);
-    if (error) throw error;
-    const grouped: Record<string, number> = {};
-    (data ?? []).forEach((t: any) => { grouped[t.market_phase] = (grouped[t.market_phase] || 0) + 1; });
-    return grouped as any as StatisticsByField;
+    try {
+      const { data, error } = await supabase.from('trade').select('market_phase').not('market_phase', 'is', null);
+      if (error) throw error;
+      const grouped: Record<string, number> = {};
+      (data ?? []).forEach((t: any) => { grouped[t.market_phase] = (grouped[t.market_phase] || 0) + 1; });
+      return grouped as any as StatisticsByField;
+    } catch {
+      return {};
+    }
   },
 
   byTrend: async (_projectId: string): Promise<StatisticsByField> => {

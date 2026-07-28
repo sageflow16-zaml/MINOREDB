@@ -3,9 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
 
-const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPENROUTER_API_KEY') || '';
-const openaiBaseUrl = Deno.env.get('OPENAI_BASE_URL') || 'https://api.openai.com/v1';
-const defaultModel = Deno.env.get('AI_MODEL') || 'gpt-4o-mini';
+const openaiApiKey = Deno.env.get('OPENROUTER_API_KEY') || '';
+const openaiBaseUrl = Deno.env.get('OPENAI_BASE_URL') || 'https://openrouter.ai/api/v1';
+const defaultModel = Deno.env.get('AI_MODEL') || 'openrouter/auto';
 
 function getSupabaseClient(req: Request) {
   const authHeader = req.headers.get('Authorization') || '';
@@ -22,12 +22,20 @@ function getServiceClient() {
   return createClient(supabaseUrl, serviceKey);
 }
 
+function aiNotConfiguredMsg() {
+  return 'AI service is not configured. Set OPENROUTER_API_KEY in your project secrets to enable AI features.';
+}
+
 async function callAI(systemPrompt: string, userPrompt: string, model = defaultModel, maxTokens = 2048) {
+  if (!openaiApiKey) {
+    return JSON.stringify({ _error: aiNotConfiguredMsg() });
+  }
   const response = await fetch(`${openaiBaseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${openaiApiKey}`,
+      'HTTP-Referer': 'https://minoredb.vercel.app',
     },
     body: JSON.stringify({
       model,
@@ -41,32 +49,50 @@ async function callAI(systemPrompt: string, userPrompt: string, model = defaultM
   });
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`AI API error: ${response.status} - ${err}`);
+    console.error(`AI API error: ${response.status} - ${err}`);
+    return JSON.stringify({ _error: `AI service error (${response.status}). Please try again later.` });
   }
   const json = await response.json();
-  return json.choices[0].message.content;
+  const content = json.choices[0].message.content;
+  const trimmed = content.trim();
+  const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  return match ? match[1].trim() : trimmed;
+}
+
+function isAiError(result: string): boolean {
+  try {
+    const parsed = JSON.parse(result);
+    return parsed && typeof parsed === 'object' && '_error' in parsed;
+  } catch {
+    return false;
+  }
 }
 
 async function extractClaims(supabase: ReturnType<typeof createClient>, projectId: string, sourceId: string) {
   const { data: source } = await supabase.from('source').select('*').eq('id', sourceId).single();
   if (!source) throw new Error('Source not found');
   const text = source.normalized_text || source.raw_text;
-  if (!text) throw new Error('Source has no text content');
+  if (!text) return { claims_created: 0, warning: 'Source has no text content' };
 
   const result = await callAI(
     'You are a claim extraction expert. Extract factual claims from the given text. Return a JSON array of objects with keys: verbatim_text (exact quote), source_location (approximate location).',
     `Extract claims from this text:\n\n${text.substring(0, 8000)}`
   );
-  const claims = JSON.parse(result);
-  for (const claim of claims) {
-    await supabase.from('claim').insert({
+  if (isAiError(result)) return { claims_created: 0, warning: JSON.parse(result)._error };
+
+  let claimList: any[];
+  try { claimList = JSON.parse(result); } catch { return { claims_created: 0, warning: 'Failed to parse AI response' }; }
+  if (!Array.isArray(claimList)) return { claims_created: 0, warning: 'AI returned unexpected format' };
+  let created = 0;
+  for (const claim of claimList) {
+    const { error: insertError } = await supabase.from('claim').insert({
       project_id: projectId,
       source_id: sourceId,
       verbatim_text: claim.verbatim_text,
-      source_location: claim.source_location || '',
     });
+    if (!insertError) created++;
   }
-  return { claims_created: claims.length };
+  return { claims_created: created };
 }
 
 async function extractConcepts(supabase: ReturnType<typeof createClient>, projectId: string, claimId: string) {
@@ -77,6 +103,8 @@ async function extractConcepts(supabase: ReturnType<typeof createClient>, projec
     'You are a concept extraction expert. Extract key concepts from a claim. Return a JSON array of objects with keys: conceptual_term (short term), definition (brief definition).',
     `Extract concepts from this claim:\n\n${claim.verbatim_text}`
   );
+  if (isAiError(result)) return { concepts_created: 0, warning: JSON.parse(result)._error };
+
   const concepts = JSON.parse(result);
   const created = [];
   for (const c of concepts) {
@@ -99,14 +127,20 @@ async function extractConcepts(supabase: ReturnType<typeof createClient>, projec
 
 async function detectConflicts(supabase: ReturnType<typeof createClient>, projectId: string, sourceId: string) {
   const { data: claims } = await supabase.from('claim').select('*').eq('source_id', sourceId).is('deleted_at', null);
-  if (!claims || claims.length < 2) throw new Error('Need at least 2 claims to detect conflicts');
+  if (!claims || claims.length < 2) {
+    return { conflicts_created: 0, warning: 'Need at least 2 claims to detect conflicts' };
+  }
 
   const claimsText = claims.map((c: any) => `[${c.id}] ${c.verbatim_text}`).join('\n');
   const result = await callAI(
     'You are a conflict detection expert. Analyze claims for logical contradictions or disagreements. Return a JSON array of objects with keys: claim_ids (array of 2+ claim IDs), conflict_classification (type of conflict), contextual_applicability_check (notes).',
     `Analyze these claims for conflicts:\n\n${claimsText}`
   );
-  const conflicts = JSON.parse(result);
+  if (isAiError(result)) return { conflicts_created: 0, warning: JSON.parse(result)._error };
+
+  let conflicts: any[];
+  try { conflicts = JSON.parse(result); } catch { return { conflicts_created: 0, warning: 'Failed to parse AI response' }; }
+  if (!Array.isArray(conflicts)) return { conflicts_created: 0, warning: 'AI returned unexpected format' };
   for (const conflict of conflicts) {
     const { data: c } = await supabase.from('conflict').insert({
       project_id: projectId,
@@ -141,6 +175,8 @@ async function interpretClaim(supabase: ReturnType<typeof createClient>, project
     'You are an interpretation expert. Generate an interpretation that explains the significance and implications of a claim. Return JSON with keys: interpretation_statement, reasoning_chain, interpretation_foundation.',
     `Claim: ${claim.verbatim_text}\n\nRelated concepts:\n${conceptsContext || 'None'}\n\nGenerate an interpretation.`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const interpretation = JSON.parse(result);
   const { data: created } = await supabase.from('interpretation').insert({
     project_id: projectId,
@@ -160,6 +196,8 @@ async function generateQuestion(supabase: ReturnType<typeof createClient>, proje
     'You are a research question generator. Given a conflict between claims, generate research questions that could help resolve it. Return JSON with keys: question_statement, inquiry_origin, domain_relevance.',
     `Conflict: ${conflict.conflict_classification}\nDetails: ${conflict.contextual_applicability_check || ''}\n\nGenerate a research question.`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const question = JSON.parse(result);
   const { data: created } = await supabase.from('research_question').insert({
     project_id: projectId,
@@ -179,6 +217,8 @@ async function generateHypothesis(supabase: ReturnType<typeof createClient>, pro
     'You are a hypothesis generator. Generate a testable hypothesis from a research question. Return JSON with keys: hypothesis_statement, variable_specification, measurement_specification.',
     `Question: ${question.question_statement}\n\nGenerate a hypothesis.`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const hypothesis = JSON.parse(result);
   const { data: created } = await supabase.from('hypothesis').insert({
     project_id: projectId,
@@ -198,6 +238,8 @@ async function generateDebrief(supabase: ReturnType<typeof createClient>, projec
     'You are a trade debrief expert. Analyze a trade and generate a detailed debrief. Return JSON with keys: entry_review, execution_review, exit_review, psychology_review, lessons_learned, strengths, weaknesses, mistakes, improvements, overall_rating (1-10), summary.',
     `Analyze this trade:\nPair: ${trade.pair || 'N/A'}\nDirection: ${trade.direction || 'N/A'}\nEntry: ${trade.entry_price}\nExit: ${trade.exit_price}\nResult: ${trade.result}\nPnL: ${trade.pnl}\nRR: ${trade.rr}\nNotes: ${trade.notes || ''}\n\nGenerate a debrief.`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const debrief = JSON.parse(result);
   const { data: created } = await supabase.from('trade_debrief').insert({
     project_id: projectId,
@@ -229,6 +271,8 @@ async function detectPatterns(supabase: ReturnType<typeof createClient>, project
     'You are a pattern detection expert. Analyze trading data to identify recurring patterns. Return a JSON array of pattern objects with keys: name, category, signature (JSON), description, confidence (0-1).',
     `Analyze these trades for patterns:\n\n${tradesSummary}`
   );
+  if (isAiError(result)) return { patterns_created: 0, warning: JSON.parse(result)._error };
+
   const patterns = JSON.parse(result);
   const created = [];
   for (const p of patterns) {
@@ -260,12 +304,14 @@ async function generateRules(supabase: ReturnType<typeof createClient>, projectI
     'You are a trading rule generator. Generate actionable trading rules based on trade history and patterns. Return a JSON array of rule objects with keys: title, description, category, evidence.',
     `Generate rules from this data:\n\n${context}`
   );
+  if (isAiError(result)) return { rules_created: 0, warning: JSON.parse(result)._error };
+
   const rules = JSON.parse(result);
   const created = [];
   for (const r of rules) {
     const { data: rule } = await supabase.from('personal_rule').insert({
       project_id: projectId,
-      title: r.title,
+      name: r.title,
       description: r.description || '',
       category: r.category || 'general',
       evidence: r.evidence || '',
@@ -291,6 +337,8 @@ async function buildProfile(supabase: ReturnType<typeof createClient>, projectId
     'You are a trader profile builder. Analyze trading history to build a comprehensive trader profile. Return JSON with keys: strengths (array), weaknesses (array), trading_habits (array), discipline_score (0-100), rule_adherence (0-100), improvement_suggestions (array), notes.',
     `Build a trader profile from:\n\n${context}`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const profile = JSON.parse(result);
   const { data: existing } = await supabase.from('trader_profile').select('id').eq('project_id', projectId).maybeSingle();
   if (existing) {
@@ -335,6 +383,8 @@ Market Structure: ${ms ? JSON.stringify(ms) : 'N/A'}`;
     'You are a trade memory expert. Generate a structured trade memory entry. Return JSON with keys: summary, strengths (array), weaknesses (array), mistakes (array), lessons (array), tags (array), confidence (0-1).',
     `Generate trade memory from:\n\n${context}`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const memory = JSON.parse(result);
   const { data: created } = await supabase.from('trade_memory').insert({
     project_id: projectId,
@@ -369,6 +419,7 @@ async function ragChat(supabase: ReturnType<typeof createClient>, projectId: str
 Current context:\n${context}\n\nBe concise and data-driven.`;
 
   const result = await callAI(systemPrompt, `Chat history:\n${chatHistory}\n\nUser: ${message}`, defaultModel, 4096);
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
 
   const { data: aiMsg } = await supabase.from('ai_message').insert({
     project_id: projectId,
@@ -388,6 +439,9 @@ Current context:\n${context}\n\nBe concise and data-driven.`;
 }
 
 async function ragSearch(supabase: ReturnType<typeof createClient>, projectId: string, query: string) {
+  if (!openaiApiKey) {
+    return { results: [], method: 'disabled', warning: aiNotConfiguredMsg() };
+  }
   const embeddingResponse = await fetch(`${openaiBaseUrl}/embeddings`, {
     method: 'POST',
     headers: {
@@ -396,7 +450,10 @@ async function ragSearch(supabase: ReturnType<typeof createClient>, projectId: s
     },
     body: JSON.stringify({ model: 'text-embedding-3-small', input: query }),
   });
-  if (!embeddingResponse.ok) throw new Error('Embedding API error');
+  if (!embeddingResponse.ok) {
+    console.error('Embedding API error:', await embeddingResponse.text());
+    return { results: [], method: 'disabled', warning: 'Embedding service unavailable.' };
+  }
   const embedJson = await embeddingResponse.json();
   const embedding = embedJson.data[0].embedding;
 
@@ -425,6 +482,8 @@ async function analyzeTrade(supabase: ReturnType<typeof createClient>, projectId
     'You are a trade analyst. Evaluate this trade and provide constructive analysis. Return JSON with keys: strength_score (0-100), risk_score (0-100), execution_score (0-100), psychology_score (0-100), overall_quality (0-100), critique (text).',
     `Evaluate this trade:\nPair: ${trade.pair}\nDirection: ${trade.direction}\nEntry: ${trade.entry_price}\nExit: ${trade.exit_price}\nSL: ${trade.stop_loss}\nTP: ${trade.take_profit}\nResult: ${trade.result}\nPnL: ${trade.pnl}\nRR: ${trade.rr}\nNotes: ${trade.notes || ''}`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const evaluation = JSON.parse(result);
   const { data: created } = await supabase.from('trade_evaluation').insert({
     project_id: projectId,
@@ -454,6 +513,8 @@ async function generateSummary(supabase: ReturnType<typeof createClient>, projec
     'You are a trading summary generator. Create a concise performance summary. Return JSON with keys: content (detailed), text_summary (one paragraph), keywords (array), sentiment (positive/neutral/negative), importance (high/medium/low).',
     `Generate a ${summaryType} summary for ${period} period.\n\nStats: ${JSON.stringify(stats)}`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const summary = JSON.parse(result);
   const { data: created } = await supabase.from('ai_summary').insert({
     project_id: projectId,
@@ -477,18 +538,25 @@ async function refreshKnowledgeRules(supabase: ReturnType<typeof createClient>, 
   ).join('\n');
 
   const result = await callAI(
-    'You are a knowledge discovery engine. Analyze trade data to discover trading rules/knowledge. Return a JSON array of rule objects with keys: title, description, category, confidence (0-1), signature (string).',
+    'You are a knowledge discovery engine. Analyze trade data to discover trading rules/knowledge. Return a JSON array of rule objects with keys: title, description, category, confidence (0-1), wins, losses, avg_rr, signature (string).',
     `Discover knowledge from these trades:\n\n${summary}`
   );
+  if (isAiError(result)) return { rules_created: 0, warning: JSON.parse(result)._error };
+
   const rules = JSON.parse(result);
   const created = [];
   for (const r of rules) {
     const { data: rule } = await supabase.from('knowledge_rule').insert({
       project_id: projectId,
+      name: r.title,
       title: r.title,
       description: r.description || '',
       category: r.category || 'discovered',
-      confidence: r.confidence || 0.5,
+      confidence: r.confidence != null ? Math.round(r.confidence * 100) : 50,
+      wins: typeof r.wins === 'number' ? r.wins : 0,
+      losses: typeof r.losses === 'number' ? r.losses : 0,
+      avg_rr: typeof r.avg_rr === 'number' ? r.avg_rr : 0,
+      signature: r.signature || '',
     }).select().single();
     if (rule) created.push(rule);
   }
@@ -505,6 +573,8 @@ async function refreshKnowledgeGraph(supabase: ReturnType<typeof createClient>, 
     'You are a knowledge graph builder. Given sources, claims, and concepts, identify important relationships to build a knowledge graph. Return a JSON array of edge objects with keys: source (concept name), target (concept name), relationship (string), strength (0-1).',
     `Build knowledge graph edges from:\nConcepts: ${(concepts || []).map((c: any) => c.conceptual_term).join(', ')}`
   );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
   const edges = JSON.parse(result);
 
   const created = [];
@@ -655,6 +725,17 @@ serve(async (req) => {
           'You are a trade decision support AI. Evaluate a potential trade against the trader\'s history. Return ONLY valid JSON with NO markdown formatting, NO code blocks, NO extra text. Return a JSON object with keys: market_alignment (object with score 0-100, details string), ict_components (object with score 0-100, present array, missing array, details string), session_alignment (object with score 0-100, active_sessions array, details string), pattern_match (object with found bool, win_rate number, occurrences number, confidence number, avg_rr number), confidence (object with score 0-100, level string), execution (object with status string, criteria array, satisfied number, total number), explanation (array of strings).',
           `Trader history: ${JSON.stringify((trades || []).slice(0, 20))}\n\nProposed trade environment: ${envStr}`
         );
+        if (isAiError(result)) return successResponse({
+          market_alignment: { score: 0, details: '' },
+          ict_components: { score: 0, present: [], missing: [], details: '' },
+          session_alignment: { score: 0, active_sessions: [], details: '' },
+          pattern_match: { found: false, win_rate: 0, occurrences: 0, confidence: 0, avg_rr: 0 },
+          similarity: { matches_found: 0, average_win_rate: 0, average_rr: 0, average_pnl: 0, average_drawdown: 0, top_matches: [] },
+          statistics: { overall_win_rate: 0, overall_avg_rr: 0, overall_expectancy: 0, overall_total_trades: 0, overall_profit_factor: 0, overall_max_drawdown: 0 },
+          confidence: { score: 0, level: 'unknown' },
+          execution: { status: 'pending', criteria: [], satisfied: 0, total: 0 },
+          explanation: ['AI evaluation not available. Configure OPENROUTER_API_KEY to enable this feature.'],
+        });
         const parsed = JSON.parse(result);
         return successResponse({
           market_alignment: parsed.market_alignment || { score: 0, details: '' },
