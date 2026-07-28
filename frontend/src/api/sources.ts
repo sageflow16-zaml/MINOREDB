@@ -59,6 +59,7 @@ export const sourceService = {
 
   upload: async (projectId: string, formData: FormData): Promise<SourceRead> => {
     const file = formData.get('file') as File;
+    const rawText = formData.get('raw_text') as string | null;
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const filePath = `${projectId}/${Date.now()}_${sanitizedName}`;
     const { error: uploadError } = await supabase.storage
@@ -67,12 +68,15 @@ export const sourceService = {
     if (uploadError) throw uploadError;
     const { data: row, error } = await supabase
       .from('source')
-      .insert({ project_id: projectId, source_metadata: { file_path: filePath, original_name: file.name } })
+      .insert({ project_id: projectId, raw_text: rawText, normalized_text: rawText, source_metadata: { file_path: filePath, original_name: file.name } })
       .select()
       .single();
     if (error) throw error;
     return row as SourceRead;
   },
+
+  ingestDocument: async (projectId: string, sourceId: string) =>
+    callEdgeFunction('ai', { operation: 'ingest-document', project_id: projectId, data: { source_id: sourceId } }),
 
   extractClaims: async (projectId: string, sourceId: string) =>
     callEdgeFunction('ai', { operation: 'extract-claims', project_id: projectId, data: { source_id: sourceId } }),

@@ -9,6 +9,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
+import { extractTextFromFile } from '../lib/textExtraction';
 import {
   Upload, FileText, Brain, AlertTriangle, Trash2, Search,
   Bookmark, Layers, Link, CheckCircle, XCircle, Sparkles,
@@ -51,7 +52,7 @@ export default function SourcesPage() {
     return null;
   }, []);
 
-  const handleUpload = useCallback((file: File) => {
+  const handleUpload = useCallback(async (file: File) => {
     const validationError = validateFile(file);
     if (validationError) {
       toast.error(validationError);
@@ -59,6 +60,17 @@ export default function SourcesPage() {
     }
     const formData = new FormData();
     formData.append('file', file);
+    if (file.name.endsWith('.txt')) {
+      formData.append('raw_text', await file.text());
+    } else if (file.name.endsWith('.pdf')) {
+      toast.loading('Extracting text from PDF...', { id: 'pdf-extract' });
+      const text = await extractTextFromFile(file);
+      toast.dismiss('pdf-extract');
+      if (text) formData.append('raw_text', text);
+    } else if (file.name.endsWith('.docx')) {
+      const text = await extractTextFromFile(file);
+      if (text) formData.append('raw_text', text);
+    }
     uploadSource.mutate(formData);
   }, [uploadSource, validateFile]);
 

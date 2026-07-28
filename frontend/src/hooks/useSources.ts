@@ -14,7 +14,11 @@ export const useSources = (projectId: string) => {
 export const useUploadSource = (projectId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData: FormData) => sourceService.upload(projectId, formData),
+    mutationFn: async (formData: FormData) => {
+      const source = await sourceService.upload(projectId, formData);
+      sourceService.ingestDocument(projectId, source.id).catch(() => {});
+      return source;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources', projectId] });
       toast.success('Source uploaded successfully');

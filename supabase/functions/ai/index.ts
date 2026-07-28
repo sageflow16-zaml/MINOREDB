@@ -697,6 +697,93 @@ async function refreshKnowledgeGraph(supabase: ReturnType<typeof createClient>, 
   return { nodes: existingCount, edges_created: created.length };
 }
 
+async function generateEmbedding(text: string): Promise<number[] | null> {
+  if (!openaiApiKey) return null;
+  try {
+    const resp = await fetch(`${openaiBaseUrl}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'HTTP-Referer': 'https://minoredb.vercel.app',
+      },
+      body: JSON.stringify({ model: 'text-embedding-3-small', input: text }),
+    });
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    return json.data?.[0]?.embedding ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function chunkText(text: string, maxTokens = 500): string[] {
+  const words = text.split(/\s+/);
+  const chunks: string[] = [];
+  let current: string[] = [];
+  let currentTokens = 0;
+
+  for (const word of words) {
+    const estimatedTokens = Math.ceil(word.length / 4) || 1;
+    if (currentTokens + estimatedTokens > maxTokens && current.length > 0) {
+      chunks.push(current.join(' '));
+      current = [];
+      currentTokens = 0;
+    }
+    current.push(word);
+    currentTokens += estimatedTokens;
+  }
+  if (current.length > 0) chunks.push(current.join(' '));
+  return chunks;
+}
+
+async function ingestDocument(supabase: ReturnType<typeof createClient>, projectId: string, sourceId: string) {
+  const { data: source } = await supabase.from('source').select('*').eq('id', sourceId).single();
+  if (!source) throw new Error('Source not found');
+
+  const text = source.normalized_text || source.raw_text;
+  if (!text) return { chunks_created: 0, warning: 'Source has no text content' };
+
+  const chunks = chunkText(text);
+  if (chunks.length === 0) return { chunks_created: 0, warning: 'Text too short to chunk' };
+
+  const filename = source.source_metadata?.original_name ?? source.id;
+
+  const { data: ingestion, error: ingestError } = await supabase.from('ai_document_ingestion').insert({
+    project_id: projectId,
+    filename,
+    source_type: 'source',
+    status: 'processing',
+  }).select().single();
+
+  if (ingestError || !ingestion) throw new Error('Failed to create ingestion record');
+
+  let created = 0;
+  for (let i = 0; i < chunks.length; i++) {
+    const embedding = await generateEmbedding(chunks[i]);
+    const { error: chunkError } = await supabase.from('ai_document_chunk').insert({
+      project_id: projectId,
+      ingestion_id: ingestion.id,
+      chunk_index: i,
+      content: chunks[i],
+      embedding: embedding ?? undefined,
+      token_count: Math.ceil(chunks[i].split(/\s+/).length),
+    });
+    if (!chunkError) created++;
+  }
+
+  await supabase.from('ai_document_ingestion').update({
+    status: 'completed',
+    chunk_count: created,
+  }).eq('id', ingestion.id);
+
+  return {
+    chunks_created: created,
+    total_chunks: chunks.length,
+    ingestion_id: ingestion.id,
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -808,6 +895,12 @@ serve(async (req) => {
       }
       case 'refresh-knowledge-rules': {
         const result = await refreshKnowledgeRules(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'ingest-document': {
+        const sourceId = data?.source_id;
+        if (!sourceId) return errorResponse('Missing source_id');
+        const result = await ingestDocument(supabase, project_id, sourceId);
         return successResponse(result);
       }
       case 'refresh-knowledge-graph': {
