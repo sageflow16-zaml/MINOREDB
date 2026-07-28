@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAnalyzeICT, useICTFullContext, useICTAIContext } from '../hooks/useICT';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
@@ -160,8 +161,10 @@ export default function ICTSmartEngine() {
         include_models: includeModels,
       });
       setAnalysis(normalizeICT(result));
+      toast.success('ICT analysis complete');
     } catch (err) {
-      console.error('Analysis failed:', err);
+      const msg = err instanceof Error ? err.message : 'Analysis failed';
+      toast.error(msg);
     } finally {
       setAnalyzing(false);
     }
