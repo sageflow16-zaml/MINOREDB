@@ -1,102 +1,56 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
-  LineChart, Line, Legend, ReferenceLine,
-} from 'recharts';
-import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { KpiCard } from '../components/ui/KpiCard';
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/Button';
-import { Skeleton, SkeletonCard } from '../components/ui/skeleton';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { cn } from '../lib/utils';
-import {
-  useRiskDashboard,
-  useRiskDrawdown,
-  useRiskHistory,
-  useRiskRules,
-  useCreateRiskRule,
-  useDeleteRiskRule,
-  useRiskAlerts,
-  useDismissAlert,
-  useValidateTrade,
-  useCalculatePositionSize,
-  useRiskViolations,
+  useRiskDashboard, useRiskDrawdown, useRiskHistory, useRiskRules,
+  useCreateRiskRule, useDeleteRiskRule, useRiskAlerts, useDismissAlert,
+  useValidateTrade, useCalculatePositionSize, useRiskViolations,
 } from '../hooks/useRisk';
-import type {
-  RiskDashboard,
-  RiskRule,
-  RiskAlert,
-  DrawdownPoint,
-  RiskHistoryPoint,
-  TradeValidationResult,
-  PositionSizeResult,
-  RuleViolation,
-} from '../api/types';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/badge';
+import { DataTable } from '../components/ui/DataTable';
+import { Skeleton } from '../components/ui/skeleton';
+import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
 import {
   Shield, AlertTriangle, TrendingDown, Wallet, Activity, Target,
   Plus, Trash2, CheckCircle, XCircle, AlertCircle, Clock,
-  Calculator, ShieldCheck, ShieldAlert, Ban, Eye, EyeOff,
-  ArrowUpRight, ArrowDownRight, BarChart3, Bell, BellOff,
-  FileText, Zap, AlertOctagon, Info, ChevronDown, Settings,
-  DollarSign, Percent, Hash, Crosshair, RotateCcw,
+  Calculator, ShieldCheck, ArrowUpRight, ArrowDownRight,
+  BarChart3, Bell, AlertOctagon, Info, RotateCcw,
+  DollarSign, Hash, TrendingUp, EyeOff,
 } from 'lucide-react';
+import { cn } from '../lib/utils';
+import type { RiskRule, RiskAlert, RuleViolation, TradeValidationResult, PositionSizeResult } from '../api/types';
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--warning))'];
+function formatCurrency(value: number | undefined | null): string {
+  if (value == null) return '—';
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
-};
+const tooltipStyle = chartTooltipStyle.contentStyle;
 
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0 },
-};
-
-type TabType = 'dashboard' | 'calculator' | 'rules' | 'exposure' | 'alerts' | 'validation' | 'history';
-
-function DrawdownChart({ data }: { data: DrawdownPoint[] }) {
-  if (!data || data.length === 0) return <EmptyState message="No drawdown data" />;
+function MetricCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
+  const accentColors = { default: 'text-[#FAFAFA]', success: 'text-[#22C55E]', danger: 'text-[#EF4444]', warning: 'text-[#F59E0B]' };
+  const accentBg = { default: 'bg-[#4F46E5]/10', success: 'bg-[#22C55E]/10', danger: 'bg-[#EF4444]/10', warning: 'bg-[#F59E0B]/10' };
   return (
-    <div className="h-72">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} tickFormatter={(v) => new Date(v).toLocaleDateString()} />
-          <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
-          <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} formatter={(v: number) => [`${v.toFixed(2)}%`, 'Drawdown']} />
-          <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
-          <Area type="monotone" dataKey="drawdown" stroke="hsl(var(--destructive))" strokeWidth={2} fill="url(#ddGrad)" />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <p className="text-[11px] font-medium text-[#71717A] tracking-wide">{label}</p>
+        <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accentBg[accent || 'default'])}>
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-[#22C55E]' : accent === 'danger' ? 'text-[#EF4444]' : accent === 'warning' ? 'text-[#F59E0B]' : 'text-[#4F46E5]')} />
+        </div>
+      </div>
+      <p className={cn('text-xl font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
+      {sub && <p className="text-[10px] text-[#71717A] mt-1">{sub}</p>}
+    </motion.div>
   );
 }
 
-function ExposurePie({ data, label }: { data: { name: string; value: number }[]; label: string }) {
-  if (!data || data.length === 0) return <EmptyState message={`No ${label} data`} />;
+function InsightBadge({ label, value, good }: { label: string; value: string; good?: boolean }) {
   return (
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
-            {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-          </Pie>
-          <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
+    <div className="flex items-center justify-between rounded-lg bg-[#111113] px-3 py-2">
+      <span className="text-xs text-[#A1A1AA]">{label}</span>
+      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-[#FAFAFA]' : good ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{value}</span>
     </div>
   );
 }
@@ -105,10 +59,7 @@ function CreateRuleDialog({ projectId, onClose }: { projectId: string; onClose: 
   const createRule = useCreateRiskRule(projectId);
   const [form, setForm] = useState({ name: '', rule_type: 'max_daily_loss', description: '', limit_value: 5, severity: 'warning' });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createRule.mutate(form, { onSuccess: onClose });
-  };
+  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); createRule.mutate(form, { onSuccess: onClose }); };
 
   const ruleTypes = [
     { value: 'max_daily_loss', label: 'Max Daily Loss' },
@@ -124,81 +75,166 @@ function CreateRuleDialog({ projectId, onClose }: { projectId: string; onClose: 
   ];
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">Create Risk Rule</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Rule Name</label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                placeholder="e.g. Max Daily Loss"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Rule Type</label>
-              <select
-                value={form.rule_type}
-                onChange={(e) => setForm({ ...form, rule_type: e.target.value })}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-              >
-                {ruleTypes.map((rt) => <option key={rt.value} value={rt.value}>{rt.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Limit Value</label>
-              <input
-                type="number"
-                step="0.1"
-                value={form.limit_value}
-                onChange={(e) => setForm({ ...form, limit_value: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Severity</label>
-              <select
-                value={form.severity}
-                onChange={(e) => setForm({ ...form, severity: e.target.value })}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="critical">Critical</option>
-              </select>
-            </div>
+    <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5 mb-4">
+      <h4 className="text-sm font-medium text-[#FAFAFA] mb-4">Create Risk Rule</h4>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[11px] text-[#71717A] mb-1 block">Rule Name</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" placeholder="e.g. Max Daily Loss" required />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Description</label>
-            <input
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-              placeholder="Optional description..."
-            />
+            <label className="text-[11px] text-[#71717A] mb-1 block">Rule Type</label>
+            <select value={form.rule_type} onChange={(e) => setForm({ ...form, rule_type: e.target.value })}
+              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+              {ruleTypes.map((rt) => <option key={rt.value} value={rt.value}>{rt.label}</option>)}
+            </select>
           </div>
-          <div className="flex gap-2">
-            <Button type="submit" disabled={createRule.isPending}>
-              {createRule.isPending ? 'Creating...' : 'Create Rule'}
-            </Button>
-            <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
+          <div>
+            <label className="text-[11px] text-[#71717A] mb-1 block">Limit Value</label>
+            <input type="number" step="0.1" value={form.limit_value}
+              onChange={(e) => setForm({ ...form, limit_value: parseFloat(e.target.value) || 0 })}
+              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
           </div>
-        </form>
-      </CardContent>
-    </Card>
+          <div>
+            <label className="text-[11px] text-[#71717A] mb-1 block">Severity</label>
+            <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })}
+              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+              <option value="info">Info</option>
+              <option value="warning">Warning</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="text-[11px] text-[#71717A] mb-1 block">Description</label>
+          <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" placeholder="Optional..." />
+        </div>
+        <div className="flex gap-2">
+          <Button type="submit" disabled={createRule.isPending}>{createRule.isPending ? 'Creating...' : 'Create Rule'}</Button>
+          <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function PositionSizeCalculator({ projectId }: { projectId: string }) {
+  const calc = useCalculatePositionSize(projectId);
+  const [form, setForm] = useState({ account_balance: 10000, risk_percent: 1.0, entry_price: 1.1000, stop_loss: 1.0950, take_profit: 1.1100, pip_value: 10, instrument: 'forex' });
+  const [result, setResult] = useState<PositionSizeResult | null>(null);
+  const handleCalc = () => { calc.mutate(form, { onSuccess: (data) => setResult(data) }); };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[{ k: 'account_balance', l: 'Balance ($)' }, { k: 'risk_percent', l: 'Risk %' }, { k: 'entry_price', l: 'Entry' }, { k: 'stop_loss', l: 'Stop Loss' }, { k: 'take_profit', l: 'Take Profit' }, { k: 'pip_value', l: 'Pip Value ($)' }].map(({ k, l }) => (
+          <div key={k}>
+            <label className="text-[11px] text-[#71717A] mb-1 block">{l}</label>
+            <input type="number" step="0.0001" value={(form as any)[k]} onChange={(e) => setForm({ ...form, [k]: parseFloat(e.target.value) || 0 })}
+              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
+          </div>
+        ))}
+        <div>
+          <label className="text-[11px] text-[#71717A] mb-1 block">Instrument</label>
+          <select value={form.instrument} onChange={(e) => setForm({ ...form, instrument: e.target.value })}
+            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+            <option value="forex">Forex</option>
+            <option value="crypto">Crypto</option>
+            <option value="stocks">Stocks</option>
+            <option value="futures">Futures</option>
+          </select>
+        </div>
+        <div className="flex items-end"><Button onClick={handleCalc} disabled={calc.isPending} className="w-full">{calc.isPending ? 'Calculating...' : 'Calculate'}</Button></div>
+      </div>
+      {result && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Position Size', value: result.position_size.toLocaleString(), color: 'text-[#FAFAFA]' },
+            { label: 'Lot Size', value: result.lot_size, color: 'text-[#FAFAFA]' },
+            { label: 'Dollar Risk', value: `-$${result.dollar_risk}`, color: 'text-[#EF4444]' },
+            { label: 'Expected R:R', value: `${result.expected_rr}R`, color: result.expected_rr >= 1 ? 'text-[#22C55E]' : 'text-[#F59E0B]' },
+            { label: 'Potential Profit', value: `+$${result.potential_profit}`, color: 'text-[#22C55E]' },
+            { label: 'Potential Loss', value: `-$${result.potential_loss}`, color: 'text-[#EF4444]' },
+            { label: 'Stop Distance', value: `${result.stop_distance_pips} pips`, color: 'text-[#FAFAFA]' },
+            { label: 'Risk/Pip', value: `$${result.risk_per_pip}`, color: 'text-[#FAFAFA]' },
+          ].map((r) => (
+            <div key={r.label} className="rounded-lg bg-[#111113] p-3 text-center">
+              <p className={cn('text-lg font-bold font-mono', r.color)}>{r.value}</p>
+              <p className="text-[10px] text-[#71717A] mt-0.5">{r.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TradeValidator({ projectId }: { projectId: string }) {
+  const validate = useValidateTrade(projectId);
+  const [form, setForm] = useState({ pair: 'EURUSD', direction: 'LONG', entry_price: 1.1000, stop_loss: 1.0950, take_profit: 1.1100, risk_percent: 1.0 });
+  const [result, setResult] = useState<TradeValidationResult | null>(null);
+  const handleValidate = () => { validate.mutate(form, { onSuccess: (data) => setResult(data) }); };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div>
+          <label className="text-[11px] text-[#71717A] mb-1 block">Pair</label>
+          <input value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })}
+            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
+        </div>
+        <div>
+          <label className="text-[11px] text-[#71717A] mb-1 block">Direction</label>
+          <select value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}
+            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+            <option value="LONG">Long</option>
+            <option value="SHORT">Short</option>
+          </select>
+        </div>
+        {[{ k: 'entry_price', l: 'Entry' }, { k: 'stop_loss', l: 'Stop Loss' }, { k: 'take_profit', l: 'Take Profit' }, { k: 'risk_percent', l: 'Risk %' }].map(({ k, l }) => (
+          <div key={k}>
+            <label className="text-[11px] text-[#71717A] mb-1 block">{l}</label>
+            <input type="number" step="0.0001" value={(form as any)[k]} onChange={(e) => setForm({ ...form, [k]: parseFloat(e.target.value) || 0 })}
+              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
+          </div>
+        ))}
+        <div className="flex items-end"><Button onClick={handleValidate} disabled={validate.isPending} className="w-full">{validate.isPending ? 'Validating...' : 'Validate Trade'}</Button></div>
+      </div>
+      {result && (
+        <div className={cn('rounded-xl border p-5', result.status === 'approved' ? 'border-[#22C55E]/50 bg-[#22C55E]/5' : result.status === 'warning' ? 'border-[#F59E0B]/50 bg-[#F59E0B]/5' : 'border-[#EF4444]/50 bg-[#EF4444]/5')}>
+          <div className="flex items-center gap-3 mb-4">
+            {result.status === 'approved' ? <CheckCircle className="h-5 w-5 text-[#22C55E]" /> : result.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-[#F59E0B]" /> : <XCircle className="h-5 w-5 text-[#EF4444]" />}
+            <span className={cn('text-sm font-medium capitalize', result.status === 'approved' ? 'text-[#22C55E]' : result.status === 'warning' ? 'text-[#F59E0B]' : 'text-[#EF4444]')}>{result.status}</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {result.risk_amount != null && <InsightBadge label="Risk Amount" value={`$${result.risk_amount}`} />}
+            {result.potential_profit != null && <InsightBadge label="Potential Profit" value={`+$${result.potential_profit}`} good />}
+            {result.potential_loss != null && <InsightBadge label="Potential Loss" value={`-$${result.potential_loss}`} good={false} />}
+            {result.rr_ratio != null && <InsightBadge label="R:R Ratio" value={`${result.rr_ratio}R`} good={result.rr_ratio >= 1} />}
+          </div>
+          <div className="space-y-2">
+            {result.checks.map((check, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg bg-[#111113] px-3 py-2">
+                {check.passed ? <CheckCircle className="h-4 w-4 text-[#22C55E] shrink-0" /> : check.severity === 'critical' ? <XCircle className="h-4 w-4 text-[#EF4444] shrink-0" /> : <AlertTriangle className="h-4 w-4 text-[#F59E0B] shrink-0" />}
+                <span className="text-xs text-[#A1A1AA] flex-1">{check.check_name}: {check.message}</span>
+                <Badge variant={check.passed ? 'success' : check.severity === 'critical' ? 'destructive' : 'warning'} size="sm">{check.passed ? 'Pass' : check.severity}</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
 export default function RiskPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [showCreateRule, setShowCreateRule] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [showValidator, setShowValidator] = useState(false);
 
   const dashboard = useRiskDashboard(projectId!);
   const drawdown = useRiskDrawdown(projectId!);
@@ -212,656 +248,252 @@ export default function RiskPage() {
   const isLoading = dashboard.isLoading;
   const isError = dashboard.isError;
 
+  const handleRetry = useCallback(() => {
+    dashboard.refetch(); drawdown.refetch(); history.refetch();
+    rules.refetch(); alerts.refetch(); violations.refetch();
+  }, []);
+
+  const dd = useMemo(() => (drawdown.data ?? []).map((p: any) => ({ date: p.date ? new Date(p.date).toLocaleDateString() : '', drawdown: p.drawdown })), [drawdown.data]);
+
+  const hist = useMemo(() => (history.data ?? []).slice(-30).map((p: any) => ({ date: p.date ? new Date(p.date).toLocaleDateString() : '', daily_pnl: p.daily_pnl, drawdown: p.drawdown, risk_percent: p.risk_percent })), [history.data]);
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-72" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-        <Skeleton className="h-80 w-full rounded-xl" />
+      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+        <div className="flex items-center justify-between"><div className="space-y-2"><Skeleton className="h-7 w-44" /><Skeleton className="h-4 w-60" /></div><Skeleton className="h-8 w-28 rounded-lg" /></div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{Array.from({ length: 8 }).map((_, i) => (<div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-24" /></div>))}</div>
+        <Skeleton className="h-72 rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5"><Skeleton className="h-56 rounded-xl" /><Skeleton className="h-56 rounded-xl" /></div>
       </div>
     );
   }
 
-  if (isError) return <ErrorState message="Error loading risk data." onRetry={() => dashboard.refetch()} />;
+  if (isError) {
+    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EF4444]/10"><Shield className="h-6 w-6 text-[#EF4444]" /></div><p className="text-sm font-medium text-[#FAFAFA]">Error loading risk data</p><p className="text-xs text-[#71717A]">There was a problem fetching risk data.</p><Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button></div></div>);
+  }
 
-  const d = dashboard.data as RiskDashboard | undefined;
-  const dd = drawdown.data as DrawdownPoint[] | undefined || [];
-  const hist = history.data as RiskHistoryPoint[] | undefined || [];
-  const ruleList = rules.data as RiskRule[] | undefined || [];
-  const alertList = alerts.data as RiskAlert[] | undefined || [];
-  const violationList = violations.data as RuleViolation[] | undefined || [];
+  const d = dashboard.data;
+  const ruleList = (rules.data ?? []) as RiskRule[];
+  const alertList = (alerts.data ?? []) as RiskAlert[];
+  const violationList = (violations.data ?? []) as RuleViolation[];
 
   if (!d) {
     return (
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-        <PageHeader title="Risk Management" description="Central hub for controlling trading risk" />
-        <EmptyState message="No risk data" description="Start trading to see risk management analytics." />
-      </motion.div>
+      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Risk Management</h1><p className="text-sm text-[#71717A] mt-0.5">Risk control center</p></div></div>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#27272A]"><Shield className="h-6 w-6 text-[#71717A]" /></div>
+          <p className="text-sm font-medium text-[#A1A1AA]">No risk data yet</p>
+          <p className="text-xs text-[#71717A] mt-1 max-w-sm">Start trading to see risk management analytics and exposure data.</p>
+        </div>
+      </div>
     );
   }
 
-  const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: Shield },
-    { id: 'calculator', label: 'Calculator', icon: Calculator },
-    { id: 'rules', label: 'Rules', icon: Settings },
-    { id: 'exposure', label: 'Exposure', icon: Activity },
-    { id: 'alerts', label: 'Alerts', icon: Bell },
-    { id: 'validation', label: 'Validate', icon: ShieldCheck },
-    { id: 'history', label: 'History', icon: Clock },
-  ];
-
-  const pnlColor = (val: number) => val >= 0 ? 'text-success' : 'text-destructive';
-  const pnlBg = (val: number) => val >= 0 ? 'bg-success/10' : 'bg-destructive/10';
-
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      <PageHeader
-        title="Risk Management"
-        description="Central hub for controlling trading risk before, during, and after execution"
-        actions={
-          <Button variant="outline" size="sm" onClick={() => dashboard.refetch()}>
-            <RotateCcw className="h-4 w-4 mr-1" />
-            Refresh
-          </Button>
-        }
-      />
+    <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Risk Management</h1><p className="text-sm text-[#71717A] mt-0.5">Risk control center</p></div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={handleRetry}><RotateCcw className="h-4 w-4 mr-1" />Refresh</Button>
+        </div>
+      </motion.div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-1 p-1 bg-muted rounded-lg overflow-x-auto">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap',
-                activeTab === tab.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-              {tab.id === 'alerts' && alertList.length > 0 && (
-                <span className="ml-1 rounded-full bg-destructive/20 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
-                  {alertList.length}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* Executive KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <MetricCard label="Account Balance" value={`$${(d.account_balance ?? 0).toLocaleString()}`} icon={Wallet} accent={(d.account_balance ?? 0) > 0 ? 'success' : 'default'} />
+        <MetricCard label="Equity" value={`$${(d.equity ?? 0).toLocaleString()}`} icon={DollarSign} accent={(d.equity ?? 0) >= (d.account_balance ?? 0) ? 'success' : 'danger'} />
+        <MetricCard label="Daily P&L" value={`$${(d.daily_pnl ?? 0).toFixed(2)}`} icon={TrendingUp} accent={(d.daily_pnl ?? 0) >= 0 ? 'success' : 'danger'} />
+        <MetricCard label="Weekly P&L" value={`$${(d.weekly_pnl ?? 0).toFixed(2)}`} icon={BarChart3} accent={(d.weekly_pnl ?? 0) >= 0 ? 'success' : 'danger'} />
+        <MetricCard label="Monthly P&L" value={`$${(d.monthly_pnl ?? 0).toFixed(2)}`} icon={Activity} accent={(d.monthly_pnl ?? 0) >= 0 ? 'success' : 'danger'} />
+        <MetricCard label="Current Risk" value={`${(d.current_risk_percent ?? 0).toFixed(2)}%`} icon={Target} accent={(d.current_risk_percent ?? 0) > 5 ? 'danger' : (d.current_risk_percent ?? 0) > 2 ? 'warning' : 'success'} />
+        <MetricCard label="Max Drawdown" value={`${(d.max_drawdown ?? 0).toFixed(2)}%`} icon={TrendingDown} accent={(d.max_drawdown ?? 0) > 20 ? 'danger' : (d.max_drawdown ?? 0) > 10 ? 'warning' : 'success'} />
+        <MetricCard label="Open Positions" value={String(d.open_positions ?? 0)} icon={Hash} sub={`${(d.total_exposure ?? 0).toFixed(1)}% exposure`} />
       </div>
 
-      {/* Dashboard Tab */}
-      {activeTab === 'dashboard' && (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-          {/* Account & P&L */}
-          <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <KpiCard title="Account Balance" value={`$${(d.account_balance ?? 0).toLocaleString()}`} icon={Wallet} variant="info" size="sm" />
-            <KpiCard title="Equity" value={`$${(d.equity ?? 0).toLocaleString()}`} icon={DollarSign} variant="info" size="sm" />
-            <KpiCard title="Daily P&L" value={`$${(d.daily_pnl ?? 0).toFixed(2)}`} icon={TrendingDown} variant={(d.daily_pnl ?? 0) >= 0 ? 'success' : 'danger'} size="sm" />
-            <KpiCard title="Weekly P&L" value={`$${(d.weekly_pnl ?? 0).toFixed(2)}`} icon={BarChart3} variant={(d.weekly_pnl ?? 0) >= 0 ? 'success' : 'danger'} size="sm" />
-            <KpiCard title="Monthly P&L" value={`$${(d.monthly_pnl ?? 0).toFixed(2)}`} icon={Activity} variant={(d.monthly_pnl ?? 0) >= 0 ? 'success' : 'danger'} size="sm" />
-          </motion.div>
-
-          {/* Risk Usage */}
-          <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <KpiCard title="Current Risk %" value={`${(d.current_risk_percent ?? 0).toFixed(2)}%`} icon={Target} variant={(d.current_risk_percent ?? 0) > 5 ? 'danger' : 'warning'} size="sm" />
-            <KpiCard title="Open Risk" value={`${(d.open_risk ?? 0).toFixed(2)}%`} icon={AlertTriangle} variant="warning" size="sm" />
-            <KpiCard title="Available Risk" value={`${(d.available_risk ?? 0).toFixed(2)}%`} icon={ShieldCheck} variant="success" size="sm" />
-            <KpiCard title="Daily Risk Left" value={`${(d.daily_risk_remaining ?? 0).toFixed(2)}%`} icon={Clock} variant={(d.daily_risk_remaining ?? 0) < 1 ? 'danger' : 'info'} size="sm" />
-            <KpiCard title="Open Positions" value={d.open_positions ?? 0} icon={Hash} variant="info" size="sm" />
-          </motion.div>
-
-          {/* Drawdown */}
-          <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
-            <KpiCard title="Max Drawdown" value={`${(d.max_drawdown ?? 0).toFixed(2)}%`} icon={TrendingDown} variant="danger" size="sm" />
-            <KpiCard title="Current Drawdown" value={`${(d.current_drawdown ?? 0).toFixed(2)}%`} icon={AlertOctagon} variant={(d.current_drawdown ?? 0) > 5 ? 'danger' : 'warning'} size="sm" />
-            <KpiCard title="Recovery Progress" value={`${(d.recovery_progress ?? 0).toFixed(1)}%`} icon={RotateCcw} variant={(d.recovery_progress ?? 0) > 50 ? 'success' : 'warning'} size="sm" />
-          </motion.div>
-
-          {/* Alert & Violation Banner */}
-          {((d.active_alerts ?? 0) > 0 || (d.rule_violations ?? 0) > 0) && (
-            <motion.div variants={item}>
-              <Card className={cn((d.active_alerts ?? 0) > 0 ? 'border-destructive/50' : 'border-warning/50')}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', (d.active_alerts ?? 0) > 0 ? 'bg-destructive/10' : 'bg-warning/10')}>
-                      {(d.active_alerts ?? 0) > 0 ? <AlertOctagon className="h-5 w-5 text-destructive" /> : <AlertTriangle className="h-5 w-5 text-warning" />}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground">
-                        {(d.active_alerts ?? 0)} Active Alert{(d.active_alerts ?? 0) !== 1 ? 's' : ''} • {(d.rule_violations ?? 0)} Rule Violation{(d.rule_violations ?? 0) !== 1 ? 's' : ''}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">Review your risk settings and open positions</p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setActiveTab('alerts')} className="ml-auto">
-                      View Alerts
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Drawdown Chart */}
-          <motion.div variants={item}>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                <CardTitle className="text-sm font-medium">Drawdown Timeline</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DrawdownChart data={dd} />
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Exposure Breakdown */}
-          <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Exposure by Pair</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ExposurePie
-                  data={(d.exposure?.by_pair || []).map((p) => ({ name: p.name, value: p.risk }))}
-                  label="pair"
-                />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Exposure by Direction</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ExposurePie
-                  data={(d.exposure?.by_direction || []).map((p) => ({ name: p.name, value: p.risk }))}
-                  label="direction"
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Calculator Tab */}
-      {activeTab === 'calculator' && (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-          <PositionSizeCalculator projectId={projectId!} />
-        </motion.div>
-      )}
-
-      {/* Rules Tab */}
-      {activeTab === 'rules' && (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-          {showCreateRule && <CreateRuleDialog projectId={projectId!} onClose={() => setShowCreateRule(false)} />}
-
-          <motion.div variants={item} className="flex justify-between items-center">
-            <h3 className="text-sm font-medium text-foreground">Risk Rules ({ruleList.length})</h3>
-            <Button size="sm" onClick={() => setShowCreateRule(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add Rule
-            </Button>
-          </motion.div>
-
-          {ruleList.length > 0 ? (
-            <motion.div variants={item} className="space-y-3">
-              {ruleList.map((rule) => (
-                <Card key={rule.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', rule.is_active ? 'bg-primary/10' : 'bg-muted')}>
-                          {rule.severity === 'critical' ? <ShieldAlert className="h-5 w-5 text-destructive" /> :
-                           rule.severity === 'warning' ? <AlertTriangle className="h-5 w-5 text-warning" /> :
-                           <Info className="h-5 w-5 text-muted-foreground" />}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground">{rule.name}</h4>
-                          <p className="text-xs text-muted-foreground">{rule.rule_type.replace(/_/g, ' ')} • Limit: {rule.limit_value}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant={rule.is_active ? 'default' : 'secondary'}>
-                          {rule.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                        {rule.violation_count > 0 && (
-                          <Badge variant="destructive">{rule.violation_count} violations</Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteRule.mutate(rule.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </motion.div>
-          ) : (
-            <EmptyState message="No risk rules" description="Create rules to protect your capital." />
-          )}
-        </motion.div>
-      )}
-
-      {/* Exposure Tab */}
-      {activeTab === 'exposure' && (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-          <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            <KpiCard title="Total Exposure" value={`${(d.total_exposure ?? 0).toFixed(2)}%`} icon={Activity} variant="warning" size="sm" />
-            <KpiCard title="Open Positions" value={d.open_positions ?? 0} icon={Hash} variant="info" size="sm" />
-            <KpiCard title="Max Single" value={`${(d.exposure?.max_single_exposure || 0).toFixed(2)}%`} icon={Target} variant="info" size="sm" />
-            <KpiCard title="Correlation Risk" value={`${(d.exposure?.correlation_risk || 0).toFixed(2)}%`} icon={AlertTriangle} variant="warning" size="sm" />
-          </motion.div>
-
-          <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader><CardTitle className="text-sm font-medium">By Pair</CardTitle></CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Pair</th>
-                        <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">Positions</th>
-                        <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">Risk</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(d.exposure?.by_pair || []).map((p, i) => (
-                        <tr key={p.name} className={cn('border-b border-border/50', i % 2 === 0 && 'bg-muted/20')}>
-                          <td className="px-4 py-2.5 font-medium">{p.name}</td>
-                          <td className="px-4 py-2.5 text-right">{p.count}</td>
-                          <td className="px-4 py-2.5 text-right font-mono">{p.risk.toFixed(2)}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle className="text-sm font-medium">By Direction</CardTitle></CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Direction</th>
-                        <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">Positions</th>
-                        <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">Risk</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(d.exposure?.by_direction || []).map((p, i) => (
-                        <tr key={p.name} className={cn('border-b border-border/50', i % 2 === 0 && 'bg-muted/20')}>
-                          <td className="px-4 py-2.5 font-medium">{p.name}</td>
-                          <td className="px-4 py-2.5 text-right">{p.count}</td>
-                          <td className="px-4 py-2.5 text-right font-mono">{p.risk.toFixed(2)}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Alerts Tab */}
-      {activeTab === 'alerts' && (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-          {alertList.length > 0 ? (
-            <motion.div variants={item} className="space-y-3">
-              {alertList.map((alert) => (
-                <Card key={alert.id} className={cn(
-                  alert.severity === 'critical' && 'border-destructive/50',
-                  alert.severity === 'warning' && 'border-warning/50'
-                )}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', pnlBg(alert.severity === 'critical' ? -1 : 0))}>
-                          {alert.severity === 'critical' ? <AlertOctagon className="h-5 w-5 text-destructive" /> :
-                           alert.severity === 'warning' ? <AlertTriangle className="h-5 w-5 text-warning" /> :
-                           <Info className="h-5 w-5 text-info" />}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground">{alert.title}</h4>
-                          <p className="text-xs text-muted-foreground">{alert.message}</p>
-                          <p className="text-[10px] text-muted-foreground mt-1">{new Date(alert.created_at).toLocaleString()}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={alert.severity === 'critical' ? 'destructive' : alert.severity === 'warning' ? 'secondary' : 'outline'}>
-                          {alert.severity}
-                        </Badge>
-                        <Button variant="ghost" size="sm" onClick={() => dismissAlert.mutate(alert.id)}>
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </motion.div>
-          ) : (
-            <EmptyState message="No active alerts" description="Your risk alerts will appear here." />
-          )}
-        </motion.div>
-      )}
-
-      {/* Validation Tab */}
-      {activeTab === 'validation' && (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-          <TradeValidator projectId={projectId!} />
-        </motion.div>
-      )}
-
-      {/* History Tab */}
-      {activeTab === 'history' && (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-          <motion.div variants={item}>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <CardTitle className="text-sm font-medium">Risk History (30 Days)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={hist}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-                      <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="daily_pnl" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} name="Daily P&L" />
-                      <Line type="monotone" dataKey="drawdown" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} name="Drawdown %" />
-                      <Line type="monotone" dataKey="risk_percent" stroke="hsl(var(--warning))" strokeWidth={2} dot={false} name="Risk %" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {violationList.length > 0 && (
-            <motion.div variants={item}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">Rule Violations</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Rule</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Type</th>
-                          <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">Limit</th>
-                          <th className="text-right px-4 py-2.5 text-xs font-medium text-muted-foreground">Actual</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Severity</th>
-                          <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {violationList.map((v, i) => (
-                          <tr key={i} className={cn('border-b border-border/50', i % 2 === 0 && 'bg-muted/20')}>
-                            <td className="px-4 py-2.5 font-medium">{v.rule_name}</td>
-                            <td className="px-4 py-2.5 text-muted-foreground">{v.rule_type.replace(/_/g, ' ')}</td>
-                            <td className="px-4 py-2.5 text-right font-mono">{v.limit_value}</td>
-                            <td className="px-4 py-2.5 text-right font-mono text-destructive">{v.actual_value}</td>
-                            <td className="px-4 py-2.5"><Badge variant={v.severity === 'critical' ? 'destructive' : 'secondary'}>{v.severity}</Badge></td>
-                            <td className="px-4 py-2.5 text-xs text-muted-foreground">{v.timestamp ? new Date(v.timestamp).toLocaleString() : 'N/A'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </motion.div>
-      )}
-    </motion.div>
-  );
-}
-
-function PositionSizeCalculator({ projectId }: { projectId: string }) {
-  const calc = useCalculatePositionSize(projectId);
-  const [form, setForm] = useState({
-    account_balance: 10000,
-    risk_percent: 1.0,
-    entry_price: 1.1000,
-    stop_loss: 1.0950,
-    take_profit: 1.1100,
-    pip_value: 10,
-    instrument: 'forex',
-  });
-  const [result, setResult] = useState<PositionSizeResult | null>(null);
-
-  const handleCalc = () => {
-    calc.mutate(form, { onSuccess: (data) => setResult(data) });
-  };
-
-  return (
-    <>
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-2">
-          <Calculator className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-sm font-medium">Position Size Calculator</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Account Balance ($)</label>
-              <input type="number" value={form.account_balance} onChange={(e) => setForm({ ...form, account_balance: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
+      {/* Alert Banner */}
+      {((d.active_alerts ?? 0) > 0 || (d.rule_violations ?? 0) > 0) && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <div className={cn('rounded-xl border p-4 flex items-center gap-4', (d.active_alerts ?? 0) > 0 ? 'border-[#EF4444]/50 bg-[#EF4444]/5' : 'border-[#F59E0B]/50 bg-[#F59E0B]/5')}>
+            <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', (d.active_alerts ?? 0) > 0 ? 'bg-[#EF4444]/10' : 'bg-[#F59E0B]/10')}>
+              {(d.active_alerts ?? 0) > 0 ? <AlertOctagon className="h-5 w-5 text-[#EF4444]" /> : <AlertTriangle className="h-5 w-5 text-[#F59E0B]" />}
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Risk %</label>
-              <input type="number" step="0.1" value={form.risk_percent} onChange={(e) => setForm({ ...form, risk_percent: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Entry Price</label>
-              <input type="number" step="0.0001" value={form.entry_price} onChange={(e) => setForm({ ...form, entry_price: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Stop Loss</label>
-              <input type="number" step="0.0001" value={form.stop_loss} onChange={(e) => setForm({ ...form, stop_loss: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Take Profit</label>
-              <input type="number" step="0.0001" value={form.take_profit} onChange={(e) => setForm({ ...form, take_profit: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Pip Value ($)</label>
-              <input type="number" step="0.1" value={form.pip_value} onChange={(e) => setForm({ ...form, pip_value: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Instrument</label>
-              <select value={form.instrument} onChange={(e) => setForm({ ...form, instrument: e.target.value })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                <option value="forex">Forex</option>
-                <option value="crypto">Crypto</option>
-                <option value="stocks">Stocks</option>
-                <option value="futures">Futures</option>
-              </select>
-            </div>
-            <div className="flex items-end">
-              <Button onClick={handleCalc} disabled={calc.isPending} className="w-full">
-                {calc.isPending ? 'Calculating...' : 'Calculate'}
-              </Button>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[#FAFAFA]">{(d.active_alerts ?? 0)} Active Alert{(d.active_alerts ?? 0) !== 1 ? 's' : ''} &bull; {(d.rule_violations ?? 0)} Rule Violation{(d.rule_violations ?? 0) !== 1 ? 's' : ''}</p>
+              <p className="text-xs text-[#71717A]">Review your risk settings and open positions</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {result && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="rounded-lg bg-muted/30 p-4 text-center">
-                <div className="text-2xl font-bold text-foreground">{result.position_size.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground mt-1">Position Size (units)</div>
-              </div>
-              <div className="rounded-lg bg-muted/30 p-4 text-center">
-                <div className="text-2xl font-bold text-foreground">{result.lot_size}</div>
-                <div className="text-xs text-muted-foreground mt-1">Lot Size</div>
-              </div>
-              <div className="rounded-lg bg-muted/30 p-4 text-center">
-                <div className={cn('text-2xl font-bold', 'text-destructive')}>${result.dollar_risk}</div>
-                <div className="text-xs text-muted-foreground mt-1">Dollar Risk</div>
-              </div>
-              <div className="rounded-lg bg-muted/30 p-4 text-center">
-                <div className={cn('text-2xl font-bold', result.expected_rr >= 1 ? 'text-success' : 'text-warning')}>{result.expected_rr}R</div>
-                <div className="text-xs text-muted-foreground mt-1">Expected R:R</div>
-              </div>
-              <div className="rounded-lg bg-success/10 p-4 text-center">
-                <div className="text-2xl font-bold text-success">+${result.potential_profit}</div>
-                <div className="text-xs text-muted-foreground mt-1">Potential Profit</div>
-              </div>
-              <div className="rounded-lg bg-destructive/10 p-4 text-center">
-                <div className="text-2xl font-bold text-destructive">-${result.potential_loss}</div>
-                <div className="text-xs text-muted-foreground mt-1">Potential Loss</div>
-              </div>
-              <div className="rounded-lg bg-muted/30 p-4 text-center">
-                <div className="text-2xl font-bold text-foreground">{result.stop_distance_pips}</div>
-                <div className="text-xs text-muted-foreground mt-1">Stop Distance (pips)</div>
-              </div>
-              <div className="rounded-lg bg-muted/30 p-4 text-center">
-                <div className="text-2xl font-bold text-foreground">${result.risk_per_pip}</div>
-                <div className="text-xs text-muted-foreground mt-1">Risk Per Pip</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        </motion.div>
       )}
-    </>
-  );
-}
 
-function TradeValidator({ projectId }: { projectId: string }) {
-  const validate = useValidateTrade(projectId);
-  const [form, setForm] = useState({ pair: 'EURUSD', direction: 'LONG', entry_price: 1.1000, stop_loss: 1.0950, take_profit: 1.1100, risk_percent: 1.0 });
-  const [result, setResult] = useState<TradeValidationResult | null>(null);
-
-  const handleValidate = () => {
-    validate.mutate(form, { onSuccess: (data) => setResult(data) });
-  };
-
-  return (
-    <>
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-sm font-medium">Trade Validation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Pair</label>
-              <input value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Direction</label>
-              <select value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-                <option value="LONG">Long</option>
-                <option value="SHORT">Short</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Entry Price</label>
-              <input type="number" step="0.0001" value={form.entry_price} onChange={(e) => setForm({ ...form, entry_price: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Stop Loss</label>
-              <input type="number" step="0.0001" value={form.stop_loss} onChange={(e) => setForm({ ...form, stop_loss: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Take Profit</label>
-              <input type="number" step="0.0001" value={form.take_profit} onChange={(e) => setForm({ ...form, take_profit: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Risk %</label>
-              <input type="number" step="0.1" value={form.risk_percent} onChange={(e) => setForm({ ...form, risk_percent: parseFloat(e.target.value) || 0 })} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={handleValidate} disabled={validate.isPending} className="w-full">
-                {validate.isPending ? 'Validating...' : 'Validate Trade'}
-              </Button>
-            </div>
+      {/* Drawdown Timeline + Risk Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="lg:col-span-2 rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="flex items-center gap-2 mb-4"><TrendingDown className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Drawdown Timeline</h3></div>
+          <div className="h-60">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dd.length > 0 ? dd : [{ date: '', drawdown: 0 }]} {...chartDefaultProps}>
+                <defs><linearGradient id="riskDDGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#EF4444" stopOpacity={0.25} /><stop offset="100%" stopColor="#EF4444" stopOpacity={0} /></linearGradient></defs>
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v}%`} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toFixed(2)}%`, 'Drawdown']} />
+                <Area type="monotone" dataKey="drawdown" stroke="#EF4444" strokeWidth={2} fill="url(#riskDDGrad)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
+        </motion.div>
 
-      {result && (
-        <Card className={cn(
-          result.status === 'approved' && 'border-success/50',
-          result.status === 'warning' && 'border-warning/50',
-          result.status === 'rejected' && 'border-destructive/50'
-        )}>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              {result.status === 'approved' ? <CheckCircle className="h-5 w-5 text-success" /> :
-               result.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-warning" /> :
-               <XCircle className="h-5 w-5 text-destructive" />}
-              <CardTitle className={cn('text-sm font-medium capitalize', result.status === 'approved' ? 'text-success' : result.status === 'warning' ? 'text-warning' : 'text-destructive')}>
-                {result.status}
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="rounded-lg bg-muted/30 p-3 text-center">
-                <div className="text-lg font-bold text-foreground">{result.risk_amount ? `$${result.risk_amount}` : 'N/A'}</div>
-                <div className="text-xs text-muted-foreground">Risk Amount</div>
-              </div>
-              <div className="rounded-lg bg-success/10 p-3 text-center">
-                <div className="text-lg font-bold text-success">{result.potential_profit ? `+$${result.potential_profit}` : 'N/A'}</div>
-                <div className="text-xs text-muted-foreground">Potential Profit</div>
-              </div>
-              <div className="rounded-lg bg-destructive/10 p-3 text-center">
-                <div className="text-lg font-bold text-destructive">{result.potential_loss ? `-$${result.potential_loss}` : 'N/A'}</div>
-                <div className="text-xs text-muted-foreground">Potential Loss</div>
-              </div>
-              <div className="rounded-lg bg-muted/30 p-3 text-center">
-                <div className="text-lg font-bold text-foreground">{result.rr_ratio ? `${result.rr_ratio}R` : 'N/A'}</div>
-                <div className="text-xs text-muted-foreground">R:R Ratio</div>
-              </div>
-            </div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="flex items-center gap-2 mb-4"><Shield className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Risk Metrics</h3></div>
+          <div className="space-y-2">
+            <InsightBadge label="Open Risk" value={`${(d.open_risk ?? 0).toFixed(2)}%`} good={(d.open_risk ?? 0) < 3} />
+            <InsightBadge label="Available Risk" value={`${(d.available_risk ?? 0).toFixed(2)}%`} good={(d.available_risk ?? 0) > 2} />
+            <InsightBadge label="Daily Risk Left" value={`${(d.daily_risk_remaining ?? 0).toFixed(2)}%`} good={(d.daily_risk_remaining ?? 0) > 1} />
+            <InsightBadge label="Current Drawdown" value={`${(d.current_drawdown ?? 0).toFixed(2)}%`} good={(d.current_drawdown ?? 0) < 5} />
+            <InsightBadge label="Recovery Progress" value={`${(d.recovery_progress ?? 0).toFixed(1)}%`} good={(d.recovery_progress ?? 0) > 50} />
+            <InsightBadge label="Total Exposure" value={`${(d.total_exposure ?? 0).toFixed(2)}%`} good={(d.total_exposure ?? 0) < 10} />
+          </div>
+        </motion.div>
+      </div>
 
-            <div className="space-y-2">
-              {result.checks.map((check, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/20">
-                  {check.passed ? <CheckCircle className="h-4 w-4 text-success shrink-0" /> :
-                   check.severity === 'critical' ? <XCircle className="h-4 w-4 text-destructive shrink-0" /> :
-                   <AlertTriangle className="h-4 w-4 text-warning shrink-0" />}
-                  <div className="flex-1">
-                    <span className="text-sm font-medium">{check.check_name}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{check.message}</span>
+      {/* Exposure Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {[{ title: 'Exposure by Pair', key: 'by_pair', data: d.exposure?.by_pair || [] },
+          { title: 'Exposure by Direction', key: 'by_direction', data: d.exposure?.by_direction || [] }].map((section) => (
+          <motion.div key={section.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+            <div className="flex items-center gap-2 mb-4"><Activity className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">{section.title}</h3></div>
+            {section.data.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b border-[#27272A]"><th className="text-left px-3 py-2 text-[11px] font-medium text-[#71717A]">Name</th><th className="text-right px-3 py-2 text-[11px] font-medium text-[#71717A]">Positions</th><th className="text-right px-3 py-2 text-[11px] font-medium text-[#71717A]">Risk</th></tr></thead>
+                  <tbody>
+                    {section.data.map((p: any, i: number) => (
+                      <tr key={p.name || i} className="border-b border-[#27272A]/50">
+                        <td className="px-3 py-2 text-xs text-[#A1A1AA]">{p.name}</td>
+                        <td className="px-3 py-2 text-xs text-right font-mono text-[#A1A1AA]">{p.count}</td>
+                        <td className="px-3 py-2 text-xs text-right font-mono text-[#FAFAFA]">{p.risk.toFixed(2)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : <p className="text-xs text-[#71717A] py-8 text-center">No exposure data</p>}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Risk History */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="flex items-center gap-2 mb-4"><Clock className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Risk History (30 Days)</h3></div>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={hist} {...chartDefaultProps}>
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Line type="monotone" dataKey="daily_pnl" stroke="#4F46E5" strokeWidth={2} dot={false} name="Daily P&L" />
+              <Line type="monotone" dataKey="drawdown" stroke="#EF4444" strokeWidth={2} dot={false} name="Drawdown %" />
+              <Line type="monotone" dataKey="risk_percent" stroke="#F59E0B" strokeWidth={2} dot={false} name="Risk %" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      {/* Risk Rules */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Risk Rules ({ruleList.length})</h3></div>
+          <Button size="sm" onClick={() => setShowCreateRule(!showCreateRule)}><Plus className="h-4 w-4 mr-1" />Add Rule</Button>
+        </div>
+        {showCreateRule && <CreateRuleDialog projectId={projectId!} onClose={() => setShowCreateRule(false)} />}
+        {ruleList.length > 0 ? (
+          <div className="space-y-2">
+            {ruleList.map((rule) => (
+              <div key={rule.id} className="flex items-center justify-between rounded-lg bg-[#111113] px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', rule.severity === 'critical' ? 'bg-[#EF4444]/10' : rule.severity === 'warning' ? 'bg-[#F59E0B]/10' : 'bg-[#4F46E5]/10')}>
+                    {rule.severity === 'critical' ? <Shield className="h-4 w-4 text-[#EF4444]" /> : rule.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-[#F59E0B]" /> : <Info className="h-4 w-4 text-[#4F46E5]" />}
                   </div>
-                  <Badge variant={check.passed ? 'default' : check.severity === 'critical' ? 'destructive' : 'secondary'}>
-                    {check.passed ? 'Pass' : check.severity}
-                  </Badge>
+                  <div>
+                    <p className="text-sm font-medium text-[#FAFAFA]">{rule.name}</p>
+                    <p className="text-xs text-[#71717A]">{rule.rule_type.replace(/_/g, ' ')} &bull; Limit: {rule.limit_value}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex items-center gap-2">
+                  <Badge variant={rule.is_active ? 'success' : 'secondary'} size="sm">{rule.is_active ? 'Active' : 'Inactive'}</Badge>
+                  {rule.violation_count > 0 && <Badge variant="warning" size="sm">{rule.violation_count} violations</Badge>}
+                  <Button variant="ghost" size="icon" onClick={() => deleteRule.mutate(rule.id)}><Trash2 className="h-4 w-4 text-[#EF4444]" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : <p className="text-xs text-[#71717A] py-6 text-center">No risk rules. Create one to protect your capital.</p>}
+      </motion.div>
+
+      {/* Alerts */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="flex items-center gap-2 mb-4"><Bell className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Alerts ({alertList.length})</h3></div>
+        {alertList.length > 0 ? (
+          <div className="space-y-2">
+            {alertList.map((alert) => (
+              <div key={alert.id} className={cn('flex items-center justify-between rounded-lg px-4 py-3', alert.severity === 'critical' ? 'bg-[#EF4444]/5 border border-[#EF4444]/20' : alert.severity === 'warning' ? 'bg-[#F59E0B]/5 border border-[#F59E0B]/20' : 'bg-[#111113]')}>
+                <div className="flex items-center gap-3">
+                  <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', alert.severity === 'critical' ? 'bg-[#EF4444]/10' : alert.severity === 'warning' ? 'bg-[#F59E0B]/10' : 'bg-[#4F46E5]/10')}>
+                    {alert.severity === 'critical' ? <AlertOctagon className="h-4 w-4 text-[#EF4444]" /> : alert.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-[#F59E0B]" /> : <Info className="h-4 w-4 text-[#4F46E5]" />}
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#FAFAFA]">{alert.title}</p>
+                    <p className="text-xs text-[#71717A]">{alert.message} &bull; {new Date(alert.created_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={alert.severity === 'critical' ? 'destructive' : alert.severity === 'warning' ? 'warning' : 'default'} size="sm">{alert.severity}</Badge>
+                  <Button variant="ghost" size="icon" onClick={() => dismissAlert.mutate(alert.id)}><XCircle className="h-4 w-4 text-[#71717A]" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : <p className="text-xs text-[#71717A] py-6 text-center">No active alerts</p>}
+      </motion.div>
+
+      {/* Tools Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <button onClick={() => setShowCalculator(!showCalculator)} className="flex items-center gap-2 w-full mb-4">
+            <Calculator className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Position Size Calculator</h3>
+          </button>
+          {showCalculator && <PositionSizeCalculator projectId={projectId!} />}
+          {!showCalculator && <p className="text-xs text-[#71717A]">Expand to calculate optimal position sizes based on risk parameters.</p>}
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <button onClick={() => setShowValidator(!showValidator)} className="flex items-center gap-2 w-full mb-4">
+            <ShieldCheck className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Trade Validator</h3>
+          </button>
+          {showValidator && <TradeValidator projectId={projectId!} />}
+          {!showValidator && <p className="text-xs text-[#71717A]">Expand to validate trade ideas against active risk rules.</p>}
+        </motion.div>
+      </div>
+
+      {/* Rule Violations */}
+      {violationList.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="flex items-center gap-2 mb-4"><AlertOctagon className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Rule Violations ({violationList.length})</h3></div>
+          <DataTable
+            data={violationList}
+            columns={[
+              { id: 'rule', header: 'Rule', accessor: (row: RuleViolation) => row.rule_name, width: '120px' },
+              { id: 'type', header: 'Type', accessor: (row: RuleViolation) => row.rule_type.replace(/_/g, ' '), width: '120px', hideOnMobile: true },
+              { id: 'limit', header: 'Limit', accessor: (row: RuleViolation) => String(row.limit_value), width: '60px', hideOnMobile: true },
+              { id: 'actual', header: 'Actual', accessor: (row: RuleViolation) => (<span className="text-[#EF4444]">{row.actual_value}</span>), width: '60px' },
+              { id: 'severity', header: 'Severity', accessor: (row: RuleViolation) => (<Badge variant={row.severity === 'critical' ? 'destructive' : 'warning'} size="sm">{row.severity}</Badge>), width: '80px' },
+              { id: 'time', header: 'Time', accessor: (row: RuleViolation) => row.timestamp ? new Date(row.timestamp).toLocaleString() : '-', width: '140px', hideOnMobile: true },
+            ]}
+            pageSize={10}
+          />
+        </motion.div>
       )}
-    </>
+    </div>
   );
 }
