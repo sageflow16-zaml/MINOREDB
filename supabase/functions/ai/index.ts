@@ -339,7 +339,8 @@ async function buildProfile(supabase: ReturnType<typeof createClient>, projectId
   );
   if (isAiError(result)) return { warning: JSON.parse(result)._error };
 
-  const profile = JSON.parse(result);
+  let profile: any;
+  try { profile = JSON.parse(result); } catch { return { warning: 'Failed to parse AI profile response' }; }
   const { data: existing } = await supabase.from('trader_profile').select('id').eq('project_id', projectId).maybeSingle();
   if (existing) {
     await supabase.from('trader_profile').update({
