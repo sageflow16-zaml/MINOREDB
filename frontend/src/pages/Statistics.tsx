@@ -204,7 +204,7 @@ export default function StatisticsPage() {
         <StatCard label="Total Trades" value={String(o.total_trades)} icon={BarChart3} sub={`${o.closed_trades} closed, ${o.open_trades} open`} />
         <StatCard label="Win Rate" value={`${o.win_rate}%`} icon={Target} accent={o.win_rate >= 50 ? 'success' : 'danger'} sub={`${o.wins}W / ${o.losses}L`} />
         <StatCard label="Avg R:R" value={o.avg_rr ? o.avg_rr.toFixed(2) : '—'} icon={Activity} accent={o.avg_rr >= 1.5 ? 'success' : o.avg_rr >= 1 ? 'warning' : 'danger'} />
-        <StatCard label="Profit Factor" value={r?.profit_factor ? r.profit_factor.toFixed(2) : '—'} icon={Shield} accent={r?.profit_factor >= 1.5 ? 'success' : r?.profit_factor >= 1 ? 'warning' : 'danger'} />
+        <StatCard label="Profit Factor" value={r?.profit_factor ? Number(r.profit_factor).toFixed(2) : '—'} icon={Shield} accent={(r?.profit_factor ?? 0) >= 1.5 ? 'success' : (r?.profit_factor ?? 0) >= 1 ? 'warning' : 'danger'} />
         <StatCard label="Expectancy" value={formatCurrency(o.expectancy)} icon={TrendingUp} accent={o.expectancy >= 0 ? 'success' : 'danger'} sub="per trade" />
         <StatCard label="Net P&L" value={formatCurrency(o.total_pnl)} icon={DollarSign} accent={isPnlPositive ? 'success' : 'danger'} />
       </div>

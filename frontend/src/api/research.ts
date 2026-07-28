@@ -6,8 +6,23 @@ export { ResearchDetail, ResearchSession };
 export type { };
 
 export const researchService = {
-  run: (projectId: string, question: string): Promise<{ session_id: string; status: string; message: string }> =>
-    callEdgeFunction('ai', { operation: 'rag-chat', project_id: projectId, data: { conversation_id: '', message: question } }),
+  run: async (projectId: string, question: string): Promise<{ session_id: string; status: string; message: string }> => {
+    try {
+      return await callEdgeFunction('ai', { operation: 'rag-chat', project_id: projectId, data: { conversation_id: '', message: question } });
+    } catch {
+      const { data: conversation, error: convError } = await supabase
+        .from('ai_conversation')
+        .insert({ project_id: projectId, title: question, metadata: {} })
+        .select()
+        .single();
+      if (convError || !conversation) throw convError || new Error('Failed to create conversation');
+      const { error: msgError } = await supabase
+        .from('ai_message')
+        .insert({ conversation_id: conversation.id, role: 'user', content: question });
+      if (msgError) throw msgError;
+      return { session_id: conversation.id, status: 'created', message: 'Conversation created (offline mode)' };
+    }
+  },
 
   getSession: async (projectId: string, sessionId: string): Promise<ResearchDetail> => {
     const { data: conversation, error: convError } = await supabase

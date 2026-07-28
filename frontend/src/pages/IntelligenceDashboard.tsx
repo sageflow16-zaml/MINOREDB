@@ -47,7 +47,7 @@ const statusToColor = (s: string) => {
 export default function IntelligenceDashboard() {
   const { projectId } = useParams<{ projectId: string }>();
   const pid = projectId!;
-  const { data: dashboard, isLoading, error } = useAgentDashboard(pid);
+  const { data: dashboard, isLoading, error, refetch } = useAgentDashboard(pid);
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
   const [taskFormAgent, setTaskFormAgent] = useState('');
   const [taskFormType, setTaskFormType] = useState('analyze');
@@ -59,7 +59,7 @@ export default function IntelligenceDashboard() {
   const runWorkflow = useRunAgentWorkflow(pid);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorState message="Failed to load intelligence dashboard" />;
+  if (error) return <ErrorState message="Failed to load intelligence dashboard" onRetry={() => refetch()} />;
 
   const agents = dashboard?.agents || [];
   const pendingTasks = dashboard?.pending_tasks || [];

@@ -251,7 +251,7 @@ export default function AnalystPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between py-3">
                 <CardTitle className="text-xs font-medium">Evidence</CardTitle>
-                <Button variant="ghost" size="icon-sm" onClick={() => {}}>
+                <Button variant="ghost" size="icon-sm" onClick={() => setShowEvidence(false)}>
                   <X className="h-3 w-3" />
                 </Button>
               </CardHeader>

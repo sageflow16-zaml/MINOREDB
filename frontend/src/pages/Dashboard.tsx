@@ -164,12 +164,12 @@ export default function DashboardPage() {
     day: equityPeriod === '1W' ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i % 7] || `Day ${i + 1}`
       : equityPeriod === 'All' ? `W${Math.floor(i / 5) + 1}`
       : `Day ${i + 1}`,
-    value: (s?.total_pnl ?? 1000) * (1 + Math.sin(i / (days / 4)) * 0.2 + (Math.random() - 0.5) * 0.1),
+    value: (s?.total_pnl ?? 1000) * (1 + Math.sin(i / (days / 4)) * 0.2),
   }));
 
   const weeklyData = Array.from({ length: 7 }, (_, i) => ({
     day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
-    pnl: (Math.random() - 0.3) * 500,
+    pnl: 0,
   }));
 
   const recentTrades = trades.data?.slice(0, 5) ?? [];

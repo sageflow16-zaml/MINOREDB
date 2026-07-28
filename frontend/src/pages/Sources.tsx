@@ -8,6 +8,7 @@ import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { cn } from '../lib/utils';
+import toast from 'react-hot-toast';
 import {
   Upload, FileText, Brain, AlertTriangle, Trash2, Search,
   Bookmark, Layers, Link, CheckCircle, XCircle, Sparkles,
@@ -35,11 +36,31 @@ export default function SourcesPage() {
     return true;
   }) : [];
 
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
+  const ALLOWED_TYPES = ['text/plain', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg', 'image/gif'];
+  const ALLOWED_EXTENSIONS = ['.txt', '.pdf', '.docx', '.png', '.jpg', '.jpeg', '.gif'];
+
+  const validateFile = useCallback((file: File): string | null => {
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext) && !ALLOWED_TYPES.includes(file.type)) {
+      return `File type "${ext || file.type}" is not supported. Accepted: ${ALLOWED_EXTENSIONS.join(', ')}`;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return `File exceeds the maximum allowed size of 50 MB. Selected file is ${(file.size / (1024 * 1024)).toFixed(1)} MB.`;
+    }
+    return null;
+  }, []);
+
   const handleUpload = useCallback((file: File) => {
+    const validationError = validateFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
     const formData = new FormData();
     formData.append('file', file);
     uploadSource.mutate(formData);
-  }, [uploadSource]);
+  }, [uploadSource, validateFile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);

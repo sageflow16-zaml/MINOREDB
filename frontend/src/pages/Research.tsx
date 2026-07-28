@@ -83,7 +83,14 @@ export default function ResearchPage() {
   const runResearch = useCallback(() => {
     if (!question.trim() || !projectId) return;
     setActiveSessionId(null);
-    runMutation.mutate({ projectId, question: question.trim() }, { onSuccess: (data) => setActiveSessionId(data.session_id) });
+    runMutation.mutate({ projectId, question: question.trim() }, {
+      onSuccess: (data: any) => {
+        const id = data?.session_id || data?.conversation_id || data?.id;
+        if (id) {
+          setActiveSessionId(id);
+        }
+      },
+    });
   }, [question, projectId, runMutation]);
 
   const handleSubmit = (e: React.FormEvent) => {

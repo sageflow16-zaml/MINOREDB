@@ -35,8 +35,6 @@ export function Watchlist() {
       </div>
       <div className="space-y-0.5 max-h-[240px] overflow-y-auto">
         {items.map((item) => {
-          const change = (Math.random() - 0.5) * 2;
-          const isUp = change >= 0;
           return (
             <div
               key={item.symbol}
@@ -58,11 +56,7 @@ export function Watchlist() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono">{(Math.random() * 100 + 1).toFixed(4)}</span>
-                <span className={cn('text-[10px] flex items-center gap-0.5', isUp ? 'text-success' : 'text-destructive')}>
-                  {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-                  {change.toFixed(2)}%
-                </span>
+                <span className="text-xs text-muted-foreground">—</span>
               </div>
             </div>
           );

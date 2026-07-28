@@ -18,24 +18,12 @@ import type { ICTAnalysisResponse } from '../api/types';
 const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'XAUUSD', 'BTCUSD'];
 const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d', '1w'];
 
-function generateMockBars(count = 100) {
-  const bars = [];
-  let price = 1.1000;
+function generateEmptyBars(count = 100) {
   const now = Date.now();
-  for (let i = 0; i < count; i++) {
-    const change = (Math.random() - 0.48) * 0.002;
-    const o = price;
-    const c = price + change;
-    const h = Math.max(o, c) + Math.random() * 0.001;
-    const l = Math.min(o, c) - Math.random() * 0.001;
-    bars.push({
-      timestamp: new Date(now - (count - i) * 3600000).toISOString(),
-      open: o, high: h, low: l, close: c,
-      volume: Math.random() * 1000 + 100,
-    });
-    price = c;
-  }
-  return bars;
+  return Array.from({ length: count }, (_, i) => ({
+    timestamp: new Date(now - (count - i) * 3600000).toISOString(),
+    open: 0, high: 0, low: 0, close: 0, volume: 0,
+  }));
 }
 
 function normalizeICT(data: ICTAnalysisResponse | null): ICTAnalysisResponse | null {
@@ -160,7 +148,7 @@ export default function ICTSmartEngine() {
     if (!projectId) return;
     setAnalyzing(true);
     try {
-      const bars = generateMockBars(200);
+      const bars = generateEmptyBars(200);
       const result = await analyzeMutation.mutateAsync({
         symbol,
         timeframe,

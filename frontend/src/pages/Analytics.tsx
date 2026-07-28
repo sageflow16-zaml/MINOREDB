@@ -17,9 +17,9 @@ import {
 import { cn } from '../lib/utils';
 
 function formatCurrency(value: number | undefined | null): string {
-  if (value == null) return '—';
+  if (value == null || Number.isNaN(value)) return '—';
   const prefix = value >= 0 ? '+' : '';
-  return `${prefix}$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${prefix}$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const tooltipStyle = chartTooltipStyle.contentStyle;
@@ -130,22 +130,23 @@ export default function AnalyticsPage() {
   const insightCards = useMemo(() => {
     const cards: { title: string; description: string; icon: any; action?: { label: string; onClick: () => void } }[] = [];
     const o = stats.data?.overview;
+    const r = stats.data?.risk;
     const s = sessionData.data;
     const w = weekdayData.data;
     if (o && o.total_trades > 0) {
       if (s) {
-        const bestSession = Object.entries(s).sort((a: any, b: any) => b[1].win_rate - a[1].win_rate)[0];
-        if (bestSession) cards.push({ title: 'Best Session', description: `Your ${bestSession[0]} session has a ${bestSession[1].win_rate}% win rate with ${bestSession[1].trades} trades.`, icon: Clock, action: { label: 'Analyze Sessions', onClick: () => navigate(`/projects/${projectId}/statistics`) } });
+        const bestSession = Object.entries(s).sort((a: any, b: any) => (b[1].win_rate ?? 0) - (a[1].win_rate ?? 0))[0];
+        if (bestSession) cards.push({ title: 'Best Session', description: `Your ${bestSession[0]} session has a ${bestSession[1].win_rate ?? 0}% win rate with ${bestSession[1].trades ?? 0} trades.`, icon: Clock, action: { label: 'Analyze Sessions', onClick: () => navigate(`/projects/${projectId}/statistics`) } });
       }
       if (w) {
-        const bestDay = Object.entries(w).sort((a: any, b: any) => b[1].win_rate - a[1].win_rate)[0];
-        if (bestDay) cards.push({ title: 'Best Trading Day', description: `${bestDay[0]} is your strongest day with ${bestDay[1].win_rate}% win rate.`, icon: CalendarDays });
+        const bestDay = Object.entries(w).sort((a: any, b: any) => (b[1].win_rate ?? 0) - (a[1].win_rate ?? 0))[0];
+        if (bestDay) cards.push({ title: 'Best Trading Day', description: `${bestDay[0]} is your strongest day with ${bestDay[1].win_rate ?? 0}% win rate.`, icon: CalendarDays });
       }
-      cards.push({ title: 'Profit Factor', description: o.profit_factor >= 1.5 ? `Your profit factor of ${o.profit_factor.toFixed(2)} indicates strong risk-adjusted returns.` : `Your profit factor of ${o.profit_factor.toFixed(2)} needs improvement. Focus on cutting losses early.`, icon: Shield });
+      cards.push({ title: 'Profit Factor', description: (r?.profit_factor ?? 0) >= 1.5 ? `Your profit factor of ${(r?.profit_factor ?? 0).toFixed(2)} indicates strong risk-adjusted returns.` : `Your profit factor of ${(r?.profit_factor ?? 0).toFixed(2)} needs improvement. Focus on cutting losses early.`, icon: Shield });
       if (psychData.data) {
         const p = psychData.data;
-        if (p.fomo_frequency > 2) cards.push({ title: 'FOMO Alert', description: `FOMO entries detected ${p.fomo_frequency} times. Consider sticking to your plan more strictly.`, icon: AlertTriangle });
-        if (p.revenge_trades > 0) cards.push({ title: 'Revenge Trading', description: `${p.revenge_trades} revenge trades identified. Take a break after losses.`, icon: Zap });
+        if ((p.fomo_frequency ?? 0) > 2) cards.push({ title: 'FOMO Alert', description: `FOMO entries detected ${p.fomo_frequency ?? 0} times. Consider sticking to your plan more strictly.`, icon: AlertTriangle });
+        if ((p.revenge_trades ?? 0) > 0) cards.push({ title: 'Revenge Trading', description: `${p.revenge_trades ?? 0} revenge trades identified. Take a break after losses.`, icon: Zap });
       }
     }
     return cards;
@@ -182,8 +183,8 @@ export default function AnalyticsPage() {
     );
   }
 
-  const o = stats.data!.overview;
-  const r = stats.data!.risk;
+  const o = stats.data?.overview ?? {} as any;
+  const r = stats.data?.risk ?? {} as any;
   const isPnlPositive = o.total_pnl >= 0;
 
   return (
@@ -206,12 +207,12 @@ export default function AnalyticsPage() {
 
       {/* Hero Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <HeroCard label="Net P&L" value={formatCurrency(o.total_pnl)} icon={DollarSign} accent={isPnlPositive ? 'success' : 'danger'} sub={`${o.total_trades} trades`} />
-        <HeroCard label="Win Rate" value={`${o.win_rate}%`} icon={Award} accent={o.win_rate >= 50 ? 'success' : 'danger'} sub={`${o.wins}W / ${o.losses}L`} />
-        <HeroCard label="Expectancy" value={formatCurrency(o.expectancy)} icon={Target} accent={o.expectancy >= 0 ? 'success' : 'danger'} sub="per trade" />
-        <HeroCard label="Profit Factor" value={r.profit_factor ? r.profit_factor.toFixed(2) : '—'} icon={Shield} accent={r.profit_factor >= 1.5 ? 'success' : r.profit_factor >= 1 ? 'warning' : 'danger'} />
-        <HeroCard label="Avg R:R" value={o.avg_rr ? o.avg_rr.toFixed(2) : '—'} icon={Activity} accent={o.avg_rr >= 1.5 ? 'success' : o.avg_rr >= 1 ? 'warning' : 'danger'} />
-        <HeroCard label="Sharpe Ratio" value={r.sharpe_ratio ? r.sharpe_ratio.toFixed(2) : '—'} icon={BarChart3} accent={r.sharpe_ratio >= 1 ? 'success' : r.sharpe_ratio >= 0.5 ? 'warning' : 'default'} />
+        <HeroCard label="Net P&L" value={formatCurrency(o.total_pnl)} icon={DollarSign} accent={isPnlPositive ? 'success' : 'danger'} sub={`${o.total_trades ?? 0} trades`} />
+        <HeroCard label="Win Rate" value={o.win_rate != null ? `${o.win_rate}%` : '—'} icon={Award} accent={(o.win_rate ?? 0) >= 50 ? 'success' : 'danger'} sub={`${o.wins ?? 0}W / ${o.losses ?? 0}L`} />
+        <HeroCard label="Expectancy" value={formatCurrency(o.expectancy)} icon={Target} accent={(o.expectancy ?? 0) >= 0 ? 'success' : 'danger'} sub="per trade" />
+        <HeroCard label="Profit Factor" value={r.profit_factor != null ? Number(r.profit_factor).toFixed(2) : '—'} icon={Shield} accent={(r.profit_factor ?? 0) >= 1.5 ? 'success' : (r.profit_factor ?? 0) >= 1 ? 'warning' : 'danger'} />
+        <HeroCard label="Avg R:R" value={o.avg_rr != null ? Number(o.avg_rr).toFixed(2) : '—'} icon={Activity} accent={(o.avg_rr ?? 0) >= 1.5 ? 'success' : (o.avg_rr ?? 0) >= 1 ? 'warning' : 'danger'} />
+        <HeroCard label="Sharpe Ratio" value={r.sharpe_ratio != null ? Number(r.sharpe_ratio).toFixed(2) : '—'} icon={BarChart3} accent={(r.sharpe_ratio ?? 0) >= 1 ? 'success' : (r.sharpe_ratio ?? 0) >= 0.5 ? 'warning' : 'default'} />
       </div>
 
       {/* Large Equity Curve */}
@@ -327,11 +328,11 @@ export default function AnalyticsPage() {
           {psychData.data ? (
             <div className="space-y-2">
               {[
-                { label: 'FOMO Entries', value: psychData.data.fomo_frequency, threshold: 2 },
-                { label: 'Revenge Trades', value: psychData.data.revenge_trades, threshold: 0 },
-                { label: 'Early Exits', value: psychData.data.early_exits, threshold: 3 },
-                { label: 'Late Entries', value: psychData.data.late_entries, threshold: 3 },
-                { label: 'Missed Setups', value: psychData.data.missed_setups, threshold: 3 },
+                { label: 'FOMO Entries', value: psychData.data.fomo_frequency ?? 0, threshold: 2 },
+                { label: 'Revenge Trades', value: psychData.data.revenge_trades ?? 0, threshold: 0 },
+                { label: 'Early Exits', value: psychData.data.early_exits ?? 0, threshold: 3 },
+                { label: 'Late Entries', value: psychData.data.late_entries ?? 0, threshold: 3 },
+                { label: 'Missed Setups', value: psychData.data.missed_setups ?? 0, threshold: 3 },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between rounded-md bg-[#111113] px-3 py-2">
                   <span className="text-xs text-[#A1A1AA]">{item.label}</span>
@@ -377,8 +378,8 @@ export default function AnalyticsPage() {
             columns={[
               { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
               { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{row.direction || '-'}</span>), width: '40px' },
-              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{row.pnl >= 0 ? '+' : ''}${row.pnl.toFixed(2)}</span>) : '-', width: '100px' },
-              { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr?.toFixed(2) ?? '-', width: '60px', hideOnMobile: true },
+              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null && !Number.isNaN(row.pnl) ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{row.pnl >= 0 ? '+' : ''}${Number(row.pnl).toFixed(2)}</span>) : '-', width: '100px' },
+              { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr != null && !Number.isNaN(row.rr) ? Number(row.rr).toFixed(2) : '-', width: '60px', hideOnMobile: true },
               { id: 'session', header: 'Session', accessor: (row: any) => row.session || '-', width: '80px', hideOnMobile: true },
               { id: 'result', header: 'Result', accessor: (row: any) => row.result ? <Badge variant={row.result === 'WIN' ? 'success' : row.result === 'LOSS' ? 'destructive' : 'warning'} size="sm">{row.result}</Badge> : '-', width: '70px' },
               { id: 'date', header: 'Date', accessor: (row: any) => new Date(row.created_at).toLocaleDateString(), width: '90px', hideOnMobile: true },

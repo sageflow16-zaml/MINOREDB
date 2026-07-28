@@ -10,17 +10,11 @@ interface ChartContainerProps {
   config: ChartConfig;
 }
 
-const mockCandles = (symbol: string) => {
+const emptyCandles = () => {
   const data = [];
   const now = Math.floor(Date.now() / 1000);
-  let price = symbol === 'XAUUSD' ? 2350 : symbol === 'BTCUSD' ? 68000 : 1.08;
   for (let i = 200; i >= 0; i--) {
-    const open = price + (Math.random() - 0.5) * (symbol === 'BTCUSD' ? 500 : 0.05);
-    const close = open + (Math.random() - 0.5) * (symbol === 'BTCUSD' ? 400 : 0.04);
-    const high = Math.max(open, close) + Math.random() * (symbol === 'BTCUSD' ? 200 : 0.02);
-    const low = Math.min(open, close) - Math.random() * (symbol === 'BTCUSD' ? 200 : 0.02);
-    data.push({ time: (now - i * 3600) as any, open, high, low, close });
-    price = close;
+    data.push({ time: (now - i * 3600) as any, open: 0, high: 0, low: 0, close: 0 });
   }
   return data;
 };
@@ -68,7 +62,7 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
       wickUpColor: 'hsl(var(--success))',
     });
 
-    const candles = mockCandles(config.symbol);
+    const candles = emptyCandles();
     series.setData(candles);
     chart.timeScale().fitContent();
 
