@@ -7,7 +7,7 @@ import { cn } from '../lib/utils';
 import {
   User, Monitor, Link, Shield, Bell, Palette, Key, Database,
   ChevronRight, Save, CheckCircle, AlertTriangle, Globe,
-  Moon, Sun, Smartphone, Mail, Lock, RefreshCw, Plus,
+  Settings as SettingsIcon, Plus, Moon, Sun, Smartphone, Mail, Lock, RefreshCw,
 } from 'lucide-react';
 
 type SettingsTab = 'profile' | 'workspace' | 'integrations' | 'security' | 'notifications' | 'appearance' | 'api-keys' | 'data';
@@ -53,7 +53,7 @@ export default function SettingsPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#4F46E5]/10"><Settings className="h-5 w-5 text-[#4F46E5]" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#4F46E5]/10"><SettingsIcon className="h-5 w-5 text-[#4F46E5]" /></div>
           <div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Settings</h1><p className="text-sm text-[#71717A] mt-0.5">Configure your workspace</p></div>
         </div>
         <Button size="sm" onClick={handleSave} className={saved ? 'bg-[#22C55E]' : ''}>
