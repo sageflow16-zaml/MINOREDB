@@ -1,19 +1,19 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { PageLayout, PageSection, PageGrid } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { KpiCard } from '../components/ui/KpiCard';
-import { Badge } from '../components/ui/badge';
-import { DataTable } from '../components/ui/DataTable';
-import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
-import { SkeletonCard } from '../components/ui/skeleton';
+import { motion } from 'framer-motion';
 import { usePortfolioDashboard } from '../hooks/usePortfolio';
-import { DollarSign, TrendingUp, Activity, TrendingDown, Wallet, Award, Users, PieChart as PieChartIcon, Shield } from 'lucide-react';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/Button';
+import { DataTable } from '../components/ui/DataTable';
+import { Skeleton } from '../components/ui/skeleton';
+import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
+import {
+  DollarSign, TrendingUp, Activity, TrendingDown, Wallet, Award,
+  PieChart as PieChartIcon, Shield, ArrowUpRight, ArrowDownRight,
+  BookOpen, Sparkles, Plus, ChevronRight, Download, Users,
+  BarChart3, Target, Brain,
+} from 'lucide-react';
 import { cn } from '../lib/utils';
-import { chartTooltipStyle } from '../lib/chart';
-
-const tooltipStyle = chartTooltipStyle.contentStyle;
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--muted-foreground))'];
 
 function formatCurrency(value: number | undefined | null): string {
   if (value == null) return '—';
@@ -26,235 +26,368 @@ function formatPercent(value: number | undefined | null): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
 }
 
+const tooltipStyle = chartTooltipStyle.contentStyle;
+const CHART_COLORS = ['#4F46E5', '#22C55E', '#F59E0B', '#EF4444', '#A1A1AA', '#3B82F6'];
+
+function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: 'success' | 'danger' | 'warning' | 'default' }) {
+  const accentColors = {
+    default: 'text-[#FAFAFA]',
+    success: 'text-[#22C55E]',
+    danger: 'text-[#EF4444]',
+    warning: 'text-[#F59E0B]',
+  };
+  return (
+    <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+      <p className="text-[11px] font-medium text-[#71717A] tracking-wide">{label}</p>
+      <p className={cn('text-lg font-bold font-mono tracking-tight mt-1', accentColors[accent || 'default'])}>{value}</p>
+      {sub && <p className="text-[11px] text-[#71717A] mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+function MiniStat({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
+  return (
+    <div className="rounded-lg bg-[#111113] p-3">
+      <p className="text-[10px] text-[#71717A] tracking-wide">{label}</p>
+      <p className={cn('text-sm font-bold font-mono mt-1', positive === undefined ? 'text-[#FAFAFA]' : positive ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{value}</p>
+    </div>
+  );
+}
+
 export default function PortfolioDashboardPage() {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = usePortfolioDashboard(projectId!);
 
   if (isLoading) {
     return (
-      <PageLayout>
-        <div className="space-y-2">
-          <div className="h-8 w-48 bg-muted rounded animate-pulse" />
-          <div className="h-4 w-72 bg-muted rounded animate-pulse" />
+      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-40" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+          <Skeleton className="h-8 w-32 rounded-lg" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          ))}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+        <Skeleton className="h-72 rounded-xl" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="h-72 bg-muted rounded-xl col-span-2" />
-          <div className="h-72 bg-muted rounded-xl" />
-        </div>
-      </PageLayout>
+      </div>
     );
   }
 
   if (isError) {
     return (
-      <PageLayout>
-        <div className="flex h-[60vh] items-center justify-center">
-          <ErrorState message="Error loading portfolio dashboard." description="There was a problem fetching your data." onRetry={() => refetch()} />
+      <div className="flex h-[80vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EF4444]/10">
+            <Wallet className="h-6 w-6 text-[#EF4444]" />
+          </div>
+          <p className="text-sm font-medium text-[#FAFAFA]">Error loading portfolio</p>
+          <p className="text-xs text-[#71717A]">There was a problem fetching your portfolio data.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Try Again
+          </Button>
         </div>
-      </PageLayout>
+      </div>
     );
   }
 
   const { summary, risk, allocations, account_breakdown, history } = data!;
-  const isPnlPositive = summary.daily_pnl >= 0;
+  const isDailyPnlPositive = summary.daily_pnl >= 0;
   const equityData = (history.equity_curve ?? []).map((p) => ({ ...p, date: new Date(p.date).toLocaleDateString() }));
   const allocationData = allocations.allocations.map((a) => ({ name: a.entity_name || a.entity_type, value: a.current_percentage || 0 }));
   const unallocated = allocations.unallocated ?? 0;
   if (unallocated > 0) allocationData.push({ name: 'Unallocated', value: unallocated });
 
   return (
-    <PageLayout>
-      <PageSection title="Portfolio Dashboard" description="Multi-account portfolio overview and performance">
-        <PageGrid cols={6}>
-          <KpiCard title="Total Portfolio Value" value={formatCurrency(summary.total_balance)} icon={DollarSign} variant="default" size="sm" />
-          <KpiCard title="Combined Equity" value={formatCurrency(summary.total_equity)} icon={Wallet} variant="default" size="sm" />
-          <KpiCard title="Daily PnL" value={formatCurrency(summary.daily_pnl)} icon={TrendingUp} variant={isPnlPositive ? 'success' : 'danger'} size="sm" />
-          <KpiCard title="Weekly PnL" value={formatCurrency(summary.weekly_pnl)} icon={Activity} variant={summary.weekly_pnl >= 0 ? 'success' : 'danger'} size="sm" />
-          <KpiCard title="Monthly PnL" value={formatCurrency(summary.monthly_pnl)} icon={TrendingDown} variant={summary.monthly_pnl >= 0 ? 'success' : 'danger'} size="sm" />
-          <KpiCard title="Portfolio Drawdown" value={formatPercent(summary.max_drawdown_pct)} icon={Shield} variant={summary.max_drawdown_pct > 20 ? 'danger' : summary.max_drawdown_pct > 10 ? 'warning' : 'success'} size="sm" />
-        </PageGrid>
-      </PageSection>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <KpiCard title="Total Accounts" value={summary.account_count} icon={Users} variant="default" size="sm" />
-        <KpiCard title="Active Accounts" value={summary.active_account_count} icon={Users} variant="success" size="sm" subtitle={`${summary.active_account_count} of ${summary.account_count}`} />
-        <KpiCard title="Win Rate" value={summary.win_rate ? `${summary.win_rate}%` : '—'} icon={Award} variant={summary.win_rate >= 50 ? 'success' : 'danger'} size="sm" />
-        <KpiCard title="Profit Factor" value={summary.profit_factor?.toFixed(2) ?? '—'} icon={TrendingUp} variant={summary.profit_factor >= 1.5 ? 'success' : summary.profit_factor >= 1 ? 'warning' : 'danger'} size="sm" />
-        <KpiCard title="Risk Score" value={risk.risk_score != null ? `${risk.risk_score}/100` : '—'} icon={Shield} variant={risk.risk_score > 70 ? 'danger' : risk.risk_score > 40 ? 'warning' : 'success'} size="sm" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-medium">Equity Curve</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={equityData}>
-                  <defs>
-                    <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Area type="monotone" dataKey="equity" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#equityGrad)" name="Equity" />
-                  <Area type="monotone" dataKey="balance" stroke="hsl(var(--chart-2))" strokeWidth={2} fill="none" name="Balance" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-medium">Allocation</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {allocationData.length > 0 ? (
-              <>
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={allocationData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
-                        {allocationData.map((_, i) => (
-                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v.toFixed(1)}%`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-1.5 mt-2">
-                  {allocationData.map((entry, i) => (
-                    <div key={entry.name} className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-1.5 text-muted-foreground">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                        {entry.name}
-                      </span>
-                      <span className="font-medium text-foreground">{entry.value.toFixed(1)}%</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">No allocation data</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium">Account Breakdown</CardTitle>
+    <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+      {/* Top Section — Title + Quick Stats */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Portfolio</h1>
+          <p className="text-sm text-[#71717A] mt-0.5">Multi-account overview and performance</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5">
+            <span className={cn('h-2 w-2 rounded-full', risk.risk_score > 70 ? 'bg-[#22C55E]' : risk.risk_score > 40 ? 'bg-[#F59E0B]' : 'bg-[#EF4444]')} />
+            <span className="text-xs font-medium text-[#A1A1AA]">
+              {risk.risk_score > 70 ? 'Healthy' : risk.risk_score > 40 ? 'Moderate' : 'At Risk'}
+            </span>
           </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={account_breakdown}
-            columns={[
-              { id: 'name', header: 'Name', accessor: (row: any) => row.name || '-', width: '140px' },
-              { id: 'type', header: 'Type', accessor: (row: any) => <Badge variant="info" size="sm">{row.account_type}</Badge>, width: '90px' },
-              { id: 'balance', header: 'Balance', accessor: (row: any) => formatCurrency(row.current_balance), width: '100px' },
-              { id: 'equity', header: 'Equity', accessor: (row: any) => formatCurrency(row.current_equity), width: '100px' },
-              { id: 'pnl', header: 'PnL', accessor: (row: any) => (
-                <span className={cn('font-medium', row.pnl >= 0 ? 'text-success' : 'text-destructive')}>{formatCurrency(row.pnl)}</span>
-              ), width: '100px' },
-              { id: 'trades', header: 'Trades', accessor: (row: any) => row.trade_count ?? '-', width: '70px', hideOnMobile: true },
-              { id: 'win_rate', header: 'Win Rate', accessor: (row: any) => row.win_rate != null ? `${row.win_rate}%` : '-', width: '80px', hideOnMobile: true },
-            ]}
-            searchable={false}
-            pageSize={10}
-          />
-        </CardContent>
-      </Card>
+          <Button variant="ghost" size="icon" aria-label="Export">
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Risk Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Total Exposure</span>
-              <span className="text-xs font-medium text-foreground">{formatCurrency(risk.total_exposure)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Used Margin</span>
-              <span className="text-xs font-medium text-foreground">{formatCurrency(risk.used_margin)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Free Margin</span>
-              <span className="text-xs font-medium text-foreground">{formatCurrency(risk.free_margin)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Margin Level</span>
-              <span className={cn('text-xs font-medium', risk.margin_level > 200 ? 'text-success' : risk.margin_level > 100 ? 'text-warning' : 'text-destructive')}>
-                {risk.margin_level?.toFixed(1)}%
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Open Positions</span>
-              <span className="text-xs font-medium text-foreground">{risk.total_open_positions}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Concentration Risk</span>
-              <span className={cn('text-xs font-medium', risk.concentration_risk > 50 ? 'text-destructive' : risk.concentration_risk > 25 ? 'text-warning' : 'text-success')}>
-                {risk.concentration_risk?.toFixed(0)}%
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* KPI Grid — 6 cards: Balance, Equity, Daily/Weekly/Monthly PnL, Drawdown */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <StatCard label="Total Balance" value={formatCurrency(summary.total_balance)} sub={`${summary.account_count} accounts`} />
+        <StatCard label="Combined Equity" value={formatCurrency(summary.total_equity)} sub={summary.total_open_pnl ? `${formatCurrency(summary.total_open_pnl)} open P&L` : undefined} />
+        <StatCard label="Daily P&L" value={formatCurrency(summary.daily_pnl)} accent={isDailyPnlPositive ? 'success' : 'danger'} />
+        <StatCard label="Weekly P&L" value={formatCurrency(summary.weekly_pnl)} accent={summary.weekly_pnl >= 0 ? 'success' : 'danger'} />
+        <StatCard label="Monthly P&L" value={formatCurrency(summary.monthly_pnl)} accent={summary.monthly_pnl >= 0 ? 'success' : 'danger'} />
+        <StatCard
+          label="Max Drawdown"
+          value={formatPercent(summary.max_drawdown_pct)}
+          accent={summary.max_drawdown_pct > 20 ? 'danger' : summary.max_drawdown_pct > 10 ? 'warning' : 'success'}
+        />
+      </motion.div>
 
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Quick Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="rounded-lg bg-muted/30 p-3">
-              <div className="text-2xl font-bold text-foreground">{summary.total_trades ?? 0}</div>
-              <div className="text-xs text-muted-foreground mt-1">Total Trades</div>
+      {/* Large Equity Curve */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-[#71717A]" />
+            <h3 className="text-sm font-medium text-[#FAFAFA]">Equity Curve</h3>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#4F46E5]" />
+              <span className="text-[10px] text-[#71717A]">Equity</span>
             </div>
-            <div className="rounded-lg bg-muted/30 p-3">
-              <div className="text-2xl font-bold text-success">{summary.win_count ?? 0}</div>
-              <div className="text-xs text-muted-foreground mt-1">Wins</div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
+              <span className="text-[10px] text-[#71717A]">Balance</span>
             </div>
-            <div className="rounded-lg bg-muted/30 p-3">
-              <div className="text-2xl font-bold text-destructive">{summary.loss_count ?? 0}</div>
-              <div className="text-xs text-muted-foreground mt-1">Losses</div>
+          </div>
+        </div>
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={equityData} {...chartDefaultProps}>
+              <defs>
+                <linearGradient id="equityGradientPortfolio" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="#4F46E5" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Area type="monotone" dataKey="equity" stroke="#4F46E5" strokeWidth={2} fill="url(#equityGradientPortfolio)" name="Equity" dot={false} activeDot={{ r: 4, fill: '#4F46E5' }} />
+              <Area type="monotone" dataKey="balance" stroke="#22C55E" strokeWidth={1.5} fill="none" name="Balance" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      {/* Four KPI Cards — Balance, Equity, Drawdown, Risk Exposure */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#4F46E5]/10">
+              <DollarSign className="h-3.5 w-3.5 text-[#4F46E5]" />
             </div>
-            <div className="rounded-lg bg-muted/30 p-3">
-              <div className="text-lg font-bold text-foreground">{formatCurrency(summary.avg_rr != null ? summary.avg_rr : 0)}</div>
-              <div className="text-xs text-muted-foreground mt-1">Avg R:R</div>
+            <span className="text-[11px] font-medium text-[#71717A]">Balance</span>
+          </div>
+          <p className="text-lg font-bold font-mono text-[#FAFAFA]">{formatCurrency(summary.total_balance)}</p>
+          <p className="text-[10px] text-[#71717A] mt-0.5">Across {summary.account_count} accounts</p>
+        </div>
+        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#22C55E]/10">
+              <Wallet className="h-3.5 w-3.5 text-[#22C55E]" />
             </div>
-            <div className="rounded-lg bg-muted/30 p-3">
-              <div className="text-lg font-bold text-foreground">{formatCurrency(summary.total_deposits)}</div>
-              <div className="text-xs text-muted-foreground mt-1">Total Deposits</div>
+            <span className="text-[11px] font-medium text-[#71717A]">Equity</span>
+          </div>
+          <p className="text-lg font-bold font-mono text-[#FAFAFA]">{formatCurrency(summary.total_equity)}</p>
+          <p className={cn('text-[10px] mt-0.5', summary.total_open_pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>
+            {formatCurrency(summary.total_open_pnl)} open P&L
+          </p>
+        </div>
+        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#F59E0B]/10">
+              <TrendingDown className="h-3.5 w-3.5 text-[#F59E0B]" />
             </div>
-            <div className="rounded-lg bg-muted/30 p-3">
-              <div className="text-lg font-bold text-foreground">{formatCurrency(summary.total_withdrawals)}</div>
-              <div className="text-xs text-muted-foreground mt-1">Withdrawals</div>
+            <span className="text-[11px] font-medium text-[#71717A]">Drawdown</span>
+          </div>
+          <p className={cn('text-lg font-bold font-mono', summary.max_drawdown_pct > 20 ? 'text-[#EF4444]' : summary.max_drawdown_pct > 10 ? 'text-[#F59E0B]' : 'text-[#FAFAFA]')}>
+            {formatPercent(summary.max_drawdown_pct)}
+          </p>
+          <p className="text-[10px] text-[#71717A] mt-0.5">Max portfolio drawdown</p>
+        </div>
+        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#3B82F6]/10">
+              <Shield className="h-3.5 w-3.5 text-[#3B82F6]" />
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-[11px] font-medium text-[#71717A]">Risk Exposure</span>
+          </div>
+          <p className="text-lg font-bold font-mono text-[#FAFAFA]">{formatCurrency(risk.total_exposure)}</p>
+          <p className="text-[10px] text-[#71717A] mt-0.5">
+            Margin: {risk.margin_level?.toFixed(0)}% &middot; {risk.total_open_positions} positions
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Allocation + Performance Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Allocation */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <PieChartIcon className="h-4 w-4 text-[#71717A]" />
+            <h3 className="text-sm font-medium text-[#FAFAFA]">Allocation</h3>
+          </div>
+          {allocationData.length > 0 ? (
+            <div className="flex items-center gap-6">
+              <div className="h-44 w-44 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={allocationData} cx="50%" cy="50%" innerRadius={44} outerRadius={64} paddingAngle={3} dataKey="value">
+                      {allocationData.map((_, i) => (
+                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => `${v.toFixed(1)}%`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 space-y-1.5 min-w-0">
+                {allocationData.slice(0, 6).map((entry, i) => (
+                  <div key={entry.name} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-[#A1A1AA] truncate">
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                      <span className="truncate">{entry.name}</span>
+                    </span>
+                    <span className="font-medium text-[#FAFAFA] font-mono ml-2">{entry.value.toFixed(1)}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]">
+                <PieChartIcon className="h-5 w-5 text-[#71717A]" />
+              </div>
+              <p className="text-sm font-medium text-[#A1A1AA]">No allocation data</p>
+              <p className="text-xs text-[#71717A] mt-1">Set up allocations to see your portfolio breakdown.</p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Performance Stats */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="h-4 w-4 text-[#71717A]" />
+            <h3 className="text-sm font-medium text-[#FAFAFA]">Performance</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <MiniStat label="Total Trades" value={String(summary.total_trades ?? 0)} />
+            <MiniStat label="Wins" value={String(summary.win_count ?? 0)} positive />
+            <MiniStat label="Losses" value={String(summary.loss_count ?? 0)} positive={false} />
+            <MiniStat label="Win Rate" value={summary.win_rate ? `${summary.win_rate}%` : '—'} positive={summary.win_rate >= 50} />
+            <MiniStat label="Avg R:R" value={summary.avg_rr ? summary.avg_rr.toFixed(2) : '—'} positive={summary.avg_rr >= 1.5} />
+            <MiniStat label="Profit Factor" value={summary.profit_factor ? summary.profit_factor.toFixed(2) : '—'} positive={summary.profit_factor >= 1.5} />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="rounded-lg bg-[#111113] p-3">
+              <p className="text-[10px] text-[#71717A] tracking-wide">Deposits</p>
+              <p className="text-sm font-bold font-mono text-[#FAFAFA] mt-1">{formatCurrency(summary.total_deposits)}</p>
+            </div>
+            <div className="rounded-lg bg-[#111113] p-3">
+              <p className="text-[10px] text-[#71717A] tracking-wide">Withdrawals</p>
+              <p className="text-sm font-bold font-mono text-[#FAFAFA] mt-1">{formatCurrency(summary.total_withdrawals)}</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
-    </PageLayout>
+
+      {/* Account Breakdown Table */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-[#71717A]" />
+            <h3 className="text-sm font-medium text-[#FAFAFA]">Account Breakdown</h3>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${projectId}/portfolio/accounts`)}>
+            Manage <ChevronRight className="ml-1 h-3 w-3" />
+          </Button>
+        </div>
+        <DataTable
+          data={account_breakdown}
+          columns={[
+            { id: 'name', header: 'Name', accessor: (row: any) => row.name || '-', width: '140px' },
+            { id: 'type', header: 'Type', accessor: (row: any) => <Badge variant="info" size="sm">{row.account_type}</Badge>, width: '80px' },
+            { id: 'balance', header: 'Balance', accessor: (row: any) => formatCurrency(row.current_balance), width: '100px' },
+            { id: 'equity', header: 'Equity', accessor: (row: any) => formatCurrency(row.current_equity), width: '100px' },
+            { id: 'pnl', header: 'P&L', accessor: (row: any) => (
+              <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{formatCurrency(row.pnl)}</span>
+            ), width: '90px' },
+            { id: 'trades', header: 'Trades', accessor: (row: any) => row.trade_count ?? '-', width: '70px' },
+            { id: 'win_rate', header: 'Win Rate', accessor: (row: any) => row.win_rate != null ? `${row.win_rate}%` : '-', width: '80px' },
+          ]}
+          searchable={false}
+          pageSize={10}
+        />
+      </motion.div>
+
+      {/* Recent Activity — Trades + Journal + Insights */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="h-4 w-4 text-[#71717A]" />
+            <h3 className="text-sm font-medium text-[#FAFAFA]">Quick Links</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: 'Accounts', icon: Users, path: 'portfolio/accounts' },
+              { label: 'Allocations', icon: PieChartIcon, path: 'portfolio/allocations' },
+              { label: 'Analytics', icon: TrendingUp, path: 'portfolio/analytics' },
+              { label: 'Risk', icon: Shield, path: 'portfolio/risk' },
+              { label: 'Transfers', icon: ArrowUpRight, path: 'portfolio/transfers' },
+              { label: 'Goals', icon: Target, path: 'portfolio/goals' },
+            ].map((link) => {
+              const Icon = link.icon;
+              return (
+                <button
+                  key={link.label}
+                  onClick={() => navigate(`/projects/${projectId}/${link.path}`)}
+                  className="flex items-center gap-2.5 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2.5 text-xs font-medium text-[#A1A1AA] hover:text-[#FAFAFA] hover:border-[#27272A]/80 transition-all"
+                >
+                  <Icon className="h-3.5 w-3.5 text-[#4F46E5]" />
+                  {link.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="h-4 w-4 text-[#71717A]" />
+            <h3 className="text-sm font-medium text-[#FAFAFA]">AI Insights</h3>
+          </div>
+          <div className="rounded-lg bg-gradient-to-r from-[#4F46E5]/5 to-[#22C55E]/5 p-4">
+            <p className="text-xs text-[#A1A1AA] leading-relaxed">
+              {summary.total_trades > 0
+                ? `Your portfolio spans ${summary.account_count} accounts with ${summary.total_trades} total trades. Win rate is ${summary.win_rate}% with a profit factor of ${summary.profit_factor?.toFixed(2) ?? 'N/A'}.`
+                : 'No trading activity yet. Start trading to generate portfolio insights.'}
+            </p>
+          </div>
+          <div className="mt-3">
+            <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => navigate(`/projects/${projectId}/portfolio/analytics`)}>
+              <Sparkles className="h-3 w-3 mr-1.5" /> View Full Analytics
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
