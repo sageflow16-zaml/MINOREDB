@@ -370,6 +370,90 @@ async function buildProfile(supabase: ReturnType<typeof createClient>, projectId
   return { profile_built: true };
 }
 
+async function generateInsights(supabase: ReturnType<typeof createClient>, projectId: string) {
+  const { data: trades } = await supabase.from('trade').select('pair, direction, result, pnl, rr, entry_price, exit_price, notes').eq('project_id', projectId).is('deleted_at', null).order('created_at', { ascending: false }).limit(20);
+  if (!trades || trades.length === 0) return { insights: [], warning: 'Not enough trades to generate insights' };
+
+  const result = await callAI(
+    'You are a trading insight generator. Analyze recent trades and generate actionable insights. Return a JSON array of objects with keys: title (short title), description (1-2 sentence insight), category (one of: pattern, risk, psychology, strategy, execution, market), priority (high/medium/low).',
+    `Generate insights from these recent trades:\n\n${JSON.stringify(trades)}`
+  );
+  if (isAiError(result)) return { insights: [], warning: JSON.parse(result)._error };
+
+  let insightList: any[];
+  try { insightList = JSON.parse(result); } catch { return { insights: [], warning: 'Failed to parse AI response' }; }
+  if (!Array.isArray(insightList)) return { insights: [], warning: 'AI returned unexpected format' };
+
+  const created = [];
+  for (const insight of insightList) {
+    const { data: row } = await supabase.from('ai_insight').insert({
+      project_id: projectId,
+      title: insight.title,
+      description: insight.description,
+      category: insight.category || 'general',
+      priority: insight.priority || 'medium',
+      source: 'ai',
+    }).select().single();
+    if (row) created.push(row);
+  }
+  return { insights: created };
+}
+
+async function detectObservations(supabase: ReturnType<typeof createClient>, projectId: string) {
+  const { data: trades } = await supabase.from('trade').select('pair, direction, result, pnl, rr, entry_price, exit_price, notes, created_at').eq('project_id', projectId).is('deleted_at', null).order('created_at', { ascending: false }).limit(30);
+  if (!trades || trades.length < 3) return { observations: [], warning: 'Not enough trades to detect patterns' };
+
+  const result = await callAI(
+    'You are a trading psychology analyst. Analyze recent trades and identify behavioral patterns and observations. Return a JSON array of objects with keys: title (short title), description (1-2 sentence observation), category (one of: behavior, psychology, habit, pattern, risk, discipline), severity (high/medium/low).',
+    `Analyze these trades for behavioral observations:\n\n${JSON.stringify(trades)}`
+  );
+  if (isAiError(result)) return { observations: [], warning: JSON.parse(result)._error };
+
+  let obsList: any[];
+  try { obsList = JSON.parse(result); } catch { return { observations: [], warning: 'Failed to parse AI response' }; }
+  if (!Array.isArray(obsList)) return { observations: [], warning: 'AI returned unexpected format' };
+
+  const created = [];
+  for (const obs of obsList) {
+    const { data: row } = await supabase.from('learning_observation').insert({
+      project_id: projectId,
+      title: obs.title,
+      description: obs.description,
+      category: obs.category || 'behavior',
+      severity: obs.severity || 'medium',
+      source: 'ai',
+    }).select().single();
+    if (row) created.push(row);
+  }
+  return { observations: created };
+}
+
+async function generateCoaching(supabase: ReturnType<typeof createClient>, projectId: string, coachingType?: string) {
+  const { data: trades } = await supabase.from('trade').select('pair, direction, result, pnl, rr, entry_price, exit_price, notes, created_at').eq('project_id', projectId).is('deleted_at', null).order('created_at', { ascending: false }).limit(20);
+  if (!trades || trades.length < 3) return { coaching: null, warning: 'Not enough trades for coaching' };
+
+  const result = await callAI(
+    'You are a trading coach. Analyze recent trades and provide actionable coaching advice. Return a JSON object with keys: title (coaching topic), summary (2-3 sentence actionable advice), category (technical/psychological/risk/strategy/discipline), priority (high/medium/low), action_items (array of strings).',
+    `Generate coaching advice for these recent trades:\n\n${JSON.stringify(trades)}`
+  );
+  if (isAiError(result)) return { coaching: null, warning: JSON.parse(result)._error };
+
+  let coaching: any;
+  try { coaching = JSON.parse(result); } catch { return { coaching: null, warning: 'Failed to parse AI response' }; }
+
+  const { data: row } = await supabase.from('coaching_session').insert({
+    project_id: projectId,
+    session_type: coachingType || 'general',
+    title: coaching.title || 'Coaching Session',
+    summary: coaching.summary || '',
+    category: coaching.category || 'general',
+    priority: coaching.priority || 'medium',
+    action_items: coaching.action_items || [],
+    is_read: false,
+  }).select().single();
+  return { coaching: row };
+}
+
 async function generateTradeMemory(supabase: ReturnType<typeof createClient>, projectId: string, tradeId: string) {
   const { data: trade } = await supabase.from('trade').select('*').eq('id', tradeId).single();
   if (!trade) throw new Error('Trade not found');
@@ -662,6 +746,19 @@ serve(async (req) => {
         const tradeId = data?.trade_id;
         if (!tradeId) return errorResponse('Missing trade_id');
         const result = await generateDebrief(supabase, project_id, tradeId);
+        return successResponse(result);
+      }
+      case 'generate-insights': {
+        const result = await generateInsights(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'detect-observations': {
+        const result = await detectObservations(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'generate-coaching': {
+        const coachingType = data?.coaching_type;
+        const result = await generateCoaching(supabase, project_id, coachingType);
         return successResponse(result);
       }
       case 'detect-patterns': {
