@@ -78,6 +78,7 @@ supabase/.temp/
 railway.json
 *.err
 *.out
+risk_debug.png
 
 .vercel
 .env*
