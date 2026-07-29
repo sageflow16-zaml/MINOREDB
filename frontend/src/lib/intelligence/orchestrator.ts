@@ -5,7 +5,7 @@ import { createPlan, getActivePlan, updateStep } from './planner-engine';
 import { loadMemory, updateMemory } from './memory-engine';
 import { executeReasoningPipeline, type ReasoningInput } from './reasoning-engine';
 import { recordSnapshot } from '../trust/history';
-import { createEvent, eventBus } from '../ai/eventBus';
+import { eventBus } from '../ai/eventBus';
 import type { RawIntelligenceData, IntelligenceOutput, UnifiedRecommendation, BehavioralPattern } from './types';
 import type { AIExplanation } from '../trust/types';
 
@@ -61,11 +61,13 @@ export function runReasoning(
 
 export function completeRecommendation(id: string): void {
   markRecommendationCompleted(id);
-  createEvent(eventBus, {
+  eventBus.emit({
     type: 'RECOMMENDATION_COMPLETED',
-    source: 'intelligence-core',
+    projectId: 'intelligence-core',
+    timestamp: new Date().toISOString(),
+    actor: 'system',
     data: { recommendationId: id },
-    timestamp: Date.now(),
+    id: `evt_rec_${Date.now()}`,
   });
 }
 
@@ -100,24 +102,28 @@ function publishEvents(
   recommendations: UnifiedRecommendation[],
 ): void {
   try {
-    createEvent(eventBus, {
+    eventBus.emit({
       type: 'INTELLIGENCE_UPDATED',
-      source: 'intelligence-core',
+      projectId: 'intelligence-core',
+      timestamp: new Date().toISOString(),
+      actor: 'system',
       data: {
         score: context.scores.overall,
         patternCount: patterns.length,
         recommendationCount: recommendations.length,
       },
-      timestamp: Date.now(),
+      id: `evt_iu_${Date.now()}`,
     });
 
     const criticalWarnings = patterns.filter((p) => p.trend === 'declining' && p.confidence > 75);
     for (const w of criticalWarnings) {
-      createEvent(eventBus, {
+      eventBus.emit({
         type: 'PATTERN_DETECTED',
-        source: 'intelligence-core',
+        projectId: 'intelligence-core',
+        timestamp: new Date().toISOString(),
+        actor: 'system',
         data: { patternId: w.id, description: w.description, confidence: w.confidence },
-        timestamp: Date.now(),
+        id: `evt_pd_${Date.now()}_${w.id}`,
       });
     }
   } catch {

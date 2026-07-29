@@ -9,7 +9,6 @@ export function recordSnapshot(metric: string, value: number, context?: Record<s
       timestamp: new Date().toISOString(),
       value,
       label: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      context,
     });
     const maxSnapshots = 365;
     const trimmed = snapshots.slice(-maxSnapshots);

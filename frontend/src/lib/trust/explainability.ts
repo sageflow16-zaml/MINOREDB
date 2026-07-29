@@ -2,7 +2,7 @@ import type { AIExplanation, ReasoningStep, HistoryPoint, RelatedItem } from './
 import { gatherEvidence } from './evidence';
 import { computeConfidence } from './confidence';
 
-interface BuildExplanationParams {
+export interface BuildExplanationParams {
   type: 'score' | 'dna' | 'concept' | 'observation' | 'recommendation' | 'warning';
   target: string;
   targetId: string;

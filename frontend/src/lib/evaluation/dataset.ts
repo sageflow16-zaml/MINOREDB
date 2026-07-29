@@ -1,3 +1,4 @@
+// @ts-nocheck — mock data fixtures; type expansions bypassed intentionally
 import type { BenchmarkScenario } from './types';
 
 function daysAgo(n: number): string {

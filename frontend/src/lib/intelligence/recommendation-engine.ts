@@ -130,7 +130,7 @@ function tradingDNAProvider(context: IntelligenceContext): UnifiedRecommendation
     });
   }
 
-  const badAssets = context.trades?.filter ? [] : []; // Placeholder for future
+  const badAssets: string[] = []; // Placeholder for future
   return recs;
 }
 

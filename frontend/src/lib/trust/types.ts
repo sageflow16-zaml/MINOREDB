@@ -1,3 +1,5 @@
+import type { EvidenceItem } from './evidence';
+
 export interface AIExplanation {
   id: string;
   summary: string;
