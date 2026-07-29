@@ -97,7 +97,7 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
             {concept.tags && concept.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 shrink-0">
                 {concept.tags.map((t: any) => (
-                  <span key={t.id} className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{t.name}</span>
+                  <span key={t.id} className="inline-flex rounded-full bg-muted px-2 py-0.5 text-3xs font-medium text-muted-foreground">{t.name}</span>
                 ))}
               </div>
             )}
@@ -285,7 +285,7 @@ export default function KnowledgeCenter() {
                             className="font-medium text-primary hover:text-primary/80 truncate max-w-[120px] transition-colors">
                             {r.source_concept?.title || r.source_concept_id.slice(0, 8)}
                           </button>
-                          <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground shrink-0">{r.relationship_type}</span>
+                          <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-3xs font-medium text-muted-foreground shrink-0">{r.relationship_type}</span>
                           <button onClick={() => { setSelectedConcept(r.target_concept_id); setActiveTab('concepts'); }}
                             className="font-medium text-primary hover:text-primary/80 truncate max-w-[120px] transition-colors">
                             {r.target_concept?.title || r.target_concept_id.slice(0, 8)}

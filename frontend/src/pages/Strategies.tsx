@@ -128,7 +128,7 @@ export default function StrategiesPage() {
                         </Badge>
                       </div>
                       {strategy.category && (
-                        <span className="text-[11px] text-muted-foreground">{strategy.category}</span>
+                        <span className="text-2xs text-muted-foreground">{strategy.category}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -155,16 +155,16 @@ export default function StrategiesPage() {
                   )}
                   <div className="flex flex-wrap items-center gap-2">
                     {strategy.version && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-muted/30 px-2 py-0.5 text-3xs font-medium text-muted-foreground">
                         <Layers className="h-3 w-3" /> v{strategy.version}
                       </span>
                     )}
                     {strategy.tags?.slice(0, 3).map((tag) => (
-                      <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary">
+                      <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2 py-0.5 text-3xs font-medium text-primary">
                         {tag}
                       </span>
                     ))}
-                    <span className="inline-flex items-center gap-1 rounded-md bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground ml-auto">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-muted/30 px-2 py-0.5 text-3xs font-medium text-muted-foreground ml-auto">
                       {strategy.trades_count ?? 0} trades
                     </span>
                   </div>

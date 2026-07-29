@@ -196,7 +196,7 @@ export function PieChartLegend({ data, dataKey = 'value', nameKey = 'name', colo
       {filtered.map((d: any, i: number) => (
         <div key={d[nameKey]} className="flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
-          <span className="text-[10px] text-muted-foreground">{d[nameKey]}: {d[dataKey]}</span>
+          <span className="text-3xs text-muted-foreground">{d[nameKey]}: {d[dataKey]}</span>
         </div>
       ))}
     </div>

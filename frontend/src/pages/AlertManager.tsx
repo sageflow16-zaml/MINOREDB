@@ -101,7 +101,7 @@ export default function AlertManagerPage() {
             )}>
             {f}
             {f === 'unread' && unreadCount > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-[10px] font-bold text-primary">{unreadCount}</span>
+              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-3xs font-bold text-primary">{unreadCount}</span>
             )}
           </button>
         ))}
@@ -122,7 +122,7 @@ export default function AlertManagerPage() {
                   </div>
                   <p className={cn('text-sm font-medium', a.is_read ? 'text-muted-foreground' : 'text-foreground')}>{a.title}</p>
                   {a.message && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{a.message}</p>}
-                  <span className="text-[10px] text-muted-foreground mt-1 inline-block">{a.created_at?.slice(0, 16).replace('T', ' ')}</span>
+                  <span className="text-3xs text-muted-foreground mt-1 inline-block">{a.created_at?.slice(0, 16).replace('T', ' ')}</span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {!a.is_read && (

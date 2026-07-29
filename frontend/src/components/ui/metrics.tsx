@@ -26,7 +26,7 @@ export function MetricCard({ label, value, icon, variant = 'default', size = 'de
     <div className={cn('rounded-lg border', s.border, s.bg, 'p-2.5', className)}>
       <div className="flex items-center gap-1.5 mb-0.5">
         {icon && <span className={cn('h-3 w-3', s.value)}>{icon}</span>}
-        <span className="text-[10px] font-medium text-muted-foreground truncate">{label}</span>
+        <span className="text-3xs font-medium text-muted-foreground truncate">{label}</span>
       </div>
       <p className={cn(size === 'sm' ? 'text-sm' : 'text-lg', 'font-bold', s.value)}>
         {value}

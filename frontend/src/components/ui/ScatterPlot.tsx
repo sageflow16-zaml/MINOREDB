@@ -130,8 +130,8 @@ export function ScatterPlot({
           <Scatter
             name="Trades"
             data={validData}
-            fill="#8884d8"
-            stroke="#8884d8"
+            fill="hsl(var(--primary))"
+            stroke="hsl(var(--primary))"
             shape="circle"
           >
             {validData.map((point, index) => (

@@ -1,4 +1,4 @@
-﻿import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { Select } from "../../components/ui/select";
@@ -25,7 +25,7 @@ describe("Select", () => {
     render(<Select options={options} />);
     const trigger = screen.getByRole("combobox");
     await user.click(trigger);
-    // Options are rendered in a portal — use waitFor/findBy
+    // Options are rendered in a portal � use waitFor/findBy
     await waitFor(() => {
       expect(screen.getByText("Option 1")).toBeInTheDocument();
     });

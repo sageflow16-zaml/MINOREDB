@@ -16,6 +16,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
+import { EmptyState } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
 import {
   TrendingUp, BarChart3, DollarSign, Target, Award, Shield,
@@ -32,29 +33,29 @@ function formatCurrency(value: number | undefined | null): string {
 }
 
 const tooltipStyle = chartTooltipStyle.contentStyle;
-const CHART_COLORS = ['#4F46E5', '#22C55E', '#F59E0B', '#EF4444', '#3B82F6', '#A1A1AA'];
+const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--info))', 'hsl(var(--chart-5))'];
 
 function StatCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
-  const accentColors = { default: 'text-[#FAFAFA]', success: 'text-[#22C55E]', danger: 'text-[#EF4444]', warning: 'text-[#F59E0B]' };
+  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger', warning: 'text-warning' };
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-[11px] font-medium text-[#71717A] tracking-wide">{label}</p>
-        <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accent === 'success' ? 'bg-[#22C55E]/10' : accent === 'danger' ? 'bg-[#EF4444]/10' : 'bg-[#4F46E5]/10')}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-[#22C55E]' : accent === 'danger' ? 'text-[#EF4444]' : 'text-[#4F46E5]')} />
+        <p className="text-2xs font-medium text-muted tracking-wide">{label}</p>
+        <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accent === 'success' ? 'bg-success/10' : accent === 'danger' ? 'bg-danger/10' : 'bg-primary/10')}>
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger' : 'text-primary')} />
         </div>
       </div>
       <p className={cn('text-lg font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
-      {sub && <p className="text-[10px] text-[#71717A] mt-0.5">{sub}</p>}
+      {sub && <p className="text-3xs text-muted mt-0.5">{sub}</p>}
     </motion.div>
   );
 }
 
 function InsightBadge({ label, value, good }: { label: string; value: string; good?: boolean }) {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-[#111113] px-3 py-2">
-      <span className="text-xs text-[#A1A1AA]">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-[#FAFAFA]' : good ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{value}</span>
+    <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
+      <span className="text-xs text-secondary">{label}</span>
+      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger')}>{value}</span>
     </div>
   );
 }
@@ -63,7 +64,7 @@ function MiniBarChart({ data, dataKey, color }: { data: any[]; dataKey: string; 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} {...chartDefaultProps}>
-        <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#71717A' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
         <Tooltip contentStyle={tooltipStyle} />
         <Bar dataKey={dataKey} fill={color} radius={[3, 3, 0, 0]} maxBarSize={20} />
       </BarChart>
@@ -124,21 +125,21 @@ export default function StatisticsPage() {
     const o = overview.data?.overview;
     if (!o) return [];
     return [
-      { name: 'Wins', value: o.wins, color: '#22C55E' },
-      { name: 'Losses', value: o.losses, color: '#EF4444' },
-      { name: 'Breakeven', value: o.breakevens, color: '#71717A' },
+      { name: 'Wins', value: o.wins, color: 'hsl(var(--success))' },
+      { name: 'Losses', value: o.losses, color: 'hsl(var(--danger))' },
+      { name: 'Breakeven', value: o.breakevens, color: 'hsl(var(--muted-foreground))' },
     ].filter(d => d.value > 0);
   }, [overview.data]);
 
   if (isLoading) {
     return (
-      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between">
           <div className="space-y-2"><Skeleton className="h-7 w-40" /><Skeleton className="h-4 w-56" /></div>
           <Skeleton className="h-8 w-32 rounded-lg" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (<div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-24" /></div>))}
+          {Array.from({ length: 6 }).map((_, i) => (<div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-24" /></div>))}
         </div>
         <Skeleton className="h-72 rounded-xl" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -152,9 +153,9 @@ export default function StatisticsPage() {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EF4444]/10"><BarChart3 className="h-6 w-6 text-[#EF4444]" /></div>
-          <p className="text-sm font-medium text-[#FAFAFA]">Error loading statistics</p>
-          <p className="text-xs text-[#71717A]">There was a problem fetching statistics.</p>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><BarChart3 className="h-6 w-6 text-danger" /></div>
+          <p className="text-sm font-medium text-foreground">Error loading statistics</p>
+          <p className="text-xs text-muted">There was a problem fetching statistics.</p>
           <Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button>
         </div>
       </div>
@@ -169,31 +170,26 @@ export default function StatisticsPage() {
 
   if (!hasData) {
     return (
-      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Statistics</h1><p className="text-sm text-[#71717A] mt-0.5">Comprehensive trading metrics</p></div>
+          <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Statistics</h1><p className="text-sm text-muted mt-0.5">Comprehensive trading metrics</p></div>
         </div>
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#27272A]"><BarChart3 className="h-6 w-6 text-[#71717A]" /></div>
-          <p className="text-sm font-medium text-[#A1A1AA]">No statistics yet</p>
-          <p className="text-xs text-[#71717A] mt-1 max-w-sm">Complete some trades to see your performance statistics and unlock quantitative insights.</p>
-          <Button size="sm" className="mt-5" onClick={() => navigate(`/projects/${projectId}/trades`)}>Create First Trade</Button>
-        </div>
+        <EmptyState icon={<BarChart3 className="h-6 w-6" />} title="No statistics yet" description="Complete some trades to see your performance statistics and unlock quantitative insights." action={<Button size="sm" onClick={() => navigate(`/projects/${projectId}/trades`)}>Create First Trade</Button>} />
       </div>
     );
   }
 
   return (
-    <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+    <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Statistics</h1>
-          <p className="text-sm text-[#71717A] mt-0.5">Quantitative analysis of your trading data</p>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">Statistics</h1>
+          <p className="text-sm text-muted mt-0.5">Quantitative analysis of your trading data</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border border-[#27272A] bg-[#111113] p-0.5">
-            {['1M', '3M', '6M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] hover:text-[#A1A1AA]')}>{p}</button>))}
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
+            {['1M', '3M', '6M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>))}
           </div>
           <Button variant="ghost" size="icon" aria-label="Export"><Download className="h-4 w-4" /></Button>
         </div>
@@ -211,34 +207,42 @@ export default function StatisticsPage() {
 
       {/* Equity Curve + Win/Loss Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="lg:col-span-3 rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="lg:col-span-3 rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-[#71717A]" />
-              <h3 className="text-sm font-medium text-[#FAFAFA]">Equity Curve</h3>
+              <TrendingUp className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-medium text-foreground">Equity Curve</h3>
             </div>
             <div className="flex items-center gap-1">
-              {['1W', '1M', '3M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] hover:text-[#A1A1AA]')}>{p}</button>))}
+              {['1W', '1M', '3M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>))}
             </div>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={equityData.length > 0 ? equityData : [{ date: 'No data', equity: 0 }]} {...chartDefaultProps}>
-                <defs><linearGradient id="statEquity" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#4F46E5" stopOpacity={0.25} /><stop offset="100%" stopColor="#4F46E5" stopOpacity={0} /></linearGradient></defs>
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="equity" stroke="#4F46E5" strokeWidth={2} fill="url(#statEquity)" dot={false} activeDot={{ r: 4, fill: '#4F46E5' }} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {equityData.length === 0 ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <TrendingUp className="mx-auto h-6 w-6 text-muted mb-2" />
+                  <p className="text-sm text-muted">No equity data yet</p>
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={equityData} {...chartDefaultProps}>
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area type="monotone" dataKey="equity" stroke="hsl(var(--primary))" strokeWidth={2} fill="hsl(var(--primary) / 0.08)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--primary))' }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </motion.div>
 
         {/* Win/Loss Distribution */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <PieChartIcon className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Win / Loss</h3>
+            <PieChartIcon className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Win / Loss</h3>
           </div>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
@@ -252,7 +256,7 @@ export default function StatisticsPage() {
           </div>
           <div className="flex flex-wrap justify-center gap-2 mt-2">
             {winLossData.map((d) => (
-              <div key={d.name} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} /><span className="text-[10px] text-[#71717A]">{d.name}: {d.value}</span></div>
+              <div key={d.name} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} /><span className="text-3xs text-muted">{d.name}: {d.value}</span></div>
             ))}
           </div>
           <div className="mt-3 space-y-1.5">
@@ -265,73 +269,73 @@ export default function StatisticsPage() {
       {/* Main Analytics Grid — 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Monthly Returns */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Monthly Returns</h3>
+            <BarChart3 className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Monthly Returns</h3>
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyChartData} {...chartDefaultProps}>
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#71717A' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [formatCurrency(v), 'P&L']} />
-                <Bar dataKey="pnl" shape={(p: any) => { const h = Math.abs(p.height); const y = p.height < 0 ? p.y + p.height : p.y; return <rect x={p.x} y={y} width={p.width} height={h} fill={p.height < 0 ? '#22C55E' : '#EF4444'} rx={3} ry={3} />; }} maxBarSize={18} />
+                <Bar dataKey="pnl" shape={(p: any) => { const h = Math.abs(p.height); const y = p.height < 0 ? p.y + p.height : p.y; return <rect x={p.x} y={y} width={p.width} height={h} fill={p.height < 0 ? 'hsl(var(--success))' : 'hsl(var(--danger))'} rx={3} ry={3} />; }} maxBarSize={18} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
         {/* RR Distribution */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Activity className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">R:R Distribution</h3>
+            <Activity className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">R:R Distribution</h3>
           </div>
           {rrChartData.length > 0 ? (
-            <div className="h-48"><MiniBarChart data={rrChartData} dataKey="count" color="#F59E0B" /></div>
+            <div className="h-48"><MiniBarChart data={rrChartData} dataKey="count" color="hsl(var(--warning))" /></div>
           ) : (
-            <div className="flex h-48 items-center justify-center"><p className="text-xs text-[#71717A]">No R:R distribution data available</p></div>
+            <div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No R:R distribution data available</p></div>
           )}
         </motion.div>
 
         {/* Session Performance */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Session Performance</h3>
+            <Clock className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Session Performance</h3>
           </div>
           {sessionChartData.length > 0 ? (
-            <div className="h-48"><MiniBarChart data={sessionChartData} dataKey="winRate" color="#4F46E5" /></div>
-          ) : (<div className="flex h-48 items-center justify-center"><p className="text-xs text-[#71717A]">No session data</p></div>)}
+            <div className="h-48"><MiniBarChart data={sessionChartData} dataKey="winRate" color="hsl(var(--primary))" /></div>
+          ) : (<div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No session data</p></div>)}
           {sessionChartData.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {sessionChartData.map((s: any) => (<div key={s.label} className="flex items-center gap-1.5 rounded-md bg-[#111113] px-2 py-1"><span className="text-[10px] text-[#A1A1AA]">{s.label}</span><span className={cn('text-[10px] font-mono font-medium', s.winRate >= 50 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{s.winRate}%</span></div>))}
+              {sessionChartData.map((s: any) => (<div key={s.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1"><span className="text-3xs text-secondary">{s.label}</span><span className={cn('text-3xs font-mono font-medium', s.winRate >= 50 ? 'text-success' : 'text-danger')}>{s.winRate}%</span></div>))}
             </div>
           )}
         </motion.div>
 
         {/* Day of Week */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <CalendarDays className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Day of Week</h3>
+            <CalendarDays className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Day of Week</h3>
           </div>
           {weekdayChartData.length > 0 ? (
-            <div className="h-48"><MiniBarChart data={weekdayChartData} dataKey="winRate" color="#22C55E" /></div>
-          ) : (<div className="flex h-48 items-center justify-center"><p className="text-xs text-[#71717A]">No weekday data</p></div>)}
+            <div className="h-48"><MiniBarChart data={weekdayChartData} dataKey="winRate" color="hsl(var(--success))" /></div>
+          ) : (<div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No weekday data</p></div>)}
           {weekdayChartData.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {weekdayChartData.map((d: any) => (<div key={d.label} className="flex items-center gap-1.5 rounded-md bg-[#111113] px-2 py-1"><span className="text-[10px] text-[#A1A1AA]">{d.label}</span><span className={cn('text-[10px] font-mono font-medium', d.winRate >= 50 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{d.winRate}%</span></div>))}
+              {weekdayChartData.map((d: any) => (<div key={d.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1"><span className="text-3xs text-secondary">{d.label}</span><span className={cn('text-3xs font-mono font-medium', d.winRate >= 50 ? 'text-success' : 'text-danger')}>{d.winRate}%</span></div>))}
             </div>
           )}
         </motion.div>
       </div>
 
       {/* Advanced Statistics */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Award className="h-4 w-4 text-[#71717A]" />
-          <h3 className="text-sm font-medium text-[#FAFAFA]">Advanced Metrics</h3>
+          <Award className="h-4 w-4 text-muted" />
+          <h3 className="text-sm font-medium text-foreground">Advanced Metrics</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <InsightBadge label="Largest Win" value={formatCurrency(o.avg_win)} good />
@@ -343,53 +347,53 @@ export default function StatisticsPage() {
           <InsightBadge label="Recovery Factor" value={r?.recovery_factor?.toFixed(2) ?? '—'} good={(r?.recovery_factor ?? 0) >= 1} />
           <InsightBadge label="Max Drawdown" value={r?.max_drawdown ? formatCurrency(Math.abs(r.max_drawdown)) : '—'} good={false} />
         </div>
-        <div className="mt-3 flex items-center gap-3 text-[11px] text-[#71717A]">
+        <div className="mt-3 flex items-center gap-3 text-2xs text-muted">
           <span>Breakevens: {o.breakevens}</span>
-          <span className="h-1 w-1 rounded-full bg-[#27272A]" />
+          <span className="h-1 w-1 rounded-full bg-elevated" />
           <span>Closed: {o.closed_trades}</span>
-          <span className="h-1 w-1 rounded-full bg-[#27272A]" />
+          <span className="h-1 w-1 rounded-full bg-elevated" />
           <span>Open: {o.open_trades}</span>
         </div>
       </motion.div>
 
       {/* Rolling Windows */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Activity className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Last 10 Trades</h3>
+            <Activity className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Last 10 Trades</h3>
           </div>
           {rolling10.data?.available ? (
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg bg-[#111113] p-3 text-center"><p className="text-lg font-bold text-[#FAFAFA] font-mono">{rolling10.data.trades}</p><p className="text-[10px] text-[#71717A] mt-0.5">Trades</p></div>
-              <div className="rounded-lg bg-[#111113] p-3 text-center"><p className="text-lg font-bold text-[#22C55E] font-mono">{rolling10.data.win_rate}%</p><p className="text-[10px] text-[#71717A] mt-0.5">Win Rate</p></div>
-              <div className="rounded-lg bg-[#111113] p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling10.data.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{rolling10.data.pnl >= 0 ? '+' : ''}{rolling10.data.pnl.toFixed(0)}</p><p className="text-[10px] text-[#71717A] mt-0.5">P&L</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-foreground font-mono">{rolling10.data.trades}</p><p className="text-3xs text-muted mt-0.5">Trades</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-success font-mono">{rolling10.data.win_rate}%</p><p className="text-3xs text-muted mt-0.5">Win Rate</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling10.data.pnl >= 0 ? 'text-success' : 'text-danger')}>{rolling10.data.pnl >= 0 ? '+' : ''}{rolling10.data.pnl.toFixed(0)}</p><p className="text-3xs text-muted mt-0.5">P&L</p></div>
             </div>
-          ) : (<p className="py-6 text-center text-xs text-[#71717A]">Need {rolling10.data?.trades_needed ?? 10} more trades</p>)}
+          ) : (<p className="py-6 text-center text-xs text-muted">Need {rolling10.data?.trades_needed ?? 10} more trades</p>)}
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Activity className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Last 50 Trades</h3>
+            <Activity className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Last 50 Trades</h3>
           </div>
           {rolling50.data?.available ? (
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg bg-[#111113] p-3 text-center"><p className="text-lg font-bold text-[#FAFAFA] font-mono">{rolling50.data.trades}</p><p className="text-[10px] text-[#71717A] mt-0.5">Trades</p></div>
-              <div className="rounded-lg bg-[#111113] p-3 text-center"><p className="text-lg font-bold text-[#22C55E] font-mono">{rolling50.data.win_rate}%</p><p className="text-[10px] text-[#71717A] mt-0.5">Win Rate</p></div>
-              <div className="rounded-lg bg-[#111113] p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling50.data.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{rolling50.data.pnl >= 0 ? '+' : ''}{rolling50.data.pnl.toFixed(0)}</p><p className="text-[10px] text-[#71717A] mt-0.5">P&L</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-foreground font-mono">{rolling50.data.trades}</p><p className="text-3xs text-muted mt-0.5">Trades</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-success font-mono">{rolling50.data.win_rate}%</p><p className="text-3xs text-muted mt-0.5">Win Rate</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling50.data.pnl >= 0 ? 'text-success' : 'text-danger')}>{rolling50.data.pnl >= 0 ? '+' : ''}{rolling50.data.pnl.toFixed(0)}</p><p className="text-3xs text-muted mt-0.5">P&L</p></div>
             </div>
-          ) : (<p className="py-6 text-center text-xs text-[#71717A]">Need {rolling50.data?.trades_needed ?? 50} more trades</p>)}
+          ) : (<p className="py-6 text-center text-xs text-muted">Need {rolling50.data?.trades_needed ?? 50} more trades</p>)}
         </motion.div>
       </div>
 
       {/* Trade Detail Table */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">All Trades</h3>
-            <span className="text-[11px] text-[#71717A] font-mono">({o.total_trades})</span>
+            <Search className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">All Trades</h3>
+            <span className="text-2xs text-muted font-mono">({o.total_trades})</span>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${projectId}/trades`)}>View All <ChevronRight className="ml-1 h-3 w-3" /></Button>
         </div>
@@ -398,8 +402,8 @@ export default function StatisticsPage() {
             data={trades.data.slice(0, 15)}
             columns={[
               { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
-              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{row.direction || '-'}</span>), width: '40px' },
-              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{row.pnl >= 0 ? '+' : ''}${row.pnl.toFixed(2)}</span>) : '-', width: '100px' },
+              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger')}>{row.direction || '-'}</span>), width: '40px' },
+              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>{row.pnl >= 0 ? '+' : ''}${row.pnl.toFixed(2)}</span>) : '-', width: '100px' },
               { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr?.toFixed(2) ?? '-', width: '60px' },
               { id: 'session', header: 'Session', accessor: (row: any) => row.session || '-', width: '80px', hideOnMobile: true },
               { id: 'result', header: 'Result', accessor: (row: any) => row.result ? <Badge variant={row.result === 'WIN' ? 'success' : row.result === 'LOSS' ? 'destructive' : 'warning'} size="sm">{row.result}</Badge> : '-', width: '70px' },
@@ -411,8 +415,8 @@ export default function StatisticsPage() {
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]"><BarChart3 className="h-5 w-5 text-[#71717A]" /></div>
-            <p className="text-sm font-medium text-[#A1A1AA]">No trades to display</p>
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-elevated"><BarChart3 className="h-5 w-5 text-muted" /></div>
+            <p className="text-sm font-medium text-secondary">No trades to display</p>
             <Button size="sm" className="mt-3" onClick={() => navigate(`/projects/${projectId}/trades`)}>Create Trade</Button>
           </div>
         )}

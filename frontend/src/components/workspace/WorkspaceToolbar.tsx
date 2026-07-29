@@ -74,9 +74,9 @@ export function WorkspaceToolbar() {
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        {state.syncedCrosshair && <Badge variant="secondary" className="text-[10px]">Crosshair Sync</Badge>}
-        {layout.focusMode && <Badge variant="secondary" className="text-[10px]">Focus</Badge>}
-        <Badge variant="outline" className="text-[10px]">{layout.chartLayout}-Chart</Badge>
+        {state.syncedCrosshair && <Badge variant="secondary" className="text-3xs">Crosshair Sync</Badge>}
+        {layout.focusMode && <Badge variant="secondary" className="text-3xs">Focus</Badge>}
+        <Badge variant="outline" className="text-3xs">{layout.chartLayout}-Chart</Badge>
       </div>
     </div>
   );

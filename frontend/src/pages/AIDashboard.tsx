@@ -5,7 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
+import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
 import { KpiCard } from '../components/ui/KpiCard';
 import {
   useAIDashboard, useGenerateInsights, useGenerateRecommendations,
@@ -47,6 +47,10 @@ export default function AIDashboardPage() {
   const data = dashboard.data;
 
   if (dashboard.isLoading) return <div className="flex justify-center py-24"><LoadingSpinner /></div>;
+
+  if (dashboard.error) {
+    return <ErrorState message="Failed to load AI dashboard" description={dashboard.error?.message || 'An unexpected error occurred'} onRetry={() => dashboard.refetch()} />;
+  }
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -145,7 +149,7 @@ export default function AIDashboardPage() {
                             <p className="text-sm font-medium">{ins.title}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">{ins.description}</p>
                           </div>
-                          <Badge variant={ins.category === 'positive' ? 'success' : ins.category === 'warning' ? 'warning' : 'destructive'} className="shrink-0 text-[10px]">
+                          <Badge variant={ins.category === 'positive' ? 'success' : ins.category === 'warning' ? 'warning' : 'destructive'} className="shrink-0 text-3xs">
                             {(ins.confidence * 100).toFixed(0)}%
                           </Badge>
                         </div>
@@ -281,7 +285,7 @@ export default function AIDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold">{ins.title}</h4>
-                        <Badge variant="outline" className="text-[10px]">{ins.insight_type}</Badge>
+                        <Badge variant="outline" className="text-3xs">{ins.insight_type}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">{ins.description}</p>
                     </div>
@@ -314,7 +318,7 @@ export default function AIDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold capitalize">{pat.pattern_type} Pattern</h4>
-                        <Badge variant={pat.is_positive ? 'success' : 'destructive'} className="text-[10px]">
+                        <Badge variant={pat.is_positive ? 'success' : 'destructive'} className="text-3xs">
                           {pat.pattern_key}
                         </Badge>
                       </div>
@@ -398,10 +402,10 @@ export default function AIDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold">{rec.title}</h4>
-                        <Badge variant={rec.priority === 'critical' ? 'destructive' : rec.priority === 'high' ? 'warning' : 'secondary'} className="text-[10px]">
+                        <Badge variant={rec.priority === 'critical' ? 'destructive' : rec.priority === 'high' ? 'warning' : 'secondary'} className="text-3xs">
                           {rec.priority}
                         </Badge>
-                        <Badge variant="outline" className="text-[10px]">{rec.recommendation_type}</Badge>
+                        <Badge variant="outline" className="text-3xs">{rec.recommendation_type}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">{rec.description}</p>
                       {rec.rationale && <p className="text-xs text-muted-foreground/70 mt-1 italic">{rec.rationale}</p>}

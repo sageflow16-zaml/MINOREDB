@@ -150,7 +150,7 @@ export default function IntelligenceDashboard() {
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{agent.description}</p>
                   <div className="flex flex-wrap gap-1 mt-3">
                     {agent.capabilities.slice(0, 3).map((cap) => (
-                      <span key={cap} className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">
+                      <span key={cap} className="text-3xs px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">
                         {cap.replace(/_/g, ' ')}
                       </span>
                     ))}
@@ -210,7 +210,7 @@ export default function IntelligenceDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="warning" className="text-[10px] px-2 py-0.5">
+                        <Badge variant="warning" className="text-3xs px-2 py-0.5">
                           {task.priority > 0 ? `P${task.priority}` : 'Normal'}
                         </Badge>
                         <button
@@ -349,7 +349,7 @@ export default function IntelligenceDashboard() {
                 id: 'status',
                 header: 'Status',
                 accessor: (row: AgentExecution) => (
-                  <Badge variant={statusToBadgeVariant(row.status)} className="text-[10px] px-2 py-0.5">
+                  <Badge variant={statusToBadgeVariant(row.status)} className="text-3xs px-2 py-0.5">
                     {row.status}
                   </Badge>
                 ),
@@ -445,7 +445,7 @@ export default function IntelligenceDashboard() {
                   id: 'status',
                   header: 'Status',
                   accessor: (row: AgentWorkflow) => (
-                    <Badge variant={row.status === 'active' ? 'success' : row.status === 'draft' ? 'warning' : 'info'} className="text-[10px] px-2 py-0.5">
+                    <Badge variant={row.status === 'active' ? 'success' : row.status === 'draft' ? 'warning' : 'info'} className="text-3xs px-2 py-0.5">
                       {row.status}
                     </Badge>
                   ),
@@ -470,14 +470,14 @@ export default function IntelligenceDashboard() {
                   accessor: (row: AgentWorkflow) => (
                     <div className="flex items-center gap-2">
                       {row.last_run_status ? (
-                        <Badge variant={row.last_run_status === 'completed' ? 'success' : 'destructive'} className="text-[10px] px-2 py-0.5">
+                        <Badge variant={row.last_run_status === 'completed' ? 'success' : 'destructive'} className="text-3xs px-2 py-0.5">
                           {row.last_run_status}
                         </Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">Never</span>
                       )}
                       {row.last_run_at && (
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-3xs text-muted-foreground">
                           {new Date(row.last_run_at).toLocaleDateString()}
                         </span>
                       )}

@@ -5,7 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
+import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
 import { useAIProfile, useUpdateAIProfile, useAnalyzeProfile, useEvaluations, useEvaluateTrade } from '../hooks/useAIFoundation';
 import {
   Brain, TrendingUp, Target, Shield, Activity, BarChart3,
@@ -47,6 +47,8 @@ export default function AIProfilePage() {
 
       {profile.isLoading ? (
         <div className="flex justify-center py-24"><LoadingSpinner /></div>
+      ) : profile.error ? (
+        <ErrorState message="Failed to load profile" description={profile.error?.message || 'An unexpected error occurred'} onRetry={() => profile.refetch()} />
       ) : data ? (
         <>
           {/* Score Banner */}
@@ -65,15 +67,15 @@ export default function AIProfilePage() {
               <div className="grid grid-cols-3 gap-6 text-center">
                 <div>
                   <p className="text-lg font-bold">{data.trading_style || '—'}</p>
-                  <p className="text-[10px] text-muted-foreground">Style</p>
+                  <p className="text-3xs text-muted-foreground">Style</p>
                 </div>
                 <div>
                   <p className="text-lg font-bold">{data.risk_profile || '—'}</p>
-                  <p className="text-[10px] text-muted-foreground">Risk</p>
+                  <p className="text-3xs text-muted-foreground">Risk</p>
                 </div>
                 <div>
                   <p className="text-lg font-bold">{data.avg_rr?.toFixed(1) ?? '—'}</p>
-                  <p className="text-[10px] text-muted-foreground">Avg R:R</p>
+                  <p className="text-3xs text-muted-foreground">Avg R:R</p>
                 </div>
               </div>
             </div>
@@ -127,7 +129,7 @@ export default function AIProfilePage() {
                     ].map((m) => (
                       <div key={m.label} className="rounded-lg bg-muted/20 p-3 text-center">
                         <p className="text-lg font-bold">{m.value || '—'}</p>
-                        <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                        <p className="text-3xs text-muted-foreground">{m.label}</p>
                       </div>
                     ))}
                   </div>
@@ -241,7 +243,7 @@ export default function AIProfilePage() {
                           <div><p className={`font-bold ${scoreColor(ev.psychology_score ?? 0)}`}>{ev.psychology_score?.toFixed(0) ?? '—'}</p><p className="text-muted-foreground">Psychology</p></div>
                           <div><p className={`font-bold ${scoreColor(ev.discipline_score ?? 0)}`}>{ev.discipline_score?.toFixed(0) ?? '—'}</p><p className="text-muted-foreground">Discipline</p></div>
                         </div>
-                        <Badge variant={scoreVariant(ev.overall_quality ?? 0) as 'success'} className="text-[10px]">{ev.provider}</Badge>
+                        <Badge variant={scoreVariant(ev.overall_quality ?? 0) as 'success'} className="text-3xs">{ev.provider}</Badge>
                       </div>
                     ))}
                   </div>

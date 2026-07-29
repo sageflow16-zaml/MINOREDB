@@ -744,6 +744,8 @@ async function ingestDocument(supabase: ReturnType<typeof createClient>, project
   const text = source.normalized_text || source.raw_text;
   if (!text) return { chunks_created: 0, warning: 'Source has no text content' };
 
+  const wordCount = text.split(/\s+/).length;
+  const pageEstimate = Math.ceil(wordCount / 300) || 1;
   const chunks = chunkText(text);
   if (chunks.length === 0) return { chunks_created: 0, warning: 'Text too short to chunk' };
 
@@ -751,21 +753,31 @@ async function ingestDocument(supabase: ReturnType<typeof createClient>, project
 
   const { data: ingestion, error: ingestError } = await supabase.from('ai_document_ingestion').insert({
     project_id: projectId,
+    source_id: sourceId,
     filename,
     source_type: 'source',
     status: 'processing',
+    progress: { stage: 'chunking', pct: 10 },
+    page_count: pageEstimate,
+    word_count: wordCount,
   }).select().single();
 
   if (ingestError || !ingestion) throw new Error('Failed to create ingestion record');
 
   let created = 0;
   for (let i = 0; i < chunks.length; i++) {
+    await supabase.from('ai_document_ingestion').update({
+      progress: { stage: 'embeddings', pct: Math.round(10 + (i / chunks.length) * 80) },
+    }).eq('id', ingestion.id);
+
     const embedding = await generateEmbedding(chunks[i]);
+    const pageNum = Math.min(Math.ceil((chunks.slice(0, i + 1).join(' ').split(/\s+/).length) / 300) || 1, pageEstimate);
     const { error: chunkError } = await supabase.from('ai_document_chunk').insert({
       project_id: projectId,
       ingestion_id: ingestion.id,
       chunk_index: i,
       content: chunks[i],
+      page: pageNum,
       embedding: embedding ?? undefined,
       token_count: Math.ceil(chunks[i].split(/\s+/).length),
     });
@@ -775,12 +787,457 @@ async function ingestDocument(supabase: ReturnType<typeof createClient>, project
   await supabase.from('ai_document_ingestion').update({
     status: 'completed',
     chunk_count: created,
+    progress: { stage: 'indexed', pct: 100 },
   }).eq('id', ingestion.id);
 
   return {
     chunks_created: created,
     total_chunks: chunks.length,
     ingestion_id: ingestion.id,
+    page_count: pageEstimate,
+    word_count: wordCount,
+  };
+}
+
+async function researchChat(supabase: ReturnType<typeof createClient>, projectId: string, conversationId: string, message: string, documentIds?: string[]) {
+  const { data: conversation } = await supabase.from('ai_conversation').select('*').eq('id', conversationId).single();
+  if (!conversation) throw new Error('Conversation not found');
+
+  const { data: history } = await supabase.from('ai_message').select('*').eq('conversation_id', conversationId).order('created_at', { ascending: true }).limit(20);
+  const chatHistory = (history || []).map((m: any) => `${m.role}: ${m.content}`).join('\n');
+
+  let documentContext = '';
+  if (documentIds && documentIds.length > 0) {
+    const { data: docs } = await supabase.from('source').select('id, name, normalized_text, raw_text').in('id', documentIds);
+    for (const doc of docs || []) {
+      const text = doc.normalized_text || doc.raw_text || '';
+      documentContext += `\n\n--- Document: ${doc.name || doc.id} ---\n${text.substring(0, 4000)}`;
+    }
+  } else {
+    const { data: chunks } = await supabase.from('ai_document_chunk')
+      .select('content, page, ai_document_ingestion!inner(filename)')
+      .eq('project_id', projectId)
+      .limit(15);
+    if (chunks && chunks.length > 0) {
+      documentContext = '\n\nRelevant document chunks:\n' + chunks.map((c: any) =>
+        `[${c.ai_document_ingestion?.filename || 'Doc'}${c.page ? ` p.${c.page}` : ''}] ${c.content}`
+      ).join('\n');
+    }
+  }
+
+  const systemPrompt = `You are Minore Research, a trading research AI assistant. You analyze uploaded documents to answer questions.
+
+CRITICAL RULES:
+- Answer ONLY from the provided document context. Do NOT use external knowledge unless the user explicitly asks.
+- Every factual claim MUST include a citation in the format: [Source: filename, Page N]
+- If the context doesn't contain enough information, say "I don't have enough information in the uploaded documents to answer that."
+- Be precise, specific, and reference exact text from the documents.
+- When asked to summarize, extract rules, find patterns, etc., structure your response clearly.
+
+Available context from uploaded documents:${documentContext}`;
+
+  const result = await callAI(systemPrompt, `Chat history:\n${chatHistory}\n\nUser: ${message}`, defaultModel, 4096);
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
+  const { data: aiMsg } = await supabase.from('ai_message').insert({
+    project_id: projectId,
+    conversation_id: conversationId,
+    role: 'user',
+    content: message,
+    document_ids: documentIds || [],
+    metadata: { research_v3: true },
+  }).select().single();
+
+  let citations: any[] = [];
+  let aiContent = result;
+  try {
+    const citeMatches = result.match(/\[Source:\s*([^\]]+),\s*Page\s*(\d+)\]/gi);
+    if (citeMatches) {
+      for (const cite of citeMatches) {
+        const parts = cite.match(/\[Source:\s*([^\]]+),\s*Page\s*(\d+)\]/i);
+        if (parts) {
+          citations.push({
+            source_name: parts[1].trim(),
+            page: parseInt(parts[2]),
+            excerpt: '',
+          });
+        }
+      }
+    }
+  } catch { /* ignore citation parsing errors */ }
+
+  const { data: responseMsg } = await supabase.from('ai_message').insert({
+    project_id: projectId,
+    conversation_id: conversationId,
+    role: 'assistant',
+    content: aiContent,
+    citations: citations.length > 0 ? citations : undefined,
+    document_ids: documentIds || [],
+    metadata: { research_v3: true },
+  }).select().single();
+
+  return { user_message: aiMsg, assistant_message: responseMsg, citations };
+}
+
+async function semanticSearch(supabase: ReturnType<typeof createClient>, projectId: string, query: string, documentIds?: string[]) {
+  if (!openaiApiKey) return { results: [], method: 'disabled', warning: aiNotConfiguredMsg() };
+
+  const embeddingResponse = await fetch(`${openaiBaseUrl}/embeddings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openaiApiKey}`,
+    },
+    body: JSON.stringify({ model: 'text-embedding-3-small', input: query }),
+  });
+  if (!embeddingResponse.ok) return { results: [], method: 'disabled', warning: 'Embedding service unavailable.' };
+  const embedJson = await embeddingResponse.json();
+  const embedding = embedJson.data[0].embedding;
+
+  const { data: results } = await supabase.rpc('search_documents', {
+    query_embedding: embedding,
+    match_threshold: 0.6,
+    match_count: 20,
+    p_project_id: projectId,
+  });
+
+  if (results) {
+    let filtered = results;
+    if (documentIds && documentIds.length > 0) {
+      const { data: ingestions } = await supabase.from('ai_document_ingestion')
+        .select('id, filename').in('source_id', documentIds);
+      const ingIds = (ingestions || []).map((i: any) => i.id);
+      filtered = results.filter((r: any) => ingIds.includes(r.ingestion_id));
+    }
+    return { results: filtered, method: 'vector' };
+  }
+
+  return { results: [], method: 'fallback' };
+}
+
+async function journalAnalyze(supabase: ReturnType<typeof createClient>, projectId: string, documentId: string) {
+  const { data: source } = await supabase.from('source').select('*').eq('id', documentId).single();
+  if (!source) throw new Error('Source not found');
+  const text = source.normalized_text || source.raw_text;
+  if (!text) return { warning: 'No text content' };
+
+  const result = await callAI(
+    `You are a trading journal analyst. Analyze this journal entry and identify:
+1. Repeated mistakes - list each mistake with specific examples from the text
+2. Trading patterns - identify recurring patterns in behavior
+3. Psychological observations - note emotional/psychological patterns
+4. Strengths - what the trader does well
+5. Actionable improvements - specific recommendations
+
+Return a JSON object with keys: mistakes (array of {mistake, examples[], severity}), patterns (array of {pattern, frequency, impact}), psychology (array of {observation, evidence}), strengths (array of string), improvements (array of string).`,
+    `Analyze this trading journal:\n\n${text.substring(0, 8000)}`
+  );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
+  try {
+    const analysis = JSON.parse(result);
+    const { data: stored } = await supabase.from('document_journal_analysis').insert({
+      project_id: projectId,
+      document_id: documentId,
+      analysis_type: 'journal_analysis',
+      content: analysis,
+    }).select().single();
+    return { analysis: stored || analysis };
+  } catch {
+    return { analysis: { raw: result } };
+  }
+}
+
+async function generateFlashcards(supabase: ReturnType<typeof createClient>, projectId: string, documentIds: string[]) {
+  let context = '';
+  for (const docId of documentIds) {
+    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    if (source) {
+      context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 3000)}`;
+    }
+  }
+  if (!context) return { flashcards: [], warning: 'No document content found' };
+
+  const result = await callAI(
+    'You are a flashcard generator. Create study flashcards from the provided document content. Return a JSON array of objects with keys: front (question/concept), back (answer/definition), topic, difficulty (beginner/intermediate/advanced). Generate 10-20 flashcards.',
+    `Generate flashcards from:\n${context}`
+  );
+  if (isAiError(result)) return { flashcards: [], warning: JSON.parse(result)._error };
+  try { return { flashcards: JSON.parse(result) }; } catch { return { flashcards: [], warning: 'Failed to parse AI response' }; }
+}
+
+async function compareDocuments(supabase: ReturnType<typeof createClient>, projectId: string, documentIds: string[]) {
+  let contexts: any[] = [];
+  for (const docId of documentIds) {
+    const { data: source } = await supabase.from('source').select('id, name, normalized_text, raw_text').eq('id', docId).single();
+    if (source) {
+      contexts.push({
+        id: source.id,
+        name: source.name || source.id,
+        text: (source.normalized_text || source.raw_text || '').substring(0, 4000),
+      });
+    }
+  }
+  if (contexts.length < 2) return { comparison: null, warning: 'Need at least 2 documents to compare' };
+
+  const docsText = contexts.map(d => `--- Document: ${d.name} ---\n${d.text}`).join('\n\n');
+  const result = await callAI(
+    `You are a document comparison expert. Compare the provided documents and identify:
+1. Key similarities between documents
+2. Key differences
+3. Complementary information (what each document adds)
+4. Contradictions or conflicts
+5. Synthesis - integrated summary
+
+Return a JSON object with keys: similarities (array), differences (array), complementary (array), contradictions (array), synthesis (string).`,
+    `Compare these documents:\n\n${docsText}`
+  );
+  if (isAiError(result)) return { comparison: null, warning: JSON.parse(result)._error };
+  try { return { comparison: JSON.parse(result) }; } catch { return { comparison: null, warning: 'Failed to parse AI response' }; }
+}
+
+async function extractRules(supabase: ReturnType<typeof createClient>, projectId: string, documentId: string) {
+  const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', documentId).single();
+  if (!source) throw new Error('Source not found');
+  const text = source.normalized_text || source.raw_text;
+  if (!text) return { rules: [], warning: 'No text content' };
+
+  const result = await callAI(
+    'You are a trading rules extraction expert. Extract every trading rule, principle, and key concept from the document. Return a JSON array of objects with keys: rule (the rule statement), category (entry/exit/risk/psychology/management/confluence/other), page (approximate page number if inferable), importance (critical/important/supplementary).',
+    `Extract trading rules from:\n\n${text.substring(0, 8000)}`
+  );
+  if (isAiError(result)) return { rules: [], warning: JSON.parse(result)._error };
+  try { return { rules: JSON.parse(result) }; } catch { return { rules: [], warning: 'Failed to parse AI response' }; }
+}
+
+async function generateQuiz(supabase: ReturnType<typeof createClient>, projectId: string, documentIds: string[]) {
+  let context = '';
+  for (const docId of documentIds) {
+    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 3000)}`;
+  }
+  if (!context) return { questions: [], warning: 'No document content found' };
+
+  const result = await callAI(
+    'You are a quiz generator. Create test questions from the provided document content. Generate 10 questions with varying difficulty. Return a JSON array of objects with keys: question (string), options (array of 4 strings), correct_index (0-3), explanation (string), topic (string), difficulty (easy/medium/hard).',
+    `Generate quiz questions from:\n${context}`
+  );
+  if (isAiError(result)) return { questions: [], warning: JSON.parse(result)._error };
+  try { return { questions: JSON.parse(result) }; } catch { return { questions: [], warning: 'Failed to parse AI response' }; }
+}
+
+async function generateStudyNotes(supabase: ReturnType<typeof createClient>, projectId: string, documentIds: string[]) {
+  let context = '';
+  for (const docId of documentIds) {
+    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 4000)}`;
+  }
+  if (!context) return { notes: null, warning: 'No document content found' };
+
+  const result = await callAI(
+    `You are a study notes generator. Create comprehensive, well-structured study notes from the provided documents. Organize by topics and subtopics. Include key concepts, definitions, examples, and important quotes.
+
+Return a JSON object with keys: title (string), topics (array of {topic, subtopics: array of {subtopic, content, key_points: string[], quotes: string[]}}), summary (string), key_takeaways (string[]).`,
+    `Generate study notes from:\n${context}`
+  );
+  if (isAiError(result)) return { notes: null, warning: JSON.parse(result)._error };
+  try { return { notes: JSON.parse(result) }; } catch { return { notes: null, warning: 'Failed to parse AI response' }; }
+}
+
+async function findConfluences(supabase: ReturnType<typeof createClient>, projectId: string, documentIds: string[]) {
+  let context = '';
+  for (const docId of documentIds) {
+    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 3000)}`;
+  }
+  if (!context) return { confluences: [], warning: 'No document content found' };
+  if (documentIds.length < 2) return { confluences: [], warning: 'Need at least 2 documents to find confluences' };
+
+  const result = await callAI(
+    `You are a trading confluence analyst. Analyze the provided documents and identify areas of confluence (agreement/correlation) between them.
+
+For example, if one document talks about liquidity sweeps and another discusses entries after sweeps, that's a confluence.
+
+Return a JSON array of objects with keys: concept (string), documents (string[] - document names), description (string), confidence (0-1), trading_application (string).`,
+    `Find confluences across these documents:\n${context}`
+  );
+  if (isAiError(result)) return { confluences: [], warning: JSON.parse(result)._error };
+  try { return { confluences: JSON.parse(result) }; } catch { return { confluences: [], warning: 'Failed to parse AI response' }; }
+}
+
+async function suggestQuestions(supabase: ReturnType<typeof createClient>, projectId: string, documentId: string) {
+  const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', documentId).single();
+  if (!source) return { questions: [], warning: 'Document not found' };
+  const text = (source.normalized_text || source.raw_text || '').substring(0, 4000);
+
+  const result = await callAI(
+    `You are an AI research assistant. Given a document, generate 6-8 specific, insightful questions that a trader could ask about this document to deepen their understanding.
+
+Return ONLY a JSON array of strings. Each question should:
+- Be specific to the document content (not generic)
+- Test understanding of key concepts
+- Ask about practical trading applications
+- Probe for contradictions or unclear points
+- Challenge assumptions in the document
+
+Example: "How does the concept of liquidity sweeps in this document differ from conventional ICT teachings when applied to lower timeframes?"`,
+    `Generate suggested questions for this document (${source.name || 'Untitled'}):\n\n${text}`
+  );
+  if (isAiError(result)) return { questions: [], warning: JSON.parse(result)._error };
+  try { const parsed = JSON.parse(result); return { questions: Array.isArray(parsed) ? parsed : parsed.questions || [] }; }
+  catch { return { questions: [], warning: 'Failed to parse AI response' }; }
+}
+
+async function findRelatedDocuments(supabase: ReturnType<typeof createClient>, projectId: string, documentId: string) {
+  const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', documentId).single();
+  if (!source) return { related: [], warning: 'Document not found' };
+
+  const query = (source.normalized_text || source.raw_text || '').substring(0, 2000);
+  if (!openaiApiKey) return { related: [], method: 'disabled' };
+
+  const embeddingResponse = await fetch(`${openaiBaseUrl}/embeddings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiApiKey}` },
+    body: JSON.stringify({ model: 'text-embedding-3-small', input: query }),
+  });
+  if (!embeddingResponse.ok) return { related: [], method: 'disabled' };
+  const embedJson = await embeddingResponse.json();
+  const embedding = embedJson.data[0].embedding;
+
+  const { data: results } = await supabase.rpc('search_documents', {
+    query_embedding: embedding,
+    match_threshold: 0.5,
+    match_count: 10,
+    p_project_id: projectId,
+  });
+
+  const related = (results || [])
+    .filter((r: any) => r.source_id !== documentId)
+    .map((r: any) => ({
+      source_id: r.source_id,
+      title: r.filename || r.source_id.slice(0, 8),
+      similarity: r.similarity,
+      snippet: r.content?.substring(0, 200) || '',
+    }));
+
+  return { related, method: 'vector' };
+}
+
+async function crossDocumentReasoning(supabase: ReturnType<typeof createClient>, projectId: string, documentIds: string[]) {
+  let context = '';
+  for (const docId of documentIds) {
+    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 2500)}`;
+  }
+  if (!context) return { reasoning: null, warning: 'No document content found' };
+
+  const result = await callAI(
+    `You are a cross-document reasoning engine for trading research. Analyze the provided documents and produce a structured analysis.
+
+Return ONLY valid JSON with this structure:
+{
+  "shared_concepts": [{"concept": "string", "documents": ["doc1", "doc2"], "explanation": "string"}],
+  "contradictions": [{"concept": "string", "docs_disagreeing": ["doc1", "doc2"], "explanation": "string", "resolution_suggestion": "string"}],
+  "complementary_insights": [{"insight": "string", "source_docs": ["doc1"], "supported_by": ["doc2"], "trading_application": "string"}],
+  "synthesis": "string - a unified summary that integrates all documents",
+  "gaps": ["string - areas not covered that would be useful to research"]
+}`,
+    `Perform cross-document reasoning on these documents:\n${context}`
+  );
+  if (isAiError(result)) return { reasoning: null, warning: JSON.parse(result)._error };
+  try { return { reasoning: JSON.parse(result) }; }
+  catch { return { reasoning: null, warning: 'Failed to parse AI response' }; }
+}
+
+async function getRecommendations(supabase: ReturnType<typeof createClient>, projectId: string, documentIds: string[]) {
+  let context = '';
+  const { data: allSources } = await supabase.from('source')
+    .select('id, name, normalized_text, raw_text, origin_type')
+    .eq('project_id', projectId)
+    .limit(10);
+  const docsToAnalyze = documentIds.length > 0
+    ? (allSources || []).filter((s: any) => documentIds.includes(s.id))
+    : (allSources || []).slice(0, 5);
+
+  for (const source of docsToAnalyze) {
+    context += `\n\n--- ${source.name || source.id} (${source.origin_type || 'unknown'}) ---\n${(source.normalized_text || source.raw_text || '').substring(0, 2000)}`;
+  }
+  if (!context) return { recommendations: [], warning: 'No documents available for analysis' };
+
+  const result = await callAI(
+    `You are a trading intelligence AI. Based on the user's uploaded documents (trading journals, educational materials, research papers), generate personalized actionable recommendations.
+
+Return ONLY valid JSON with this structure:
+{
+  "recommendations": [
+    {
+      "category": "trading_rule|risk_management|psychology|strategy|learning",
+      "priority": "high|medium|low",
+      "title": "string",
+      "description": "string",
+      "rationale": "string - why this recommendation is relevant to THIS trader's specific materials",
+      "document_references": ["document names that support this"],
+      "action_items": ["specific actionable step 1", "step 2"]
+    }
+  ],
+  "summary": "string - a brief summary of the overall recommendation theme"
+}
+
+Generate 3-6 recommendations. Be specific to the content, not generic advice.`,
+    `Analyze these uploaded documents and generate personalized trading recommendations:\n${context}`
+  );
+  if (isAiError(result)) return { recommendations: [], warning: JSON.parse(result)._error };
+  try { const parsed = JSON.parse(result); return { recommendations: parsed.recommendations || [], summary: parsed.summary || '' }; }
+  catch { return { recommendations: [], warning: 'Failed to parse AI response' }; }
+}
+
+async function getKnowledgeGraphData(supabase: ReturnType<typeof createClient>, projectId: string) {
+  const { data: nodes } = await supabase.from('knowledge_node')
+    .select('id, name, type')
+    .eq('project_id', projectId)
+    .limit(100);
+  const { data: edges } = await supabase.from('knowledge_edge')
+    .select('id, source_node_id, target_node_id, relationship, strength')
+    .eq('project_id', projectId)
+    .limit(200);
+
+  if (!nodes || nodes.length === 0) {
+    const { data: concepts } = await supabase.from('knowledge_concept')
+      .select('id, title, summary, category_id, knowledge_category!inner(name, color)')
+      .eq('project_id', projectId)
+      .limit(100);
+    const { data: relationships } = await supabase.from('knowledge_relationship')
+      .select('id, source_concept_id, target_concept_id, relationship_type, strength')
+      .eq('project_id', projectId)
+      .limit(200);
+
+    const graphNodes = (concepts || []).map((c: any) => ({
+      id: c.id,
+      name: c.title,
+      type: 'concept',
+      category: c.knowledge_category?.name || 'General',
+      color: c.knowledge_category?.color || '#6366f1',
+      summary: c.summary || '',
+    }));
+    const graphEdges = (relationships || []).map((r: any) => ({
+      id: r.id,
+      source: r.source_concept_id,
+      target: r.target_concept_id,
+      relationship: r.relationship_type,
+      strength: r.strength || 0.5,
+    }));
+    return { nodes: graphNodes, edges: graphEdges };
+  }
+
+  return {
+    nodes: nodes.map((n: any) => ({ id: n.id, name: n.name, type: n.type })),
+    edges: edges.map((e: any) => ({
+      id: e.id,
+      source: e.source_node_id,
+      target: e.target_node_id,
+      relationship: e.relationship,
+      strength: e.strength,
+    })),
   };
 }
 
@@ -900,8 +1357,92 @@ serve(async (req) => {
       case 'ingest-document': {
         const sourceId = data?.source_id;
         if (!sourceId) return errorResponse('Missing source_id');
-        const result = await ingestDocument(supabase, project_id, sourceId);
+        const result = await ingestDocument(getServiceClient(), project_id, sourceId);
         return successResponse(result);
+      }
+      case 'research-chat': {
+        const conversationId = data?.conversation_id;
+        const message = data?.message;
+        const documentIds = data?.document_ids;
+        if (!conversationId || !message) return errorResponse('Missing conversation_id or message');
+        const result = await researchChat(supabase, project_id, conversationId, message, documentIds);
+        return successResponse(result);
+      }
+      case 'semantic-search': {
+        const query = data?.query;
+        const docIds = data?.document_ids;
+        if (!query) return errorResponse('Missing query');
+        const result = await semanticSearch(supabase, project_id, query, docIds);
+        return successResponse(result);
+      }
+      case 'journal-analyze': {
+        const docId = data?.document_id;
+        if (!docId) return errorResponse('Missing document_id');
+        const result = await journalAnalyze(supabase, project_id, docId);
+        return successResponse(result);
+      }
+      case 'generate-flashcards': {
+        const flashDocIds = data?.document_ids;
+        if (!flashDocIds || !Array.isArray(flashDocIds)) return errorResponse('Missing document_ids array');
+        const result = await generateFlashcards(supabase, project_id, flashDocIds);
+        return successResponse(result);
+      }
+      case 'compare-documents': {
+        const compDocIds = data?.document_ids;
+        if (!compDocIds || !Array.isArray(compDocIds) || compDocIds.length < 2) return errorResponse('Need at least 2 document_ids');
+        const compResult = await compareDocuments(supabase, project_id, compDocIds);
+        return successResponse(compResult);
+      }
+      case 'extract-rules': {
+        const ruleDocId = data?.document_id;
+        if (!ruleDocId) return errorResponse('Missing document_id');
+        const ruleResult = await extractRules(supabase, project_id, ruleDocId);
+        return successResponse(ruleResult);
+      }
+      case 'generate-quiz': {
+        const quizDocIds = data?.document_ids;
+        if (!quizDocIds || !Array.isArray(quizDocIds)) return errorResponse('Missing document_ids array');
+        const quizResult = await generateQuiz(supabase, project_id, quizDocIds);
+        return successResponse(quizResult);
+      }
+      case 'generate-study-notes': {
+        const notesDocIds = data?.document_ids;
+        if (!notesDocIds || !Array.isArray(notesDocIds)) return errorResponse('Missing document_ids array');
+        const notesResult = await generateStudyNotes(supabase, project_id, notesDocIds);
+        return successResponse(notesResult);
+      }
+      case 'find-confluences': {
+        const confDocIds = data?.document_ids;
+        if (!confDocIds || !Array.isArray(confDocIds) || confDocIds.length < 2) return errorResponse('Need at least 2 document_ids');
+        const confResult = await findConfluences(supabase, project_id, confDocIds);
+        return successResponse(confResult);
+      }
+      case 'knowledge-graph-data': {
+        const graphResult = await getKnowledgeGraphData(supabase, project_id);
+        return successResponse(graphResult);
+      }
+      case 'suggest-questions': {
+        const suggestDocId = data?.document_id;
+        if (!suggestDocId) return errorResponse('Missing document_id');
+        const questionsResult = await suggestQuestions(supabase, project_id, suggestDocId);
+        return successResponse(questionsResult);
+      }
+      case 'find-related': {
+        const relatedDocId = data?.document_id;
+        if (!relatedDocId) return errorResponse('Missing document_id');
+        const relatedResult = await findRelatedDocuments(supabase, project_id, relatedDocId);
+        return successResponse(relatedResult);
+      }
+      case 'cross-document-reasoning': {
+        const crossDocIds = data?.document_ids;
+        if (!crossDocIds || !Array.isArray(crossDocIds) || crossDocIds.length < 2) return errorResponse('Need at least 2 document_ids');
+        const crossResult = await crossDocumentReasoning(supabase, project_id, crossDocIds);
+        return successResponse(crossResult);
+      }
+      case 'get-recommendations': {
+        const recDocIds = data?.document_ids || [];
+        const recResult = await getRecommendations(supabase, project_id, recDocIds);
+        return successResponse(recResult);
       }
       case 'refresh-knowledge-graph': {
         const result = await refreshKnowledgeGraph(supabase, project_id);

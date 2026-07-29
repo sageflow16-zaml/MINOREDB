@@ -39,7 +39,7 @@ export default function AuditLog() {
     }},
     { id: 'summary', header: 'Summary', accessor: 'summary' },
     { id: 'actor', header: 'Actor', accessor: 'actor' },
-    { id: 'source', header: 'Source', accessor: (row: Record<string, unknown>) => row.source ? <Badge variant="outline" className="text-[10px]">{row.source as string}</Badge> : '-' },
+    { id: 'source', header: 'Source', accessor: (row: Record<string, unknown>) => row.source ? <Badge variant="outline" className="text-3xs">{row.source as string}</Badge> : '-' },
     { id: 'severity', header: 'Severity', accessor: (row: Record<string, unknown>) => <Badge className={severityColors[row.severity as string] || ''}>{row.severity as string}</Badge> },
   ];
 

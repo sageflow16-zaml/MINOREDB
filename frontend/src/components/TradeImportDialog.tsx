@@ -159,19 +159,19 @@ export default function TradeImportDialog({ projectId, open, onClose }: Props) {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-foreground">{preview.total_rows}</div>
-                      <div className="text-[10px] text-muted-foreground">Total Rows</div>
+                      <div className="text-3xs text-muted-foreground">Total Rows</div>
                     </div>
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-green-500">{preview.valid_rows}</div>
-                      <div className="text-[10px] text-muted-foreground">Valid</div>
+                      <div className="text-3xs text-muted-foreground">Valid</div>
                     </div>
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-yellow-500">{preview.duplicate_rows}</div>
-                      <div className="text-[10px] text-muted-foreground">Duplicates</div>
+                      <div className="text-3xs text-muted-foreground">Duplicates</div>
                     </div>
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-red-500">{preview.error_rows}</div>
-                      <div className="text-[10px] text-muted-foreground">Errors</div>
+                      <div className="text-3xs text-muted-foreground">Errors</div>
                     </div>
                   </div>
 
@@ -258,7 +258,7 @@ export default function TradeImportDialog({ projectId, open, onClose }: Props) {
                       </tbody>
                     </table>
                     {preview.rows.length > 100 && (
-                      <p className="text-center text-[10px] text-muted-foreground py-2">
+                      <p className="text-center text-3xs text-muted-foreground py-2">
                         Showing first 100 of {preview.rows.length} rows
                       </p>
                     )}
@@ -287,19 +287,19 @@ export default function TradeImportDialog({ projectId, open, onClose }: Props) {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-green-500">{result.imported}</div>
-                      <div className="text-[10px] text-muted-foreground">Imported</div>
+                      <div className="text-3xs text-muted-foreground">Imported</div>
                     </div>
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-blue-500">{result.updated}</div>
-                      <div className="text-[10px] text-muted-foreground">Updated</div>
+                      <div className="text-3xs text-muted-foreground">Updated</div>
                     </div>
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-yellow-500">{result.skipped}</div>
-                      <div className="text-[10px] text-muted-foreground">Skipped</div>
+                      <div className="text-3xs text-muted-foreground">Skipped</div>
                     </div>
                     <div className="rounded-lg border border-border p-3 text-center">
                       <div className="text-lg font-bold text-red-500">{result.failed}</div>
-                      <div className="text-[10px] text-muted-foreground">Failed</div>
+                      <div className="text-3xs text-muted-foreground">Failed</div>
                     </div>
                   </div>
                   <div className="flex justify-center gap-3 pt-2">

@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../auth/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useProjects } from '../hooks/useProjects';
@@ -46,6 +45,7 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
     similarity: 'Similarity',
     decision: 'Decision Support',
     'knowledge-graph': 'Knowledge Graph',
+    'knowledge-engine': 'Knowledge Engine',
     sources: 'Sources',
     claims: 'Claims',
     interpretations: 'Interpretations',
@@ -76,12 +76,12 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-[#27272A] bg-[#09090B]/80 px-4 backdrop-blur-xl md:px-5">
+    <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-xl md:px-5">
       <div className="flex items-center gap-3 min-w-0">
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden text-[#71717A] hover:text-[#FAFAFA]"
+          className="lg:hidden text-muted hover:text-foreground"
           onClick={onToggleSidebar}
           aria-label="Toggle sidebar"
         >
@@ -92,13 +92,13 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         <div className="flex items-center gap-2 min-w-0">
           {currentProject && (
             <>
-              <span className="hidden sm:inline text-xs font-medium text-[#71717A] truncate max-w-[120px]">
+              <span className="hidden sm:inline text-xs font-medium text-muted truncate max-w-[120px]">
                 {currentProject.name}
               </span>
-              <ChevronRight className="hidden sm:inline h-3 w-3 text-[#71717A] shrink-0" />
+              <ChevronRight className="hidden sm:inline h-3 w-3 text-muted shrink-0" />
             </>
           )}
-          <span className="text-sm font-medium text-[#FAFAFA] truncate">
+          <span className="text-sm font-medium text-foreground truncate">
             {pageLabels[currentPage] || 'Dashboard'}
           </span>
         </div>
@@ -109,11 +109,11 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         <button
           onClick={onCommandPalette}
           aria-label="Open command palette"
-          className="hidden md:flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#71717A] hover:text-[#A1A1AA] hover:border-[#27272A]/80 transition-all min-w-[160px] group"
+          className="hidden md:flex items-center gap-2 rounded border border-border bg-surface px-3 py-1.5 text-xs text-muted hover:text-secondary hover:border-border/80 transition-all min-w-[160px] group"
         >
           <SearchIcon className="h-3.5 w-3.5 shrink-0" />
           <span className="flex-1 text-left">Search pages...</span>
-          <kbd className="flex items-center gap-0.5 rounded border border-[#27272A] bg-[#09090B] px-1.5 py-0.5 text-[10px] font-medium text-[#71717A] group-hover:text-[#A1A1AA] transition-colors">
+          <kbd>
             <Command className="h-2.5 w-2.5" />K
           </kbd>
         </button>
@@ -122,7 +122,7 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden text-[#71717A] hover:text-[#FAFAFA]"
+          className="md:hidden text-muted hover:text-foreground"
           onClick={onCommandPalette}
           aria-label="Search"
         >
@@ -132,31 +132,31 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         {/* Quick Actions */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="hidden sm:flex text-[#71717A] hover:text-[#FAFAFA]" aria-label="Quick actions">
+            <Button variant="ghost" size="icon" className="hidden sm:flex text-muted hover:text-foreground" aria-label="Quick actions">
               <Plus className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 mt-1 border-[#27272A] bg-[#111113]">
-            <DropdownMenuLabel className="text-xs text-[#71717A] font-normal">Quick Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => go('trades')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
-              <Plus className="mr-2 h-4 w-4 text-[#4F46E5]" />
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => go('trades')}>
+              <Plus className="mr-2 h-4 w-4 text-primary" />
               New Trade
-              <kbd className="ml-auto text-[10px] text-[#71717A]">T</kbd>
+              <kbd className="ml-auto">T</kbd>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => go('dashboard')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
-              <LayoutDashboard className="mr-2 h-4 w-4 text-[#4F46E5]" />
+            <DropdownMenuItem onClick={() => go('dashboard')}>
+              <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
               Dashboard
-              <kbd className="ml-auto text-[10px] text-[#71717A]">D</kbd>
+              <kbd className="ml-auto">D</kbd>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => go('learning')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
-              <Notebook className="mr-2 h-4 w-4 text-[#4F46E5]" />
+            <DropdownMenuItem onClick={() => go('learning')}>
+              <Notebook className="mr-2 h-4 w-4 text-primary" />
               Journal
-              <kbd className="ml-auto text-[10px] text-[#71717A]">G J</kbd>
+              <kbd className="ml-auto">G J</kbd>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => go('analyst')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
-              <Sparkles className="mr-2 h-4 w-4 text-[#4F46E5]" />
+            <DropdownMenuItem onClick={() => go('analyst')}>
+              <Sparkles className="mr-2 h-4 w-4 text-primary" />
               AI Analyst
-              <kbd className="ml-auto text-[10px] text-[#71717A]">A</kbd>
+              <kbd className="ml-auto">A</kbd>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -165,48 +165,48 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-[#71717A] hover:text-[#FAFAFA]"
+          className="relative text-muted hover:text-foreground"
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#4F46E5] shadow-[0_0_6px_rgba(79,70,229,0.4)]" />
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-primary" />
         </Button>
 
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full ml-1">
-              <Avatar className="h-7 w-7 ring-2 ring-[#27272A] ring-offset-2 ring-offset-[#09090B]">
-                <AvatarFallback className="bg-[#4F46E5]/10 text-[#4F46E5] text-xs font-semibold">
+              <Avatar className="h-7 w-7 ring-2 ring-border ring-offset-2 ring-offset-background">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mt-1 border-[#27272A] bg-[#111113]">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-[#FAFAFA]">{displayName}</span>
+                <span className="text-sm font-medium text-foreground">{displayName}</span>
                 {user?.email && (
-                  <span className="text-xs font-normal text-[#71717A]">{user.email}</span>
+                  <span className="text-xs font-normal text-muted">{user.email}</span>
                 )}
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-[#27272A]" />
-            <DropdownMenuItem onClick={() => navigate('/projects')} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/projects')}>
               <User className="mr-2 h-4 w-4" />
               Projects
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => projectId && navigate(`/projects/${projectId}/settings`)} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
+            <DropdownMenuItem onClick={() => projectId && navigate(`/projects/${projectId}/settings`)}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onCommandPalette} className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] focus:bg-[#27272A] focus:text-[#FAFAFA]">
+            <DropdownMenuItem onClick={onCommandPalette}>
               <Keyboard className="mr-2 h-4 w-4" />
               Keyboard Shortcuts
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[#27272A]" />
-            <DropdownMenuItem onClick={handleLogout} className="text-[#EF4444] hover:text-[#EF4444] hover:bg-[#EF4444]/10 focus:bg-[#EF4444]/10 focus:text-[#EF4444]">
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-danger hover:text-danger hover:bg-danger/10 focus:bg-danger/10 focus:text-danger">
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

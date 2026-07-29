@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tradeService, type TradeRead, type TradeCreate, type TradeUpdate } from '../api';
 import toast from 'react-hot-toast';
+import { createEvent, eventBus } from '../lib/ai/eventBus';
 
 export const useTrades = (projectId: string) => {
   return useQuery({
@@ -22,9 +23,10 @@ export const useCreateTrade = (projectId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: TradeCreate) => tradeService.create(projectId, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trades', projectId] });
       toast.success('Trade created');
+      eventBus.emit(createEvent('TRADE_RECORDED', projectId, { tradeId: data?.id, pair: (data as any)?.pair }));
     },
     onError: () => toast.error('Failed to create trade'),
   });

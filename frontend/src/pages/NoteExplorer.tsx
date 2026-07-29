@@ -68,14 +68,14 @@ export default function NoteExplorerPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-medium truncate">{n.title || n.file_name}</h4>
-                      {n.note_type && <Badge variant="outline" className="text-[10px]">{n.note_type}</Badge>}
-                      <Badge variant={n.sync_status === 'synced' ? 'success' : n.sync_status === 'conflict' ? 'warning' : 'secondary'} className="text-[10px]">{n.sync_status}</Badge>
+                      {n.note_type && <Badge variant="outline" className="text-3xs">{n.note_type}</Badge>}
+                      <Badge variant={n.sync_status === 'synced' ? 'success' : n.sync_status === 'conflict' ? 'warning' : 'secondary'} className="text-3xs">{n.sync_status}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground font-mono mt-0.5">{n.file_path}</p>
                     {n.tags && n.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {n.tags.slice(0, 5).map((t) => <Badge key={t} variant="secondary" className="text-[10px]">#{t}</Badge>)}
-                        {n.tags.length > 5 && <span className="text-[10px] text-muted-foreground">+{n.tags.length - 5}</span>}
+                        {n.tags.slice(0, 5).map((t) => <Badge key={t} variant="secondary" className="text-3xs">#{t}</Badge>)}
+                        {n.tags.length > 5 && <span className="text-3xs text-muted-foreground">+{n.tags.length - 5}</span>}
                       </div>
                     )}
                   </div>
@@ -127,7 +127,7 @@ function NoteDetail({ note, backlinks, onBack }: { note: ObsidianNote; backlinks
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs font-semibold mb-2 flex items-center gap-1"><Tag className="h-3.5 w-3.5" />Tags</p>
-                <div className="flex flex-wrap gap-1">{note.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">#{t}</Badge>)}</div>
+                <div className="flex flex-wrap gap-1">{note.tags.map((t) => <Badge key={t} variant="secondary" className="text-3xs">#{t}</Badge>)}</div>
               </CardContent>
             </Card>
           )}
@@ -165,7 +165,7 @@ function NoteDetail({ note, backlinks, onBack }: { note: ObsidianNote; backlinks
             <Card>
               <CardContent className="p-4">
                 <p className="text-xs font-semibold mb-2">Sessions</p>
-                <div className="flex flex-wrap gap-1">{note.detected_sessions.map((s) => <Badge key={s} variant="info" className="text-[10px]">{s}</Badge>)}</div>
+                <div className="flex flex-wrap gap-1">{note.detected_sessions.map((s) => <Badge key={s} variant="info" className="text-3xs">{s}</Badge>)}</div>
               </CardContent>
             </Card>
           )}

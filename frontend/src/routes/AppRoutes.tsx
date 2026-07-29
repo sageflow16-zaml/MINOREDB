@@ -46,6 +46,7 @@ const AIDashboard = lazy(() => import('../pages/AIDashboard'));
 const AICoach = lazy(() => import('../pages/AICoach'));
 const AIProfile = lazy(() => import('../pages/AIProfile'));
 const KnowledgeExplorer = lazy(() => import('../pages/KnowledgeExplorer'));
+const KnowledgeEngine = lazy(() => import('../pages/KnowledgeEngine'));
 const VaultManager = lazy(() => import('../pages/VaultManager'));
 const SyncDashboard = lazy(() => import('../pages/SyncDashboard'));
 const NoteExplorer = lazy(() => import('../pages/NoteExplorer'));
@@ -97,6 +98,10 @@ const Workspace = lazy(() => import('../pages/Workspace'));
 const ICTSmartEngine = lazy(() => import('../pages/ICTSmartEngine'));
 const BrainDashboard = lazy(() => import('../pages/BrainDashboard'));
 const IntelligenceDashboard = lazy(() => import('../pages/IntelligenceDashboard'));
+const CollectionsPage = lazy(() => import('../pages/Collections'));
+const NotesPage = lazy(() => import('../pages/Notes'));
+const BookmarksPage = lazy(() => import('../pages/Bookmarks'));
+const GraphPage = lazy(() => import('../pages/Graph'));
 
 /**
  * Authenticated application routes. Every module under /projects/:projectId is
@@ -144,6 +149,7 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/memories" element={<TradeMemory />} />
           <Route path="/projects/:projectId/knowledge" element={<Knowledge />} />
           <Route path="/projects/:projectId/knowledge-graph" element={<KnowledgeGraph />} />
+          <Route path="/projects/:projectId/knowledge-engine" element={<KnowledgeEngine />} />
           <Route path="/projects/:projectId/analyst" element={<Analyst />} />
           <Route path="/projects/:projectId/research" element={<Research />} />
           <Route path="/projects/:projectId/replay" element={<Replay />} />
@@ -204,6 +210,10 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/ict" element={<ICTSmartEngine />} />
           <Route path="/projects/:projectId/brain" element={<BrainDashboard />} />
           <Route path="/projects/:projectId/intelligence" element={<IntelligenceDashboard />} />
+          <Route path="/projects/:projectId/collections" element={<CollectionsPage />} />
+          <Route path="/projects/:projectId/notes" element={<NotesPage />} />
+          <Route path="/projects/:projectId/bookmarks" element={<BookmarksPage />} />
+          <Route path="/projects/:projectId/graph" element={<GraphPage />} />
         </Route>
       </Routes>
     </Suspense>

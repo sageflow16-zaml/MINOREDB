@@ -42,7 +42,7 @@ export function FeedbackBlock({ title, items, variant }: FeedbackBlockProps) {
       </div>
       <ul className="space-y-1">
         {items.map((item: string, i: number) => (
-          <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+          <li key={i} className="flex items-start gap-1.5 text-3xs text-muted-foreground">
             <Icon className={cn('h-3 w-3 shrink-0 mt-0.5', c.text)} />
             {item}
           </li>
@@ -84,7 +84,7 @@ export function TradeMemoryCard({
               <CardTitle className="text-sm font-semibold">
                 {pair || 'Unknown'} — {direction || 'N/A'}
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-3xs text-muted-foreground mt-0.5">
                 {session && `Session: ${session.replace(/_/g, ' / ')}`}
                 {created_at && ` — ${new Date(created_at).toLocaleDateString()}`}
               </p>
@@ -149,7 +149,7 @@ export function JournalEntryCard({ title, date, type, content, metrics, tags }: 
             </div>
             <div>
               <CardTitle className="text-sm font-semibold">{title}</CardTitle>
-              {date && <p className="text-[10px] text-muted-foreground mt-0.5">{date}</p>}
+              {date && <p className="text-3xs text-muted-foreground mt-0.5">{date}</p>}
             </div>
           </div>
           {type && <Badge variant="info" size="sm">{type}</Badge>}
@@ -199,13 +199,13 @@ export function ResearchTaskCard({ step, tool, description, status, evidence_cou
   };
   return (
     <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/20">
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-3xs font-bold text-primary">
         {step}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           {tool && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-chart-3/10 px-2 py-0.5 text-[9px] font-medium text-chart-3">
+            <span className="inline-flex items-center gap-1 rounded-full bg-chart-3/10 px-2 py-0.5 text-3xs font-medium text-chart-3">
               <Sparkles className="h-2.5 w-2.5" />
               {tool}
             </span>
@@ -215,7 +215,7 @@ export function ResearchTaskCard({ step, tool, description, status, evidence_cou
         <p className="text-xs text-foreground">{description}</p>
       </div>
       {evidence_count != null && (
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+        <div className="flex items-center gap-1 text-3xs text-muted-foreground shrink-0">
           <MessageSquare className="h-3 w-3" />
           {evidence_count}
         </div>
@@ -242,7 +242,7 @@ export function ResearchReport({ summary, findings, recommendations }: ResearchR
             <h4 className="text-xs font-semibold text-foreground mb-2">Findings</h4>
             <ul className="space-y-1">
               {findings.map((f, i) => (
-                <li key={i} className="flex items-start gap-2 text-[10px] text-muted-foreground">
+                <li key={i} className="flex items-start gap-2 text-3xs text-muted-foreground">
                   <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-chart-1" />
                   {f}
                 </li>
@@ -255,7 +255,7 @@ export function ResearchReport({ summary, findings, recommendations }: ResearchR
             <h4 className="text-xs font-semibold text-foreground mb-2">Recommendations</h4>
             <ul className="space-y-1">
               {recommendations.map((r, i) => (
-                <li key={i} className="flex items-start gap-2 text-[10px] text-muted-foreground">
+                <li key={i} className="flex items-start gap-2 text-3xs text-muted-foreground">
                   <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
                   {r}
                 </li>
@@ -298,12 +298,12 @@ export function ChatBubble({ role, content, confidence, sources, suggestions }: 
         {!isUser && (
           <div className="mt-2 flex flex-wrap gap-2">
             {confidence != null && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-chart-1/10 px-2 py-0.5 text-[9px] font-medium text-chart-1">
+              <span className="inline-flex items-center gap-1 rounded-full bg-chart-1/10 px-2 py-0.5 text-3xs font-medium text-chart-1">
                 {confidence}% confidence
               </span>
             )}
             {sources?.map((s, i) => (
-              <span key={i} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[9px] font-medium text-muted-foreground">
+              <span key={i} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-3xs font-medium text-muted-foreground">
                 <FileText className="h-2.5 w-2.5" />
                 {s.label}
               </span>
@@ -315,7 +315,7 @@ export function ChatBubble({ role, content, confidence, sources, suggestions }: 
             {suggestions.map((s, i) => (
               <button
                 key={i}
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2.5 py-1 text-[9px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2.5 py-1 text-3xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               >
                 {s}
               </button>

@@ -5,7 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
+import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
 import { useCoachingSessions, useGenerateCoaching } from '../hooks/useAIFoundation';
 import {
   BookOpen, Calendar, TrendingUp, Target, AlertTriangle,
@@ -92,6 +92,8 @@ export default function AICoachPage() {
       {/* Sessions */}
       {coaching.isLoading ? (
         <div className="flex justify-center py-12"><LoadingSpinner /></div>
+      ) : coaching.error ? (
+        <ErrorState message="Failed to load coaching sessions" description={coaching.error?.message || 'An unexpected error occurred'} onRetry={() => coaching.refetch()} />
       ) : sessions.length > 0 ? (
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
           {sessions.map((session: CoachingSession) => (
@@ -135,7 +137,7 @@ export default function AICoachPage() {
                       {Object.entries(session.metrics_snapshot).map(([key, val]) => (
                         <div key={key} className="text-center">
                           <p className="text-lg font-semibold text-foreground">{typeof val === 'number' ? val.toFixed(key.includes('pnl') ? 2 : 1) : String(val)}</p>
-                          <p className="text-[10px] text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</p>
+                          <p className="text-3xs text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</p>
                         </div>
                       ))}
                     </div>
@@ -182,7 +184,7 @@ export default function AICoachPage() {
                       <div className="space-y-2">
                         {session.key_findings.map((f, i) => (
                           <div key={i} className="flex items-start gap-2 text-sm">
-                            <Badge variant={f.impact === 'positive' ? 'success' : f.impact === 'negative' ? 'destructive' : 'secondary'} className="shrink-0 text-[10px]">
+                            <Badge variant={f.impact === 'positive' ? 'success' : f.impact === 'negative' ? 'destructive' : 'secondary'} className="shrink-0 text-3xs">
                               {f.category}
                             </Badge>
                             <span className="text-muted-foreground">{f.finding}</span>
@@ -201,7 +203,7 @@ export default function AICoachPage() {
                           <div key={i} className="flex items-center gap-2 text-sm p-2 rounded-lg bg-muted/20">
                             <CheckCircle className={`h-3.5 w-3.5 shrink-0 ${a.completed ? 'text-success' : 'text-muted-foreground'}`} />
                             <span className={a.completed ? 'line-through text-muted-foreground' : ''}>{a.action}</span>
-                            <Badge variant={a.priority === 'high' ? 'warning' : 'secondary'} className="ml-auto text-[10px]">{a.priority}</Badge>
+                            <Badge variant={a.priority === 'high' ? 'warning' : 'secondary'} className="ml-auto text-3xs">{a.priority}</Badge>
                           </div>
                         ))}
                       </div>

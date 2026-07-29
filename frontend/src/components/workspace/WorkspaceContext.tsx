@@ -40,31 +40,31 @@ const defaultChartConfig = (symbol: string): ChartConfig => ({
 });
 
 const defaultICT = (): ICTOverlay[] => [
-  { type: 'fvg', visible: true, color: '#22c55e', opacity: 0.15 },
-  { type: 'order_block', visible: true, color: '#3b82f6', opacity: 0.2 },
-  { type: 'breaker_block', visible: true, color: '#ef4444', opacity: 0.2 },
-  { type: 'mitigation_block', visible: true, color: '#f59e0b', opacity: 0.2 },
-  { type: 'bpr', visible: true, color: '#8b5cf6', opacity: 0.15 },
-  { type: 'liquidity_pool', visible: true, color: '#ec4899', opacity: 0.2 },
-  { type: 'equal_high', visible: true, color: '#06b6d4', opacity: 0.3 },
-  { type: 'equal_low', visible: true, color: '#f97316', opacity: 0.3 },
-  { type: 'premium_discount', visible: true, color: '#6366f1', opacity: 0.1 },
-  { type: 'pdh', visible: true, color: '#a855f7', opacity: 0.5 },
-  { type: 'pdl', visible: true, color: '#a855f7', opacity: 0.5 },
-  { type: 'weekly_hl', visible: true, color: '#14b8a6', opacity: 0.4 },
-  { type: 'monthly_hl', visible: true, color: '#d946ef', opacity: 0.4 },
+  { type: 'fvg', visible: true, color: 'hsl(var(--success))', opacity: 0.15 },
+  { type: 'order_block', visible: true, color: 'hsl(var(--info))', opacity: 0.2 },
+  { type: 'breaker_block', visible: true, color: 'hsl(var(--danger))', opacity: 0.2 },
+  { type: 'mitigation_block', visible: true, color: 'hsl(var(--warning))', opacity: 0.2 },
+  { type: 'bpr', visible: true, color: 'hsl(var(--chart-4))', opacity: 0.15 },
+  { type: 'liquidity_pool', visible: true, color: 'hsl(var(--chart-5))', opacity: 0.2 },
+  { type: 'equal_high', visible: true, color: 'hsl(var(--chart-2))', opacity: 0.3 },
+  { type: 'equal_low', visible: true, color: 'hsl(var(--chart-3))', opacity: 0.3 },
+  { type: 'premium_discount', visible: true, color: 'hsl(var(--chart-1))', opacity: 0.1 },
+  { type: 'pdh', visible: true, color: 'hsl(var(--chart-4))', opacity: 0.5 },
+  { type: 'pdl', visible: true, color: 'hsl(var(--chart-4))', opacity: 0.5 },
+  { type: 'weekly_hl', visible: true, color: 'hsl(var(--chart-5))', opacity: 0.4 },
+  { type: 'monthly_hl', visible: true, color: 'hsl(var(--chart-3))', opacity: 0.4 },
 ];
 
 const defaultSession = (): SessionOverlay[] => [
-  { session: 'asia', visible: true, color: '#6366f1', opacity: 0.06 },
-  { session: 'london', visible: true, color: '#f59e0b', opacity: 0.06 },
-  { session: 'new_york', visible: true, color: '#ef4444', opacity: 0.06 },
-  { session: 'kill_zone_asia', visible: false, color: '#6366f1', opacity: 0.1 },
-  { session: 'kill_zone_london', visible: false, color: '#f59e0b', opacity: 0.1 },
-  { session: 'kill_zone_new_york', visible: false, color: '#ef4444', opacity: 0.1 },
-  { session: 'silver_bullet', visible: false, color: '#22c55e', opacity: 0.08 },
-  { session: 'power_of_three', visible: false, color: '#8b5cf6', opacity: 0.08 },
-  { session: 'opening_range', visible: false, color: '#06b6d4', opacity: 0.08 },
+  { session: 'asia', visible: true, color: 'hsl(var(--chart-1))', opacity: 0.06 },
+  { session: 'london', visible: true, color: 'hsl(var(--warning))', opacity: 0.06 },
+  { session: 'new_york', visible: true, color: 'hsl(var(--danger))', opacity: 0.06 },
+  { session: 'kill_zone_asia', visible: false, color: 'hsl(var(--chart-1))', opacity: 0.1 },
+  { session: 'kill_zone_london', visible: false, color: 'hsl(var(--warning))', opacity: 0.1 },
+  { session: 'kill_zone_new_york', visible: false, color: 'hsl(var(--danger))', opacity: 0.1 },
+  { session: 'silver_bullet', visible: false, color: 'hsl(var(--success))', opacity: 0.08 },
+  { session: 'power_of_three', visible: false, color: 'hsl(var(--chart-4))', opacity: 0.08 },
+  { session: 'opening_range', visible: false, color: 'hsl(var(--chart-2))', opacity: 0.08 },
 ];
 
 const symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'XAUUSD', 'XAGUSD', 'BTCUSD'];

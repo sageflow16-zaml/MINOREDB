@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { quantResearchService } from '../api/quantResearch';
+import { createEvent, eventBus } from '../lib/ai/eventBus';
 
 // ── Dashboard ──
 export const useQuantDashboard = (projectId: string) => {
@@ -81,7 +82,10 @@ export const useRunBacktest = (projectId: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) => quantResearchService.runBacktest(projectId, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['quant-research', projectId, 'backtests'] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['quant-research', projectId, 'backtests'] });
+      eventBus.emit(createEvent('BACKTEST_CREATED', projectId, { backtestId: data?.id, backtestName: data?.name }));
+    },
   });
 };
 

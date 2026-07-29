@@ -57,10 +57,10 @@ export function ActivityItem({
           {badge && <span className="shrink-0">{badge}</span>}
         </div>
         {description && (
-          <p className="mt-0.5 text-[10px] text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
+          <p className="mt-0.5 text-3xs text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
         )}
       </div>
-      {time && <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">{time}</span>}
+      {time && <span className="text-3xs text-muted-foreground shrink-0 whitespace-nowrap">{time}</span>}
     </Wrapper>
   );
 }

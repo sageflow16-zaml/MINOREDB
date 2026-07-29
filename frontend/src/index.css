@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,66 +6,59 @@
 
 @layer base {
   :root {
-    --background: 240 6% 4%;
-    --foreground: 0 0% 98%;
-    --surface: 240 4% 7%;
-    --card: 240 3% 10%;
-    --card-hover: 240 3% 13%;
-    --border: 240 3% 15%;
-    --border-light: 240 3% 12%;
-
-    --primary: 245 73% 58%;
-    --primary-hover: 245 70% 54%;
+    --background: 222 29% 5%;
+    --surface: 215 26% 9%;
+    --card: 212 25% 13%;
+    --elevated: 213 26% 15%;
+    --border: 210 22% 18%;
+    --foreground: 216 33% 97%;
+    --secondary: 212 17% 66%;
+    --muted: 213 9% 48%;
+    --primary: 140 19% 58%;
+    --primary-hover: 140 19% 52%;
     --primary-foreground: 0 0% 100%;
-    --primary-muted: 245 73% 58% / 0.12;
-
-    --success: 142 72% 45%;
+    --primary-muted: 140 19% 58% / 0.12;
+    --success: 130 48% 61%;
     --success-foreground: 0 0% 100%;
-    --success-muted: 142 72% 45% / 0.12;
-
-    --danger: 0 84% 60%;
+    --success-muted: 130 48% 61% / 0.12;
+    --danger: 0 60% 60%;
     --danger-foreground: 0 0% 100%;
-    --danger-muted: 0 84% 60% / 0.12;
-
-    --warning: 38 92% 50%;
+    --danger-muted: 0 60% 60% / 0.12;
+    --warning: 45 65% 52%;
     --warning-foreground: 0 0% 100%;
-    --warning-muted: 38 92% 50% / 0.12;
-
-    --info: 200 98% 45%;
+    --warning-muted: 45 65% 52% / 0.12;
+    --info: 214 99% 71%;
     --info-foreground: 0 0% 100%;
-    --info-muted: 200 98% 45% / 0.12;
+    --info-muted: 214 99% 71% / 0.12;
+    --ring: 140 19% 58%;
 
-    --muted: 240 3% 12%;
-    --muted-foreground: 240 4% 46%;
-    --secondary-foreground: 240 4% 63%;
-
-    --accent: 240 3% 14%;
-    --accent-hover: 240 3% 17%;
-    --accent-foreground: 0 0% 98%;
-
-    --ring: 245 73% 58%;
+    --chart-1: 212 64% 57%;
+    --chart-2: 10 76% 61%;
+    --chart-3: 45 65% 52%;
+    --chart-4: 174 62% 47%;
+    --chart-5: 258 89% 66%;
 
     --radius-xs: 4px;
     --radius-sm: 6px;
-    --radius: 8px;
-    --radius-md: 10px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --radius-2xl: 20px;
-    --radius-3xl: 24px;
-    --radius-full: 9999px;
+    --radius: 10px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-3xl: 28px;
+    --radius-full: 999px;
 
     --sidebar-width: 240px;
     --sidebar-collapsed: 60px;
-    --topbar-height: 56px;
+    --topbar-height: 52px;
 
     --shadow-xs: 0 0 0 1px rgba(255, 255, 255, 0.03);
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 
     --z-dropdown: 50;
     --z-sticky: 60;
@@ -79,12 +72,10 @@
     --duration-fast: 150ms;
     --duration-normal: 200ms;
     --duration-slow: 300ms;
-    --duration-slower: 500ms;
 
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in: cubic-bezier(0.4, 0, 1, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
@@ -92,15 +83,15 @@
   * {
     @apply border-border;
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+    scrollbar-color: hsl(var(--muted) / 0.25) transparent;
   }
   *::-webkit-scrollbar { width: 4px; height: 4px; }
   *::-webkit-scrollbar-track { background: transparent; }
-  *::-webkit-scrollbar-thumb { background-color: hsl(var(--muted-foreground) / 0.15); border-radius: var(--radius-full); }
-  *::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--muted-foreground) / 0.3); }
+  *::-webkit-scrollbar-thumb { background-color: hsl(var(--muted) / 0.25); border-radius: var(--radius-full); }
+  *::-webkit-scrollbar-thumb:hover { background-color: hsl(var(--muted) / 0.4); }
 
   body {
-    @apply bg-[#09090B] text-foreground;
+    @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-size: 14px;
     line-height: 1.5;
@@ -114,7 +105,7 @@
   }
 
   ::selection {
-    background: hsl(var(--primary) / 0.3);
+    background: hsl(var(--primary) / 0.25);
     color: hsl(var(--foreground));
   }
 
@@ -122,30 +113,39 @@
     @apply outline-none;
   }
   input:focus, textarea:focus, select:focus {
-    @apply ring-2 ring-primary/30 ring-offset-0;
+    @apply ring-2 ring-primary/25 ring-offset-0;
+  }
+
+  kbd {
+    @apply inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium;
+    border-color: hsl(var(--border));
+    background: hsl(var(--background));
+    color: hsl(var(--muted));
+  }
+
+  table {
+    @apply w-full caption-bottom text-sm;
   }
 }
 
 @layer components {
-  .glass {
-    background: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border));
-  }
-
   .text-balance {
     text-wrap: balance;
-  }
-
-  .bg-grid {
-    background-image:
-      linear-gradient(hsl(var(--border)) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
-    background-size: 32px 32px;
   }
 
   .font-mono-num {
     font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
     font-feature-settings: "tnum" 1;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }

@@ -139,7 +139,7 @@ export function CommandPalette({ open, onClose, groups, extraGroups = [] }: Comm
                 placeholder="Search pages, actions, or anything..."
                 className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
               />
-              <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
+              <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-border bg-muted px-1.5 text-3xs font-medium text-muted-foreground">
                 <CommandIcon className="h-2.5 w-2.5" />K
               </kbd>
             </div>
@@ -156,7 +156,7 @@ export function CommandPalette({ open, onClose, groups, extraGroups = [] }: Comm
                 if (groupItems.length === 0) return null;
                 return (
                   <div key={group.label}>
-                    <p className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    <p className="px-2 py-1.5 text-2xs font-medium text-muted-foreground uppercase tracking-wider">
                       {group.label}
                     </p>
                     {groupItems.map((item, ii) => {
@@ -187,7 +187,7 @@ export function CommandPalette({ open, onClose, groups, extraGroups = [] }: Comm
                             )}
                           </div>
                           {item.shortcut && (
-                            <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-3xs font-medium text-muted-foreground">
                               {item.shortcut}
                             </kbd>
                           )}

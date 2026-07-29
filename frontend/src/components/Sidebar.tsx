@@ -68,6 +68,7 @@ const navSections: NavSection[] = [
       { name: 'Similarity', path: 'similarity', icon: LineChart },
       { name: 'Decision Support', path: 'decision', icon: Target },
       { name: 'Knowledge Graph', path: 'knowledge-graph', icon: Network },
+      { name: 'Knowledge Engine', path: 'knowledge-engine', icon: Network },
     ],
   },
   {
@@ -89,13 +90,12 @@ const navSections: NavSection[] = [
     title: 'Knowledge',
     icon: BookOpen,
     items: [
-      { name: 'Sources', path: 'sources', icon: FileText },
-      { name: 'Claims', path: 'claims', icon: Layers },
-      { name: 'Interpretations', path: 'interpretations', icon: MessageSquare },
-      { name: 'Conflicts & RQs', path: 'conflicts', icon: AlertTriangle },
-      { name: 'Hypotheses', path: 'hypotheses', icon: Lightbulb },
-      { name: 'Knowledge Center', path: 'knowledge-center', icon: Library },
-      { name: 'Trader Intelligence', path: 'trader-intelligence', icon: Zap },
+      { name: 'Library', path: 'sources', icon: Library },
+      { name: 'Research', path: 'research', icon: Brain },
+      { name: 'Collections', path: 'collections', icon: FolderOpen },
+      { name: 'Notes', path: 'notes', icon: FileText },
+      { name: 'Bookmarks', path: 'bookmarks', icon: BookMarked },
+      { name: 'Graph', path: 'graph', icon: Network },
     ],
   },
   {
@@ -298,7 +298,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: prefersReduced ? 0 : 0.15 }}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
             onClick={onClose}
             aria-hidden="true"
           />
@@ -307,10 +307,9 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r',
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border',
           'bg-background text-foreground',
-          'transition-all duration-300 ease-spring',
-          'border-[#27272A]',
+          'transition-all duration-300 ease-out',
           collapsed ? 'w-[60px]' : 'w-60',
           'lg:static',
           open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -318,27 +317,27 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
       >
         {/* Brand */}
         <div className={cn(
-          'flex h-14 items-center shrink-0 border-b border-[#27272A]',
+          'flex h-14 items-center shrink-0 border-b border-border',
           collapsed ? 'justify-center' : 'justify-between px-4'
         )}>
           {collapsed ? (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#4F46E5]">
-              <Layers className="h-4 w-4 text-[#FAFAFA]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-primary">
+              <Layers className="h-4 w-4 text-primary-foreground" />
             </div>
           ) : (
             <>
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#4F46E5]">
-                  <Layers className="h-4 w-4 text-[#FAFAFA]" />
+                <div className="flex h-8 w-8 items-center justify-center rounded bg-primary">
+                  <Layers className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <div className="leading-tight">
-                  <span className="text-sm font-semibold tracking-tight text-[#FAFAFA]">Minore</span>
-                  <p className="text-[10px] text-[#71717A] leading-none mt-0.5">Trading OS</p>
+                  <span className="text-sm font-semibold tracking-tight text-foreground">Minore</span>
+                  <p className="text-3xs text-muted leading-none mt-0.5">Trading OS</p>
                 </div>
               </div>
               <button
                 onClick={() => setCollapsed(true)}
-                className="text-[#71717A] hover:text-[#A1A1AA] transition-colors"
+                className="text-muted hover:text-secondary transition-colors"
                 aria-label="Collapse sidebar"
               >
                 <PanelLeftClose className="h-3.5 w-3.5" />
@@ -350,7 +349,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="mx-auto mt-2.5 text-[#71717A] hover:text-[#A1A1AA] transition-colors shrink-0"
+            className="mx-auto mt-2.5 text-muted hover:text-secondary transition-colors shrink-0"
             aria-label="Expand sidebar"
           >
             <PanelLeft className="h-3.5 w-3.5" />
@@ -363,7 +362,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
             <select
               value={projectId || ''}
               onChange={(e) => handleProjectChange(e.target.value)}
-              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-2.5 py-1.5 text-xs text-[#A1A1AA] outline-none focus:border-[#4F46E5]/50 transition-colors appearance-none cursor-pointer"
+              className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-secondary outline-none focus:border-primary/50 transition-colors appearance-none cursor-pointer"
             >
               <option value="" disabled>Select Project</option>
               {projects.map((p) => (
@@ -377,7 +376,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
         {!collapsed && favoritedItems.length > 0 && (
           <>
             <div className="px-3 pt-3 pb-1">
-              <p className="text-[10px] font-semibold tracking-widest text-[#71717A] uppercase">Favorites</p>
+              <p className="text-3xs font-semibold tracking-widest text-muted uppercase">Favorites</p>
               <div className="mt-1 flex flex-col gap-0.5">
                 {favoritedItems.map((item) => {
                   const Icon = item.icon;
@@ -388,10 +387,10 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                       onClick={onClose}
                       className={({ isActive: active }) =>
                         cn(
-                          'group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs transition-all',
+                          'group flex items-center gap-2.5 rounded px-2.5 py-1.5 text-xs transition-all',
                           active
-                            ? 'bg-[#4F46E5]/10 text-[#FAFAFA] font-medium'
-                            : 'text-[#71717A] hover:bg-[#27272A] hover:text-[#A1A1AA]'
+                            ? 'bg-primary/10 text-foreground font-medium'
+                            : 'text-muted hover:bg-surface hover:text-secondary'
                         )
                       }
                     >
@@ -399,21 +398,21 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                       <span className="truncate flex-1">{item.name}</span>
                       <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(item.path); }}
-                        className="opacity-0 group-hover:opacity-100 text-[#71717A] hover:text-[#F59E0B] transition-all"
+                        className="opacity-0 group-hover:opacity-100 text-muted hover:text-warning transition-all"
                         aria-label="Remove from favorites"
                       >
-                        <Star className="h-3 w-3 fill-[#F59E0B] text-[#F59E0B]" />
+                        <Star className="h-3 w-3 fill-warning text-warning" />
                       </button>
                     </NavLink>
                   );
                 })}
               </div>
             </div>
-            <div className="border-t border-[#27272A] mx-3" />
+            <div className="border-t border-border mx-3" />
           </>
         )}
 
-        {!collapsed && <div className="border-t border-[#27272A]/50 shrink-0" />}
+        {!collapsed && <div className="border-t border-border/50 shrink-0" />}
 
         {/* Navigation */}
         <ScrollArea className={cn('flex-1', collapsed ? 'px-1.5 py-2' : 'px-2 py-2')}>
@@ -432,17 +431,17 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                               onClick={onClose}
                               className={({ isActive: active }) =>
                                 cn(
-                                  'relative flex h-9 w-9 items-center justify-center rounded-lg transition-all',
+                                  'relative flex h-9 w-9 items-center justify-center rounded transition-all',
                                   active
-                                    ? 'bg-[#4F46E5]/15 text-[#4F46E5]'
-                                    : 'text-[#71717A] hover:bg-[#27272A] hover:text-[#A1A1AA]'
+                                    ? 'bg-primary/15 text-primary'
+                                    : 'text-muted hover:bg-surface hover:text-secondary'
                                 )
                               }
                               title={section.title}
                             >
                               <Icon className="h-4 w-4" />
                               {isActive(item.path) && currentSection === section && (
-                                <span className="absolute left-0.5 top-1/2 -translate-y-1/2 h-3.5 w-0.5 rounded-full bg-[#4F46E5]" />
+                                <span className="absolute left-0.5 top-1/2 -translate-y-1/2 h-3.5 w-0.5 rounded-full bg-primary" />
                               )}
                             </NavLink>
                           );
@@ -453,8 +452,8 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                         <button
                           onClick={() => toggleSection(section.title)}
                           className={cn(
-                            'flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors',
-                            'text-[10px] font-semibold tracking-widest text-[#71717A] hover:text-[#A1A1AA] group'
+                            'flex w-full items-center justify-between rounded px-2.5 py-1.5 transition-colors',
+                            'text-3xs font-semibold tracking-widest text-muted hover:text-secondary group'
                           )}
                         >
                           <div className="flex items-center gap-2">
@@ -463,7 +462,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                           </div>
                           <ChevronDown
                             className={cn(
-                              'h-3 w-3 transition-transform text-[#71717A]',
+                              'h-3 w-3 transition-transform text-muted',
                               expandedSections[section.title] ? 'rotate-0' : '-rotate-90'
                             )}
                           />
@@ -488,19 +487,19 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                                       to={`/projects/${projectId}/${item.path}`}
                                       onClick={onClose}
                                       className={cn(
-                                        'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs transition-all',
+                                        'group relative flex items-center gap-2.5 rounded px-2.5 py-1.5 text-xs transition-all',
                                         active
-                                          ? 'bg-[#4F46E5]/10 text-[#FAFAFA] font-medium'
-                                          : 'text-[#71717A] hover:bg-[#27272A] hover:text-[#A1A1AA]'
+                                          ? 'bg-primary/10 text-foreground font-medium'
+                                          : 'text-muted hover:bg-surface hover:text-secondary'
                                       )}
                                     >
                                       {active && (
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full bg-[#4F46E5]" />
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full bg-primary" />
                                       )}
                                       <Icon className="h-3.5 w-3.5 shrink-0 ml-1" aria-hidden="true" />
                                       <span className="truncate flex-1">{item.name}</span>
                                       {item.badge && (
-                                        <span className="rounded-full bg-[#4F46E5]/15 px-1.5 py-0.5 text-[9px] font-medium text-[#4F46E5]">
+                                        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-3xs font-medium text-primary">
                                           {item.badge}
                                         </span>
                                       )}
@@ -509,12 +508,12 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                                         className={cn(
                                           'transition-all shrink-0',
                                           isFav
-                                            ? 'text-[#F59E0B] opacity-100'
-                                            : 'opacity-0 group-hover:opacity-100 text-[#71717A] hover:text-[#F59E0B]'
+                                            ? 'text-warning opacity-100'
+                                            : 'opacity-0 group-hover:opacity-100 text-muted hover:text-warning'
                                         )}
                                         aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
                                       >
-                                        <Star className={cn('h-3 w-3', isFav && 'fill-[#F59E0B]')} />
+                                        <Star className={cn('h-3 w-3', isFav && 'fill-warning')} />
                                       </button>
                                     </NavLink>
                                   );
@@ -529,8 +528,8 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                 ))
               : !collapsed && (
                   <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                    <FolderOpen className="h-8 w-8 text-[#71717A]" />
-                    <p className="text-xs text-[#71717A]">Select a project to begin</p>
+                    <FolderOpen className="h-8 w-8 text-muted" />
+                    <p className="text-xs text-muted">Select a project to begin</p>
                   </div>
                 )}
           </nav>
@@ -538,13 +537,13 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
 
         {/* User Profile */}
         <div className={cn(
-          'border-t border-[#27272A] shrink-0',
+          'border-t border-border shrink-0',
           collapsed ? 'p-2 flex flex-col items-center gap-2' : 'p-2.5'
         )}>
           {collapsed ? (
             <>
               <button
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#71717A] hover:bg-[#27272A] hover:text-[#A1A1AA] transition-all"
+                className="flex h-9 w-9 items-center justify-center rounded text-muted hover:bg-surface hover:text-secondary transition-all"
                 aria-label="Search"
                 onClick={() => {
                   const e = new KeyboardEvent('keydown', { metaKey: true, key: 'k' });
@@ -553,25 +552,25 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
               >
                 <Search className="h-3.5 w-3.5" />
               </button>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4F46E5]/20 text-[#4F46E5] text-[10px] font-bold" title={displayName}>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-3xs font-bold" title={displayName}>
                 {initials}
               </div>
             </>
           ) : (
-            <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-[#27272A] transition-colors group cursor-pointer">
-              <Avatar className="h-7 w-7 shrink-0 ring-2 ring-[#27272A]">
-                <AvatarFallback className="bg-[#4F46E5]/20 text-[#4F46E5] text-[10px] font-bold">
+            <div className="flex items-center gap-2.5 rounded px-2 py-1.5 hover:bg-surface transition-colors group cursor-pointer">
+              <Avatar className="h-7 w-7 shrink-0 ring-2 ring-border">
+                <AvatarFallback className="bg-primary/20 text-primary text-3xs font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-[#A1A1AA] truncate leading-tight">{displayName}</p>
-                <p className="text-[10px] text-[#71717A] truncate leading-tight mt-0.5">
+                <p className="text-xs font-medium text-secondary truncate leading-tight">{displayName}</p>
+                <p className="text-3xs text-muted truncate leading-tight mt-0.5">
                   {user?.email || ''}
                 </p>
               </div>
               <button
-                className="text-[#71717A] hover:text-[#EF4444] transition-colors opacity-0 group-hover:opacity-100"
+                className="text-muted hover:text-danger transition-colors opacity-0 group-hover:opacity-100"
                 aria-label="Logout"
                 onClick={(e) => {
                   e.stopPropagation();

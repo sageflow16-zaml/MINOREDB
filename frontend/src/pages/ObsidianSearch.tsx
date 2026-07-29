@@ -63,14 +63,14 @@ export default function ObsidianSearchPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-medium">{r.title}</h4>
-                        <Badge variant={(typeColor[r.result_type] || 'secondary') as 'info'} className="text-[10px]">{r.result_type}</Badge>
-                        <Badge variant="outline" className="text-[10px]">{r.source}</Badge>
+                        <Badge variant={(typeColor[r.result_type] || 'secondary') as 'info'} className="text-3xs">{r.result_type}</Badge>
+                        <Badge variant="outline" className="text-3xs">{r.source}</Badge>
                       </div>
                       {r.snippet && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.snippet}</p>}
                       {r.path && <p className="text-xs text-muted-foreground font-mono mt-1">{r.path}</p>}
                       {r.tags && r.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {r.tags.slice(0, 5).map((t) => <Badge key={t} variant="secondary" className="text-[10px]">#{t}</Badge>)}
+                          {r.tags.slice(0, 5).map((t) => <Badge key={t} variant="secondary" className="text-3xs">#{t}</Badge>)}
                         </div>
                       )}
                     </div>

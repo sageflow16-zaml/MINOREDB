@@ -283,7 +283,7 @@ export default function TemplateLibraryPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="text-sm font-medium">{t.name}</h4>
-                        <Badge variant="outline" className="text-[10px]">{t.template_type}</Badge>
+                        <Badge variant="outline" className="text-3xs">{t.template_type}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-2">{t.content.substring(0, 150)}...</p>
                       <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">

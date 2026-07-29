@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
+import { EmptyState } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
 import {
   TrendingUp, BarChart3, DollarSign, Target, Award, Shield,
@@ -23,39 +24,39 @@ function formatCurrency(value: number | undefined | null): string {
 }
 
 const tooltipStyle = chartTooltipStyle.contentStyle;
-const CHART_COLORS = ['#4F46E5', '#22C55E', '#F59E0B', '#EF4444', '#3B82F6', '#A1A1AA'];
-const CHART_COLORS_5 = ['#4F46E5', '#22C55E', '#F59E0B', '#EF4444', '#3B82F6'];
+const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--chart-1))', 'hsl(var(--muted))'];
+const CHART_COLORS_5 = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--chart-1))'];
 
 function HeroCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
   const accentColors = {
-    default: 'text-[#FAFAFA]', success: 'text-[#22C55E]', danger: 'text-[#EF4444]', warning: 'text-[#F59E0B]',
+    default: 'text-foreground', success: 'text-success', danger: 'text-danger', warning: 'text-warning',
   };
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-[11px] font-medium text-[#71717A] tracking-wide">{label}</p>
-        <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accent === 'success' ? 'bg-[#22C55E]/10' : accent === 'danger' ? 'bg-[#EF4444]/10' : 'bg-[#4F46E5]/10')}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-[#22C55E]' : accent === 'danger' ? 'text-[#EF4444]' : 'text-[#4F46E5]')} />
+        <p className="text-2xs font-medium text-muted tracking-wide">{label}</p>
+        <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accent === 'success' ? 'bg-success/10' : accent === 'danger' ? 'bg-danger/10' : 'bg-primary/10')}>
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger' : 'text-primary')} />
         </div>
       </div>
       <p className={cn('text-xl font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
-      {sub && <p className="text-[10px] text-[#71717A] mt-0.5">{sub}</p>}
+      {sub && <p className="text-3xs text-muted mt-0.5">{sub}</p>}
     </motion.div>
   );
 }
 
 function InsightCard({ title, description, icon: Icon, action }: { title: string; description: string; icon: any; action?: { label: string; onClick: () => void } }) {
   return (
-    <div className="rounded-lg border border-[#27272A] bg-gradient-to-r from-[#4F46E5]/5 to-transparent p-3.5">
+    <div className="rounded-lg border border-border bg-gradient-to-r from-primary/5 to-transparent p-3.5">
       <div className="flex items-start gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4F46E5]/10">
-          <Icon className="h-4 w-4 text-[#4F46E5]" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+          <Icon className="h-4 w-4 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-[#FAFAFA]">{title}</p>
-          <p className="text-[11px] text-[#A1A1AA] mt-0.5 leading-relaxed">{description}</p>
+          <p className="text-xs font-medium text-foreground">{title}</p>
+          <p className="text-2xs text-secondary mt-0.5 leading-relaxed">{description}</p>
           {action && (
-            <button onClick={action.onClick} className="mt-1.5 text-[11px] font-medium text-[#4F46E5] hover:text-[#4F46E5]/80 transition-colors">
+            <button onClick={action.onClick} className="mt-1.5 text-2xs font-medium text-primary hover:text-primary/80 transition-colors">
               {action.label} <ChevronRight className="h-2.5 w-2.5 inline" />
             </button>
           )}
@@ -69,7 +70,7 @@ function MiniBarChart({ data, dataKey, color }: { data: any[]; dataKey: string; 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} {...chartDefaultProps}>
-        <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#71717A' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
         <Tooltip contentStyle={tooltipStyle} />
         <Bar dataKey={dataKey} fill={color} radius={[3, 3, 0, 0]} maxBarSize={24} />
       </BarChart>
@@ -154,13 +155,13 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between">
           <div className="space-y-2"><Skeleton className="h-7 w-40" /><Skeleton className="h-4 w-56" /></div>
           <Skeleton className="h-8 w-32 rounded-lg" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (<div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-24" /></div>))}
+          {Array.from({ length: 6 }).map((_, i) => (<div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-24" /></div>))}
         </div>
         <Skeleton className="h-72 rounded-xl" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -174,13 +175,17 @@ export default function AnalyticsPage() {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EF4444]/10"><Brain className="h-6 w-6 text-[#EF4444]" /></div>
-          <p className="text-sm font-medium text-[#FAFAFA]">Error loading analytics</p>
-          <p className="text-xs text-[#71717A]">There was a problem fetching analytics data.</p>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Brain className="h-6 w-6 text-danger" /></div>
+          <p className="text-sm font-medium text-foreground">Error loading analytics</p>
+          <p className="text-xs text-muted">There was a problem fetching analytics data.</p>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Try Again</Button>
         </div>
       </div>
     );
+  }
+
+  if (!isLoading && !isError && !stats.data) {
+    return <EmptyState icon={<Brain className="h-6 w-6" />} title="No analytics data" description="Start trading to see your analytics and insights." />;
   }
 
   const o = stats.data?.overview ?? {} as any;
@@ -188,17 +193,17 @@ export default function AnalyticsPage() {
   const isPnlPositive = o.total_pnl >= 0;
 
   return (
-    <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+    <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Analytics</h1>
-          <p className="text-sm text-[#71717A] mt-0.5">Discover why you&apos;re making or losing money</p>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">Analytics</h1>
+          <p className="text-sm text-muted mt-0.5">Discover why you&apos;re making or losing money</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border border-[#27272A] bg-[#111113] p-0.5">
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
             {['1W', '1M', '3M', 'All'].map((p) => (
-              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] hover:text-[#A1A1AA]')}>{p}</button>
+              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>
             ))}
           </div>
           <Button variant="ghost" size="icon" aria-label="Export"><Download className="h-4 w-4" /></Button>
@@ -216,55 +221,58 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Large Equity Curve */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Equity Curve</h3>
+            <TrendingUp className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Equity Curve</h3>
           </div>
           <div className="flex items-center gap-1">
             {['1W', '1M', '3M', 'All'].map((p) => (
-              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] hover:text-[#A1A1AA]')}>{p}</button>
+              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>
             ))}
           </div>
         </div>
         <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={equityData.length > 0 ? equityData : [{ date: 'No data', equity: 0 }]} {...chartDefaultProps}>
-              <defs>
-                <linearGradient id="analyticsEquityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#4F46E5" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Area type="monotone" dataKey="equity" stroke="#4F46E5" strokeWidth={2} fill="url(#analyticsEquityGradient)" dot={false} activeDot={{ r: 4, fill: '#4F46E5' }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+          {equityData.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <TrendingUp className="mx-auto h-6 w-6 text-muted mb-2" />
+                <p className="text-sm text-muted">No equity data yet</p>
+              </div>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={equityData} {...chartDefaultProps}>
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area type="monotone" dataKey="equity" stroke="hsl(var(--primary))" strokeWidth={2} fill="hsl(var(--primary) / 0.08)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--primary))' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+            )}
+          </div>
       </motion.div>
 
       {/* Analytics Grid — 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Session Performance */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Session Performance</h3>
+            <Clock className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Session Performance</h3>
           </div>
           {sessionChartData.length > 0 ? (
-            <div className="h-48"><MiniBarChart data={sessionChartData} dataKey="winRate" color="#4F46E5" /></div>
+            <div className="h-48"><MiniBarChart data={sessionChartData} dataKey="winRate" color="hsl(var(--primary))" /></div>
           ) : (
-            <div className="flex h-48 items-center justify-center"><p className="text-xs text-[#71717A]">No session data available</p></div>
+            <div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No session data available</p></div>
           )}
           {sessionChartData.length > 0 && (
             <div className="mt-3 grid grid-cols-2 gap-1.5">
               {sessionChartData.map((s: any) => (
-                <div key={s.label} className="flex items-center justify-between rounded-md bg-[#111113] px-2.5 py-1.5">
-                  <span className="text-[10px] text-[#A1A1AA]">{s.label}</span>
-                  <span className={cn('text-[10px] font-mono font-medium', s.winRate >= 50 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{s.winRate}%</span>
+                <div key={s.label} className="flex items-center justify-between rounded-md bg-background px-2.5 py-1.5">
+                  <span className="text-3xs text-secondary">{s.label}</span>
+                  <span className={cn('text-3xs font-mono font-medium', s.winRate >= 50 ? 'text-success' : 'text-danger')}>{s.winRate}%</span>
                 </div>
               ))}
             </div>
@@ -272,22 +280,22 @@ export default function AnalyticsPage() {
         </motion.div>
 
         {/* Day of Week Performance */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <CalendarDays className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Day of Week</h3>
+            <CalendarDays className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Day of Week</h3>
           </div>
           {weekdayChartData.length > 0 ? (
-            <div className="h-48"><MiniBarChart data={weekdayChartData} dataKey="winRate" color="#22C55E" /></div>
+            <div className="h-48"><MiniBarChart data={weekdayChartData} dataKey="winRate" color="hsl(var(--success))" /></div>
           ) : (
-            <div className="flex h-48 items-center justify-center"><p className="text-xs text-[#71717A]">No weekday data available</p></div>
+            <div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No weekday data available</p></div>
           )}
           {weekdayChartData.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {weekdayChartData.map((d: any) => (
-                <div key={d.label} className="flex items-center gap-1.5 rounded-md bg-[#111113] px-2 py-1">
-                  <span className="text-[10px] text-[#A1A1AA]">{d.label}</span>
-                  <span className={cn('text-[10px] font-mono font-medium', d.winRate >= 50 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{d.winRate}%</span>
+                <div key={d.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1">
+                  <span className="text-3xs text-secondary">{d.label}</span>
+                  <span className={cn('text-3xs font-mono font-medium', d.winRate >= 50 ? 'text-success' : 'text-danger')}>{d.winRate}%</span>
                 </div>
               ))}
             </div>
@@ -295,35 +303,35 @@ export default function AnalyticsPage() {
         </motion.div>
 
         {/* Monthly Returns */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Monthly Returns</h3>
+            <TrendingUp className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Monthly Returns</h3>
           </div>
           {monthlyChartData.length > 0 ? (
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyChartData} {...chartDefaultProps}>
-                  <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#71717A' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [formatCurrency(v), 'P&L']} />
                   <Bar dataKey="pnl" shape={(props: any) => {
                     const { x, y, width, height } = props;
                     const isPositive = height < 0;
-                    return <rect x={x} y={isPositive ? y + height : y} width={width} height={Math.abs(height)} fill={isPositive ? '#22C55E' : '#EF4444'} rx={3} ry={3} />;
+                    return <rect x={x} y={isPositive ? y + height : y} width={width} height={Math.abs(height)} fill={isPositive ? 'hsl(var(--success))' : 'hsl(var(--danger))'} rx={3} ry={3} />;
                   }} maxBarSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="flex h-48 items-center justify-center"><p className="text-xs text-[#71717A]">No monthly data available</p></div>
+            <div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No monthly data available</p></div>
           )}
         </motion.div>
 
         {/* Psychology Summary */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Brain className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Behavior Analysis</h3>
+            <Brain className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Behavior Analysis</h3>
           </div>
           {psychData.data ? (
             <div className="space-y-2">
@@ -334,24 +342,24 @@ export default function AnalyticsPage() {
                 { label: 'Late Entries', value: psychData.data.late_entries ?? 0, threshold: 3 },
                 { label: 'Missed Setups', value: psychData.data.missed_setups ?? 0, threshold: 3 },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-md bg-[#111113] px-3 py-2">
-                  <span className="text-xs text-[#A1A1AA]">{item.label}</span>
-                  <span className={cn('text-xs font-mono font-medium', item.value <= item.threshold ? 'text-[#22C55E]' : 'text-[#F59E0B]')}>{item.value}</span>
+                <div key={item.label} className="flex items-center justify-between rounded-md bg-background px-3 py-2">
+                  <span className="text-xs text-secondary">{item.label}</span>
+                  <span className={cn('text-xs font-mono font-medium', item.value <= item.threshold ? 'text-success' : 'text-warning')}>{item.value}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex h-48 items-center justify-center"><p className="text-xs text-[#71717A]">No behavior data yet. Add more trades to generate insights.</p></div>
+            <div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No behavior data yet. Add more trades to generate insights.</p></div>
           )}
         </motion.div>
       </div>
 
       {/* AI Insights */}
       {insightCards.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-4 w-4 text-[#4F46E5]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Intelligence</h3>
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-medium text-foreground">Intelligence</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {insightCards.map((card, i) => (
@@ -362,11 +370,11 @@ export default function AnalyticsPage() {
       )}
 
       {/* Trade Explorer */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Trade Explorer</h3>
+            <Search className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">Trade Explorer</h3>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${projectId}/trades`)}>
             View All <ChevronRight className="ml-1 h-3 w-3" />
@@ -377,8 +385,8 @@ export default function AnalyticsPage() {
             data={trades.data.slice(0, 10)}
             columns={[
               { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
-              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{row.direction || '-'}</span>), width: '40px' },
-              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null && !Number.isNaN(row.pnl) ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{row.pnl >= 0 ? '+' : ''}${Number(row.pnl).toFixed(2)}</span>) : '-', width: '100px' },
+              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger')}>{row.direction || '-'}</span>), width: '40px' },
+              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null && !Number.isNaN(row.pnl) ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>{row.pnl >= 0 ? '+' : ''}${Number(row.pnl).toFixed(2)}</span>) : '-', width: '100px' },
               { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr != null && !Number.isNaN(row.rr) ? Number(row.rr).toFixed(2) : '-', width: '60px', hideOnMobile: true },
               { id: 'session', header: 'Session', accessor: (row: any) => row.session || '-', width: '80px', hideOnMobile: true },
               { id: 'result', header: 'Result', accessor: (row: any) => row.result ? <Badge variant={row.result === 'WIN' ? 'success' : row.result === 'LOSS' ? 'destructive' : 'warning'} size="sm">{row.result}</Badge> : '-', width: '70px' },
@@ -390,9 +398,9 @@ export default function AnalyticsPage() {
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]"><BarChart3 className="h-5 w-5 text-[#71717A]" /></div>
-            <p className="text-sm font-medium text-[#A1A1AA]">No trades yet</p>
-            <p className="text-xs text-[#71717A] mt-1">Add trades to unlock analytics and insights.</p>
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-elevated"><BarChart3 className="h-5 w-5 text-muted" /></div>
+            <p className="text-sm font-medium text-secondary">No trades yet</p>
+            <p className="text-xs text-muted mt-1">Add trades to unlock analytics and insights.</p>
             <Button size="sm" className="mt-4" onClick={() => navigate(`/projects/${projectId}/trades`)}>Start Trading</Button>
           </div>
         )}

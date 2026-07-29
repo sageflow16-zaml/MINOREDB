@@ -68,7 +68,7 @@ export default function AutomationTemplates() {
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Icon className={`w-4 h-4 ${color}`} />
                     {t.name}
-                    {t.is_built_in && <Badge variant="info" className="text-[10px] px-1.5">Built-in</Badge>}
+                    {t.is_built_in && <Badge variant="info" className="text-3xs px-1.5">Built-in</Badge>}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -78,7 +78,7 @@ export default function AutomationTemplates() {
                       <div className="text-xs font-medium text-muted-foreground mb-1">Triggers:</div>
                       <div className="flex gap-1 flex-wrap">
                         {(t.triggers_config as Record<string, unknown>[]).map((tr, i) => (
-                          <Badge key={i} variant="outline" className="text-[10px]">{tr.trigger_type as string}</Badge>
+                          <Badge key={i} variant="outline" className="text-3xs">{tr.trigger_type as string}</Badge>
                         ))}
                       </div>
                     </div>
@@ -88,7 +88,7 @@ export default function AutomationTemplates() {
                       <div className="text-xs font-medium text-muted-foreground mb-1">Actions:</div>
                       <div className="flex gap-1 flex-wrap">
                         {(t.actions_config as Record<string, unknown>[]).map((a, i) => (
-                          <Badge key={i} variant="outline" className="text-[10px]">{a.action_type as string}</Badge>
+                          <Badge key={i} variant="outline" className="text-3xs">{a.action_type as string}</Badge>
                         ))}
                       </div>
                     </div>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
+import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
 import { createChart, CandlestickSeries, ColorType } from 'lightweight-charts';
 import {
   useReplaySessions, useCreateSession, useReplayState,
@@ -43,15 +44,15 @@ function CandlestickChart({ candles, trades, annotations }: { candles?: MarketCa
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
       height: chartRef.current.clientHeight || 500,
-      layout: { background: { type: ColorType.Solid, color: '#18181B' }, textColor: '#71717A' },
-      grid: { vertLines: { color: '#27272A' }, horzLines: { color: '#27272A' } },
-      timeScale: { borderColor: '#27272A' },
+layout: { background: { type: ColorType.Solid, color: 'hsl(var(--card))' }, textColor: 'hsl(var(--muted))' },
+grid: { vertLines: { color: 'hsl(var(--elevated))' }, horzLines: { color: 'hsl(var(--elevated))' } },
+timeScale: { borderColor: 'hsl(var(--elevated))' },
       crosshair: { mode: 0 },
     });
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: '#22C55E', downColor: '#EF4444',
-      borderDownColor: '#EF4444', borderUpColor: '#22C55E',
-      wickDownColor: '#EF4444', wickUpColor: '#22C55E',
+upColor: 'hsl(var(--success))', downColor: 'hsl(var(--danger))',
+borderDownColor: 'hsl(var(--danger))', borderUpColor: 'hsl(var(--success))',
+wickDownColor: 'hsl(var(--danger))', wickUpColor: 'hsl(var(--success))',
     });
     series.setData(candles.map((c) => ({ time: Math.floor(new Date(c.timestamp).getTime() / 1000) as any, open: c.open, high: c.high, low: c.low, close: c.close })));
     chart.timeScale().fitContent();
@@ -61,9 +62,9 @@ function CandlestickChart({ candles, trades, annotations }: { candles?: MarketCa
   }, [candles]);
 
   return (
-    <motion.div layout className={cn('relative rounded-xl border border-[#27272A] bg-[#18181B] overflow-hidden', fullscreen ? 'fixed inset-4 z-50' : 'flex-1 min-h-[400px]')}>
+    <motion.div layout className={cn('relative rounded-xl border border-border bg-card overflow-hidden', fullscreen ? 'fixed inset-4 z-50' : 'flex-1 min-h-[400px]')}>
       <div className="absolute top-2 right-2 z-10 flex gap-1">
-        <button onClick={() => setFullscreen(!fullscreen)} aria-label={fullscreen ? 'Exit fullscreen' : 'Toggle fullscreen'} className="rounded-lg bg-[#111113]/80 p-1.5 text-[#71717A] hover:text-[#FAFAFA] transition-colors">
+        <button onClick={() => setFullscreen(!fullscreen)} aria-label={fullscreen ? 'Exit fullscreen' : 'Toggle fullscreen'} className="rounded-lg bg-background/80 p-1.5 text-muted hover:text-foreground transition-colors">
           {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
       </div>
@@ -78,10 +79,10 @@ function TimelinePanel({ state, currentCandle, onJump, playbackSpeed, onSpeedCha
   const total = state.session.total_candles;
   const events = useMemo(() => {
     const items: { candle_index: number; type: string; label: string; icon: any; color: string }[] = [];
-    state.trades.forEach((t) => items.push({ candle_index: t.candle_index, type: 'trade', label: `${t.direction} @ ${t.entry_price}`, icon: TrendingUp, color: 'text-[#22C55E]' }));
-    state.bookmarks.forEach((b) => items.push({ candle_index: b.candle_index, type: 'bookmark', label: b.note || 'Bookmark', icon: BookOpen, color: 'text-[#4F46E5]' }));
-    state.mistakes.forEach((m) => { if (m.candle_index != null) items.push({ candle_index: m.candle_index, type: 'mistake', label: m.mistake_type || 'Mistake', icon: AlertTriangle, color: 'text-[#EF4444]' }); });
-    state.annotations.forEach((a) => items.push({ candle_index: a.candle_index, type: 'annotation', label: a.label || a.annotation_type, icon: Edit3, color: 'text-[#22C55E]' }));
+    state.trades.forEach((t) => items.push({ candle_index: t.candle_index, type: 'trade', label: `${t.direction} @ ${t.entry_price}`, icon: TrendingUp, color: 'text-success' }));
+    state.bookmarks.forEach((b) => items.push({ candle_index: b.candle_index, type: 'bookmark', label: b.note || 'Bookmark', icon: BookOpen, color: 'text-primary' }));
+    state.mistakes.forEach((m) => { if (m.candle_index != null) items.push({ candle_index: m.candle_index, type: 'mistake', label: m.mistake_type || 'Mistake', icon: AlertTriangle, color: 'text-danger' }); });
+    state.annotations.forEach((a) => items.push({ candle_index: a.candle_index, type: 'annotation', label: a.label || a.annotation_type, icon: Edit3, color: 'text-success' }));
     return items.sort((a, b) => a.candle_index - b.candle_index);
   }, [state]);
 
@@ -89,32 +90,32 @@ function TimelinePanel({ state, currentCandle, onJump, playbackSpeed, onSpeedCha
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between"><h3 className="text-xs font-medium text-[#FAFAFA]">Timeline</h3><span className="text-[10px] text-[#71717A] font-mono">{currentCandle + 1}/{total}</span></div>
-      <div className="relative h-2 rounded-full bg-[#27272A] cursor-pointer"
+      <div className="flex items-center justify-between"><h3 className="text-xs font-medium text-foreground">Timeline</h3><span className="text-3xs text-muted font-mono">{currentCandle + 1}/{total}</span></div>
+      <div className="relative h-2 rounded-full bg-elevated cursor-pointer"
         role="slider" tabIndex={0} aria-valuemin={0} aria-valuemax={total} aria-valuenow={currentCandle}
         onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const pct = (e.clientX - rect.left) / rect.width; onJump(Math.floor(pct * total)); }}
         onKeyDown={(e) => { if (e.key === 'ArrowRight') onJump(Math.min(currentCandle + 1, total - 1)); if (e.key === 'ArrowLeft') onJump(Math.max(currentCandle - 1, 0)); }}>
-        <div className="absolute left-0 top-0 h-full rounded-full bg-[#4F46E5] transition-all" style={{ width: `${progressPct}%` }} />
-        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#4F46E5] border-2 border-[#18181B]" style={{ left: `calc(${progressPct}% - 6px)` }} />
+        <div className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
+        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary border-2 border-card" style={{ left: `calc(${progressPct}% - 6px)` }} />
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-[#71717A]">Speed</span>
+        <span className="text-3xs text-muted">Speed</span>
         {[1, 2, 5, 10].map((s) => (
           <button key={s} onClick={() => onSpeedChange(1000 / s)}
-            className={cn('rounded px-2 py-0.5 text-[10px] font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] hover:text-[#A1A1AA]')}>{s}x</button>
+            className={cn('rounded px-2 py-0.5 text-3xs font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{s}x</button>
         ))}
       </div>
       <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
         {events.slice(-30).map((evt, i) => (
           <button key={i} onClick={() => onJump(evt.candle_index)}
-            className={cn('w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[#111113]', evt.candle_index === currentCandle && 'bg-[#4F46E5]/10')}>
-            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#111113]">
+            className={cn('w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-background', evt.candle_index === currentCandle && 'bg-primary/10')}>
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-background">
               <evt.icon className={cn('h-3 w-3', evt.color)} />
             </div>
-            <div className="min-w-0 flex-1"><p className="text-[11px] font-medium text-[#A1A1AA] truncate">{evt.label}</p><p className="text-[9px] text-[#71717A]">Candle #{evt.candle_index}</p></div>
+            <div className="min-w-0 flex-1"><p className="text-2xs font-medium text-secondary truncate">{evt.label}</p><p className="text-3xs text-muted">Candle #{evt.candle_index}</p></div>
           </button>
         ))}
-        {events.length === 0 && <p className="text-[11px] text-[#71717A] text-center py-4">No events yet</p>}
+        {events.length === 0 && <p className="text-2xs text-muted text-center py-4">No events yet</p>}
       </div>
     </div>
   );
@@ -135,14 +136,14 @@ function ReviewPanel({ projectId, state }: { projectId: string; state: ReplayWor
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-1 rounded-lg bg-[#111113] p-0.5">
+      <div className="flex gap-1 rounded-lg bg-background p-0.5">
         {[
           { id: 'review' as const, label: 'Review', icon: MessageSquare },
           { id: 'mistakes' as const, label: 'Mistakes', icon: AlertTriangle },
           { id: 'psychology' as const, label: 'Psychology', icon: Brain },
         ].map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={cn('flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors flex items-center justify-center gap-1', tab === t.id ? 'bg-[#18181B] text-[#FAFAFA]' : 'text-[#71717A] hover:text-[#A1A1AA]')}>
+            className={cn('flex-1 rounded-md px-2 py-1.5 text-3xs font-medium transition-colors flex items-center justify-center gap-1', tab === t.id ? 'bg-card text-foreground' : 'text-muted hover:text-secondary')}>
             <t.icon className="h-3 w-3" />{t.label}
           </button>
         ))}
@@ -151,25 +152,25 @@ function ReviewPanel({ projectId, state }: { projectId: string; state: ReplayWor
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
           {tab === 'review' && (
             <div className="space-y-3">
-              <div><label className="text-[10px] font-medium text-[#71717A]">What went well</label><textarea className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2.5 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5] min-h-[50px]" value={review.went_well} onChange={(e) => setReview((p) => ({ ...p, went_well: e.target.value }))} /></div>
-              <div><label className="text-[10px] font-medium text-[#71717A]">What went wrong</label><textarea className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2.5 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5] min-h-[50px]" value={review.went_wrong} onChange={(e) => setReview((p) => ({ ...p, went_wrong: e.target.value }))} /></div>
+              <div><label className="text-3xs font-medium text-muted">What went well</label><textarea className="w-full mt-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary min-h-[50px]" value={review.went_well} onChange={(e) => setReview((p) => ({ ...p, went_well: e.target.value }))} /></div>
+              <div><label className="text-3xs font-medium text-muted">What went wrong</label><textarea className="w-full mt-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary min-h-[50px]" value={review.went_wrong} onChange={(e) => setReview((p) => ({ ...p, went_wrong: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-2">
-                <div><label className="text-[10px] font-medium text-[#71717A]">Execution</label><select className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#A1A1AA]" value={review.execution_quality} onChange={(e) => setReview((p) => ({ ...p, execution_quality: e.target.value }))}><option value="">Select...</option><option value="Excellent">Excellent</option><option value="Good">Good</option><option value="Average">Average</option><option value="Poor">Poor</option></select></div>
-                <div><label className="text-[10px] font-medium text-[#71717A]">Risk Mgmt</label><select className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#A1A1AA]" value={review.risk_management} onChange={(e) => setReview((p) => ({ ...p, risk_management: e.target.value }))}><option value="">Select...</option><option value="Excellent">Excellent</option><option value="Good">Good</option><option value="Average">Average</option><option value="Poor">Poor</option></select></div>
+                <div><label className="text-3xs font-medium text-muted">Execution</label><select className="w-full mt-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-secondary" value={review.execution_quality} onChange={(e) => setReview((p) => ({ ...p, execution_quality: e.target.value }))}><option value="">Select...</option><option value="Excellent">Excellent</option><option value="Good">Good</option><option value="Average">Average</option><option value="Poor">Poor</option></select></div>
+                <div><label className="text-3xs font-medium text-muted">Risk Mgmt</label><select className="w-full mt-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-secondary" value={review.risk_management} onChange={(e) => setReview((p) => ({ ...p, risk_management: e.target.value }))}><option value="">Select...</option><option value="Excellent">Excellent</option><option value="Good">Good</option><option value="Average">Average</option><option value="Poor">Poor</option></select></div>
               </div>
               <div className="flex items-center gap-3">
-                <div><label className="text-[10px] font-medium text-[#71717A]">Grade</label><select className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#A1A1AA]" value={review.trade_grade} onChange={(e) => setReview((p) => ({ ...p, trade_grade: e.target.value }))}><option value="">-</option>{['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F'].map((g) => <option key={g} value={g}>{g}</option>)}</select></div>
-                <div><label className="text-[10px] font-medium text-[#71717A]">Confidence</label><input type="number" min={0} max={100} className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#A1A1AA]" value={review.confidence_score} onChange={(e) => setReview((p) => ({ ...p, confidence_score: parseFloat(e.target.value) || 0 }))} /></div>
-                <div><label className="text-[10px] font-medium text-[#71717A]">Discipline</label><input type="number" min={0} max={100} className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#A1A1AA]" value={review.discipline_score} onChange={(e) => setReview((p) => ({ ...p, discipline_score: parseFloat(e.target.value) || 0 }))} /></div>
+                <div><label className="text-3xs font-medium text-muted">Grade</label><select className="w-full mt-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-secondary" value={review.trade_grade} onChange={(e) => setReview((p) => ({ ...p, trade_grade: e.target.value }))}><option value="">-</option>{['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D', 'F'].map((g) => <option key={g} value={g}>{g}</option>)}</select></div>
+                <div><label className="text-3xs font-medium text-muted">Confidence</label><input type="number" min={0} max={100} className="w-full mt-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-secondary" value={review.confidence_score} onChange={(e) => setReview((p) => ({ ...p, confidence_score: parseFloat(e.target.value) || 0 }))} /></div>
+                <div><label className="text-3xs font-medium text-muted">Discipline</label><input type="number" min={0} max={100} className="w-full mt-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-secondary" value={review.discipline_score} onChange={(e) => setReview((p) => ({ ...p, discipline_score: parseFloat(e.target.value) || 0 }))} /></div>
               </div>
-              <div className="flex items-center justify-between"><span className="text-[10px] text-[#71717A]">Rule compliance: {review.rule_compliance}%</span><input type="range" min={0} max={100} className="w-32 accent-[#4F46E5]" value={review.rule_compliance} onChange={(e) => setReview((p) => ({ ...p, rule_compliance: parseInt(e.target.value) }))} /></div>
+              <div className="flex items-center justify-between"><span className="text-3xs text-muted">Rule compliance: {review.rule_compliance}%</span><input type="range" min={0} max={100} className="w-32 accent-primary" value={review.rule_compliance} onChange={(e) => setReview((p) => ({ ...p, rule_compliance: parseInt(e.target.value) }))} /></div>
               <Button size="sm" className="w-full" onClick={saveReview} disabled={upsertReview.isPending}><Save className="h-3 w-3 mr-1" /> Save Review</Button>
             </div>
           )}
           {tab === 'mistakes' && <MistakePanel projectId={projectId} state={state} />}
           {tab === 'psychology' && (
             <div className="space-y-3">
-              <div><label className="text-[10px] font-medium text-[#71717A]">Psychology notes</label><textarea className="w-full mt-1 rounded-lg border border-[#27272A] bg-[#111113] px-2.5 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5] min-h-[80px]" value={review.psychology} onChange={(e) => setReview((p) => ({ ...p, psychology: e.target.value }))} placeholder="How were you feeling?" /></div>
+              <div><label className="text-3xs font-medium text-muted">Psychology notes</label><textarea className="w-full mt-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary min-h-[80px]" value={review.psychology} onChange={(e) => setReview((p) => ({ ...p, psychology: e.target.value }))} placeholder="How were you feeling?" /></div>
               <Button size="sm" className="w-full" onClick={saveReview} disabled={upsertReview.isPending}><Save className="h-3 w-3 mr-1" /> Save</Button>
             </div>
           )}
@@ -194,24 +195,24 @@ function MistakePanel({ projectId, state }: { projectId: string; state: ReplayWo
       {state.mistakes.length > 0 && (
         <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
           {state.mistakes.map((m) => (
-            <div key={m.id} className="flex items-start gap-2 rounded-lg bg-[#111113] p-2">
-              <div className={cn('mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full', m.severity === 'High' ? 'bg-[#EF4444]' : m.severity === 'Medium' ? 'bg-[#F59E0B]' : 'bg-[#71717A]')} />
+            <div key={m.id} className="flex items-start gap-2 rounded-lg bg-background p-2">
+              <div className={cn('mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full', m.severity === 'High' ? 'bg-danger' : m.severity === 'Medium' ? 'bg-warning' : 'bg-muted')} />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2"><span className="text-[10px] font-medium text-[#A1A1AA]">{m.mistake_type || 'Mistake'}</span><Badge variant={m.severity === 'High' ? 'destructive' : m.severity === 'Medium' ? 'warning' : 'default'} size="sm">{m.severity}</Badge></div>
-                <p className="text-[10px] text-[#71717A] mt-0.5">{m.description}</p>
-                {m.recommendation && <p className="text-[10px] text-[#4F46E5] mt-0.5">&rarr; {m.recommendation}</p>}
+                <div className="flex items-center gap-2"><span className="text-3xs font-medium text-secondary">{m.mistake_type || 'Mistake'}</span><Badge variant={m.severity === 'High' ? 'destructive' : m.severity === 'Medium' ? 'warning' : 'default'} size="sm">{m.severity}</Badge></div>
+                <p className="text-3xs text-muted mt-0.5">{m.description}</p>
+                {m.recommendation && <p className="text-3xs text-primary mt-0.5">&rarr; {m.recommendation}</p>}
               </div>
-              <button onClick={() => deleteMistake.mutate({ sessionId: state.session.id, mistakeId: m.id })} className="text-[#71717A] hover:text-[#EF4444] shrink-0"><X className="h-3 w-3" /></button>
+              <button onClick={() => deleteMistake.mutate({ sessionId: state.session.id, mistakeId: m.id })} className="text-muted hover:text-danger shrink-0"><X className="h-3 w-3" /></button>
             </div>
           ))}
         </div>
       )}
       {showForm ? (
-        <div className="space-y-2 rounded-lg border border-[#27272A] p-2.5">
-          <select className="w-full rounded border border-[#27272A] bg-[#111113] px-2 py-1 text-[10px] text-[#A1A1AA]" value={mistakeType} onChange={(e) => setMistakeType(e.target.value)}><option value="">Type...</option>{MISTAKE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select>
-          <select className="w-full rounded border border-[#27272A] bg-[#111113] px-2 py-1 text-[10px] text-[#A1A1AA]" value={severity} onChange={(e) => setSeverity(e.target.value)}>{['Low', 'Medium', 'High'].map((s) => <option key={s} value={s}>{s}</option>)}</select>
-          <textarea className="w-full rounded border border-[#27272A] bg-[#111113] px-2 py-1 text-[10px] text-[#A1A1AA] placeholder-[#71717A] min-h-[50px]" placeholder="Describe..." value={description} onChange={(e) => setDescription(e.target.value)} />
-          <textarea className="w-full rounded border border-[#27272A] bg-[#111113] px-2 py-1 text-[10px] text-[#A1A1AA] placeholder-[#71717A]" placeholder="Recommendation..." value={recommendation} onChange={(e) => setRecommendation(e.target.value)} />
+        <div className="space-y-2 rounded-lg border border-border p-2.5">
+          <select className="w-full rounded border border-border bg-background px-2 py-1 text-3xs text-secondary" value={mistakeType} onChange={(e) => setMistakeType(e.target.value)}><option value="">Type...</option>{MISTAKE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+          <select className="w-full rounded border border-border bg-background px-2 py-1 text-3xs text-secondary" value={severity} onChange={(e) => setSeverity(e.target.value)}>{['Low', 'Medium', 'High'].map((s) => <option key={s} value={s}>{s}</option>)}</select>
+          <textarea className="w-full rounded border border-border bg-background px-2 py-1 text-3xs text-secondary placeholder-muted min-h-[50px]" placeholder="Describe..." value={description} onChange={(e) => setDescription(e.target.value)} />
+          <textarea className="w-full rounded border border-border bg-background px-2 py-1 text-3xs text-secondary placeholder-muted" placeholder="Recommendation..." value={recommendation} onChange={(e) => setRecommendation(e.target.value)} />
           <div className="flex gap-2"><Button size="sm" className="flex-1" onClick={handleSubmit} disabled={!description.trim() || createMistake.isPending}>Save</Button><Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button></div>
         </div>
       ) : (<Button size="sm" variant="outline" className="w-full" onClick={() => setShowForm(true)}><Plus className="h-3 w-3 mr-1" /> Add Mistake</Button>)}
@@ -231,22 +232,22 @@ function NewTradeModal({ projectId, sessionId, currentCandle, onClose }: { proje
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-xl border border-[#27272A] bg-[#18181B] p-5 space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between"><h2 className="text-sm font-semibold text-[#FAFAFA]">New Trade @ Candle #{currentCandle}</h2><button onClick={onClose} className="text-[#71717A] hover:text-[#FAFAFA]"><X className="h-4 w-4" /></button></div>
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-5 space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between"><h2 className="text-sm font-semibold text-foreground">New Trade @ Candle #{currentCandle}</h2><button onClick={onClose} className="text-muted hover:text-foreground"><X className="h-4 w-4" /></button></div>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex gap-2">
-            <button type="button" onClick={() => setDirection('BUY')} className={cn('flex-1 rounded-lg py-2 text-sm font-medium transition-colors', direction === 'BUY' ? 'bg-[#22C55E] text-white' : 'bg-[#111113] text-[#71717A] hover:text-[#A1A1AA]')}>BUY</button>
-            <button type="button" onClick={() => setDirection('SELL')} className={cn('flex-1 rounded-lg py-2 text-sm font-medium transition-colors', direction === 'SELL' ? 'bg-[#EF4444] text-white' : 'bg-[#111113] text-[#71717A] hover:text-[#A1A1AA]')}>SELL</button>
+            <button type="button" onClick={() => setDirection('BUY')} className={cn('flex-1 rounded-lg py-2 text-sm font-medium transition-colors', direction === 'BUY' ? 'bg-success text-white' : 'bg-background text-muted hover:text-secondary')}>BUY</button>
+            <button type="button" onClick={() => setDirection('SELL')} className={cn('flex-1 rounded-lg py-2 text-sm font-medium transition-colors', direction === 'SELL' ? 'bg-danger text-white' : 'bg-background text-muted hover:text-secondary')}>SELL</button>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <input type="number" step="any" placeholder="Entry" value={entry} onChange={(e) => setEntry(e.target.value)} className="rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" required />
-            <input type="number" step="any" placeholder="Stop Loss" value={sl} onChange={(e) => setSl(e.target.value)} className="rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" />
-            <input type="number" step="any" placeholder="Take Profit" value={tp} onChange={(e) => setTp(e.target.value)} className="rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" />
-            <input type="number" step="any" placeholder="Size" value={size} onChange={(e) => setSize(e.target.value)} className="rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" />
-            <input type="number" step="any" placeholder="Risk %" value={risk} onChange={(e) => setRisk(e.target.value)} className="rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" />
-            <input type="number" min={0} max={100} placeholder="Confidence %" value={confidence} onChange={(e) => setConfidence(e.target.value)} className="rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" />
+            <input type="number" step="any" placeholder="Entry" value={entry} onChange={(e) => setEntry(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary" required />
+            <input type="number" step="any" placeholder="Stop Loss" value={sl} onChange={(e) => setSl(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary" />
+            <input type="number" step="any" placeholder="Take Profit" value={tp} onChange={(e) => setTp(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary" />
+            <input type="number" step="any" placeholder="Size" value={size} onChange={(e) => setSize(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary" />
+            <input type="number" step="any" placeholder="Risk %" value={risk} onChange={(e) => setRisk(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary" />
+            <input type="number" min={0} max={100} placeholder="Confidence %" value={confidence} onChange={(e) => setConfidence(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary" />
           </div>
-          <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5 text-xs text-[#A1A1AA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" />
+          <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-secondary placeholder-muted focus:outline-none focus:border-primary" />
           <div className="flex gap-2"><Button type="submit" className="flex-1" disabled={!entry || tradeMut.isPending}>{tradeMut.isPending ? 'Saving...' : 'Save Trade'}</Button><Button variant="ghost" onClick={onClose}>Cancel</Button></div>
         </form>
       </div>
@@ -304,12 +305,12 @@ export default function ReplayPage() {
   };
 
   return (
-    <div className="p-5 md:p-8 space-y-4 max-w-screen-2xl mx-auto h-full flex flex-col">
+    <div className="p-6 md:p-8 space-y-4 max-w-screen-2xl mx-auto h-full flex flex-col">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#4F46E5]/10"><BarChart3 className="h-5 w-5 text-[#4F46E5]" /></div>
-          <div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Replay</h1><p className="text-sm text-[#71717A] mt-0.5">{dashboardQuery.data?.total_sessions ?? 0} sessions &bull; {dashboardQuery.data?.total_trades ?? 0} trades{dashboardQuery.data?.avg_win_rate != null ? ` &bull; WR ${dashboardQuery.data.avg_win_rate.toFixed(1)}%` : ''}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><BarChart3 className="h-5 w-5 text-primary" /></div>
+          <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Replay</h1><p className="text-sm text-muted mt-0.5">{dashboardQuery.data?.total_sessions ?? 0} sessions &bull; {dashboardQuery.data?.total_trades ?? 0} trades{dashboardQuery.data?.avg_win_rate != null ? ` &bull; WR ${dashboardQuery.data.avg_win_rate.toFixed(1)}%` : ''}</p></div>
         </div>
       </motion.div>
 
@@ -317,20 +318,20 @@ export default function ReplayPage() {
       <div className="flex flex-wrap items-center gap-2">
         {sessions.slice().reverse().map((s: any) => (
           <button key={s.id} onClick={() => setActiveSessionId(s.id)}
-            className={cn('shrink-0 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors', s.id === activeSessionId ? 'border-[#4F46E5]/40 bg-[#4F46E5]/5 text-[#4F46E5]' : 'border-[#27272A] bg-[#18181B] text-[#71717A] hover:text-[#A1A1AA]')}>
-            {s.pair} {s.timeframe} <span className="text-[9px] opacity-60">{new Date(s.start_date).toLocaleDateString()}</span>
+            className={cn('shrink-0 rounded-lg border px-2.5 py-1 text-2xs font-medium transition-colors', s.id === activeSessionId ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border bg-card text-muted hover:text-secondary')}>
+            {s.pair} {s.timeframe} <span className="text-3xs opacity-60">{new Date(s.start_date).toLocaleDateString()}</span>
           </button>
         ))}
         <div className="relative group">
-          <Button variant="outline" size="sm" className="text-[11px]"><Plus className="h-3 w-3 mr-1" /> New</Button>
-          <div className="absolute top-full right-0 mt-1 w-64 rounded-xl border border-[#27272A] bg-[#18181B] shadow-xl p-3 space-y-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+          <Button variant="outline" size="sm" className="text-2xs"><Plus className="h-3 w-3 mr-1" /> New</Button>
+          <div className="absolute top-full right-0 mt-1 w-64 rounded-xl border border-border bg-card shadow-xl p-3 space-y-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
             <div className="flex gap-2">
-              <select id="new-pair" className="flex-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-[11px] text-[#A1A1AA]">{PAIRS.map((p) => <option key={p} value={p}>{p}</option>)}</select>
-              <select id="new-tf" className="flex-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-[11px] text-[#A1A1AA]">{TIMEFRAMES.map((tf) => <option key={tf} value={tf}>{tf}</option>)}</select>
+              <select id="new-pair" className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-2xs text-secondary">{PAIRS.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+              <select id="new-tf" className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-2xs text-secondary">{TIMEFRAMES.map((tf) => <option key={tf} value={tf}>{tf}</option>)}</select>
             </div>
             <div className="flex gap-2">
-              <input id="new-start" type="date" defaultValue="2024-06-01" className="flex-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-[11px] text-[#A1A1AA]" />
-              <input id="new-end" type="date" defaultValue="2024-06-10" className="flex-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-[11px] text-[#A1A1AA]" />
+              <input id="new-start" type="date" defaultValue="2024-06-01" className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-2xs text-secondary" />
+              <input id="new-end" type="date" defaultValue="2024-06-10" className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-2xs text-secondary" />
             </div>
             <Button size="sm" className="w-full" onClick={() => {
               const pair = (document.getElementById('new-pair') as HTMLSelectElement)?.value || 'EURUSD';
@@ -344,54 +345,58 @@ export default function ReplayPage() {
       </div>
 
       {/* Loading / Empty */}
-      {sessionsQuery.isLoading && <div className="flex items-center justify-center py-12"><div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-[#4F46E5] animate-pulse" /><div className="h-2 w-2 rounded-full bg-[#4F46E5] animate-pulse" style={{ animationDelay: '0.2s' }} /><div className="h-2 w-2 rounded-full bg-[#4F46E5] animate-pulse" style={{ animationDelay: '0.4s' }} /></div></div>}
+      {sessionsQuery.isLoading && <div className="flex items-center justify-center py-12"><div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-primary animate-pulse" /><div className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0.2s' }} /><div className="h-2 w-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0.4s' }} /></div></div>}
       {!sessionsQuery.isLoading && sessions.length === 0 && (
-        <div className="flex flex-col items-center py-20 text-center"><div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#27272A]"><BarChart3 className="h-6 w-6 text-[#71717A]" /></div><p className="text-sm font-medium text-[#A1A1AA]">No replay sessions</p><p className="text-xs text-[#71717A] mt-1">Create a new session to start replaying market data.</p></div>
+        <div className="flex flex-col items-center py-20 text-center"><div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-elevated"><BarChart3 className="h-6 w-6 text-muted" /></div><p className="text-sm font-medium text-secondary">No replay sessions</p><p className="text-xs text-muted mt-1">Create a new session to start replaying market data.</p></div>
       )}
 
       {/* Main workspace */}
-      {state && !stateQuery.isLoading && (
+      {stateQuery.isLoading ? (
+        <LoadingSpinner message="Loading replay data..." />
+      ) : stateQuery.isError ? (
+        <ErrorState message="Failed to load replay data" description={stateQuery.error?.message || 'An unexpected error occurred'} onRetry={() => stateQuery.refetch()} />
+      ) : state && (
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
           {/* Left panel */}
           <div className="lg:col-span-3 space-y-3">
-            <div className="flex gap-1 rounded-lg bg-[#111113] p-0.5">
-              <button onClick={() => setLeftPanel('timeline')} className={cn('flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors', leftPanel === 'timeline' ? 'bg-[#18181B] text-[#FAFAFA]' : 'text-[#71717A]')}><Clock className="h-3 w-3 inline mr-1" />Timeline</button>
-              <button onClick={() => setLeftPanel('screenshots')} className={cn('flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors', leftPanel === 'screenshots' ? 'bg-[#18181B] text-[#FAFAFA]' : 'text-[#71717A]')}><Image className="h-3 w-3 inline mr-1" />Shots</button>
+            <div className="flex gap-1 rounded-lg bg-background p-0.5">
+              <button onClick={() => setLeftPanel('timeline')} className={cn('flex-1 rounded-md px-2 py-1.5 text-3xs font-medium transition-colors', leftPanel === 'timeline' ? 'bg-card text-foreground' : 'text-muted')}><Clock className="h-3 w-3 inline mr-1" />Timeline</button>
+              <button onClick={() => setLeftPanel('screenshots')} className={cn('flex-1 rounded-md px-2 py-1.5 text-3xs font-medium transition-colors', leftPanel === 'screenshots' ? 'bg-card text-foreground' : 'text-muted')}><Image className="h-3 w-3 inline mr-1" />Shots</button>
             </div>
             {leftPanel === 'timeline' ? (
-              <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+              <div className="rounded-xl border border-border bg-card p-4">
                 <TimelinePanel state={state} currentCandle={currentCandleIndex} onJump={handleJump} playbackSpeed={playbackSpeed} onSpeedChange={setPlaybackSpeed} />
               </div>
             ) : (
-              <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+              <div className="rounded-xl border border-border bg-card p-4">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between"><h3 className="text-xs font-medium text-[#FAFAFA]">Screenshots</h3><Button variant="ghost" size="icon" onClick={handleStartScreenshot}><Image className="h-3.5 w-3.5" /></Button></div>
+                  <div className="flex items-center justify-between"><h3 className="text-xs font-medium text-foreground">Screenshots</h3><Button variant="ghost" size="icon" onClick={handleStartScreenshot}><Image className="h-3.5 w-3.5" /></Button></div>
                   {state.screenshots.length > 0 ? (
                     <div className="grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto">
                       {state.screenshots.map((s: any) => (
-                        <div key={s.id} className="relative rounded-lg bg-[#111113] p-2 aspect-video flex items-center justify-center group">
-                          <div className="flex flex-col items-center gap-1"><Image className="h-5 w-5 text-[#71717A]" /><span className="text-[9px] text-[#71717A]">{s.category || 'Shot'}</span></div>
-                          <button onClick={() => deleteScreenshot.mutate({ sessionId: state.session.id, screenshotId: s.id })} className="absolute top-1 right-1 rounded bg-[#111113] p-0.5 text-[#71717A] hover:text-[#EF4444] opacity-0 group-hover:opacity-100"><X className="h-3 w-3" /></button>
+                        <div key={s.id} className="relative rounded-lg bg-background p-2 aspect-video flex items-center justify-center group">
+                          <div className="flex flex-col items-center gap-1"><Image className="h-5 w-5 text-muted" /><span className="text-3xs text-muted">{s.category || 'Shot'}</span></div>
+                          <button onClick={() => deleteScreenshot.mutate({ sessionId: state.session.id, screenshotId: s.id })} className="absolute top-1 right-1 rounded bg-background p-0.5 text-muted hover:text-danger opacity-0 group-hover:opacity-100"><X className="h-3 w-3" /></button>
                         </div>
                       ))}
                     </div>
-                  ) : <p className="text-[11px] text-[#71717A] text-center py-4">No screenshots</p>}
+                  ) : <p className="text-2xs text-muted text-center py-4">No screenshots</p>}
                 </div>
               </div>
             )}
             {/* Session context */}
-            <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-1.5">
-              <div className="flex items-center justify-between"><span className="text-[10px] text-[#71717A]">Pair</span><span className="text-[11px] font-medium text-[#FAFAFA]">{state.session.pair}</span></div>
-              <div className="flex items-center justify-between"><span className="text-[10px] text-[#71717A]">Timeframe</span><Badge variant="info" size="sm">{state.session.timeframe}</Badge></div>
-              <div className="flex items-center justify-between"><span className="text-[10px] text-[#71717A]">Status</span><Badge variant={state.session.status === 'active' ? 'success' : state.session.status === 'paused' ? 'warning' : 'default'} size="sm">{state.session.status}</Badge></div>
-              <div className="flex items-center justify-between"><span className="text-[10px] text-[#71717A]">Range</span><span className="text-[10px] text-[#71717A]">{new Date(state.session.start_date).toLocaleDateString()} - {new Date(state.session.end_date).toLocaleDateString()}</span></div>
+            <div className="rounded-xl border border-border bg-card p-4 space-y-1.5">
+              <div className="flex items-center justify-between"><span className="text-3xs text-muted">Pair</span><span className="text-2xs font-medium text-foreground">{state.session.pair}</span></div>
+              <div className="flex items-center justify-between"><span className="text-3xs text-muted">Timeframe</span><Badge variant="info" size="sm">{state.session.timeframe}</Badge></div>
+              <div className="flex items-center justify-between"><span className="text-3xs text-muted">Status</span><Badge variant={state.session.status === 'active' ? 'success' : state.session.status === 'paused' ? 'warning' : 'default'} size="sm">{state.session.status}</Badge></div>
+              <div className="flex items-center justify-between"><span className="text-3xs text-muted">Range</span><span className="text-3xs text-muted">{new Date(state.session.start_date).toLocaleDateString()} - {new Date(state.session.end_date).toLocaleDateString()}</span></div>
             </div>
             {state.candle && (
-              <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+              <div className="rounded-xl border border-border bg-card p-4">
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div><p className="text-[9px] text-[#71717A]">O</p><p className="text-[11px] font-mono font-semibold text-[#FAFAFA]">{state.candle.open.toFixed(5)}</p></div>
-                  <div><p className="text-[9px] text-[#71717A]">H</p><p className="text-[11px] font-mono font-semibold text-[#22C55E]">{state.candle.high.toFixed(5)}</p></div>
-                  <div><p className="text-[9px] text-[#71717A]">L</p><p className="text-[11px] font-mono font-semibold text-[#EF4444]">{state.candle.low.toFixed(5)}</p></div>
+                  <div><p className="text-3xs text-muted">O</p><p className="text-2xs font-mono font-semibold text-foreground">{state.candle.open.toFixed(5)}</p></div>
+                  <div><p className="text-3xs text-muted">H</p><p className="text-2xs font-mono font-semibold text-success">{state.candle.high.toFixed(5)}</p></div>
+                  <div><p className="text-3xs text-muted">L</p><p className="text-2xs font-mono font-semibold text-danger">{state.candle.low.toFixed(5)}</p></div>
                 </div>
               </div>
             )}
@@ -400,19 +405,19 @@ export default function ReplayPage() {
           {/* Center */}
           <div className="lg:col-span-6 flex flex-col gap-3">
             {/* Playback controls */}
-            <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-3">
+            <div className="rounded-xl border border-border bg-card p-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={handlePrev} disabled={!activeSessionId || currentCandleIndex <= 0} aria-label="Previous candle" className="rounded-lg border border-[#27272A] p-1.5 text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#111113] disabled:opacity-30"><SkipBack className="h-4 w-4" /></button>
-                <button onClick={() => setIsPlaying(!isPlaying)} disabled={!activeSessionId || state.session.status !== 'active'} aria-label={isPlaying ? 'Pause' : 'Play'} className={cn('rounded-lg p-1.5 transition-colors disabled:opacity-30', isPlaying ? 'bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20' : 'bg-[#4F46E5]/10 text-[#4F46E5] hover:bg-[#4F46E5]/20')}>{isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
-                <button onClick={handleNext} disabled={!activeSessionId} aria-label="Next candle" className="rounded-lg border border-[#27272A] p-1.5 text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#111113] disabled:opacity-30"><SkipForward className="h-4 w-4" /></button>
-                <div className="h-4 w-px bg-[#27272A]" />
-                <span className="text-[11px] text-[#71717A] font-mono">{currentCandleIndex + 1}/{state.session.total_candles}</span>
-                <div className="h-4 w-px bg-[#27272A]" />
-                {[0.5, 1, 2, 5].map((s) => (<button key={s} onClick={() => setPlaybackSpeed(1000 / s)} className={cn('rounded px-2 py-0.5 text-[10px] font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-[#4F46E5]/10 text-[#4F46E5]' : 'text-[#71717A] hover:text-[#A1A1AA]')}>{s}x</button>))}
+                <button onClick={handlePrev} disabled={!activeSessionId || currentCandleIndex <= 0} aria-label="Previous candle" className="rounded-lg border border-border p-1.5 text-muted hover:text-foreground hover:bg-background disabled:opacity-30"><SkipBack className="h-4 w-4" /></button>
+                <button onClick={() => setIsPlaying(!isPlaying)} disabled={!activeSessionId || state.session.status !== 'active'} aria-label={isPlaying ? 'Pause' : 'Play'} className={cn('rounded-lg p-1.5 transition-colors disabled:opacity-30', isPlaying ? 'bg-danger/10 text-danger hover:bg-danger/20' : 'bg-primary/10 text-primary hover:bg-primary/20')}>{isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+                <button onClick={handleNext} disabled={!activeSessionId} aria-label="Next candle" className="rounded-lg border border-border p-1.5 text-muted hover:text-foreground hover:bg-background disabled:opacity-30"><SkipForward className="h-4 w-4" /></button>
+                <div className="h-4 w-px bg-elevated" />
+                <span className="text-2xs text-muted font-mono">{currentCandleIndex + 1}/{state.session.total_candles}</span>
+                <div className="h-4 w-px bg-elevated" />
+                {[0.5, 1, 2, 5].map((s) => (<button key={s} onClick={() => setPlaybackSpeed(1000 / s)} className={cn('rounded px-2 py-0.5 text-3xs font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{s}x</button>))}
                 <div className="ml-auto flex gap-1">
-                  <button onClick={() => handleJump(0)} className="rounded px-2 py-0.5 text-[10px] font-medium text-[#71717A] hover:text-[#A1A1AA]">Start</button>
-                  {sessionTrades.length > 0 && <button onClick={() => handleJump(sessionTrades[0].candle_index)} className="rounded px-2 py-0.5 text-[10px] font-medium text-[#4F46E5] hover:bg-[#4F46E5]/10">Entry</button>}
-                  {state.mistakes.length > 0 && <button onClick={() => handleJump(state.mistakes[0].candle_index ?? 0)} className="rounded px-2 py-0.5 text-[10px] font-medium text-[#EF4444] hover:bg-[#EF4444]/10">Mistake</button>}
+                  <button onClick={() => handleJump(0)} className="rounded px-2 py-0.5 text-3xs font-medium text-muted hover:text-secondary">Start</button>
+                  {sessionTrades.length > 0 && <button onClick={() => handleJump(sessionTrades[0].candle_index)} className="rounded px-2 py-0.5 text-3xs font-medium text-primary hover:bg-primary/10">Entry</button>}
+                  {state.mistakes.length > 0 && <button onClick={() => handleJump(state.mistakes[0].candle_index ?? 0)} className="rounded px-2 py-0.5 text-3xs font-medium text-danger hover:bg-danger/10">Mistake</button>}
                 </div>
               </div>
             </div>
@@ -421,12 +426,12 @@ export default function ReplayPage() {
             <CandlestickChart candles={state.candles_visible} trades={sessionTrades} annotations={state.annotations} />
 
             {/* Drawing tools */}
-            <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-2">
+            <div className="rounded-xl border border-border bg-card p-2">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] font-medium text-[#71717A] mr-1">Draw:</span>
+                <span className="text-3xs font-medium text-muted mr-1">Draw:</span>
                 {ANNOTATION_TOOLS.map((tool) => (
                   <button key={tool.type} onClick={() => setActiveTool(activeTool === tool.type ? null : tool.type)}
-                    className={cn('rounded-lg border p-1.5 transition-colors', activeTool === tool.type ? 'border-[#4F46E5] bg-[#4F46E5]/10 text-[#4F46E5]' : 'border-[#27272A] text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#111113]')} title={tool.label}>
+                    className={cn('rounded-lg border p-1.5 transition-colors', activeTool === tool.type ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted hover:text-foreground hover:bg-background')} title={tool.label}>
                     <tool.icon className="h-3.5 w-3.5" />
                   </button>
                 ))}
@@ -435,15 +440,15 @@ export default function ReplayPage() {
 
             {/* Trades list */}
             {sessionTrades.length > 0 && (
-              <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
-                <h3 className="text-xs font-medium text-[#FAFAFA] mb-2 flex items-center gap-2"><BarChart3 className="h-3.5 w-3.5 text-[#71717A]" />Trades ({sessionTrades.length})</h3>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <h3 className="text-xs font-medium text-foreground mb-2 flex items-center gap-2"><BarChart3 className="h-3.5 w-3.5 text-muted" />Trades ({sessionTrades.length})</h3>
                 <div className="space-y-1 max-h-[150px] overflow-y-auto">
                   {sessionTrades.map((t: any) => (
-                    <div key={t.id} className="flex items-center gap-3 rounded-lg bg-[#111113] px-2.5 py-1.5 text-[11px]">
+                    <div key={t.id} className="flex items-center gap-3 rounded-lg bg-background px-2.5 py-1.5 text-2xs">
                       <Badge variant={t.direction === 'SELL' ? 'destructive' : 'success'} size="sm">{t.direction}</Badge>
-                      <span className="font-mono text-[#FAFAFA]">@{t.entry_price?.toFixed(5)}</span>
-                      {t.stop_loss && <span className="text-[#71717A]">SL:{t.stop_loss.toFixed(5)}</span>}
-                      {t.take_profit && <span className="text-[#71717A]">TP:{t.take_profit.toFixed(5)}</span>}
+                      <span className="font-mono text-foreground">@{t.entry_price?.toFixed(5)}</span>
+                      {t.stop_loss && <span className="text-muted">SL:{t.stop_loss.toFixed(5)}</span>}
+                      {t.take_profit && <span className="text-muted">TP:{t.take_profit.toFixed(5)}</span>}
                     </div>
                   ))}
                 </div>
@@ -464,16 +469,16 @@ export default function ReplayPage() {
             {sessionBookmarks.length > 0 && (
               <div className="max-h-[100px] overflow-y-auto space-y-1">
                 {sessionBookmarks.slice(-5).map((b: any) => (
-                  <div key={b.id} className="flex items-center gap-2 rounded-lg bg-[#111113] px-2 py-1 text-[10px] cursor-pointer hover:bg-[#18181B]" onClick={() => handleJump(b.candle_index)}>
-                    <BookOpen className="h-3 w-3 text-[#4F46E5] shrink-0" />
-                    <span className="text-[#71717A] truncate flex-1">{b.note || 'Bookmark'}</span>
-                    <span className="text-[#71717A] shrink-0">#{b.candle_index}</span>
+                  <div key={b.id} className="flex items-center gap-2 rounded-lg bg-background px-2 py-1 text-3xs cursor-pointer hover:bg-card" onClick={() => handleJump(b.candle_index)}>
+                    <BookOpen className="h-3 w-3 text-primary shrink-0" />
+                    <span className="text-muted truncate flex-1">{b.note || 'Bookmark'}</span>
+                    <span className="text-muted shrink-0">#{b.candle_index}</span>
                   </div>
                 ))}
               </div>
             )}
-            <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
-              <h3 className="text-xs font-medium text-[#FAFAFA] mb-3 flex items-center gap-2"><Award className="h-3.5 w-3.5 text-[#71717A]" /> Trade Review</h3>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="text-xs font-medium text-foreground mb-3 flex items-center gap-2"><Award className="h-3.5 w-3.5 text-muted" /> Trade Review</h3>
               <ReviewPanel projectId={projectId!} state={state} />
             </div>
           </div>

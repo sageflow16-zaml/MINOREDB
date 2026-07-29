@@ -21,7 +21,7 @@ export function FormField({ label, value, onChange, type = 'text', step, options
   const isSelect = type === 'select' || !!options;
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <Label htmlFor={id} className="text-[11px] font-medium text-muted-foreground">
+      <Label htmlFor={id} className="text-2xs font-medium text-muted-foreground">
         {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {isSelect ? (
@@ -59,7 +59,7 @@ export function FormField({ label, value, onChange, type = 'text', step, options
           className="h-8 text-xs"
         />
       )}
-      {error && <p id={`${id}-error`} className="text-[10px] text-destructive mt-0.5">{error}</p>}
+      {error && <p id={`${id}-error`} className="text-3xs text-destructive mt-0.5">{error}</p>}
     </div>
   );
 }

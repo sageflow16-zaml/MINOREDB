@@ -141,7 +141,7 @@ export default function MarketStructurePage() {
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+              <tr className="border-b border-border bg-muted/30 text-left text-3xs font-medium uppercase text-muted-foreground">
                 <th className="px-3 py-2.5">Date</th>
                 <th className="px-3 py-2.5">Pair</th>
                 <th className="px-3 py-2.5">TF</th>

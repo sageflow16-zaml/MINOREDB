@@ -1,10 +1,8 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Columns, X } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 import { Button } from './Button';
-import { LoadingSpinner, EmptyState } from './Feedback';
 
 export interface Column<T> {
   id: string;
@@ -107,38 +105,38 @@ export function DataTable<T>({
       {searchable && (
         <div className="flex items-center gap-2">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted/50" />
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); }}
               placeholder={searchPlaceholder}
               className={cn(
-                'h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-xs',
-                'placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+                'h-8 w-full rounded border border-border bg-surface pl-8 pr-3 text-xs',
+                'placeholder:text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
               )}
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted/50 hover:text-foreground"
               >
                 <X className="h-3 w-3" />
               </button>
             )}
           </div>
           {search && (
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-2xs text-muted">
               {filtered.length} result{filtered.length !== 1 ? 's' : ''}
             </span>
           )}
         </div>
       )}
 
-      <div className={cn('rounded-lg border overflow-hidden', compact && 'rounded-md')}>
+      <div className="rounded-md border border-border overflow-hidden">
         <div className={cn('overflow-x-auto', stickyHeader && 'max-h-[600px]')}>
           <Table>
-            <TableHeader className={cn(stickyHeader && 'sticky top-0 z-10 bg-background')}>
+            <TableHeader className={cn(stickyHeader && 'sticky top-0 z-10 bg-card')}>
               <TableRow>
                 {columns.map((col) => (
                   <TableHead
@@ -176,13 +174,20 @@ export function DataTable<T>({
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-40">
-                    <LoadingSpinner />
+                    <div className="flex items-center justify-center">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-border border-t-primary" />
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : paginated.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-40">
-                    <EmptyState title={emptyMessage} description={emptyDescription} />
+                    <div className="flex flex-col items-center justify-center gap-1 text-center">
+                      <p className="text-sm text-secondary">{emptyMessage}</p>
+                      {emptyDescription && (
+                        <p className="text-xs text-muted">{emptyDescription}</p>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -220,13 +225,13 @@ export function DataTable<T>({
       {!isLoading && paginated.length > 0 && (
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-2xs text-muted">
               {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sorted.length)} of {sorted.length}
             </span>
             <select
               value={pageSize}
               onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
-              className="h-7 rounded border border-input bg-background px-2 text-[11px] text-muted-foreground"
+              className="h-7 rounded border border-border bg-surface px-2 text-2xs text-muted"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>{size} / page</option>
@@ -234,19 +239,19 @@ export function DataTable<T>({
             </select>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(0)} disabled={page === 0} aria-label="First page">
+            <Button variant="ghost" size="icon-xs" onClick={() => setPage(0)} disabled={page === 0} aria-label="First page">
               <ChevronsLeft className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(page - 1)} disabled={page === 0} aria-label="Previous page">
+            <Button variant="ghost" size="icon-xs" onClick={() => setPage(page - 1)} disabled={page === 0} aria-label="Previous page">
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            <span className="min-w-[40px] text-center text-[11px] text-muted-foreground">
+            <span className="min-w-[40px] text-center text-2xs text-muted">
               {page + 1} / {totalPages}
             </span>
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1} aria-label="Next page">
+            <Button variant="ghost" size="icon-xs" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1} aria-label="Next page">
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon-sm" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1} aria-label="Last page">
+            <Button variant="ghost" size="icon-xs" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1} aria-label="Last page">
               <ChevronsRight className="h-3.5 w-3.5" />
             </Button>
           </div>

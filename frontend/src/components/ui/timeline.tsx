@@ -61,11 +61,11 @@ export function TimelineItem({
       </div>
       <div className="flex-1 min-w-0 pb-2">
         <div className="flex items-center gap-2">
-          {time && <span className="text-[10px] font-medium text-muted-foreground shrink-0">{time}</span>}
+          {time && <span className="text-3xs font-medium text-muted-foreground shrink-0">{time}</span>}
           <h4 className="text-xs font-semibold text-foreground">{title}</h4>
         </div>
         {description && (
-          <p className="mt-0.5 text-[10px] text-muted-foreground leading-relaxed">{description}</p>
+          <p className="mt-0.5 text-3xs text-muted-foreground leading-relaxed">{description}</p>
         )}
         {children && <div className="mt-2">{children}</div>}
       </div>
@@ -87,7 +87,7 @@ export function TimelineBadge({ label, variant = 'default' }: TimelineBadgeProps
     info: 'bg-chart-1/10 text-chart-1',
   };
   return (
-    <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium', colors[variant])}>
+    <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-3xs font-medium', colors[variant])}>
       {label}
     </span>
   );

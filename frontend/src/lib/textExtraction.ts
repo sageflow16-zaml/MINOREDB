@@ -18,7 +18,10 @@ export async function extractTextFromFile(file: File): Promise<string> {
 
 async function extractPDFText(file: File): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+  // Use the bundled worker served from our own domain
+  const baseUrl = document.querySelector('base')?.href ?? window.location.origin + '/';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `${baseUrl}pdf.worker.mjs`;
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;

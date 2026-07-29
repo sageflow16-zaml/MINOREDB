@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { aiFoundationService } from '../api/aiFoundation';
+import { createEvent, eventBus } from '../lib/ai/eventBus';
 
 // ── Profile ──
 
@@ -23,7 +24,10 @@ export const useAnalyzeProfile = (projectId: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => aiFoundationService.analyzeProfile(projectId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['ai', projectId, 'profile'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ai', projectId, 'profile'] });
+      eventBus.emit(createEvent('PROFILE_ANALYZED', projectId, {}));
+    },
   });
 };
 
@@ -51,7 +55,15 @@ export const useDetectPatterns = (projectId: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => aiFoundationService.detectPatterns(projectId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['ai', projectId, 'patterns'] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['ai', projectId, 'patterns'] });
+      const patterns = Array.isArray(data) ? data : [];
+      eventBus.emit(createEvent('PATTERN_DETECTED', projectId, {
+        patternCount: patterns.length,
+        negativePatterns: patterns.filter((p: any) => p?.pattern_type === 'negative' || p?.confidence < 40).length,
+        confidence: patterns.reduce((s: number, p: any) => s + (p?.confidence || 0), 0) / (patterns.length || 1),
+      }));
+    },
   });
 };
 

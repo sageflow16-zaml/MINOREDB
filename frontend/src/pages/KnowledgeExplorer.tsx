@@ -114,7 +114,7 @@ export default function KnowledgeExplorerPage() {
                   <div className="flex flex-wrap gap-4">
                     {graphData.nodes.map((node) => (
                       <div key={node.id} className="rounded-lg border border-border bg-background p-3 min-w-[120px] text-center">
-                        <Badge variant="secondary" className="text-[10px] mb-1">{node.type}</Badge>
+                        <Badge variant="secondary" className="text-3xs mb-1">{node.type}</Badge>
                         <p className="text-xs font-mono text-muted-foreground">{node.entity_id.slice(0, 8)}...</p>
                       </div>
                     ))}
@@ -125,7 +125,7 @@ export default function KnowledgeExplorerPage() {
                         <span className="font-mono">{edge.source.split(':')[1]?.slice(0, 8)}</span>
                         <span className="text-primary">→ {edge.relationship}</span>
                         <span className="font-mono">{edge.target.split(':')[1]?.slice(0, 8)}</span>
-                        <span className="text-[10px]">({(edge.strength * 100).toFixed(0)}%)</span>
+                        <span className="text-3xs">({(edge.strength * 100).toFixed(0)}%)</span>
                       </div>
                     ))}
                   </div>
@@ -146,9 +146,9 @@ export default function KnowledgeExplorerPage() {
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
                   {linksData.map((link: KnowledgeLink) => (
                     <div key={link.id} className="flex items-center gap-2 rounded-lg border border-border/50 p-2 text-xs">
-                      <Badge variant="outline" className="text-[10px] shrink-0">{link.source_type}</Badge>
+                      <Badge variant="outline" className="text-3xs shrink-0">{link.source_type}</Badge>
                       <span className="text-primary shrink-0">→ {link.relationship}</span>
-                      <Badge variant="outline" className="text-[10px] shrink-0">{link.target_type}</Badge>
+                      <Badge variant="outline" className="text-3xs shrink-0">{link.target_type}</Badge>
                       <Button size="sm" variant="ghost" className="ml-auto shrink-0 h-6 w-6 p-0" onClick={() => deleteLink.mutate(link.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>

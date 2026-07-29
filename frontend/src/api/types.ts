@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Shared API types mirroring the backend Pydantic schemas.
  * Kept intentionally permissive (Record<string, unknown>) for free-form
  * metadata while still typing the core identity/audit fields.
@@ -1209,7 +1209,7 @@ export interface TradeMemory {
   summary?: string;
 }
 
-// â”€â”€ Strategy Types â”€â”€
+// ── Strategy Types ──
 
 export interface StrategyBase {
   name?: string;
@@ -1317,7 +1317,7 @@ export interface StrategyAnalytics {
   pair_analysis?: { pair: string; trades: number; wins: number; pnl: number }[];
 }
 
-// â”€â”€ Risk Management Types â”€â”€
+// ── Risk Management Types ──
 
 export interface RiskRule {
   id: string;
@@ -1439,7 +1439,7 @@ export interface RuleViolation {
   trade_id?: string;
 }
 
-// â”€â”€ Planning & Calendar Types â”€â”€
+// ── Planning & Calendar Types ──
 
 export interface TradingPlan {
   id: string;
@@ -1601,7 +1601,7 @@ export interface PlanningDashboard {
   upcoming_sessions: { name: string; time: string }[];
 }
 
-// â”€â”€ AI Foundation â”€â”€
+// ── AI Foundation ──
 
 export interface AIProfile {
   id: string;
@@ -1843,7 +1843,7 @@ export interface KnowledgeGraphEdge {
   strength: number;
 }
 
-// â”€â”€ Obsidian Integration â”€â”€
+// ── Obsidian Integration ──
 
 export interface Vault {
   id: string;
@@ -2052,9 +2052,9 @@ export interface ParsedMarkdown {
   mermaid?: string[];
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 // Market Intelligence Types
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 
 export interface EconomicEvent {
   id: string;
@@ -2251,9 +2251,9 @@ export interface MarketAIContext {
   watchlist_biases?: Record<string, unknown>;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 // AI Research Copilot Types
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 
 export interface AIConversation {
   id: string;
@@ -2302,6 +2302,9 @@ export interface AICitation {
   snippet?: string;
   relevance_score?: number;
   url?: string;
+  page?: number;
+  excerpt?: string;
+  content?: string;
 }
 
 export interface AIChatRequest {
@@ -2468,7 +2471,7 @@ export interface AIWorkflowTemplate {
   steps: number;
 }
 
-// â”€â”€ Quantitative Research Lab â”€â”€
+// ── Quantitative Research Lab ──
 
 export interface QuantExperiment {
   id: string;
@@ -2727,7 +2730,7 @@ export interface ExportResponse {
   filename: string;
 }
 
-// â”€â”€ Automation & Workflow Engine â”€â”€
+// ── Automation & Workflow Engine ──
 
 export type WorkflowStatus = 'draft' | 'active' | 'paused' | 'archived';
 export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -3012,7 +3015,7 @@ export interface AutomationDashboardData {
   recent_audit_logs: AuditLog[];
 }
 
-// ── Portfolio Management ──
+// -- Portfolio Management --
 
 export type AccountType = "personal" | "prop_firm" | "evaluation" | "live" | "demo";
 export type AccountStatus = "active" | "archived" | "closed" | "suspended" | "pending";
@@ -3304,7 +3307,7 @@ export interface AIAnswer {
   generated_at: string;
 }
 
-// ── Broker Integration Hub Types ──
+// -- Broker Integration Hub Types --
 
 export type BrokerProvider =
   | "metatrader4" | "metatrader5" | "ctrader" | "dxtrade"
@@ -3513,7 +3516,7 @@ export interface BrokerOrder {
   comment: string | null;
 }
 
-// ── Trader Intelligence Types ──────────────
+// -- Trader Intelligence Types --------------
 
 export interface TradeDebrief {
   id: string;
@@ -3779,7 +3782,7 @@ export interface KnowledgeSearchResult {
   tags?: string[];
 }
 
-// ── Context Service Types ───────────────────
+// -- Context Service Types -------------------
 
 export interface ContextRequest {
   symbols: string[];
@@ -3811,7 +3814,7 @@ export interface ContextAnalysis {
   raw_data?: Record<string, unknown>;
 }
 
-// ── ICT Smart Engine Types ──────────────────────────────────────────────
+// -- ICT Smart Engine Types ----------------------------------------------
 
 export interface OHLCBar {
   timestamp: string;
@@ -4083,9 +4086,9 @@ export interface ICTFullContext {
   signals: ICTExecutionSignal[];
 }
 
-// ──────────────────────────────────────────────
+// ----------------------------------------------
 // AI TRADING BRAIN TYPES
-// ──────────────────────────────────────────────
+// ----------------------------------------------
 
 export interface TraderDNA {
   id: string;
@@ -4252,7 +4255,7 @@ export interface BrainDashboard {
   } | null;
 }
 
-// ── Intelligence Agents (Phase 4.6) ──
+// -- Intelligence Agents (Phase 4.6) --
 
 export interface AgentTask {
   id: string;

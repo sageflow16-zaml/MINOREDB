@@ -87,7 +87,7 @@ export function ChartToolbar({
             key={tf}
             onClick={() => onTimeframeChange(tf)}
             className={cn(
-              'px-1.5 py-0.5 text-[10px] font-medium rounded hover:bg-muted transition-colors',
+              'px-1.5 py-0.5 text-3xs font-medium rounded hover:bg-muted transition-colors',
               timeframe === tf && 'bg-muted text-primary'
             )}
           >
@@ -100,14 +100,14 @@ export function ChartToolbar({
       <div className="flex items-center gap-0.5 ml-auto">
         <button
           onClick={onToggleICT}
-          className={cn('flex items-center gap-1 px-2 py-0.5 text-[10px] rounded hover:bg-muted transition-colors', showICT && 'bg-muted text-primary')}
+          className={cn('flex items-center gap-1 px-2 py-0.5 text-3xs rounded hover:bg-muted transition-colors', showICT && 'bg-muted text-primary')}
         >
           <Layers className="w-3 h-3" />
           ICT
         </button>
         <button
           onClick={onToggleSessions}
-          className={cn('flex items-center gap-1 px-2 py-0.5 text-[10px] rounded hover:bg-muted transition-colors', showSessions && 'bg-muted text-primary')}
+          className={cn('flex items-center gap-1 px-2 py-0.5 text-3xs rounded hover:bg-muted transition-colors', showSessions && 'bg-muted text-primary')}
         >
           <Clock className="w-3 h-3" />
           Sessions

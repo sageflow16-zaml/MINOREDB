@@ -124,11 +124,11 @@ export default function MarketTimelinePage() {
                   <Card className="flex-1 hover:border-border/80 transition-colors">
                     <CardContent className="p-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge className={cn('border text-[10px]', TYPE_COLORS[ev.event_type] ?? TYPE_COLORS.economic)}>{ev.event_type}</Badge>
-                        {ev.event_time && <span className="text-[10px] text-muted-foreground">{ev.event_time}</span>}
-                        {ev.symbol && <span className="text-[10px] font-mono text-muted-foreground">{ev.symbol}</span>}
+                        <Badge className={cn('border text-3xs', TYPE_COLORS[ev.event_type] ?? TYPE_COLORS.economic)}>{ev.event_type}</Badge>
+                        {ev.event_time && <span className="text-3xs text-muted-foreground">{ev.event_time}</span>}
+                        {ev.symbol && <span className="text-3xs font-mono text-muted-foreground">{ev.symbol}</span>}
                         {ev.impact && (
-                          <Badge variant={ev.impact === 'high' ? 'destructive' : ev.impact === 'medium' ? 'warning' : 'info'} className="text-[10px]">
+                          <Badge variant={ev.impact === 'high' ? 'destructive' : ev.impact === 'medium' ? 'warning' : 'info'} className="text-3xs">
                             {ev.impact}
                           </Badge>
                         )}

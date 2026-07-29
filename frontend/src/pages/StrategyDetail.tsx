@@ -489,11 +489,11 @@ export default function StrategyDetailPage() {
               <div key={i} className="flex items-center gap-2 rounded-lg bg-muted/30 p-2.5">
                 <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-input">
                   {item.optional ? (
-                    <span className="text-[10px] text-muted-foreground">?</span>
+                    <span className="text-3xs text-muted-foreground">?</span>
                   ) : null}
                 </div>
                 <span className="text-xs text-foreground">{item.label}</span>
-                {item.category && <span className="text-[10px] text-muted-foreground ml-auto">{item.category}</span>}
+                {item.category && <span className="text-3xs text-muted-foreground ml-auto">{item.category}</span>}
               </div>
             ))}
           </div>
@@ -533,10 +533,10 @@ export default function StrategyDetailPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-foreground">v{ver.version}</span>
-                    {ver.author && <span className="text-[10px] text-muted-foreground">by {ver.author}</span>}
+                    {ver.author && <span className="text-3xs text-muted-foreground">by {ver.author}</span>}
                   </div>
                   {ver.change_log && <p className="text-xs text-muted-foreground mt-0.5">{ver.change_log}</p>}
-                  <span className="text-[10px] text-muted-foreground mt-1 block">{new Date(ver.created_at).toLocaleDateString()}</span>
+                  <span className="text-3xs text-muted-foreground mt-1 block">{new Date(ver.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
             ))}
@@ -558,8 +558,8 @@ export default function StrategyDetailPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-foreground">v{entry.version}</span>
-                    {entry.author && <span className="text-[10px] text-muted-foreground">by {entry.author}</span>}
-                    <span className="text-[10px] text-muted-foreground ml-auto">{entry.timestamp ? new Date(entry.timestamp).toLocaleDateString() : ''}</span>
+                    {entry.author && <span className="text-3xs text-muted-foreground">by {entry.author}</span>}
+                    <span className="text-3xs text-muted-foreground ml-auto">{entry.timestamp ? new Date(entry.timestamp).toLocaleDateString() : ''}</span>
                   </div>
                   {entry.change_log && <p className="text-xs text-muted-foreground mt-0.5">{entry.change_log}</p>}
                 </div>

@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { KpiCard } from '../components/ui/KpiCard';
 import { cn } from '../lib/utils';
+import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import {
   Brain, TrendingUp, TrendingDown, Activity, Layers,
   Zap, Target, Shield, AlertTriangle, CheckCircle2,
@@ -65,6 +66,10 @@ function normalizeICT(data: ICTAnalysisResponse | null): ICTAnalysisResponse | n
       recent_sweeps: data.liquidity?.recent_sweeps ?? [],
     },
     sessions: {
+      id: '',
+      project_id: '',
+      date: '',
+      session_name: '',
       sessions: data.sessions?.sessions ?? [],
       current_session: data.sessions?.current_session ?? null,
       current_kill_zone: data.sessions?.current_kill_zone ?? null,
@@ -139,8 +144,8 @@ export default function ICTSmartEngine() {
   const [includeModels, setIncludeModels] = useState(true);
 
   const analyzeMutation = useAnalyzeICT(projectId!);
-  const { data: ctx, isLoading: ctxLoading } = useICTFullContext(projectId!, symbol);
-  const { data: aiCtx, isLoading: aiLoading } = useICTAIContext(projectId!, symbol);
+  const { data: ctx, isLoading: ctxLoading, error: ctxError, refetch } = useICTFullContext(projectId!, symbol);
+  const { data: aiCtx, isLoading: aiLoading, error: aiError } = useICTAIContext(projectId!, symbol);
 
   const [analysis, setAnalysis] = useState<ICTAnalysisResponse | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -169,6 +174,18 @@ export default function ICTSmartEngine() {
       setAnalyzing(false);
     }
   }, [projectId, symbol, timeframe, includeModels, analyzeMutation]);
+
+  if (ctxLoading || aiLoading) {
+    return <LoadingSpinner message="Loading ICT analysis..." />;
+  }
+
+  if (ctxError || aiError) {
+    return <ErrorState message="Failed to load ICT analysis" description={ctxError?.message || aiError?.message || 'An unexpected error occurred'} onRetry={() => { refetch(); }} />;
+  }
+
+  if (!analysis) {
+    return <EmptyState icon={<Brain className="h-6 w-6" />} title="No analysis available" description="Upload trading data to generate ICT analysis" />;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -237,7 +254,7 @@ export default function ICTSmartEngine() {
                 } className="text-xs">
                   {analysis.execution.status.toUpperCase()}
                 </Badge>
-                <span className="text-[10px] text-muted-foreground">{analysis.analysis_time_ms.toFixed(0)}ms</span>
+                <span className="text-3xs text-muted-foreground">{analysis.analysis_time_ms.toFixed(0)}ms</span>
               </div>
             </div>
             {analysis.execution.reasoning && (
@@ -304,7 +321,7 @@ export default function ICTSmartEngine() {
                         <div>
                           <span className="text-sm font-medium capitalize">{m.model_type.replace(/_/g, ' ')}</span>
                           <span className="text-xs text-muted-foreground ml-2 capitalize">({m.direction})</span>
-                          <span className="text-[10px] text-muted-foreground ml-2">{m.components.join(', ')}</span>
+                          <span className="text-3xs text-muted-foreground ml-2">{m.components.join(', ')}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

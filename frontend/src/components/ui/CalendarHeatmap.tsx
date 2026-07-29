@@ -74,7 +74,7 @@ export function CalendarHeatmap({
     <div className={cn('font-mono', className)}>
       <div className="grid grid-cols-7 gap-0.5 mb-2">
         {WEEKDAYS.map((d, i) => (
-          <div key={d} className="text-[10px] text-center text-muted-foreground font-medium py-1">
+          <div key={d} className="text-3xs text-center text-muted-foreground font-medium py-1">
             {d}
           </div>
         ))}
@@ -104,7 +104,7 @@ export function CalendarHeatmap({
                   title={showTooltip ? `${day.date.toLocaleDateString()}: ${day.pnl >= 0 ? '+' : ''}${day.pnl.toFixed(2)}` : undefined}
                 >
                   <span className={cn(
-                    'absolute inset-0 flex items-center justify-center text-[9px] font-medium',
+                    'absolute inset-0 flex items-center justify-center text-3xs font-medium',
                     day.pnl > 0 ? 'text-success' : day.pnl < 0 ? 'text-destructive' : 'text-muted-foreground'
                   )}>
                     {day.date.getDate()}
@@ -115,7 +115,7 @@ export function CalendarHeatmap({
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-between mt-3 text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between mt-3 text-3xs text-muted-foreground">
         <span>Less</span>
         <div className="flex items-center gap-1">
           <div className="w-6 h-3 rounded bg-gradient-to-r from-destructive via-muted to-success" />

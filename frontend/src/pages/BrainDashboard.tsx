@@ -204,7 +204,7 @@ export default function BrainDashboardPage() {
                             <p className="text-sm font-medium">{ins.title}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">{ins.description}</p>
                           </div>
-                          <Badge variant={ins.impact === 'positive' ? 'success' : ins.impact === 'warning' ? 'warning' : 'destructive'} className="shrink-0 text-[10px]">
+                          <Badge variant={ins.impact === 'positive' ? 'success' : ins.impact === 'warning' ? 'warning' : 'destructive'} className="shrink-0 text-3xs">
                             {ins.confidence ? `${(ins.confidence * 100).toFixed(0)}%` : '—'}
                           </Badge>
                         </div>
@@ -313,7 +313,7 @@ export default function BrainDashboardPage() {
                             <p className="text-sm font-medium">{obs.title}</p>
                             {obs.description && <p className="text-xs text-muted-foreground mt-0.5">{obs.description}</p>}
                           </div>
-                          {obs.is_actionable && <Badge variant="warning" className="shrink-0 text-[10px]">Action</Badge>}
+                          {obs.is_actionable && <Badge variant="warning" className="shrink-0 text-3xs">Action</Badge>}
                         </div>
                       ))}
                     </div>
@@ -422,7 +422,7 @@ export default function BrainDashboardPage() {
                           <span className="text-sm font-medium capitalize flex-1">{step.step.replace(/_/g, ' ')}</span>
                           <Badge variant={
                             step.status === 'completed' ? 'success' : step.status === 'error' ? 'destructive' : 'secondary'
-                          } className="text-[10px]">{step.status}</Badge>
+                          } className="text-3xs">{step.status}</Badge>
                         </div>
                       ))}
                     </div>
@@ -483,7 +483,7 @@ export default function BrainDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold">{ins.title}</h4>
-                        <Badge variant="outline" className="text-[10px]">{ins.category}</Badge>
+                        <Badge variant="outline" className="text-3xs">{ins.category}</Badge>
                       </div>
                       {ins.description && <p className="text-xs text-muted-foreground mt-1">{ins.description}</p>}
                     </div>
@@ -525,8 +525,8 @@ export default function BrainDashboardPage() {
                         <h4 className="text-sm font-semibold">{obs.title}</h4>
                         <Badge variant={
                           obs.severity === 'positive' ? 'success' : obs.severity === 'warning' ? 'warning' : 'destructive'
-                        } className="text-[10px]">{obs.category}</Badge>
-                        {obs.is_actionable && <Badge variant="warning" className="text-[10px]">Actionable</Badge>}
+                        } className="text-3xs">{obs.category}</Badge>
+                        {obs.is_actionable && <Badge variant="warning" className="text-3xs">Actionable</Badge>}
                       </div>
                       {obs.description && <p className="text-xs text-muted-foreground mt-1">{obs.description}</p>}
                     </div>
@@ -605,7 +605,7 @@ export default function BrainDashboardPage() {
                           <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Target className="h-3 w-3 text-primary shrink-0" />
                             <span>{a.action}</span>
-                            <Badge variant={a.priority === 'high' ? 'destructive' : a.priority === 'medium' ? 'warning' : 'secondary'} className="text-[10px]">{a.priority}</Badge>
+                            <Badge variant={a.priority === 'high' ? 'destructive' : a.priority === 'medium' ? 'warning' : 'secondary'} className="text-3xs">{a.priority}</Badge>
                           </div>
                         ))}
                       </div>
@@ -641,7 +641,7 @@ export default function BrainDashboardPage() {
                           <Badge variant={
                             dec.verdict === 'strong_buy' || dec.verdict === 'buy' ? 'success' :
                             dec.verdict === 'sell' || dec.verdict === 'strong_sell' ? 'destructive' : 'warning'
-                          } className="text-[10px]">{dec.verdict}</Badge>
+                          } className="text-3xs">{dec.verdict}</Badge>
                         </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span>Confidence: <strong>{dec.confidence_score?.toFixed(0) ?? '—'}%</strong></span>
@@ -747,7 +747,7 @@ export default function BrainDashboardPage() {
                         <div>
                           <p className="text-muted-foreground">Strengths</p>
                           {dna.data.dna_summary.strengths.map((s, i) => (
-                            <p key={i} className="font-semibold text-success text-[10px]">+ {s}</p>
+                            <p key={i} className="font-semibold text-success text-3xs">+ {s}</p>
                           ))}
                         </div>
                       )}

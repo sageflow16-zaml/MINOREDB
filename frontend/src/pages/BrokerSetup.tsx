@@ -135,8 +135,8 @@ export default function BrokerSetup() {
                 <div className="font-semibold">{p.display_name}</div>
                 <div className="text-xs text-muted-foreground">{p.name}</div>
                 <div className="flex gap-1 mt-2">
-                  {p.supports_live_prices && <Badge variant="secondary" className="text-[10px]">Live Prices</Badge>}
-                  {p.supports_streaming && <Badge variant="secondary" className="text-[10px]">Streaming</Badge>}
+                  {p.supports_live_prices && <Badge variant="secondary" className="text-3xs">Live Prices</Badge>}
+                  {p.supports_streaming && <Badge variant="secondary" className="text-3xs">Streaming</Badge>}
                 </div>
               </div>
             </button>

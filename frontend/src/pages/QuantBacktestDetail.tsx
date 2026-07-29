@@ -12,8 +12,9 @@ import { cn } from '../lib/utils';
 import { useBacktest, useBacktestTrades, useEquityCurve, useBacktestMetrics } from '../hooks/useQuantResearch';
 import {
   TrendingUp, BarChart3, Activity, DollarSign, Target,
-  Percent, Zap, ArrowLeft, Download,
+  Percent, Zap, ArrowLeft, Download, Brain,
 } from 'lucide-react';
+import { BacktestIntelligencePanel } from '../components/ui/backtest-intelligence-panel';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 
@@ -65,14 +66,29 @@ export default function QuantBacktestDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Equity Curve */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <ChartCard title="Equity Curve">
             <AreaChartCard data={eqCurve} dataKey="equity" xKey="date" color="hsl(var(--chart-1))" gradient />
           </ChartCard>
+          {/* Monthlies + Distribution inside equity column */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {monthlyReturns.length > 0 && (
+              <ChartCard title="Monthly Returns">
+                <BarChartCard data={monthlyReturns} dataKey="return" xKey="month" color="hsl(var(--chart-2))" />
+              </ChartCard>
+            )}
+            {Object.keys(tradeDist).length > 0 && (
+              <ChartCard title="Trade Distribution">
+                <PieChartCard data={Object.entries(tradeDist).map(([k, v]) => ({ name: k, value: v as number }))} dataKey="value" nameKey="name" />
+              </ChartCard>
+            )}
+          </div>
         </div>
 
-        {/* Statistics Summary */}
-        <Card>
+        {/* Right Column — Intelligence + Statistics */}
+        <div className="space-y-6">
+          {projectId && backtestId && <BacktestIntelligencePanel projectId={projectId} backtestId={backtestId} metrics={bt} />}
+          <Card>
           <CardHeader><CardTitle><BarChart3 className="w-4 h-4 mr-2 inline" />Statistics</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">
@@ -102,19 +118,6 @@ export default function QuantBacktestDetail() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Monthly Returns + Trade Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {monthlyReturns.length > 0 && (
-          <ChartCard title="Monthly Returns">
-            <BarChartCard data={monthlyReturns} dataKey="return" xKey="month" color="hsl(var(--chart-2))" />
-          </ChartCard>
-        )}
-        {Object.keys(tradeDist).length > 0 && (
-          <ChartCard title="Trade Distribution">
-            <PieChartCard data={Object.entries(tradeDist).map(([k, v]) => ({ name: k, value: v as number }))} dataKey="value" nameKey="name" />
-          </ChartCard>
-        )}
       </div>
 
       {/* Regime Performance */}

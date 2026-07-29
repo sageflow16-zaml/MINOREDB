@@ -146,7 +146,7 @@ export default function Register() {
               {password && (
                 <div className="flex items-center gap-1.5 mt-1">
                   <CheckCircle className={password.length >= 6 ? 'h-3 w-3 text-success' : 'h-3 w-3 text-muted-foreground/30'} />
-                  <span className="text-[10px] text-muted-foreground/50">6+ characters</span>
+                  <span className="text-3xs text-muted-foreground/50">6+ characters</span>
                 </div>
               )}
             </div>

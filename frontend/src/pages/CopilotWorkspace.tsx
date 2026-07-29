@@ -59,7 +59,7 @@ function CitationBadge({ citation }: { citation: AICitation }) {
   const Icon = typeIcons[citation.source_type] ?? FileText;
   return (
     <a href={citation.url ?? '#'}
-      className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/50 px-2.5 py-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors group">
+      className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/50 px-2.5 py-1 text-3xs text-muted-foreground hover:text-foreground transition-colors group">
       <Icon className="h-3 w-3" />
       <span className="truncate max-w-[120px]">{citation.source_title ?? typeLabels[citation.source_type] ?? citation.source_type}</span>
       <span className="opacity-0 group-hover:opacity-100">#{citation.source_id.slice(0, 6)}</span>
@@ -103,13 +103,13 @@ function MessageBubble({ message }: { message: AIMessage }) {
         {/* Metadata row */}
         <div className="flex items-center gap-2 px-1">
           {!isUser && message.model && (
-            <Badge variant="outline" className="text-[9px] px-1.5 py-0">{message.model}</Badge>
+            <Badge variant="outline" className="text-3xs px-1.5 py-0">{message.model}</Badge>
           )}
           {!isUser && message.total_tokens && (
-            <span className="text-[9px] text-muted-foreground">{message.total_tokens} tokens</span>
+            <span className="text-3xs text-muted-foreground">{message.total_tokens} tokens</span>
           )}
           {!isUser && message.latency_ms && (
-            <span className="text-[9px] text-muted-foreground">{(message.latency_ms / 1000).toFixed(1)}s</span>
+            <span className="text-3xs text-muted-foreground">{(message.latency_ms / 1000).toFixed(1)}s</span>
           )}
           <button onClick={handleCopy} className="ml-auto p-0.5 rounded hover:bg-card/50 text-muted-foreground">
             {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
@@ -133,7 +133,7 @@ function AgentCard({ agent, active, onClick }: { agent: AIAgentConfig; active: b
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{agent.display_name}</p>
-        {agent.description && <p className="text-[9px] text-muted-foreground truncate">{agent.description}</p>}
+        {agent.description && <p className="text-3xs text-muted-foreground truncate">{agent.description}</p>}
       </div>
     </button>
   );
@@ -222,7 +222,7 @@ export default function CopilotWorkspace() {
 
             {pinned.length > 0 && (
               <>
-                <p className="text-[9px] font-medium text-muted-foreground uppercase px-2 py-1">Pinned</p>
+                <p className="text-3xs font-medium text-muted-foreground uppercase px-2 py-1">Pinned</p>
                 {pinned.map((c: AIConversation) => (
                   <ConvRow key={c.id} conv={c} active={c.id === activeConvId}
                     onClick={() => setActiveConvId(c.id)} onPin={() => unpinMutation.mutate(c.id)}
@@ -231,7 +231,7 @@ export default function CopilotWorkspace() {
               </>
             )}
 
-            <p className="text-[9px] font-medium text-muted-foreground uppercase px-2 py-1">Recent</p>
+            <p className="text-3xs font-medium text-muted-foreground uppercase px-2 py-1">Recent</p>
             {recent.length === 0 && !searchQuery && (
               <p className="text-xs text-muted-foreground text-center py-4">No conversations yet</p>
             )}
@@ -264,7 +264,7 @@ export default function CopilotWorkspace() {
               {conversations.find((c: AIConversation) => c.id === activeConvId)?.title ?? 'AI Research Copilot'}
             </span>
             {activeAgent && (
-              <Badge variant="outline" className="text-[10px]">{agents.find((a: AIAgentConfig) => a.agent_type === activeAgent)?.display_name ?? activeAgent}</Badge>
+              <Badge variant="outline" className="text-3xs">{agents.find((a: AIAgentConfig) => a.agent_type === activeAgent)?.display_name ?? activeAgent}</Badge>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -304,9 +304,9 @@ export default function CopilotWorkspace() {
           {chatMutation.isPending && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground pl-2">
               <div className="flex gap-1">
-                <span className="h-2 w-2 rounded-full bg-muted-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="h-2 w-2 rounded-full bg-muted-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="h-2 w-2 rounded-full bg-muted-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/30 animate-bounce delay-0" />
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/30 animate-bounce delay-150" />
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/30 animate-bounce delay-300" />
               </div>
               <span>Thinking...</span>
             </div>
@@ -388,7 +388,7 @@ function ConvRow({ conv, active, onClick, onPin, onDelete, pinned }: {
     )} onClick={onClick}>
       <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <span className="flex-1 truncate">{conv.title}</span>
-      <span className="text-[9px] text-muted-foreground shrink-0">{conv.message_count}</span>
+      <span className="text-3xs text-muted-foreground shrink-0">{conv.message_count}</span>
       <div className="hidden group-hover:flex items-center gap-0.5">
         <button onClick={(e) => { e.stopPropagation(); onPin(); }}
           className="p-0.5 rounded hover:bg-card/50 text-muted-foreground">

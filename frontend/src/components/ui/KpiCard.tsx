@@ -1,8 +1,6 @@
-import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { useReducedMotion } from '../../lib/animate';
 
 interface KpiCardProps {
   title: string;
@@ -22,42 +20,38 @@ const variantStyles = {
   default: '',
   success: 'border-success/20',
   warning: 'border-warning/20',
-  danger: 'border-destructive/20',
-  info: 'border-chart-1/20',
+  danger: 'border-danger/20',
+  info: 'border-info/20',
 };
 
 const iconContainerStyles = {
-  default: 'text-primary bg-primary/10',
-  success: 'text-success bg-success/10',
-  warning: 'text-warning bg-warning/10',
-  danger: 'text-destructive bg-destructive/10',
-  info: 'text-chart-1 bg-chart-1/10',
+  default: 'text-primary bg-primary-muted',
+  success: 'text-success bg-success-muted',
+  warning: 'text-warning bg-warning-muted',
+  danger: 'text-danger bg-danger-muted',
+  info: 'text-info bg-info-muted',
 };
 
 export function KpiCard({ title, value, icon: Icon, trend, subtitle, onClick, variant = 'default', size = 'default' }: KpiCardProps) {
-  const prefersReduced = useReducedMotion();
   return (
-    <motion.div
-      initial={prefersReduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={prefersReduced ? undefined : (onClick ? { scale: 1.01, y: -1 } : undefined)}
+    <div
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={cn(
-        'relative overflow-hidden rounded-xl border bg-card p-4 transition-all',
+        'relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all',
         variantStyles[variant],
-        onClick && 'cursor-pointer hover:shadow-md',
+        onClick && 'cursor-pointer hover:border-border hover:shadow-md',
         size === 'sm' && 'p-3'
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
-          <p className={cn('font-medium text-muted-foreground', size === 'sm' ? 'text-[10px]' : 'text-xs')}>{title}</p>
-          <p className={cn('font-bold tracking-tight text-foreground', size === 'sm' ? 'text-base' : 'text-xl')}>{value}</p>
+          <p className={cn('font-medium text-muted', size === 'sm' ? 'text-3xs' : 'text-xs')}>{title}</p>
+          <p className={cn('font-semibold tracking-tight text-foreground tabular-nums', size === 'sm' ? 'text-base' : 'text-xl')}>{value}</p>
           {subtitle && (
-            <p className={cn('text-muted-foreground', size === 'sm' ? 'text-[10px]' : 'text-xs')}>{subtitle}</p>
+            <p className={cn('text-muted', size === 'sm' ? 'text-3xs' : 'text-xs')}>{subtitle}</p>
           )}
           {trend && (
             <div className="flex items-center gap-1">
@@ -65,12 +59,12 @@ export function KpiCard({ title, value, icon: Icon, trend, subtitle, onClick, va
                 trend.positive ? (
                   <TrendingUp className="h-3 w-3 text-success" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 text-destructive" />
+                  <TrendingDown className="h-3 w-3 text-danger" />
                 )
               ) : null}
               <span className={cn(
                 'text-xs font-medium',
-                trend.positive ? 'text-success' : trend.positive === false ? 'text-destructive' : 'text-muted-foreground'
+                trend.positive ? 'text-success' : trend.positive === false ? 'text-danger' : 'text-muted'
               )}>
                 {trend.value > 0 ? '+' : ''}{trend.value}%
               </span>
@@ -78,11 +72,11 @@ export function KpiCard({ title, value, icon: Icon, trend, subtitle, onClick, va
           )}
         </div>
         {Icon && (
-          <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', iconContainerStyles[variant])}>
+          <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded', iconContainerStyles[variant])}>
             <Icon className={cn(size === 'sm' ? 'h-4 w-4' : 'h-5 w-5')} />
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

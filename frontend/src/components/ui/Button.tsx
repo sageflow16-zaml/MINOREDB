@@ -5,37 +5,41 @@ import { cn } from '../../lib/utils';
 import { Loader2 } from 'lucide-react';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40 select-none',
+  'inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40 select-none',
   {
     variants: {
       variant: {
+        default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover',
         primary:
-          'bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary-hover hover:shadow-xl hover:shadow-primary/25 active:scale-[0.97] active:shadow-md',
+          'bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover',
         secondary:
-          'bg-[#18181B] text-foreground border border-[#27272A] shadow-sm hover:bg-[#1c1c1f] hover:border-[#3f3f46] active:scale-[0.97]',
+          'bg-surface text-foreground border border-border hover:bg-elevated hover:border-border',
         outline:
-          'border border-[#27272A] bg-transparent text-secondary-foreground hover:bg-[#18181B] hover:text-foreground active:scale-[0.97]',
+          'border border-border bg-transparent text-secondary hover:bg-surface hover:text-foreground',
         ghost:
-          'text-secondary-foreground hover:bg-[#18181B] hover:text-foreground active:scale-[0.97]',
+          'text-secondary hover:text-foreground hover:bg-surface',
+        transparent:
+          'bg-transparent text-secondary hover:text-foreground',
+        destructive: 'bg-danger text-danger-foreground shadow-sm hover:opacity-90',
         danger:
-          'bg-danger text-danger-foreground shadow-lg shadow-danger/20 hover:bg-danger/90 hover:shadow-xl hover:shadow-danger/25 active:scale-[0.97]',
+          'bg-danger text-danger-foreground shadow-sm hover:opacity-90',
         success:
-          'bg-success text-success-foreground shadow-lg shadow-success/20 hover:bg-success/90 hover:shadow-xl hover:shadow-success/25 active:scale-[0.97]',
+          'bg-success text-success-foreground shadow-sm hover:opacity-90',
         warning:
-          'bg-warning text-warning-foreground shadow-lg shadow-warning/20 hover:bg-warning/90 active:scale-[0.97]',
-        link: 'text-primary underline-offset-4 hover:underline hover:text-primary-hover',
+          'bg-warning text-warning-foreground shadow-sm hover:opacity-90',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        xs: 'h-7 rounded-md px-2.5 text-xs gap-1.5',
-        sm: 'h-8 rounded-lg px-3 text-xs gap-1.5',
-        default: 'h-9 rounded-xl px-4 gap-2',
-        lg: 'h-10 rounded-xl px-5 gap-2',
-        xl: 'h-12 rounded-2xl px-6 text-base gap-2.5',
-        'icon-xs': 'h-7 w-7 rounded-lg',
-        'icon-sm': 'h-8 w-8 rounded-lg',
-        icon: 'h-9 w-9 rounded-xl',
-        'icon-lg': 'h-10 w-10 rounded-xl',
-        'icon-xl': 'h-12 w-12 rounded-2xl',
+        xs: 'h-7 rounded px-2.5 text-xs gap-1.5',
+        sm: 'h-8 rounded px-3 text-xs gap-1.5',
+        default: 'h-9 rounded px-4 gap-2',
+        lg: 'h-10 rounded px-5 gap-2',
+        xl: 'h-12 rounded px-6 text-base gap-2.5',
+        'icon-xs': 'h-7 w-7 rounded',
+        'icon-sm': 'h-8 w-8 rounded',
+        icon: 'h-9 w-9 rounded',
+        'icon-lg': 'h-10 w-10 rounded',
+        'icon-xl': 'h-12 w-12 rounded',
       },
     },
     defaultVariants: {

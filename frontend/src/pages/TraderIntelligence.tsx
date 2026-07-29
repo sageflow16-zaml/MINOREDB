@@ -1,41 +1,40 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  BrainCircuit, FileText, Activity, Scale, User,
-  Plus, RefreshCw, CheckCircle, XCircle, Search, TrendingUp, TrendingDown,
-  Target, AlertTriangle, Lightbulb, Sparkles, ChevronRight,
+  BrainCircuit, Brain, Target, TrendingUp, Activity, Shield,
+  Scale, Sparkles, Lightbulb, AlertTriangle, CheckCircle,
+  RefreshCw, ChevronRight, Sun, BookOpen, BarChart3, Info,
 } from 'lucide-react';
-import { traderIntelligenceService } from '../api/traderIntelligence';
+import { traderIntelligenceService, type TraderProfile, type TradeDebrief, type PersonalPattern, type PersonalRule, type DashboardData } from '../api/traderIntelligence';
+import { useTrades } from '../hooks/useTrades';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Skeleton } from '../components/ui/skeleton';
 import { cn } from '../lib/utils';
-import type { TradeDebrief, PersonalPattern, PersonalRule, TraderProfile, DashboardData } from '../api/traderIntelligence';
+import { interpretScore } from '../lib/trading-score/index';
+import { createEvent, eventBus } from '../lib/ai/eventBus';
+import { aiMemory } from '../lib/ai/memory';
+import { buildExplanation } from '../lib/trust/explainability';
+import { computeConfidenceFromScores } from '../lib/trust/confidence';
+import { recordSnapshot } from '../lib/trust/history';
+import { buildContext, detectPatterns, generateRecommendations, createPlan } from '../lib/intelligence/index';
+import type { IntelligenceContext } from '../lib/intelligence/types';
+import { ExplainDialog } from '../components/ui/explain-dialog';
+import { ConfidenceBadge } from '../components/ui/confidence-badge';
+import { HistoricalTrend } from '../components/ui/historical-trend';
+import { FeedbackButtons } from '../components/ui/feedback-buttons';
+import { AIQualityPanel } from '../components/ui/quality-panel';
+import type { AIExplanation } from '../lib/trust/types';
 
-function MetricCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
-  const accentColors = { default: 'text-[#FAFAFA]', success: 'text-[#22C55E]', danger: 'text-[#EF4444]', warning: 'text-[#F59E0B]' };
-  const accentBg = { default: 'bg-[#4F46E5]/10', success: 'bg-[#22C55E]/10', danger: 'bg-[#EF4444]/10', warning: 'bg-[#F59E0B]/10' };
-  return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-[11px] font-medium text-[#71717A] tracking-wide">{label}</p>
-        <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accentBg[accent || 'default'])}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-[#22C55E]' : accent === 'danger' ? 'text-[#EF4444]' : accent === 'warning' ? 'text-[#F59E0B]' : 'text-[#4F46E5]')} />
-        </div>
-      </div>
-      <p className={cn('text-xl font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
-      {sub && <p className="text-[10px] text-[#71717A] mt-1">{sub}</p>}
-    </motion.div>
-  );
-}
+type HubSection = 'overview' | 'score' | 'dna' | 'learning';
 
-type TabType = 'overview' | 'debriefs' | 'patterns' | 'rules' | 'profile';
+export default function TraderIntelligencePage() {
+  const { projectId: rawProjectId } = useParams<{ projectId: string }>();
+  const projectId = rawProjectId!;
 
-export default function TraderIntelligence() {
-  const { projectId } = useParams<{ projectId: string }>();
-  const [tab, setTab] = useState<TabType>('overview');
+  const [section, setSection] = useState<HubSection>('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
@@ -43,529 +42,721 @@ export default function TraderIntelligence() {
   const [patterns, setPatterns] = useState<PersonalPattern[]>([]);
   const [rules, setRules] = useState<PersonalRule[]>([]);
   const [profile, setProfile] = useState<TraderProfile | null>(null);
-  const [snapshots, setSnapshots] = useState<unknown[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [generating, setGenerating] = useState<string | null>(null);
-  const [selectedDebrief, setSelectedDebrief] = useState<TradeDebrief | null>(null);
-  const [selectedRule, setSelectedRule] = useState<PersonalRule | null>(null);
+
+  const [explainOpen, setExplainOpen] = useState(false);
+  const [currentExplanation, setCurrentExplanation] = useState<AIExplanation | null>(null);
+  const [explainMeta, setExplainMeta] = useState({ source: '', targetType: '', targetId: '' });
+
+  const { data: trades } = useTrades(projectId);
 
   const fetchData = useCallback(async () => {
-    if (!projectId) return;
     setLoading(true); setError(null);
     try {
-      const [dash, d, p, r, prof, snaps] = await Promise.all([
+      const [dash, deb, pat, rul, prof] = await Promise.all([
         traderIntelligenceService.dashboard(projectId),
-        traderIntelligenceService.listDebriefs(projectId, { limit: 50 }),
-        traderIntelligenceService.listPatterns(projectId, { limit: 50 }),
-        traderIntelligenceService.listRules(projectId, { limit: 50 }),
+        traderIntelligenceService.listDebriefs(projectId, { limit: 100 }),
+        traderIntelligenceService.listPatterns(projectId, { limit: 100 }),
+        traderIntelligenceService.listRules(projectId, { limit: 100 }),
         traderIntelligenceService.getProfile(projectId).catch(() => null),
-        traderIntelligenceService.getSnapshots(projectId).catch(() => []),
       ]);
-      setDashboard(dash); setDebriefs(d); setPatterns(p); setRules(r); setProfile(prof); setSnapshots(snaps);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally { setLoading(false); }
+      setDashboard(dash); setDebriefs(deb); setPatterns(pat);
+      setRules(rul); setProfile(prof);
+    } catch { setError('Failed to load intelligence data'); }
+    finally { setLoading(false); }
   }, [projectId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleGenerate = async (action: string) => {
-    if (!projectId) return;
+  const handleGenerate = useCallback(async (action: string) => {
     setGenerating(action);
     try {
-      if (action === 'patterns') { setPatterns(await traderIntelligenceService.detectPatterns(projectId)); }
-      else if (action === 'rules') { const result = await traderIntelligenceService.generateRules(projectId); setRules(result.rules); }
-      else if (action === 'profile') { setProfile(await traderIntelligenceService.buildProfile(projectId)); }
+      if (action === 'patterns') await traderIntelligenceService.detectPatterns(projectId);
+      else if (action === 'rules') await traderIntelligenceService.generateRules(projectId);
+      else if (action === 'profile') await traderIntelligenceService.buildProfile(projectId);
       await fetchData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${action}`);
-    } finally { setGenerating(null); }
+    } catch {}
+    finally { setGenerating(null); }
+  }, [projectId, fetchData]);
+
+  const intelligenceContext = useMemo<IntelligenceContext | null>(() => {
+    if (!debriefs.length && !patterns.length) return null;
+    try {
+      return buildContext({
+        projectId,
+        dashboard,
+        debriefs,
+        patterns,
+        rules,
+        profile,
+        trades: trades || [],
+      });
+    } catch {
+      return null;
+    }
+  }, [projectId, dashboard, debriefs, patterns, rules, profile, trades]);
+
+  const scores = intelligenceContext?.scores ?? null;
+  const dna = intelligenceContext?.dna ?? null;
+  const concepts = intelligenceContext?.concepts ?? [];
+  const learningPath = intelligenceContext?.learningPath ?? null;
+  const copilot = intelligenceContext?.copilot ?? null;
+  const confidence = intelligenceContext?.trust?.confidence ?? null;
+
+  const openExplain = (type: 'score' | 'dna' | 'concept' | 'observation' | 'recommendation' | 'warning', target: string, label: string, data: Record<string, unknown>) => {
+    const explanation = buildExplanation({ type, target, targetId: `${target}_${Date.now()}`, label, data });
+    setCurrentExplanation(explanation);
+    setExplainMeta({
+      source: explanation.metadata.source,
+      targetType: type,
+      targetId: target,
+    });
+    setExplainOpen(true);
   };
 
-  const handleApproveRule = async (ruleId: string) => {
-    if (!projectId) return;
-    try { const updated = await traderIntelligenceService.approveRule(projectId, ruleId); setRules(prev => prev.map(r => r.id === ruleId ? updated : r)); } catch { }
-  };
-
-  const handleRejectRule = async (ruleId: string) => {
-    if (!projectId) return;
-    try { const updated = await traderIntelligenceService.rejectRule(projectId, ruleId, 'Rejected by user'); setRules(prev => prev.map(r => r.id === ruleId ? updated : r)); } catch { }
-  };
-
-  const filteredDebriefs = searchQuery ? debriefs.filter(d => d.summary?.toLowerCase().includes(searchQuery.toLowerCase())) : debriefs;
-
-  const tabs: { key: TabType; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'debriefs', label: 'Debriefs' },
-    { key: 'patterns', label: 'Patterns' },
-    { key: 'rules', label: 'Rules' },
-    { key: 'profile', label: 'Profile' },
-  ];
-
-  if (loading && !dashboard) {
-    return (
-      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
-        <div className="flex items-center justify-between"><div className="space-y-2"><Skeleton className="h-7 w-44" /><Skeleton className="h-4 w-60" /></div><Skeleton className="h-8 w-28 rounded-lg" /></div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{Array.from({ length: 4 }).map((_, i) => (<div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-20" /></div>))}</div>
-        <Skeleton className="h-64 rounded-xl" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5"><Skeleton className="h-48 rounded-xl" /><Skeleton className="h-48 rounded-xl" /></div>
+  if (loading) return (
+    <div className="p-6 space-y-4 max-w-screen-2xl mx-auto">
+      <Skeleton className="h-8 w-64 mb-4" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-20" />)}
       </div>
-    );
-  }
+      <Skeleton className="h-40" />
+    </div>
+  );
 
-  if (error && !dashboard) {
-    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EF4444]/10"><BrainCircuit className="h-6 w-6 text-[#EF4444]" /></div><p className="text-sm font-medium text-[#FAFAFA]">Error loading intelligence</p><p className="text-xs text-[#71717A]">{error}</p><Button variant="outline" size="sm" onClick={fetchData}>Try Again</Button></div></div>);
-  }
+  if (error && !dashboard) return (
+    <div className="flex h-[80vh] items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <AlertTriangle className="h-8 w-8 text-danger" />
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <Button variant="outline" size="sm" onClick={fetchData}>Retry</Button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+    <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#4F46E5]/10"><BrainCircuit className="h-5 w-5 text-[#4F46E5]" /></div>
-          <div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Smart Engine</h1><p className="text-sm text-[#71717A] mt-0.5">Personal trading intelligence</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+            <BrainCircuit className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">Intelligence Hub</h1>
+            <p className="text-xs text-muted-foreground">
+              {scores ? `${scores.overall}/100 · ${interpretScore(scores.overall).level}` : 'Loading...'}
+              {confidence && <span className="ml-2 opacity-60">· Confidence: {confidence.score}% ({confidence.level})</span>}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={fetchData}><RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} /></Button>
+          {!profile && (
+            <Button size="xs" variant="outline" onClick={() => handleGenerate('profile')} isLoading={generating === 'profile'}>
+              <Brain className="h-3 w-3 mr-1" /> Build Profile
+            </Button>
+          )}
+          <Button size="xs" variant="ghost" onClick={fetchData}>
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
         </div>
-      </motion.div>
+      </div>
 
-      {error && (
-        <div className="rounded-xl border border-[#EF4444]/20 bg-[#EF4444]/5 p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-[#EF4444]"><AlertTriangle className="h-4 w-4" />{error}</div>
-          <Button variant="ghost" size="sm" onClick={fetchData}>Retry</Button>
-        </div>
+      {/* Copilot Briefing */}
+      {copilot && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-chart-4/20 bg-gradient-to-br from-chart-4/5 to-transparent p-5"
+        >
+          <div className="flex items-start gap-3 mb-4">
+            <Sun className="h-5 w-5 text-chart-4 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                {copilot.greeting}, {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Confidence: {copilot.confidenceLevel}% · {copilot.observations.length} observations
+              </p>
+            </div>
+            <Button size="xs" variant="ghost" className="shrink-0" onClick={() => openExplain('observation', 'copilot-brief', 'Daily Brief', { observation: copilot as any })}>
+              <Info className="h-3 w-3 mr-1" /> Explain
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <div className="rounded-lg bg-background/60 p-2.5">
+              <p className="text-3xs text-muted-foreground uppercase">Goal</p>
+              <p className="text-xs text-foreground mt-0.5">{copilot.todayGoal}</p>
+            </div>
+            <div className="rounded-lg bg-background/60 p-2.5">
+              <p className="text-3xs text-muted-foreground uppercase">Risk Focus</p>
+              <p className="text-xs text-foreground mt-0.5">{copilot.todayRisk}</p>
+            </div>
+            <div className="rounded-lg bg-background/60 p-2.5">
+              <p className="text-3xs text-muted-foreground uppercase">Backtest</p>
+              <p className="text-xs text-foreground mt-0.5">{copilot.recommendedBacktest}</p>
+            </div>
+            <div className="rounded-lg bg-background/60 p-2.5">
+              <p className="text-3xs text-muted-foreground uppercase">Journal</p>
+              <p className="text-xs text-foreground mt-0.5">{copilot.recommendedJournalReview}</p>
+            </div>
+          </div>
+
+          {copilot.observations.length > 0 && (
+            <div className="space-y-1.5">
+              {copilot.observations.slice(0, 2).map((obs, i) => (
+                <div key={i} className={cn(
+                  'flex items-start gap-2 rounded-lg p-2',
+                  obs.priority === 'high' ? 'bg-danger/5 border border-danger/10' : 'bg-background/40'
+                )}>
+                  {obs.type === 'warning' ? <AlertTriangle className="h-3.5 w-3.5 text-danger mt-0.5 shrink-0" /> :
+                   obs.type === 'reminder' ? <BookOpen className="h-3.5 w-3.5 text-warning mt-0.5 shrink-0" /> :
+                   <Lightbulb className="h-3.5 w-3.5 text-chart-4 mt-0.5 shrink-0" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground">{obs.title}</p>
+                    <p className="text-3xs text-muted-foreground">{obs.message}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openExplain(
+                        obs.type === 'warning' ? 'warning' : 'observation',
+                        obs.title, obs.title, { observation: obs as any, warning: obs as any, patterns, debriefs }
+                      )}
+                      className="text-3xs text-muted-foreground hover:text-foreground transition-colors p-1"
+                      title="Explain"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
+                    <FeedbackButtons
+                      source="copilot"
+                      targetType={obs.type === 'warning' ? 'warning' : 'observation'}
+                      targetId={obs.title}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 rounded-lg bg-[#111113] p-0.5 w-fit">
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={cn('rounded-md px-3 py-1.5 text-xs font-medium transition-all', tab === t.key ? 'bg-[#18181B] text-[#FAFAFA] shadow-sm' : 'text-[#71717A] hover:text-[#A1A1AA]')}>
-            {t.label}
+      {/* Section Navigation */}
+      <div className="flex gap-1 rounded-lg bg-muted/20 p-0.5 w-fit">
+        {[
+          { key: 'overview' as const, label: 'Overview', icon: Activity },
+          { key: 'score' as const, label: 'Score', icon: Target },
+          { key: 'dna' as const, label: 'DNA', icon: Brain },
+          { key: 'learning' as const, label: 'Learning', icon: BookOpen },
+        ].map((tab) => (
+          <button key={tab.key} onClick={() => setSection(tab.key)}
+            className={cn(
+              'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all',
+              section === tab.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <tab.icon className="h-3.5 w-3.5" />
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Tab Content */}
-      {tab === 'overview' && dashboard && (
-        <OverviewTab dashboard={dashboard} profile={profile} patterns={patterns} rules={rules}
-          onBuildProfile={() => handleGenerate('profile')} generating={generating === 'profile'} />
-      )}
-      {tab === 'debriefs' && (
-        <DebriefsTab debriefs={filteredDebriefs} selected={selectedDebrief} onSelect={setSelectedDebrief}
-          searchQuery={searchQuery} onSearch={setSearchQuery} />
-      )}
-      {tab === 'patterns' && (
-        <PatternsTab patterns={patterns} onDetect={() => handleGenerate('patterns')} generating={generating === 'patterns'} />
-      )}
-      {tab === 'rules' && (
-        <RulesTab rules={rules} selected={selectedRule} onSelect={setSelectedRule}
-          onGenerate={() => handleGenerate('rules')} onApprove={handleApproveRule} onReject={handleRejectRule}
-          generating={generating === 'rules'} />
-      )}
-      {tab === 'profile' && (
-        <ProfileTab profile={profile} snapshots={snapshots} onBuild={() => handleGenerate('profile')} generating={generating === 'profile'} />
-      )}
+      <AnimatePresence mode="wait">
+        {section === 'overview' && <OverviewSection scores={scores} dna={dna} concepts={concepts} learningPath={learningPath} patterns={patterns} rules={rules} profile={profile} trades={trades} debriefs={debriefs} onGenerate={handleGenerate} generating={generating} openExplain={openExplain} />}
+        {section === 'score' && <ScoreSection scores={scores} debriefs={debriefs} patterns={patterns} rules={rules} trades={trades} openExplain={openExplain} />}
+        {section === 'dna' && <DNASection dna={dna} profile={profile} debriefs={debriefs} patterns={patterns} rules={rules} trades={trades} openExplain={openExplain} />}
+        {section === 'learning' && <LearningSection concepts={concepts} learningPath={learningPath} openExplain={openExplain} />}
+      </AnimatePresence>
+
+      <AIQualityPanel />
+
+      <ExplainDialog
+        open={explainOpen}
+        onOpenChange={setExplainOpen}
+        explanation={currentExplanation}
+        source={explainMeta.source}
+        targetType={explainMeta.targetType}
+        targetId={explainMeta.targetId}
+      />
     </div>
   );
 }
 
-function OverviewTab({ dashboard, profile, patterns, rules, onBuildProfile, generating }: {
-  dashboard: DashboardData; profile: TraderProfile | null;
-  patterns: PersonalPattern[]; rules: PersonalRule[];
-  onBuildProfile: () => void; generating: boolean;
-}) {
-  const sortedPatterns = [...patterns].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0)).slice(0, 4);
-  const draftRules = rules.filter(r => r.status === 'draft');
-  const hasProfile = !!profile;
-
+function OverviewSection({ scores, dna, concepts, learningPath, patterns, rules, profile, debriefs, trades, onGenerate, generating, openExplain }: any) {
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard label="Debriefs" value={String(dashboard.debrief_count)} icon={FileText} accent="default" />
-        <MetricCard label="Patterns" value={String(dashboard.pattern_count)} icon={Activity} accent="warning" />
-        <MetricCard label="Rules" value={String(dashboard.rule_count)} icon={Scale} accent="default" />
-        <MetricCard label="Approved Rules" value={String(dashboard.approved_rule_count)} icon={CheckCircle} accent="success" />
+    <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      {/* Score + DNA row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Score Overview */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="py-3 px-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs font-medium flex items-center gap-2"><Target className="h-4 w-4 text-primary" />Trading Score</CardTitle>
+              {scores && (
+                <Button size="xs" variant="ghost" onClick={() => openExplain('score', 'overall', 'Trading Score', { score: scores.overall, categories: scores.categories, ...scores })}>
+                  <Info className="h-3 w-3 mr-1" /> Explain
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            {scores ? (
+              <>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-primary/20">
+                    <span className="text-xl font-bold text-foreground">{scores.overall}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{interpretScore(scores.overall).level}</p>
+                    <p className="text-3xs text-muted-foreground">{interpretScore(scores.overall).description}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {scores.categories.slice(0, 5).map((c: any) => (
+                    <div key={c.key} className="rounded-lg bg-background p-2 text-center">
+                      <p className="text-xs font-bold" style={{ color: c.score >= 70 ? 'hsl(var(--success))' : c.score >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--danger))' }}>{c.score}</p>
+                      <p className="text-3xs text-muted-foreground truncate">{c.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center py-4">
+                <p className="text-xs text-muted-foreground">Upload documents and trade to build your score</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* DNA Mini */}
+        <Card>
+          <CardHeader className="py-3 px-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs font-medium flex items-center gap-2"><Brain className="h-4 w-4 text-primary" />Trader DNA</CardTitle>
+              {dna && (
+                <Button size="xs" variant="ghost" onClick={() => openExplain('dna', 'trader-dna', 'Trader DNA', { ...dna, patterns, debriefs, profile, rules, trades })}>
+                  <Info className="h-3 w-3 mr-1" /> Explain
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 space-y-2">
+            {dna ? (
+              <>
+                <div className="grid grid-cols-2 gap-2 text-3xs">
+                  <div><span className="text-muted-foreground">Session</span><p className="text-foreground font-medium">{dna.preferredSession}</p></div>
+                  <div><span className="text-muted-foreground">Best Day</span><p className="text-foreground font-medium">{dna.bestDay}</p></div>
+                  <div><span className="text-muted-foreground">Top Mistake</span><p className="text-foreground font-medium truncate">{dna.mostFrequentMistake}</p></div>
+                  <div><span className="text-muted-foreground">Holding</span><p className="text-foreground font-medium">{dna.averageHoldingMinutes}m</p></div>
+                </div>
+                {dna.insights?.length > 0 && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-3xs text-chart-4 mb-1">Key Insight</p>
+                    <p className="text-3xs text-muted-foreground">{dna.insights[0].title}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center py-4 text-center">
+                <p className="text-xs text-muted-foreground">No DNA data yet</p>
+                <Button size="xs" variant="outline" className="mt-2" onClick={() => onGenerate('profile')} isLoading={generating === 'profile'}>
+                  <Brain className="h-3 w-3 mr-1" /> Build Profile
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Profile + Intelligence Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Profile Snapshot */}
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2"><User className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Trader Profile</h3></div>
-            <Button variant="ghost" size="sm" onClick={onBuildProfile} disabled={generating}>{generating ? 'Building...' : hasProfile ? 'Rebuild' : 'Build'}</Button>
-          </div>
-          {profile ? (
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1"><span className="text-[#71717A]">Discipline Score</span><span className={cn('font-mono font-medium', (profile.discipline_score ?? 0) >= 70 ? 'text-[#22C55E]' : (profile.discipline_score ?? 0) >= 40 ? 'text-[#F59E0B]' : 'text-[#EF4444]')}>{profile.discipline_score?.toFixed(0) ?? 'N/A'}</span></div>
-                <div className="h-2 rounded-full bg-[#27272A]"><div className="h-2 rounded-full bg-[#4F46E5] transition-all" style={{ width: `${profile.discipline_score ?? 0}%` }} /></div>
+      {/* Learning Path + Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Today's Goal */}
+        <Card>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" />Today's Goal</CardTitle></CardHeader>
+          <CardContent className="px-4 pb-4">
+            {learningPath?.todayGoal ? (
+              <div className="space-y-2">
+                <div className="rounded-lg bg-chart-4/5 border border-chart-4/10 p-2.5">
+                  <p className="text-xs font-medium text-foreground">{learningPath.todayGoal.task}</p>
+                  <p className="text-3xs text-muted-foreground mt-0.5">{learningPath.todayGoal.reason}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Badge variant={learningPath.todayGoal.priority === 'high' ? 'warning' : 'secondary'} size="sm">{learningPath.todayGoal.priority}</Badge>
+                    <span className="text-3xs text-muted-foreground">{learningPath.todayGoal.estimatedMinutes} min</span>
+                  </div>
+                </div>
+                {learningPath.weeklyPlan?.length > 0 && (
+                  <div>
+                    <p className="text-3xs text-muted-foreground uppercase tracking-wider mb-1">Weekly Plan</p>
+                    {learningPath.weeklyPlan.map((g: any, i: number) => (
+                      <div key={i} className="flex items-center gap-2 py-1 border-b border-border/30 last:border-0">
+                        <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-3xs text-foreground truncate">{g.task}</p>
+                        </div>
+                        <span className="text-3xs text-muted-foreground shrink-0">{g.estimatedMinutes}m</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <InsightBadge label="Trades Analyzed" value={String(profile.total_trades_analyzed ?? 0)} />
-                <InsightBadge label="Active Patterns" value={String(profile.active_patterns ?? 0)} />
-                <InsightBadge label="Approved Rules" value={String(profile.approved_rules ?? 0)} />
-                <InsightBadge label="Trading Style" value={profile.trading_style || '—'} />
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-4">Start trading and documenting to get personalized goals</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Concept Mastery (top) */}
+        <Card>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><Brain className="h-4 w-4 text-primary" />Concept Mastery</CardTitle></CardHeader>
+          <CardContent className="px-4 pb-4">
+            {concepts.length > 0 ? (
+              <div className="space-y-1.5">
+                {concepts.slice(0, 6).map((c: any) => (
+                  <div key={c.name} className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-3xs text-foreground truncate">{c.name}</span>
+                        <span className={cn(
+                          'text-3xs font-medium shrink-0 ml-1',
+                          c.understanding >= 70 ? 'text-success' : c.understanding >= 40 ? 'text-warning' : 'text-danger'
+                        )}>{c.understanding}%</span>
+                      </div>
+                      <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
+                        <div className={cn(
+                          'h-full rounded-full transition-all',
+                          c.understanding >= 70 ? 'bg-success' : c.understanding >= 40 ? 'bg-warning' : 'bg-danger'
+                        )} style={{ width: `${c.understanding}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-start gap-2 rounded-lg bg-gradient-to-r from-[#4F46E5]/5 to-[#22C55E]/5 p-3">
-                <Sparkles className="h-4 w-4 text-[#4F46E5] shrink-0 mt-0.5" />
-                <p className="text-xs text-[#A1A1AA]">Top improvement: {profile.improvement_suggestions?.[0] ?? 'Add more trades to generate suggestions.'}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center py-8 text-center">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]"><BrainCircuit className="h-5 w-5 text-[#71717A]" /></div>
-              <p className="text-sm text-[#A1A1AA]">No profile built yet</p>
-              <p className="text-xs text-[#71717A] mt-1 max-w-xs">Build a trader profile to get personalized insights.</p>
-              <Button size="sm" className="mt-3" onClick={onBuildProfile} disabled={generating}>{generating ? 'Building...' : 'Build Profile'}</Button>
-            </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-4">No concepts tracked yet</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Activity</CardTitle></CardHeader>
+          <CardContent className="px-4 pb-4 space-y-1.5">
+            <div className="flex justify-between py-1"><span className="text-3xs text-muted-foreground">Debriefs</span><span className="text-xs text-foreground font-medium">{debriefs?.length || 0}</span></div>
+            <div className="flex justify-between py-1"><span className="text-3xs text-muted-foreground">Patterns</span><span className="text-xs text-foreground font-medium">{patterns?.length || 0}</span></div>
+            <div className="flex justify-between py-1"><span className="text-3xs text-muted-foreground">Rules</span><span className="text-xs text-foreground font-medium">{rules?.length || 0}</span></div>
+            <div className="flex justify-between py-1"><span className="text-3xs text-muted-foreground">Profile</span><span className="text-xs text-foreground font-medium">{profile ? 'Built' : 'Not built'}</span></div>
+            <div className="flex justify-between py-1"><span className="text-3xs text-muted-foreground">Trades</span><span className="text-xs text-foreground font-medium">{trades?.length || 0}</span></div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Pattern/Rule Generation */}
+      {(!patterns.length || !rules.length) && (
+        <div className="flex gap-2 justify-center">
+          {!patterns.length && (
+            <Button size="sm" variant="outline" onClick={() => onGenerate('patterns')} isLoading={generating === 'patterns'}>
+              <Sparkles className="h-3.5 w-3.5 mr-1" /> Detect Patterns
+            </Button>
+          )}
+          {!rules.length && (
+            <Button size="sm" variant="outline" onClick={() => onGenerate('rules')} isLoading={generating === 'rules'}>
+              <Sparkles className="h-3.5 w-3.5 mr-1" /> Generate Rules
+            </Button>
           )}
         </div>
+      )}
+    </motion.div>
+  );
+}
 
-        {/* Recent Debriefs */}
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Recent Debriefs</h3></div>
-          </div>
-          {(dashboard.recent_debriefs ?? []).length > 0 ? (
-            <div className="space-y-2">
-              {dashboard.recent_debriefs.slice(0, 4).map(d => (
-                <div key={d.id} className="rounded-lg bg-[#111113] px-3 py-2">
-                  <div className="flex items-center justify-between"><span className="text-xs text-[#A1A1AA] truncate flex-1">{d.summary?.slice(0, 60) ?? 'Debrief'}</span>{d.overall_rating ? <span className={cn('text-xs font-mono font-medium shrink-0 ml-2', d.overall_rating >= 7 ? 'text-[#22C55E]' : 'text-[#F59E0B]')}>{d.overall_rating}/10</span> : null}</div>
-                </div>
-              ))}
-            </div>
-          ) : <p className="text-xs text-[#71717A] py-6 text-center">No debriefs yet</p>}
+function ScoreSection({ scores, debriefs, patterns, rules, trades, openExplain }: any) {
+  if (!scores) return <div className="text-center py-12"><p className="text-sm text-muted-foreground">Not enough data to compute scores</p></div>;
+  const { level, description } = interpretScore(scores.overall);
+  return (
+    <motion.div key="score" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Overall Score */}
+      <div className="flex items-center gap-6 p-5 rounded-xl border border-border bg-surface">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border-4" style={{ borderColor: scores.overall >= 70 ? 'hsl(var(--success))' : scores.overall >= 40 ? 'hsl(var(--warning))' : 'hsl(var(--danger))' }}>
+          <span className="text-2xl font-bold text-foreground">{scores.overall}</span>
         </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-lg font-semibold text-foreground">{level}</p>
+            <ConfidenceBadge score={scores.overall} />
+          </div>
+          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-3xs text-muted mt-1">Last updated: {new Date(scores.lastUpdated).toLocaleString()}</p>
+        </div>
+        <Button size="xs" variant="outline" onClick={() => openExplain('score', 'overall', 'Trading Score', { score: scores.overall, categories: scores.categories, factors: scores.categories.flatMap((c: any) => c.factors), ...scores })}>
+          <Info className="h-3 w-3 mr-1" /> Explain Score
+        </Button>
       </div>
 
-      {/* High Confidence Patterns + Rule Drafts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center gap-2 mb-4"><Activity className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Top Patterns</h3></div>
-          {sortedPatterns.length > 0 ? (
-            <div className="space-y-2">
-              {sortedPatterns.map(p => (
-                <div key={p.id} className="rounded-lg bg-[#111113] px-3 py-2">
-                  <div className="flex items-center justify-between mb-1"><span className="text-xs text-[#FAFAFA] font-medium">{p.name || 'Pattern'}</span><Badge variant={p.category === 'session' ? 'info' : p.category === 'pair' ? 'default' : 'warning'} size="sm">{p.category}</Badge></div>
-                  <div className="flex items-center gap-3 text-[10px] text-[#71717A]"><span>{p.occurrence_count} occurrences</span><span>{p.win_count ?? 0}W / {p.loss_count ?? 0}L</span></div>
-                  {p.confidence != null && <div className="mt-1 h-1 rounded-full bg-[#27272A]"><div className="h-1 rounded-full bg-[#4F46E5]" style={{ width: `${p.confidence}%` }} /></div>}
-                </div>
-              ))}
-            </div>
-          ) : <p className="text-xs text-[#71717A] py-6 text-center">No patterns detected. Run pattern detection.</p>}
-        </div>
+      {/* Trend */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-3xs text-muted-foreground uppercase mb-2">Trend (7d)</p>
+            <HistoricalTrend metric="score_overall" period="7d" value={scores.overall} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-3xs text-muted-foreground uppercase mb-2">Trend (30d)</p>
+            <HistoricalTrend metric="score_overall" period="30d" value={scores.overall} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-3xs text-muted-foreground uppercase mb-2">Trend (90d)</p>
+            <HistoricalTrend metric="score_overall" period="90d" value={scores.overall} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-3xs text-muted-foreground uppercase mb-2">Trend (All)</p>
+            <HistoricalTrend metric="score_overall" period="all" value={scores.overall} />
+          </CardContent>
+        </Card>
+      </div>
 
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center gap-2 mb-4"><Scale className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Rules Awaiting Review ({draftRules.length})</h3></div>
-          {draftRules.length > 0 ? (
-            <div className="space-y-2">
-              {draftRules.slice(0, 5).map(r => (
-                <div key={r.id} className="rounded-lg bg-[#111113] px-3 py-2 flex items-center justify-between">
-                  <div className="flex-1 min-w-0"><p className="text-xs text-[#FAFAFA] truncate">{r.title}</p><p className="text-[10px] text-[#71717A] truncate">{r.description?.slice(0, 50) ?? ''}</p></div>
-                  <Badge variant="warning" size="sm">draft</Badge>
+      {/* Category Scores */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {scores.categories.map((c: any) => (
+          <Card key={c.key}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-foreground">{c.label}</span>
+                  <ConfidenceBadge score={c.score} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={cn('text-sm font-bold', c.score >= 70 ? 'text-success' : c.score >= 40 ? 'text-warning' : 'text-danger')}>{c.score}</span>
+                  <Button size="xs" variant="ghost" onClick={() => openExplain('score', c.key, c.label, { score: c.score, factors: c.factors, categories: scores.categories, debriefs, patterns, rules, trades })}>
+                    <Info className="h-3 w-3" /> Explain
+                  </Button>
+                </div>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden mb-2">
+                <div className={cn('h-full rounded-full transition-all', c.score >= 70 ? 'bg-success' : c.score >= 40 ? 'bg-warning' : 'bg-danger')} style={{ width: `${c.score}%` }} />
+              </div>
+              {c.factors?.map((f: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-3xs text-muted-foreground py-0.5">
+                  <span>{f.label}</span>
+                  <span className={f.impact === 'positive' ? 'text-success' : f.impact === 'negative' ? 'text-danger' : ''}>{f.value}/{f.max}</span>
                 </div>
               ))}
-            </div>
-          ) : <p className="text-xs text-[#71717A] py-6 text-center">No rules awaiting review.</p>}
-        </div>
+              <div className="mt-2 pt-2 border-t border-border/50">
+                <HistoricalTrend metric={`score_${c.key}`} period="30d" value={c.score} />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </motion.div>
   );
 }
 
-function InsightBadge({ label, value, good }: { label: string; value: string; good?: boolean }) {
+function DNASection({ dna, profile, debriefs, patterns, rules, trades, openExplain }: any) {
+  if (!dna) return <div className="text-center py-12"><p className="text-sm text-muted-foreground">Insufficient data for DNA analysis</p></div>;
   return (
-    <div className="flex items-center justify-between rounded-lg bg-[#111113] px-3 py-2">
-      <span className="text-xs text-[#A1A1AA]">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-[#FAFAFA]' : good ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{value}</span>
-    </div>
-  );
-}
-
-function DebriefsTab({ debriefs, selected, onSelect, searchQuery, onSearch }: {
-  debriefs: TradeDebrief[]; selected: TradeDebrief | null;
-  onSelect: (d: TradeDebrief | null) => void; searchQuery: string; onSearch: (q: string) => void;
-}) {
-  if (selected) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => onSelect(null)} className="text-xs">&larr; Back</Button>
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-[#FAFAFA]">Debrief Detail</h3>
-            {selected.overall_rating && <Badge variant={selected.overall_rating >= 7 ? 'success' : 'warning'}>{selected.overall_rating}/10</Badge>}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              { label: 'Entry Review', value: selected.entry_review },
-              { label: 'Execution Review', value: selected.execution_review },
-              { label: 'Exit Review', value: selected.exit_review },
-              { label: 'Psychology Review', value: selected.psychology_review },
-            ].map(s => s.value ? (
-              <div key={s.label} className="rounded-lg bg-[#111113] p-3">
-                <p className="text-[11px] font-medium text-[#71717A] mb-1">{s.label}</p>
-                <p className="text-xs text-[#A1A1AA]">{s.value}</p>
-              </div>
-            ) : null)}
-          </div>
-          {selected.summary && (
-            <div className="rounded-lg bg-[#111113] p-3 mt-4">
-              <p className="text-[11px] font-medium text-[#71717A] mb-1">Summary</p>
-              <p className="text-xs text-[#A1A1AA]">{selected.summary}</p>
-            </div>
-          )}
-          {selected.lessons_learned && (Array.isArray(selected.lessons_learned) ? selected.lessons_learned.length > 0 : true) && (
-            <div className="mt-4">
-              <p className="text-[11px] font-medium text-[#71717A] mb-2">Lessons Learned</p>
-              <ul className="space-y-1">
-                {(Array.isArray(selected.lessons_learned) ? selected.lessons_learned : [selected.lessons_learned]).filter(Boolean).map((l: any, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-[#A1A1AA]"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#F59E0B]" />{l}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {selected.strengths && selected.strengths.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1">
-              {selected.strengths.map((s, i) => <span key={i} className="rounded-full bg-[#22C55E]/10 px-2 py-0.5 text-[10px] text-[#22C55E]">{s}</span>)}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#71717A]" />
-        <Input value={searchQuery} onChange={e => onSearch(e.target.value)} placeholder="Search debriefs..." className="pl-10" />
-      </div>
-      {debriefs.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]"><FileText className="h-5 w-5 text-[#71717A]" /></div>
-          <p className="text-sm text-[#A1A1AA]">No debriefs found</p>
-          <p className="text-xs text-[#71717A] mt-1">Generate debriefs from completed trades via the trades page.</p>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {debriefs.map(d => (
-            <button key={d.id} onClick={() => onSelect(d)}
-              className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 text-left transition-all hover:border-[#4F46E5]/30">
+    <motion.div key="dna" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Profile Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Preferred Session', value: dna.preferredSession, key: 'preferredSession' },
+          { label: 'Best Concept', value: dna.highestWinRateConcept, key: 'highestWinRateConcept' },
+          { label: 'Weakest Concept', value: dna.weakestConcept, key: 'weakestConcept' },
+          { label: 'Top Mistake', value: dna.mostFrequentMistake, key: 'mostFrequentMistake' },
+          { label: 'Common Emotion', value: dna.mostCommonEmotion, key: 'mostCommonEmotion' },
+          { label: 'Best Day', value: dna.bestDay, key: 'bestDay' },
+          { label: 'Worst Day', value: dna.worstDay, key: 'worstDay' },
+          { label: 'Best Asset', value: dna.bestAsset, key: 'bestAsset' },
+          { label: 'Worst Asset', value: dna.worstAsset, key: 'worstAsset' },
+          { label: 'Best R:R', value: dna.bestRR.toFixed(2), key: 'bestRR' },
+          { label: 'Avg Hold Time', value: `${dna.averageHoldingMinutes}m`, key: 'averageHoldingMinutes' },
+          { label: 'Research', value: `${dna.researchConsistency}%`, key: 'researchConsistency' },
+        ].map((item) => (
+          <Card key={item.key}>
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-[#71717A]">{new Date(d.created_at).toLocaleDateString()}</span>
-                {d.overall_rating && <span className={cn('text-xs font-mono font-bold', d.overall_rating >= 7 ? 'text-[#22C55E]' : 'text-[#F59E0B]')}>{d.overall_rating}/10</span>}
+                <p className="text-3xs text-muted-foreground uppercase">{item.label}</p>
+                <button
+                  type="button"
+                  onClick={() => openExplain('dna', item.key, item.label, { ...dna, patterns, debriefs, profile, rules, trades, label: item.value })}
+                  className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
+                  title="Explain"
+                >
+                  <Info className="h-3 w-3" />
+                </button>
               </div>
-              <p className="mt-2 line-clamp-2 text-xs text-[#A1A1AA]">{d.summary ?? 'No summary'}</p>
-              {d.strengths && d.strengths.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {d.strengths.slice(0, 2).map((s, i) => <span key={i} className="rounded-full bg-[#22C55E]/10 px-2 py-0.5 text-[10px] text-[#22C55E]">{s}</span>)}
+              <p className="text-xs font-medium text-foreground mt-0.5 truncate">{item.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Insights */}
+      {dna.insights?.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-foreground mb-3">AI Insights</p>
+          <div className="space-y-2">
+            {dna.insights.map((insight: any, i: number) => (
+              <div key={i} className={cn(
+                'rounded-lg border p-3',
+                insight.type === 'strength' ? 'border-success/20 bg-success/5' :
+                insight.type === 'weakness' ? 'border-danger/20 bg-danger/5' :
+                insight.type === 'behavior' ? 'border-chart-4/20 bg-chart-4/5' :
+                'border-border/50 bg-background/50'
+              )}>
+                <div className="flex items-start gap-1.5 mb-1">
+                  {insight.type === 'strength' ? <CheckCircle className="h-3.5 w-3.5 text-success mt-0.5" /> :
+                   insight.type === 'weakness' ? <AlertTriangle className="h-3.5 w-3.5 text-danger mt-0.5" /> :
+                   <Lightbulb className="h-3.5 w-3.5 text-chart-4 mt-0.5" />}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-foreground">{insight.title}</span>
+                      {insight.confidence && <ConfidenceBadge score={insight.confidence} />}
+                    </div>
+                    <p className="text-3xs text-muted-foreground mt-0.5">{insight.description}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openExplain('dna', insight.title, insight.title, { ...dna, insight, patterns, debriefs, profile, rules, trades })}
+                      className="text-3xs text-muted-foreground hover:text-foreground transition-colors p-1"
+                      title="Explain"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
+                    <FeedbackButtons
+                      source="dna"
+                      targetType={insight.type}
+                      targetId={insight.title}
+                    />
+                  </div>
                 </div>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PatternsTab({ patterns, onDetect, generating }: { patterns: PersonalPattern[]; onDetect: () => void; generating: boolean }) {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-[#71717A]">{patterns.length} patterns detected</p>
-        <Button size="sm" onClick={onDetect} disabled={generating}>{generating ? 'Detecting...' : 'Detect Patterns'}</Button>
-      </div>
-      {patterns.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]"><Activity className="h-5 w-5 text-[#71717A]" /></div>
-          <p className="text-sm text-[#A1A1AA]">No patterns detected</p>
-          <p className="text-xs text-[#71717A] mt-1">Click &quot;Detect Patterns&quot; to analyze your trading data.</p>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {patterns.map(p => (
-            <div key={p.id} className={cn('rounded-xl border border-[#27272A] bg-[#18181B] p-5', !p.active && 'opacity-60')}>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-[#FAFAFA]">{p.name || 'Pattern'}</h4>
-                <Badge variant={p.category === 'session' ? 'info' : p.category === 'pair' ? 'default' : p.category === 'direction' ? 'warning' : 'secondary'} size="sm">{p.category}</Badge>
-              </div>
-              <p className="text-xs text-[#71717A] mb-3">{p.description}</p>
-              <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-                <div className="rounded-lg bg-[#111113] p-2"><p className="text-[10px] text-[#71717A]">Trades</p><p className="text-xs font-medium text-[#FAFAFA]">{p.occurrence_count}</p></div>
-                <div className="rounded-lg bg-[#111113] p-2"><p className="text-[10px] text-[#22C55E]">Wins</p><p className="text-xs font-medium text-[#FAFAFA]">{p.win_count ?? 0}</p></div>
-                <div className="rounded-lg bg-[#111113] p-2"><p className="text-[10px] text-[#EF4444]">Losses</p><p className="text-xs font-medium text-[#FAFAFA]">{p.loss_count ?? 0}</p></div>
-              </div>
-              {p.confidence != null && (
-                <div><div className="flex items-center justify-between text-[10px] text-[#71717A] mb-1"><span>Confidence</span><span>{p.confidence.toFixed(0)}%</span></div><div className="h-1.5 rounded-full bg-[#27272A]"><div className="h-1.5 rounded-full bg-[#4F46E5]" style={{ width: `${p.confidence}%` }} /></div></div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RulesTab({ rules, selected, onSelect, onGenerate, onApprove, onReject, generating }: {
-  rules: PersonalRule[]; selected: PersonalRule | null;
-  onSelect: (r: PersonalRule | null) => void;
-  onGenerate: () => void; onApprove: (id: string) => void; onReject: (id: string) => void; generating: boolean;
-}) {
-  const draftCount = rules.filter(r => r.status === 'draft').length;
-  const approvedCount = rules.filter(r => r.status === 'approved').length;
-
-  if (selected) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => onSelect(null)} className="text-xs">&larr; Back</Button>
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-[#FAFAFA]">{selected.title}</h3>
-            <Badge variant={selected.status === 'approved' ? 'success' : selected.status === 'rejected' ? 'destructive' : 'warning'}>{selected.status}</Badge>
-          </div>
-          {selected.description && <p className="text-xs text-[#71717A] mb-4">{selected.description}</p>}
-          <div className="grid gap-3 sm:grid-cols-2 mb-4">
-            <InsightBadge label="Category" value={selected.category || '—'} />
-            <InsightBadge label="Version" value={selected.version || '—'} />
-          </div>
-          {selected.supporting_stats && (
-            <div className="rounded-lg bg-[#111113] p-3 mb-4">
-              <p className="text-[11px] font-medium text-[#71717A] mb-2">Supporting Stats</p>
-              <pre className="text-[10px] text-[#A1A1AA] whitespace-pre-wrap">{JSON.stringify(selected.supporting_stats, null, 2)}</pre>
-            </div>
-          )}
-          {selected.status === 'draft' && (
-            <div className="flex gap-3">
-              <Button size="sm" onClick={() => onApprove(selected.id)}><CheckCircle className="mr-1.5 h-4 w-4" /> Approve</Button>
-              <Button variant="outline" size="sm" onClick={() => onReject(selected.id)}><XCircle className="mr-1.5 h-4 w-4 text-[#EF4444]" /> Reject</Button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-[#71717A]">{draftCount} draft, {approvedCount} approved</p>
-        <Button size="sm" onClick={onGenerate} disabled={generating}>{generating ? 'Generating...' : 'Generate Rules'}</Button>
-      </div>
-      {rules.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]"><Scale className="h-5 w-5 text-[#71717A]" /></div>
-          <p className="text-sm text-[#A1A1AA]">No rules yet</p>
-          <p className="text-xs text-[#71717A] mt-1">Generate rules from patterns and debriefs.</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {rules.map(r => (
-            <button key={r.id} onClick={() => onSelect(r)}
-              className="flex items-center justify-between w-full rounded-lg bg-[#111113] px-4 py-3 text-left transition-all hover:bg-[#18181B]">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2"><span className="text-sm font-medium text-[#FAFAFA]">{r.title}</span><Badge variant={r.status === 'approved' ? 'success' : r.status === 'rejected' ? 'destructive' : 'warning'} size="sm">{r.status}</Badge></div>
-                {r.description && <p className="mt-0.5 truncate text-xs text-[#71717A]">{r.description}</p>}
-              </div>
-              <div className="flex items-center gap-2 shrink-0 ml-3">
-                <span className="text-[10px] text-[#71717A]">v{r.version}</span>
-                {r.status === 'draft' && (
-                  <><button onClick={e => { e.stopPropagation(); onApprove(r.id); }} className="rounded p-1 text-[#22C55E] hover:bg-[#22C55E]/10"><CheckCircle className="h-4 w-4" /></button><button onClick={e => { e.stopPropagation(); onReject(r.id); }} className="rounded p-1 text-[#EF4444] hover:bg-[#EF4444]/10"><XCircle className="h-4 w-4" /></button></>
+                {insight.evidence?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {insight.evidence.map((e: string, j: number) => (
+                      <Badge key={j} variant="outline" size="sm" className="text-3xs">{e}</Badge>
+                    ))}
+                  </div>
                 )}
               </div>
-            </button>
-          ))}
+            ))}
+          </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
-function ProfileTab({ profile, snapshots, onBuild, generating }: {
-  profile: TraderProfile | null; snapshots: unknown[]; onBuild: () => void; generating: boolean;
-}) {
-  if (!profile) {
-    return (
-      <div className="flex flex-col items-center py-20 text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#27272A]"><BrainCircuit className="h-6 w-6 text-[#71717A]" /></div>
-        <p className="text-sm font-medium text-[#A1A1AA]">No profile built</p>
-        <p className="text-xs text-[#71717A] mt-1">Build your trader profile to get AI-powered insights.</p>
-        <Button className="mt-5" size="sm" onClick={onBuild} disabled={generating}>{generating ? 'Building...' : 'Build Profile'}</Button>
-      </div>
-    );
-  }
-
+function LearningSection({ concepts, learningPath, openExplain }: any) {
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard label="Trades Analyzed" value={String(profile.total_trades_analyzed ?? 0)} icon={Activity} />
-        <MetricCard label="Active Patterns" value={String(profile.active_patterns ?? 0)} icon={Activity} accent="warning" />
-        <MetricCard label="Approved Rules" value={String(profile.approved_rules ?? 0)} icon={CheckCircle} accent="success" />
-        <MetricCard label="Trading Style" value={profile.trading_style || '—'} icon={User} />
-      </div>
+    <motion.div key="learning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Today's Goal */}
+      {learningPath?.todayGoal && (
+        <Card className="border-chart-4/20">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-chart-4/10">
+                <Target className="h-4 w-4 text-chart-4" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium text-foreground">{learningPath.todayGoal.task}</p>
+                  <button
+                    type="button"
+                    onClick={() => openExplain('recommendation', learningPath.todayGoal.task, learningPath.todayGoal.task, { recommendation: learningPath.todayGoal as any, concepts })}
+                    className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
+                    title="Explain"
+                  >
+                    <Info className="h-3 w-3" />
+                  </button>
+                </div>
+                <p className="text-3xs text-muted-foreground mt-0.5">{learningPath.todayGoal.reason}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant={learningPath.todayGoal.priority === 'high' ? 'warning' : 'secondary'} size="sm">{learningPath.todayGoal.priority}</Badge>
+                  <span className="text-3xs text-muted-foreground">{learningPath.todayGoal.estimatedMinutes} minutes</span>
+                </div>
+              </div>
+              <FeedbackButtons
+                source="adaptive-learning"
+                targetType="recommendation"
+                targetId={learningPath.todayGoal.task}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Discipline Score */}
-      <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-[#FAFAFA]">Discipline Score</h3>
-          <Button variant="ghost" size="sm" onClick={onBuild} disabled={generating}>{generating ? '...' : 'Rebuild'}</Button>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="h-3 flex-1 rounded-full bg-[#27272A]">
-            <div className={cn('h-3 rounded-full transition-all', (profile.discipline_score ?? 0) >= 70 ? 'bg-[#22C55E]' : (profile.discipline_score ?? 0) >= 40 ? 'bg-[#F59E0B]' : 'bg-[#EF4444]')}
-              style={{ width: `${profile.discipline_score ?? 0}%` }} />
-          </div>
-          <span className="text-2xl font-bold font-mono text-[#FAFAFA]">{profile.discipline_score?.toFixed(0)}</span>
-        </div>
-      </div>
-
-      {/* Strengths / Weaknesses */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {profile.strengths && profile.strengths.length > 0 && (
-          <div className="rounded-xl border border-[#22C55E]/20 bg-[#18181B] p-5">
-            <div className="flex items-center gap-2 mb-3"><TrendingUp className="h-4 w-4 text-[#22C55E]" /><h3 className="text-sm font-medium text-[#22C55E]">Strengths</h3></div>
-            <ul className="space-y-1">
-              {profile.strengths.map((s, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-[#A1A1AA]"><CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#22C55E]" />{s}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {profile.weaknesses && profile.weaknesses.length > 0 && (
-          <div className="rounded-xl border border-[#EF4444]/20 bg-[#18181B] p-5">
-            <div className="flex items-center gap-2 mb-3"><TrendingDown className="h-4 w-4 text-[#EF4444]" /><h3 className="text-sm font-medium text-[#EF4444]">Areas to Improve</h3></div>
-            <ul className="space-y-1">
-              {profile.weaknesses.map((w, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-[#A1A1AA]"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#EF4444]" />{w}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Suggestions */}
-      {profile.improvement_suggestions && profile.improvement_suggestions.length > 0 && (
-        <div className="rounded-xl border border-[#F59E0B]/20 bg-[#18181B] p-5">
-          <div className="flex items-center gap-2 mb-3"><Lightbulb className="h-4 w-4 text-[#F59E0B]" /><h3 className="text-sm font-medium text-[#F59E0B]">Improvement Suggestions</h3></div>
-          <ul className="space-y-2">
-            {profile.improvement_suggestions.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-[#A1A1AA]"><Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#F59E0B]" />{s}</li>
+      {/* Weekly Plan */}
+      {learningPath?.weeklyPlan?.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-foreground mb-2">Weekly Study Plan</p>
+          <div className="space-y-2">
+            {learningPath.weeklyPlan.map((goal: any, i: number) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-border/50 bg-surface p-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/30 text-3xs font-medium text-muted-foreground">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-foreground truncate">{goal.task}</p>
+                    <button
+                      type="button"
+                      onClick={() => openExplain('recommendation', goal.task, goal.task, { recommendation: goal as any, concepts })}
+                      className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
+                      title="Explain"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <p className="text-3xs text-muted-foreground">{goal.reason}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant={goal.priority === 'high' ? 'warning' : 'secondary'} size="sm">{goal.priority}</Badge>
+                  <span className="text-3xs text-muted-foreground">{goal.estimatedMinutes}m</span>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 
-      {/* Snapshots */}
-      {snapshots.length > 0 && (
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <h3 className="text-sm font-medium text-[#FAFAFA] mb-2">Profile History ({snapshots.length} snapshots)</h3>
-          <p className="text-xs text-[#71717A]">Snapshots are captured each time the profile is rebuilt.</p>
+      {/* Concept Mastery Full */}
+      <div>
+        <p className="text-xs font-medium text-foreground mb-2">Concept Mastery</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {concepts.length > 0 ? concepts.map((c: any) => (
+            <Card key={c.name}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-foreground truncate">{c.name}</span>
+                  <div className="flex items-center gap-1">
+                    <Badge variant={c.aiConfidence === 'high' ? 'success' : c.aiConfidence === 'low' ? 'warning' : 'secondary'} size="sm">{c.aiConfidence}</Badge>
+                    <button
+                      type="button"
+                      onClick={() => openExplain('concept', c.name, c.name, { ...c, concept: c, concepts })}
+                      className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
+                      title="Explain"
+                    >
+                      <Info className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden mb-1.5">
+                  <div className={cn('h-full rounded-full', c.understanding >= 70 ? 'bg-success' : c.understanding >= 40 ? 'bg-warning' : 'bg-danger')} style={{ width: `${c.understanding}%` }} />
+                </div>
+                <div className="flex items-center justify-between text-3xs text-muted-foreground">
+                  <span>{c.understanding}%</span>
+                  <span>{c.applications} apps · {c.mistakes} mistakes</span>
+                </div>
+              </CardContent>
+            </Card>
+          )) : (
+            <p className="text-sm text-muted-foreground col-span-full text-center py-8">No concepts tracked yet. Upload documents and trade to build concept mastery.</p>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </motion.div>
   );
 }

@@ -128,7 +128,7 @@ export function PageLayout({ children, className, maxWidth = 'xl' }: PageLayoutP
       variants={prefersReduced ? undefined : pageVariants}
       initial={prefersReduced ? reducedMotionAnim.initial : 'initial'}
       animate={prefersReduced ? reducedMotionAnim.animate : 'animate'}
-      className={cn('p-4 md:p-6 space-y-6', maxWidths[maxWidth], 'mx-auto', className)}
+      className={cn('p-6 md:p-8 space-y-6', maxWidths[maxWidth], 'mx-auto', className)}
     >
       {children}
     </motion.div>

@@ -27,7 +27,7 @@ const NODE_TYPES = [
   { value: 'confidence_level', label: 'Confidence' },
 ];
 
-function getCSS(v: string, fallback = '#6b7280'): string {
+function getCSS(v: string, fallback = 'hsl(var(--muted))'): string {
   return getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fallback;
 }
 
@@ -186,7 +186,7 @@ export default function KnowledgeGraphPage() {
         ctx.beginPath();
         ctx.moveTo(src.x, src.y);
         ctx.lineTo(tgt.x, tgt.y);
-        ctx.strokeStyle = connectedEdgeIds.has(e.id) ? getCSS('--chart-1') : getCSS('--border', '#374151');
+        ctx.strokeStyle = connectedEdgeIds.has(e.id) ? getCSS('--chart-1') : getCSS('--border', 'hsl(var(--secondary))');
         ctx.lineWidth = connectedEdgeIds.has(e.id) ? 2 : Math.max(0.5, (e.confidence || 0.5) * 3);
         ctx.globalAlpha = connectedEdgeIds.has(e.id) ? 0.9 : 0.3;
         ctx.stroke();
@@ -198,7 +198,7 @@ export default function KnowledgeGraphPage() {
         ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
         ctx.fillStyle = resolveCSS(TYPE_COLORS[n.type]) || getCSS('--muted-foreground');
         ctx.fill();
-        ctx.strokeStyle = selectedNode?.id === n.id ? '#fff' : getCSS('--foreground', '#1f2937');
+        ctx.strokeStyle = selectedNode?.id === n.id ? '#fff' : getCSS('--foreground', 'hsl(var(--surface))');
         ctx.lineWidth = selectedNode?.id === n.id ? 3 : 1;
         ctx.stroke();
 

@@ -98,7 +98,7 @@ export default function Connectors() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-xs text-muted-foreground mb-3">
-                    Type: <Badge variant="outline" className="text-[10px]">{c.connector_type}</Badge>
+                    Type: <Badge variant="outline" className="text-3xs">{c.connector_type}</Badge>
                     {c.last_sync_at && <div className="mt-1">Last sync: {new Date(c.last_sync_at).toLocaleString()}</div>}
                     {c.error && <div className="mt-1 text-destructive">{c.error}</div>}
                   </div>

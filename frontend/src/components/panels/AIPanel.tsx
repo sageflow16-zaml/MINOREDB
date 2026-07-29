@@ -41,7 +41,7 @@ export function AIPanel() {
       <div className="flex-1 overflow-y-auto space-y-2 mb-2 min-h-[100px] max-h-[300px]">
         {messages.length === 0 && (
           <div className="space-y-1.5">
-            <p className="text-[10px] text-muted-foreground mb-2">Ask me anything about the market:</p>
+            <p className="text-3xs text-muted-foreground mb-2">Ask me anything about the market:</p>
             {suggestions.map((s, i) => (
               <button
                 key={i}
@@ -49,7 +49,7 @@ export function AIPanel() {
                 className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors text-left"
               >
                 <s.icon className="w-3 h-3 text-primary shrink-0" />
-                <span className="text-[11px]">{s.label}</span>
+                <span className="text-2xs">{s.label}</span>
               </button>
             ))}
           </div>

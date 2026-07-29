@@ -49,7 +49,7 @@ export default function ResearchQuestionsPage() {
                         <CardTitle className="text-sm font-medium">{row.question_statement}</CardTitle>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Badge variant="secondary" size="sm">{row.inquiry_origin || 'Unknown'}</Badge>
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-3xs text-muted-foreground">
                             {row.created_at ? new Date(row.created_at).toLocaleDateString() : ''}
                           </span>
                         </div>

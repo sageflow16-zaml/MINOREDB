@@ -13,7 +13,8 @@ import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedbac
 import {
   useLearningEvents, useLearningSnapshots, useLearningStatus, useLearningRebuild,
 } from '../hooks/useLearning';
-import { Brain, RefreshCw, TrendingUp, Layers, GitBranch, BookOpen } from 'lucide-react';
+import { Brain, RefreshCw, TrendingUp, Layers, GitBranch, BookOpen, Sparkles } from 'lucide-react';
+import { JournalIntelligencePanel } from '../components/ui/journal-intelligence';
 import { cn } from '../lib/utils';
 
 const statusBadge = (status: string) => {
@@ -127,7 +128,7 @@ export default function LearningPage() {
                   <Area type="monotone" dataKey="concepts" stackId="1" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4))" fillOpacity={0.6} />
                 </AreaChart>
               </ResponsiveContainer>
-              <div className="mt-2 flex flex-wrap gap-4 text-[10px] text-muted-foreground">
+              <div className="mt-2 flex flex-wrap gap-4 text-3xs text-muted-foreground">
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-1))' }} /> Trades</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-2))' }} /> Patterns</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-3))' }} /> Claims</span>
@@ -175,47 +176,54 @@ export default function LearningPage() {
       )}
 
       {/* Events Table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Recent Learning Events</CardTitle>
-        </CardHeader>
-        {eventData.length === 0 ? (
-          <CardContent><p className="text-center text-xs text-muted-foreground py-8">No learning events yet.</p></CardContent>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
-                  <th className="px-4 py-2.5">Event</th>
-                  <th className="px-4 py-2.5">Entity</th>
-                  <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5">Duration</th>
-                  <th className="px-4 py-2.5">Summary</th>
-                  <th className="px-4 py-2.5">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {eventData.map((e) => (
-                  <tr key={e.id} className="hover:bg-muted/20">
-                    <td className="px-4 py-2.5 font-medium text-foreground">{e.event_type}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">
-                      {e.entity_type ? `${e.entity_type}${e.entity_id ? ` (${e.entity_id.slice(0, 8)})` : ''}` : '—'}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <Badge variant={statusBadge(e.status)} size="sm">{e.status}</Badge>
-                    </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{e.duration_ms != null ? `${e.duration_ms}ms` : '—'}</td>
-                    <td className="max-w-xs truncate px-4 py-2.5 text-muted-foreground">{e.summary || '—'}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
-                      {e.created_at ? new Date(e.created_at).toLocaleString() : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Recent Learning Events</CardTitle>
+            </CardHeader>
+            {eventData.length === 0 ? (
+              <CardContent><p className="text-center text-xs text-muted-foreground py-8">No learning events yet.</p></CardContent>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30 text-left text-3xs font-medium uppercase text-muted-foreground">
+                      <th className="px-4 py-2.5">Event</th>
+                      <th className="px-4 py-2.5">Entity</th>
+                      <th className="px-4 py-2.5">Status</th>
+                      <th className="px-4 py-2.5">Duration</th>
+                      <th className="px-4 py-2.5">Summary</th>
+                      <th className="px-4 py-2.5">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {eventData.map((e) => (
+                      <tr key={e.id} className="hover:bg-muted/20">
+                        <td className="px-4 py-2.5 font-medium text-foreground">{e.event_type}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">
+                          {e.entity_type ? `${e.entity_type}${e.entity_id ? ` (${e.entity_id.slice(0, 8)})` : ''}` : '—'}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Badge variant={statusBadge(e.status)} size="sm">{e.status}</Badge>
+                        </td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{e.duration_ms != null ? `${e.duration_ms}ms` : '—'}</td>
+                        <td className="max-w-xs truncate px-4 py-2.5 text-muted-foreground">{e.summary || '—'}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                          {e.created_at ? new Date(e.created_at).toLocaleString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
+        <div>
+          {projectId && <JournalIntelligencePanel projectId={projectId} />}
+        </div>
+      </div>
 
       {/* Snapshots Table */}
       {snapshotData.length > 0 && (
@@ -226,7 +234,7 @@ export default function LearningPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-3xs font-medium uppercase text-muted-foreground">
                   <th className="px-4 py-2.5">Date</th>
                   <th className="px-4 py-2.5">Trades</th>
                   <th className="px-4 py-2.5">Patterns</th>

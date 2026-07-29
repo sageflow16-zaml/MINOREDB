@@ -49,12 +49,12 @@ export function ChartNotes() {
       {/* Note list */}
       <div className="space-y-1 max-h-[200px] overflow-y-auto">
         {state.notes.length === 0 && (
-          <p className="text-[10px] text-muted-foreground text-center py-4">No notes yet</p>
+          <p className="text-3xs text-muted-foreground text-center py-4">No notes yet</p>
         )}
         {state.notes.map((note) => (
           <div key={note.id} className="px-2 py-1.5 rounded border bg-card/50 group">
             <div className="flex items-start justify-between gap-1">
-              <p className="text-[11px] flex-1">{note.content}</p>
+              <p className="text-2xs flex-1">{note.content}</p>
               <button
                 onClick={() => dispatch({ type: 'REMOVE_NOTE', noteId: note.id })}
                 className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
@@ -62,7 +62,7 @@ export function ChartNotes() {
                 <Trash2 className="w-3 h-3 text-destructive" />
               </button>
             </div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">
+            <div className="text-3xs text-muted-foreground mt-0.5">
               {new Date(note.timestamp).toLocaleTimeString()}
             </div>
           </div>

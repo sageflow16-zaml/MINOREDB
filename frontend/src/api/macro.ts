@@ -24,9 +24,21 @@ export const macroService = {
   },
 
   state: async (): Promise<MarketState> => {
-    const { data: snap } = await supabase.from('market_snapshot').select('*').order('snapshot_time', { ascending: false }).limit(1).maybeSingle();
-    const { data: events } = await supabase.from('macro_event').select('*').gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(10);
-    return { snapshot: snap as MarketSnapshot | null, events: (events ?? []) as MacroEvent[], events_today: [], high_impact_events: [], recent_releases: [], upcoming_events: [] } as MarketState;
+    const { data: events } = await supabase.from('macro_event').select('*').gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(50);
+    const allEvents = (events ?? []) as any[];
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const todayEvents: MacroEvent[] = allEvents.filter((e: any) => (e.event_date || '').startsWith(todayStr));
+    const highImpact: MacroEvent[] = allEvents.filter((e: any) => typeof e.importance === 'number' && e.importance >= 4);
+    const upcoming: MacroEvent[] = allEvents.filter((e: any) => (e.event_date || '') > todayStr);
+    return {
+      snapshot: null,
+      events: allEvents,
+      events_today: todayEvents,
+      high_impact_events: highImpact,
+      upcoming_events: upcoming,
+      recent_releases: [],
+    } as unknown as MarketState;
   },
 
   refresh: async (): Promise<MacroRefreshResponse> =>

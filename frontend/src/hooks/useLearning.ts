@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { learningService } from '../api/learning';
+import { createEvent, eventBus } from '../lib/ai/eventBus';
 
 export const useLearningEvents = (projectId: string, limit?: number) => {
   return useQuery({
@@ -32,6 +33,7 @@ export const useLearningRebuild = (projectId: string) => {
     mutationFn: () => learningService.rebuild(projectId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['learning', projectId] });
+      eventBus.emit(createEvent('LEARNING_EVENT', projectId, { action: 'rebuild' }));
     },
   });
 };

@@ -32,7 +32,7 @@ export function ICTControls() {
         </h3>
         <button
           onClick={() => dispatch({ type: 'TOGGLE_ICT', panelId: activePanel })}
-          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
         >
           {state.layout.chartConfigs[activePanel]?.showICT ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
         </button>
@@ -42,7 +42,7 @@ export function ICTControls() {
           <div key={overlay.type} className="flex items-center justify-between px-2 py-1 rounded hover:bg-muted/50 transition-colors">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: overlay.color }} />
-              <span className="text-[11px]">{overlayLabels[overlay.type] || overlay.type}</span>
+              <span className="text-2xs">{overlayLabels[overlay.type] || overlay.type}</span>
             </div>
             <Switch
               checked={overlay.visible}
@@ -56,27 +56,27 @@ export function ICTControls() {
       {/* Session controls */}
       <div className="mt-3 pt-2 border-t border-border">
         <div className="flex items-center justify-between mb-2">
-          <h4 className="text-[10px] font-semibold text-muted-foreground uppercase">Sessions</h4>
+          <h4 className="text-3xs font-semibold text-muted-foreground uppercase">Sessions</h4>
           <button
             onClick={() => dispatch({ type: 'TOGGLE_SESSION', panelId: activePanel })}
-            className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            className="text-3xs text-muted-foreground hover:text-foreground transition-colors"
           >
             {state.layout.chartConfigs[activePanel]?.showSessions ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
           </button>
         </div>
         <div className="space-y-1">
           {[
-            { session: 'asia', label: 'Asia Session', color: '#6366f1' },
-            { session: 'london', label: 'London Session', color: '#f59e0b' },
-            { session: 'new_york', label: 'New York Session', color: '#ef4444' },
-            { session: 'kill_zone_london', label: 'London Kill Zone', color: '#f59e0b' },
-            { session: 'kill_zone_new_york', label: 'NY Kill Zone', color: '#ef4444' },
-            { session: 'silver_bullet', label: 'Silver Bullet', color: '#22c55e' },
+{ session: 'asia', label: 'Asia Session', color: 'hsl(var(--chart-1))' },
+{ session: 'london', label: 'London Session', color: 'hsl(var(--warning))' },
+{ session: 'new_york', label: 'New York Session', color: 'hsl(var(--danger))' },
+{ session: 'kill_zone_london', label: 'London Kill Zone', color: 'hsl(var(--warning))' },
+{ session: 'kill_zone_new_york', label: 'NY Kill Zone', color: 'hsl(var(--danger))' },
+{ session: 'silver_bullet', label: 'Silver Bullet', color: 'hsl(var(--success))' },
           ].map((s) => (
             <div key={s.session} className="flex items-center justify-between px-2 py-1 rounded hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                <span className="text-[11px]">{s.label}</span>
+                <span className="text-2xs">{s.label}</span>
               </div>
               <Switch
                 checked={

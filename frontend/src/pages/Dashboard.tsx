@@ -1,10 +1,11 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useDashboardStats } from '../hooks/useDashboard';
 import { useTrades } from '../hooks/useTrades';
 import { useLearningEvents } from '../hooks/useLearning';
+import { useEquityCurve } from '../hooks/useStatistics';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
@@ -27,11 +28,11 @@ function getGreeting() {
 
 function getCurrentSession(): { label: string; dot: string } {
   const hour = new Date().getUTCHours();
-  if (hour >= 0 && hour < 8) return { label: 'Asian', dot: 'bg-[#22C55E]' };
-  if (hour >= 8 && hour < 12) return { label: 'London Open', dot: 'bg-[#4F46E5]' };
-  if (hour >= 12 && hour < 16) return { label: 'London/NY Overlap', dot: 'bg-[#F59E0B]' };
-  if (hour >= 16 && hour < 21) return { label: 'New York', dot: 'bg-[#EF4444]' };
-  return { label: 'Sydney', dot: 'bg-[#A1A1AA]' };
+  if (hour >= 0 && hour < 8) return { label: 'Asian', dot: 'bg-success' };
+  if (hour >= 8 && hour < 12) return { label: 'London Open', dot: 'bg-primary' };
+  if (hour >= 12 && hour < 16) return { label: 'London/NY Overlap', dot: 'bg-warning' };
+  if (hour >= 16 && hour < 21) return { label: 'New York', dot: 'bg-danger' };
+  return { label: 'Sydney', dot: 'bg-secondary' };
 }
 
 function formatCurrency(value: number | undefined | null): string {
@@ -49,10 +50,10 @@ function KpiCard({ title, value, icon: Icon, trend, subtitle, variant = 'default
   subtitle?: string; variant?: 'default' | 'success' | 'warning' | 'danger'; onClick?: () => void;
 }) {
   const accentMap = {
-    default: { bg: 'bg-[#4F46E5]/10', text: 'text-[#4F46E5]' },
-    success: { bg: 'bg-[#22C55E]/10', text: 'text-[#22C55E]' },
-    warning: { bg: 'bg-[#F59E0B]/10', text: 'text-[#F59E0B]' },
-    danger: { bg: 'bg-[#EF4444]/10', text: 'text-[#EF4444]' },
+    default: { bg: 'bg-primary/10', text: 'text-primary' },
+    success: { bg: 'bg-success/10', text: 'text-success' },
+    warning: { bg: 'bg-warning/10', text: 'text-warning' },
+    danger: { bg: 'bg-danger/10', text: 'text-danger' },
   };
   const accent = accentMap[variant];
   return (
@@ -64,25 +65,25 @@ function KpiCard({ title, value, icon: Icon, trend, subtitle, variant = 'default
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={cn(
-        'relative overflow-hidden rounded-xl border border-[#27272A] bg-[#18181B] p-4 transition-all',
-        onClick && 'cursor-pointer hover:border-[#27272A]/80 hover:bg-[#18181B]/80'
+        'relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all',
+        onClick && 'cursor-pointer hover:border-border/80 hover:bg-card/80'
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-[11px] font-medium text-[#71717A] tracking-wide">{title}</p>
-          <p className="text-xl font-bold tracking-tight text-[#FAFAFA] font-mono">{value}</p>
+          <p className="text-2xs font-medium text-muted tracking-wide">{title}</p>
+          <p className="text-xl font-bold tracking-tight text-foreground font-mono">{value}</p>
           {subtitle && (
-            <p className="text-[11px] text-[#71717A]">{subtitle}</p>
+            <p className="text-2xs text-muted">{subtitle}</p>
           )}
           {trend && (
             <div className="flex items-center gap-1 pt-0.5">
               {trend.positive ? (
-                <ArrowUpRight className="h-3 w-3 text-[#22C55E]" />
+                <ArrowUpRight className="h-3 w-3 text-success" />
               ) : (
-                <ArrowDownRight className="h-3 w-3 text-[#EF4444]" />
+                <ArrowDownRight className="h-3 w-3 text-danger" />
               )}
-              <span className={cn('text-xs font-medium', trend.positive ? 'text-[#22C55E]' : 'text-[#EF4444]')}>
+              <span className={cn('text-xs font-medium', trend.positive ? 'text-success' : 'text-danger')}>
                 {trend.value > 0 ? '+' : ''}{trend.value}%
               </span>
             </div>
@@ -106,11 +107,12 @@ export default function DashboardPage() {
   const stats = useDashboardStats(projectId!);
   const trades = useTrades(projectId!);
   const { data: learningEvents } = useLearningEvents(projectId!, 5);
+  const { data: rawEquityCurve } = useEquityCurve(projectId!);
   const [equityPeriod, setEquityPeriod] = useState('1M');
 
   if (stats.isLoading) {
     return (
-      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <Skeleton className="h-7 w-48" />
@@ -120,7 +122,7 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3">
+            <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-7 w-24" />
               <Skeleton className="h-3 w-20" />
@@ -139,11 +141,11 @@ export default function DashboardPage() {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EF4444]/10">
-            <TrendingUp className="h-6 w-6 text-[#EF4444]" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10">
+            <TrendingUp className="h-6 w-6 text-danger" />
           </div>
-          <p className="text-sm font-medium text-[#FAFAFA]">Error loading dashboard</p>
-          <p className="text-xs text-[#71717A]">There was a problem fetching your data.</p>
+          <p className="text-sm font-medium text-foreground">Error loading dashboard</p>
+          <p className="text-xs text-muted">There was a problem fetching your data.</p>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
             Try Again
           </Button>
@@ -158,19 +160,35 @@ export default function DashboardPage() {
   const session = getCurrentSession();
   const today = new Date();
 
-  const periodDays: Record<string, number> = { '1W': 7, '1M': 20, '3M': 60, 'All': 100 };
-  const days = periodDays[equityPeriod] ?? 20;
-  const equityData = Array.from({ length: days }, (_, i) => ({
-    day: equityPeriod === '1W' ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i % 7] || `Day ${i + 1}`
-      : equityPeriod === 'All' ? `W${Math.floor(i / 5) + 1}`
-      : `Day ${i + 1}`,
-    value: (s?.total_pnl ?? 1000) * (1 + Math.sin(i / (days / 4)) * 0.2),
-  }));
+  const periodLimit: Record<string, number> = { '1W': 7, '1M': 30, '3M': 90, 'All': Infinity };
+  const limit = periodLimit[equityPeriod] ?? 30;
+  const equityData = useMemo(() => {
+    const curve = rawEquityCurve ?? [];
+    if (curve.length === 0) return [];
+    const sliced = limit === Infinity ? curve : curve.slice(-limit);
+    return sliced.map((p: any) => ({
+      day: p.date ? new Date(p.date).toLocaleDateString() : '',
+      value: p.equity,
+    }));
+  }, [rawEquityCurve, limit]);
 
-  const weeklyData = Array.from({ length: 7 }, (_, i) => ({
-    day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
-    pnl: 0,
-  }));
+  const weeklyData = useMemo(() => {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    if (!trades.data || trades.data.length === 0) return dayNames.map(day => ({ day, pnl: 0 }));
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    weekStart.setHours(0, 0, 0, 0);
+    const dayPnls = [0, 0, 0, 0, 0, 0, 0];
+    trades.data.forEach((t: any) => {
+      const d = new Date(t.created_at);
+      if (d >= weekStart && t.pnl != null) {
+        const dayIdx = (d.getDay() + 6) % 7;
+        dayPnls[dayIdx] += t.pnl;
+      }
+    });
+    return dayNames.map((day, i) => ({ day, pnl: dayPnls[i] }));
+  }, [trades.data]);
 
   const recentTrades = trades.data?.slice(0, 5) ?? [];
   const openTrades = trades.data?.filter((t: any) => t.status === 'OPEN') ?? [];
@@ -191,21 +209,21 @@ export default function DashboardPage() {
     .reduce((sum: number, t: any) => sum + (t.pnl ?? 0), 0);
 
   return (
-    <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+    <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">{getGreeting()}</h1>
-          <p className="text-sm text-[#71717A] mt-0.5">{formatDate(today)}</p>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">{getGreeting()}</h1>
+          <p className="text-sm text-muted mt-0.5">{formatDate(today)}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5">
             <span className={cn('h-2 w-2 rounded-full', session.dot)} />
-            <span className="text-xs font-medium text-[#A1A1AA]">{session.label} Session</span>
+            <span className="text-xs font-medium text-secondary">{session.label} Session</span>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
-            <span className="text-xs font-medium text-[#A1A1AA]">Market Open</span>
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-success" />
+            <span className="text-xs font-medium text-secondary">Market Open</span>
           </div>
         </div>
       </div>
@@ -257,11 +275,11 @@ export default function DashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Equity Curve */}
-        <div className="lg:col-span-3 rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="lg:col-span-3 rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-[#71717A]" />
-              <h3 className="text-sm font-medium text-[#FAFAFA]">Equity Curve</h3>
+              <TrendingUp className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-medium text-foreground">Equity Curve</h3>
             </div>
             <div className="flex items-center gap-1">
               {(['1W', '1M', '3M', 'All'] as const).map((period) => (
@@ -271,8 +289,8 @@ export default function DashboardPage() {
                   className={cn(
                     'rounded-md px-2.5 py-1 text-xs font-medium transition-all',
                     equityPeriod === period
-                      ? 'bg-[#4F46E5]/10 text-[#4F46E5]'
-                      : 'text-[#71717A] hover:text-[#A1A1AA]'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted hover:text-secondary'
                   )}
                 >
                   {period}
@@ -281,46 +299,58 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            {equityData.length === 0 ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <TrendingUp className="mx-auto h-6 w-6 text-muted mb-2" />
+                  <p className="text-sm text-muted">No equity data yet</p>
+                  <p className="text-xs text-muted mt-1">Add trades to see your equity curve.</p>
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={equityData} {...chartDefaultProps}>
-                <defs>
-                  <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#4F46E5" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="value" stroke="#4F46E5" strokeWidth={2} fill="url(#equityGradient)" dot={false} activeDot={{ r: 4, fill: '#4F46E5' }} />
-              </AreaChart>
-            </ResponsiveContainer>
+                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="hsl(var(--primary) / 0.08)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--primary))' }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         {/* Weekly P&L Mini Chart */}
-        <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <CalendarDays className="h-4 w-4 text-[#71717A]" />
-            <h3 className="text-sm font-medium text-[#FAFAFA]">This Week</h3>
+            <CalendarDays className="h-4 w-4 text-muted" />
+            <h3 className="text-sm font-medium text-foreground">This Week</h3>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData} {...chartDefaultProps}>
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`$${v.toFixed(2)}`, 'P&L']} />
-                <Bar
-                  dataKey="pnl"
-                  shape={(props: any) => {
-                    const { x, y, width, height, fill } = props;
-                    const isPositive = height < 0;
-                    return (
-                      <rect
+            {weeklyData.every(d => d.pnl === 0) ? (
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <CalendarDays className="mx-auto h-6 w-6 text-muted mb-2" />
+                  <p className="text-sm text-muted">No trades this week</p>
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData} {...chartDefaultProps}>
+                  <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`$${v.toFixed(2)}`, 'P&L']} />
+                  <Bar
+                    dataKey="pnl"
+                    shape={(props: any) => {
+                      const { x, y, width, height, fill } = props;
+                      const isPositive = height < 0;
+                      return (
+                        <rect
                         x={x}
                         y={isPositive ? y + height : y}
                         width={width}
                         height={Math.abs(height)}
-                        fill={isPositive ? '#22C55E' : '#EF4444'}
+                        fill={isPositive ? 'hsl(var(--success))' : 'hsl(var(--danger))'}
                         rx={3}
                         ry={3}
                       />
@@ -330,6 +360,7 @@ export default function DashboardPage() {
                 />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
       </div>
@@ -337,11 +368,11 @@ export default function DashboardPage() {
       {/* Bottom Row: Active Trades + AI Brief */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Active Trades */}
-        <div className="lg:col-span-2 rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-[#71717A]" />
-              <h3 className="text-sm font-medium text-[#FAFAFA]">Active Trades</h3>
+              <BarChart3 className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-medium text-foreground">Active Trades</h3>
               {openTrades.length > 0 && (
                 <Badge variant="warning" size="sm">{openTrades.length} open</Badge>
               )}
@@ -356,14 +387,14 @@ export default function DashboardPage() {
               columns={[
                 { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
                 { id: 'direction', header: 'Dir', accessor: (row: any) => (
-                  <span className={cn(row.direction === 'BUY' ? 'text-[#22C55E]' : 'text-[#EF4444]')}>
+                  <span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger')}>
                     {row.direction || '-'}
                   </span>
                 ), width: '40px' },
                 { id: 'pnl', header: 'P&L', accessor: (row: any) => {
                   if (row.pnl == null) return '-';
                   return (
-                    <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]')}>
+                    <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>
                       {row.pnl >= 0 ? '+' : ''}${row.pnl?.toFixed(2)}
                     </span>
                   );
@@ -385,11 +416,11 @@ export default function DashboardPage() {
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#27272A]">
-                <BarChart3 className="h-5 w-5 text-[#71717A]" />
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-elevated">
+                <BarChart3 className="h-5 w-5 text-muted" />
               </div>
-              <p className="text-sm font-medium text-[#A1A1AA]">No trades yet</p>
-              <p className="text-xs text-[#71717A] mt-1">Create your first trade to start tracking.</p>
+              <p className="text-sm font-medium text-secondary">No trades yet</p>
+              <p className="text-xs text-muted mt-1">Create your first trade to start tracking.</p>
               <Button size="sm" className="mt-4" onClick={() => navigate(`/projects/${projectId}/trades`)}>
                 <Plus className="h-3 w-3 mr-1.5" /> New Trade
               </Button>
@@ -400,17 +431,17 @@ export default function DashboardPage() {
         {/* Right Panel: AI Brief + Quick Actions */}
         <div className="space-y-4">
           {/* AI Daily Brief */}
-          <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5 cursor-pointer transition-all hover:border-[#27272A]/80" onClick={() => navigate(`/projects/${projectId}/analyst`)}>
+          <div className="rounded-xl border border-border bg-card p-5 cursor-pointer transition-all hover:border-border/80" onClick={() => navigate(`/projects/${projectId}/analyst`)}>
             <div className="flex items-center gap-2 mb-4">
-              <Brain className="h-4 w-4 text-[#4F46E5]" />
-              <h3 className="text-sm font-medium text-[#FAFAFA]">AI Daily Brief</h3>
+              <Brain className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-medium text-foreground">AI Daily Brief</h3>
             </div>
-            <div className="rounded-lg bg-gradient-to-r from-[#4F46E5]/5 to-[#22C55E]/5 p-4 space-y-3">
+            <div className="rounded-lg bg-gradient-to-r from-primary/5 to-success/5 p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4F46E5]/10">
-                  <Bot className="h-4 w-4 text-[#4F46E5]" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Bot className="h-4 w-4 text-primary" />
                 </div>
-                <div className="text-xs text-[#A1A1AA] space-y-1.5 leading-relaxed">
+                <div className="text-xs text-secondary space-y-1.5 leading-relaxed">
                   <p>{s?.total_trades ? `${s.total_trades} total trades with ${winRate}% win rate` : 'No trades yet — add your first trade to generate insights.'}</p>
                   <p>{s?.expectancy != null ? `Expectancy: ${formatCurrency(s.expectancy)} per trade` : 'No expectancy data yet'}</p>
                   <p>{s?.graph_nodes ? `${s.graph_nodes} knowledge nodes, ${s.graph_edges} connections` : 'Knowledge graph is empty — add sources to build it'}</p>
@@ -428,10 +459,10 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+          <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-4 w-4 text-[#71717A]" />
-              <h3 className="text-sm font-medium text-[#FAFAFA]">Quick Actions</h3>
+              <Sparkles className="h-4 w-4 text-muted" />
+              <h3 className="text-sm font-medium text-foreground">Quick Actions</h3>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -445,9 +476,9 @@ export default function DashboardPage() {
                   <button
                     key={action.label}
                     onClick={() => navigate(`/projects/${projectId}/${action.path}`)}
-                    className="flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2.5 text-xs font-medium text-[#A1A1AA] hover:text-[#FAFAFA] hover:border-[#27272A]/80 transition-all"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-xs font-medium text-secondary hover:text-foreground hover:border-border/80 transition-all"
                   >
-                    <Icon className="h-3.5 w-3.5 text-[#4F46E5]" />
+                    <Icon className="h-3.5 w-3.5 text-primary" />
                     {action.label}
                   </button>
                 );
@@ -457,26 +488,26 @@ export default function DashboardPage() {
 
           {/* Recent Journal */}
           {(learningEvents?.length ?? 0) > 0 && (
-            <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+            <div className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-center gap-2 mb-3">
-                <BookOpen className="h-4 w-4 text-[#71717A]" />
-                <h3 className="text-sm font-medium text-[#FAFAFA]">Recent Journal</h3>
+                <BookOpen className="h-4 w-4 text-muted" />
+                <h3 className="text-sm font-medium text-foreground">Recent Journal</h3>
               </div>
               <div className="space-y-2">
                 {learningEvents!.slice(0, 3).map((event: any) => (
-                  <div key={event.id} className="flex items-start gap-2.5 rounded-lg bg-[#111113] p-2.5">
+                  <div key={event.id} className="flex items-start gap-2.5 rounded-lg bg-background p-2.5">
                     <span className={cn(
                       'mt-1 h-1.5 w-1.5 shrink-0 rounded-full',
-                      event.status === 'completed' ? 'bg-[#22C55E]' : event.status === 'in_progress' ? 'bg-[#4F46E5]' : 'bg-[#71717A]'
+                      event.status === 'completed' ? 'bg-success' : event.status === 'in_progress' ? 'bg-primary' : 'bg-muted'
                     )} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-[#A1A1AA] truncate">{event.summary || event.event_type}</p>
+                      <p className="text-xs font-medium text-secondary truncate">{event.summary || event.event_type}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <Badge variant={event.status === 'completed' ? 'success' : event.status === 'in_progress' ? 'info' : 'default'} size="sm">
                           {event.status}
                         </Badge>
                         {event.created_at && (
-                          <span className="text-[10px] text-[#71717A]">{new Date(event.created_at).toLocaleDateString()}</span>
+                          <span className="text-3xs text-muted">{new Date(event.created_at).toLocaleDateString()}</span>
                         )}
                       </div>
                     </div>

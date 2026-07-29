@@ -67,7 +67,7 @@ export default function SyncDashboardPage() {
                           <div key={v.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/20">
                             <div className={`h-3 w-3 rounded-full ${v.is_connected ? 'bg-success' : 'bg-muted-foreground/30'}`} />
                             <span className="text-sm font-medium">{v.name}</span>
-                            <Badge variant={v.is_connected ? 'success' : 'secondary'} className="text-[10px]">{v.health_status}</Badge>
+                            <Badge variant={v.is_connected ? 'success' : 'secondary'} className="text-3xs">{v.health_status}</Badge>
                             <span className="text-xs text-muted-foreground ml-auto">{v.path}</span>
                           </div>
                         ))}
@@ -92,8 +92,8 @@ export default function SyncDashboardPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px]">{log.sync_type}</Badge>
-                          <Badge variant={log.status === 'completed' ? 'success' : log.status === 'failed' ? 'destructive' : 'warning'} className="text-[10px]">{log.status}</Badge>
+                          <Badge variant="outline" className="text-3xs">{log.sync_type}</Badge>
+                          <Badge variant={log.status === 'completed' ? 'success' : log.status === 'failed' ? 'destructive' : 'warning'} className="text-3xs">{log.status}</Badge>
                           <span className="text-xs text-muted-foreground">{log.direction} · {log.trigger}</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -134,7 +134,7 @@ function ConflictCard({ conflict, projectId }: { conflict: SyncConflict; project
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-medium font-mono">{conflict.file_path}</span>
-                <Badge variant="warning" className="text-[10px]">{conflict.conflict_type}</Badge>
+                <Badge variant="warning" className="text-3xs">{conflict.conflict_type}</Badge>
               </div>
               <div className="flex gap-4 text-xs text-muted-foreground">
                 <span>Local v{conflict.local_version}</span>

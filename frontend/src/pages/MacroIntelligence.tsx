@@ -1,21 +1,28 @@
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from 'recharts';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import { ErrorState } from '../components/ui/Feedback';
 import { Skeleton, SkeletonCard } from '../components/ui/skeleton';
 import { useMacroState, useMacroRefresh } from '../hooks/useMacro';
-import { RefreshCw, TrendingUp, DollarSign, BarChart3, Activity, List } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { RefreshCw, TrendingUp, DollarSign, BarChart3, Activity, List, Database, AlertCircle } from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 const tooltipStyle = { background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' };
 
 const importanceBadge: Record<string, 'destructive' | 'warning' | 'default'> = { high: 'destructive', medium: 'warning', low: 'default' };
+
+function importanceLabel(v: any): string {
+  if (typeof v === 'string') return v;
+  const n = Number(v);
+  if (n >= 4) return 'high';
+  if (n >= 2) return 'medium';
+  return 'low';
+}
 
 export default function MacroIntelligencePage() {
   const state = useMacroState();
@@ -38,15 +45,15 @@ export default function MacroIntelligencePage() {
   if (state.isError) return <ErrorState message="Error loading macro data." onRetry={() => state.refetch()} />;
 
   const data = state.data;
-  const snapshot = data?.snapshot;
+  const snapshot = null;
   const todayEvents = data?.events_today || [];
-  const highImpact = data?.high_impact_events || [];
   const upcoming = data?.upcoming_events || [];
   const recent = data?.recent_releases || [];
 
-  const yieldHistory = [{ name: 'Now', us10y: snapshot?.us10y ?? 0, us02y: snapshot?.us02y ?? 0 }];
-  const dxyTrend = [{ name: 'Current', dxy: snapshot?.dxy ?? 0 }];
-  const macroTimeline = todayEvents.map((e) => ({ name: e.event_name, importance: e.importance === 'high' ? 3 : e.importance === 'medium' ? 2 : 1, actual: e.actual, forecast: e.forecast }));
+  const macroTimeline = (todayEvents as any[]).map((e) => {
+    const imp = importanceLabel(e.importance);
+    return { name: e.event_name || e.title || 'Unknown', importance: imp === 'high' ? 3 : imp === 'medium' ? 2 : 1, actual: e.actual, forecast: e.forecast };
+  });
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="p-4 md:p-6 space-y-6">
@@ -57,15 +64,21 @@ export default function MacroIntelligencePage() {
         </Button>
       </motion.div>
 
-      {/* Market Dashboard Cards */}
-      <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <KpiCard title="DXY" value={snapshot?.dxy?.toFixed(2) ?? '--'} icon={DollarSign} variant="info" size="sm" />
-        <KpiCard title="US10Y" value={snapshot?.us10y != null ? `${snapshot.us10y.toFixed(2)}%` : '--'} icon={TrendingUp} variant="info" size="sm" />
-        <KpiCard title="US02Y" value={snapshot?.us02y != null ? `${snapshot.us02y.toFixed(2)}%` : '--'} icon={TrendingUp} variant="info" size="sm" />
-        <KpiCard title="Yield Curve" value={snapshot?.yield_curve != null ? `${snapshot.yield_curve.toFixed(2)}%` : '--'} icon={Activity} variant="info" size="sm" />
-        <KpiCard title="Gold" value={snapshot?.gold != null ? `$${snapshot.gold.toFixed(0)}` : '--'} icon={BarChart3} variant="info" size="sm" />
-        <KpiCard title="Oil" value={snapshot?.oil != null ? `$${snapshot.oil.toFixed(1)}` : '--'} icon={BarChart3} variant="info" size="sm" />
-        <KpiCard title="VIX" value={snapshot?.vix?.toFixed(1) ?? '--'} icon={Activity} variant="info" size="sm" />
+      {/* Market Dashboard Cards — snapshot currently unavailable */}
+      <motion.div variants={item}>
+        <div className="flex items-center gap-2 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3 mb-4">
+          <AlertCircle className="h-4 w-4 text-warning shrink-0" />
+          <p className="text-xs text-warning">Market snapshot data is not available. The <code className="text-3xs bg-warning/10 px-1 rounded">market_snapshot</code> table requires a collector to populate it.</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <KpiCard title="DXY" value="--" icon={DollarSign} variant="info" size="sm" />
+          <KpiCard title="US10Y" value="--" icon={TrendingUp} variant="info" size="sm" />
+          <KpiCard title="US02Y" value="--" icon={TrendingUp} variant="info" size="sm" />
+          <KpiCard title="Yield Curve" value="--" icon={Activity} variant="info" size="sm" />
+          <KpiCard title="Gold" value="--" icon={BarChart3} variant="info" size="sm" />
+          <KpiCard title="Oil" value="--" icon={BarChart3} variant="info" size="sm" />
+          <KpiCard title="VIX" value="--" icon={Activity} variant="info" size="sm" />
+        </div>
       </motion.div>
 
       {/* Charts Row */}
@@ -73,30 +86,21 @@ export default function MacroIntelligencePage() {
         <Card>
           <CardHeader><CardTitle className="text-sm font-medium">Yield History</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={yieldHistory}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="us10y" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="US 10Y" />
-                <Bar dataKey="us02y" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="US 02Y" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Database className="h-8 w-8 text-muted mb-2" />
+              <p className="text-xs text-muted">Chart data unavailable</p>
+              <p className="text-3xs text-muted mt-1">No market snapshot history has been collected yet.</p>
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-sm font-medium">DXY Trend</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={dxyTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Line type="monotone" dataKey="dxy" stroke="hsl(var(--chart-3))" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Database className="h-8 w-8 text-muted mb-2" />
+              <p className="text-xs text-muted">Chart data unavailable</p>
+              <p className="text-3xs text-muted mt-1">No market snapshot history has been collected yet.</p>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -106,15 +110,23 @@ export default function MacroIntelligencePage() {
         <Card>
           <CardHeader><CardTitle className="text-sm font-medium">Macro Timeline</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={macroTimeline}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="importance" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} name="Importance" />
-              </BarChart>
-            </ResponsiveContainer>
+            {macroTimeline.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={macroTimeline}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="importance" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} name="Importance" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Database className="h-8 w-8 text-muted mb-2" />
+                <p className="text-xs text-muted">No events today</p>
+                <p className="text-3xs text-muted mt-1">Events will appear here after the economic calendar collector runs.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -127,7 +139,7 @@ export default function MacroIntelligencePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-border bg-muted/30 text-left text-[10px] font-medium uppercase text-muted-foreground">
+                  <tr className="border-b border-border bg-muted/30 text-left text-3xs font-medium uppercase text-muted-foreground">
                     <th className="px-4 py-2.5">Event</th>
                     <th className="px-4 py-2.5">Country</th>
                     <th className="px-4 py-2.5">Importance</th>
@@ -138,19 +150,24 @@ export default function MacroIntelligencePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {todayEvents.map((event) => (
-                    <tr key={event.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-4 py-2.5 font-medium text-foreground">{event.event_name}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{event.country}</td>
-                      <td className="px-4 py-2.5">
-                        <Badge variant={importanceBadge[event.importance] || 'default'} size="sm">{event.importance}</Badge>
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-foreground">{event.actual ?? '—'}</td>
-                      <td className="px-4 py-2.5 text-right text-muted-foreground">{event.forecast ?? '—'}</td>
-                      <td className="px-4 py-2.5 text-right text-muted-foreground">{event.previous ?? '—'}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{event.release_time ? new Date(event.release_time).toLocaleString() : '—'}</td>
-                    </tr>
-                  ))}
+                  {todayEvents.map((event: any) => {
+                    const name = event.event_name || event.title || 'Unknown';
+                    const imp = importanceLabel(event.importance);
+                    const time = event.release_time || event.event_date || '';
+                    return (
+                      <tr key={event.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-2.5 font-medium text-foreground">{name}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{event.country || '—'}</td>
+                        <td className="px-4 py-2.5">
+                          <Badge variant={importanceBadge[imp] || 'default'} size="sm">{imp}</Badge>
+                        </td>
+                        <td className="px-4 py-2.5 text-right text-foreground">{event.actual ?? '—'}</td>
+                        <td className="px-4 py-2.5 text-right text-muted-foreground">{event.forecast ?? '—'}</td>
+                        <td className="px-4 py-2.5 text-right text-muted-foreground">{event.previous ?? '—'}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{time ? new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                      </tr>
+                    );
+                  })}
                   {todayEvents.length === 0 && (
                     <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground text-xs">No events today</td></tr>
                   )}
@@ -169,18 +186,23 @@ export default function MacroIntelligencePage() {
             <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {upcoming.slice(0, 5).map((event) => (
-              <div key={event.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-foreground truncate">{event.event_name}</p>
-                  <p className="text-[10px] text-muted-foreground">{event.country} | {event.category}</p>
+            {(upcoming as any[]).slice(0, 5).map((event: any) => {
+              const name = event.event_name || event.title || 'Unknown';
+              const imp = importanceLabel(event.importance);
+              const date = event.release_time || event.event_date || '';
+              return (
+                <div key={event.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground truncate">{name}</p>
+                    <p className="text-3xs text-muted-foreground">{event.country || '—'}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant={importanceBadge[imp] || 'default'} size="sm">{imp}</Badge>
+                    <span className="text-3xs text-muted-foreground">{date ? new Date(date).toLocaleDateString() : '—'}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant={importanceBadge[event.importance] || 'default'} size="sm">{event.importance}</Badge>
-                  <span className="text-[10px] text-muted-foreground">{event.release_time ? new Date(event.release_time).toLocaleDateString() : '—'}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {upcoming.length === 0 && (
               <p className="py-4 text-center text-xs text-muted-foreground">No upcoming events</p>
             )}
@@ -192,18 +214,21 @@ export default function MacroIntelligencePage() {
             <CardTitle className="text-sm font-medium">Recent Releases</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {recent.slice(0, 5).map((event) => (
-              <div key={event.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-foreground truncate">{event.event_name}</p>
-                  <p className="text-[10px] text-muted-foreground">{event.country} | {event.category}</p>
+            {(recent as any[]).slice(0, 5).map((event: any) => {
+              const name = event.event_name || event.title || 'Unknown';
+              return (
+                <div key={event.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground truncate">{name}</p>
+                    <p className="text-3xs text-muted-foreground">{event.country || '—'}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-medium text-foreground">Actual: {event.actual ?? '—'}</p>
+                    <p className="text-3xs text-muted-foreground">Forecast: {event.forecast ?? '—'}</p>
+                  </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-xs font-medium text-foreground">Actual: {event.actual ?? '—'}</p>
-                  <p className="text-[10px] text-muted-foreground">Forecast: {event.forecast ?? '—'}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {recent.length === 0 && (
               <p className="py-4 text-center text-xs text-muted-foreground">No recent releases</p>
             )}

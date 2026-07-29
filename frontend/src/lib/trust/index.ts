@@ -1,0 +1,11 @@
+export { gatherEvidence } from './evidence';
+export type { EvidenceItem, EvidenceGatherParams } from './evidence';
+export { computeConfidence, computeConfidenceFromScores } from './confidence';
+export type { ConfidenceParams, ConfidenceResult } from './confidence';
+export { validate } from './validation';
+export type { ValidateParams } from './validation';
+export { buildExplanation } from './explainability';
+export type { BuildExplanationParams } from './explainability';
+export { recordSnapshot, getHistory, getTrend, getAllMetrics } from './history';
+export { submitRating, getRatings, getAccuracyRate } from './feedback';
+export type { AIExplanation, ReasoningStep, HistoryPoint, RelatedItem, FeedbackRating, ValidationResult, ValidationIssue } from './types';

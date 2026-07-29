@@ -32,11 +32,11 @@ export function MarketContext() {
           return (
             <div key={m.label} className="flex items-center justify-between px-2 py-1 rounded border bg-card/50">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] font-medium text-muted-foreground">{m.label}</span>
+                <span className="text-3xs font-medium text-muted-foreground">{m.label}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-xs font-mono">{m.value}</span>
-                <span className={cn('text-[10px] flex items-center', isUp ? 'text-success' : 'text-destructive')}>
+                <span className={cn('text-3xs flex items-center', isUp ? 'text-success' : 'text-destructive')}>
                   {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                   {m.change}
                 </span>
@@ -50,29 +50,29 @@ export function MarketContext() {
       <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-lg border bg-card/50">
         <Activity className="w-3.5 h-3.5 text-warning" />
         <div className="flex-1">
-          <div className="text-[10px] text-muted-foreground">Market Regime</div>
+          <div className="text-3xs text-muted-foreground">Market Regime</div>
           <div className="text-xs font-semibold text-warning">Trending / Risk-On</div>
         </div>
-        <Badge variant="outline" className="text-[10px]">High Vol</Badge>
+        <Badge variant="outline" className="text-3xs">High Vol</Badge>
       </div>
 
       {/* News */}
       <div>
-        <h4 className="text-[10px] font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+        <h4 className="text-3xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
           <Flame className="w-2.5 h-2.5" /> Latest News
         </h4>
         <div className="space-y-1">
           {news.map((n, i) => (
             <div key={i} className="px-2 py-1 rounded hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-1 mb-0.5">
-                <span className="text-[10px] text-muted-foreground">{n.time}</span>
+                <span className="text-3xs text-muted-foreground">{n.time}</span>
                 <Badge variant="outline" className={cn('text-[8px] px-1 py-0',
                   n.impact === 'high' ? 'border-destructive/30 text-destructive' : 'border-warning/30 text-warning'
                 )}>
                   {n.impact}
                 </Badge>
               </div>
-              <p className="text-[11px] leading-tight">{n.headline}</p>
+              <p className="text-2xs leading-tight">{n.headline}</p>
             </div>
           ))}
         </div>

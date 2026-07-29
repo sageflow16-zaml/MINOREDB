@@ -1,4 +1,4 @@
-ï»¿import { render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { DataTable, Column } from "../../components/ui/DataTable";
@@ -121,7 +121,7 @@ describe("DataTable", () => {
 
   it("shows pagination section when data is present", () => {
     render(<DataTable data={data} columns={columns} />);
-    expect(screen.getByText(/1.*â€“.*3/)).toBeInTheDocument();
+    expect(screen.getByText(/1.*–.*3/)).toBeInTheDocument();
   });
 
   it("shows pagination controls when data exceeds page size", () => {
@@ -151,7 +151,7 @@ describe("DataTable", () => {
   it("renders non-sortable columns without sort indicator interaction", () => {
     render(<DataTable data={data} columns={columns} />);
     const statusHeader = screen.getByText("Status");
-    // Status column is not sortable â€” clicking should not change sort
+    // Status column is not sortable — clicking should not change sort
     expect(statusHeader.closest("th")).not.toHaveClass("cursor-pointer");
   });
 });

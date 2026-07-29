@@ -78,7 +78,7 @@ export default function TradeExportDialog({ projectId, open, onClose, selectedId
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {/* Format selection */}
               <div>
-                <label className="text-[11px] font-medium text-muted-foreground mb-2 block">Format</label>
+                <label className="text-2xs font-medium text-muted-foreground mb-2 block">Format</label>
                 <div className="flex gap-2">
                   {(['csv', 'xlsx', 'json'] as const).map((f) => (
                     <button
@@ -109,7 +109,7 @@ export default function TradeExportDialog({ projectId, open, onClose, selectedId
                 <FormField label="Date To" value={dateTo} onChange={setDateTo} type="date" />
                 <FormField label="Symbol" value={symbol} onChange={setSymbol} placeholder="e.g. EURUSD" />
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-medium text-muted-foreground">Strategy</label>
+                  <label className="text-2xs font-medium text-muted-foreground">Strategy</label>
                   <select
                     value={strategyId}
                     onChange={(e) => setStrategyId(e.target.value)}

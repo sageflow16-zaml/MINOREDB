@@ -14,9 +14,7 @@ export type { NumberInputProps } from './number-input';
 export { Select, SelectRoot, SelectTrigger, SelectContent, SelectItem, SelectGroup, SelectValue, SelectSeparator } from './select';
 export type { SelectOption } from './select';
 export { Checkbox } from './checkbox';
-export type { CheckboxProps } from './checkbox';
 export { Switch } from './switch';
-export type { SwitchProps } from './switch';
 export { Label } from './label';
 
 // ── Data Display ──
@@ -24,11 +22,11 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { KpiCard } from './KpiCard';
 export { Badge, badgeVariants } from './badge';
 export type { BadgeProps } from './badge';
-export { Skeleton, SkeletonCard, SkeletonTable } from './skeleton';
+export { Skeleton } from './skeleton';
 export { MetricCard, MetricRow, MetricGroup } from './metrics';
 
 // ── Table System ──
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './table';
+export { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from './table';
 export { DataTable } from './DataTable';
 export type { Column } from './DataTable';
 
@@ -48,7 +46,7 @@ export { RightPanel } from './RightPanel';
 export { CommandPalette, useCommandPalette } from './CommandPalette';
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './tooltip';
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup } from './dropdown-menu';
-export { ScrollArea, ScrollBar } from './scroll-area';
+export { ScrollArea } from './scroll-area';
 
 // ── Navigation ──
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
@@ -80,6 +78,13 @@ export { TaskCard } from './task-card';
 export type { TaskCardProps } from './task-card';
 export { EvidencePanel } from './evidence-panel';
 export type { EvidencePanelProps, EvidenceItem } from './evidence-panel';
+
+// ── Trust & Explainability Components ──
+export { ExplainDialog } from './explain-dialog';
+export { ReasoningTrace } from './reasoning-trace';
+export { HistoricalTrend } from './historical-trend';
+export { FeedbackButtons } from './feedback-buttons';
+export { AIQualityPanel } from './quality-panel';
 
 // ── Timeline ──
 export { Timeline, TimelineItem, TimelineBadge } from './timeline';

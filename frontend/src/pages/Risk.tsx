@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
+import { EmptyState } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
 import {
   Shield, AlertTriangle, TrendingDown, Wallet, Activity, Target,
@@ -30,27 +31,27 @@ function formatCurrency(value: number | undefined | null): string {
 const tooltipStyle = chartTooltipStyle.contentStyle;
 
 function MetricCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
-  const accentColors = { default: 'text-[#FAFAFA]', success: 'text-[#22C55E]', danger: 'text-[#EF4444]', warning: 'text-[#F59E0B]' };
-  const accentBg = { default: 'bg-[#4F46E5]/10', success: 'bg-[#22C55E]/10', danger: 'bg-[#EF4444]/10', warning: 'bg-[#F59E0B]/10' };
+  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger', warning: 'text-warning' };
+  const accentBg = { default: 'bg-primary/10', success: 'bg-success/10', danger: 'bg-danger/10', warning: 'bg-warning/10' };
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-[11px] font-medium text-[#71717A] tracking-wide">{label}</p>
+        <p className="text-2xs font-medium text-muted tracking-wide">{label}</p>
         <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accentBg[accent || 'default'])}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-[#22C55E]' : accent === 'danger' ? 'text-[#EF4444]' : accent === 'warning' ? 'text-[#F59E0B]' : 'text-[#4F46E5]')} />
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger' : accent === 'warning' ? 'text-warning' : 'text-primary')} />
         </div>
       </div>
       <p className={cn('text-xl font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
-      {sub && <p className="text-[10px] text-[#71717A] mt-1">{sub}</p>}
+      {sub && <p className="text-3xs text-muted mt-1">{sub}</p>}
     </motion.div>
   );
 }
 
 function InsightBadge({ label, value, good }: { label: string; value: string; good?: boolean }) {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-[#111113] px-3 py-2">
-      <span className="text-xs text-[#A1A1AA]">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-[#FAFAFA]' : good ? 'text-[#22C55E]' : 'text-[#EF4444]')}>{value}</span>
+    <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
+      <span className="text-xs text-secondary">{label}</span>
+      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger')}>{value}</span>
     </div>
   );
 }
@@ -75,32 +76,32 @@ function CreateRuleDialog({ projectId, onClose }: { projectId: string; onClose: 
   ];
 
   return (
-    <div className="rounded-xl border border-[#27272A] bg-[#18181B] p-5 mb-4">
-      <h4 className="text-sm font-medium text-[#FAFAFA] mb-4">Create Risk Rule</h4>
+    <div className="rounded-xl border border-border bg-card p-5 mb-4">
+      <h4 className="text-sm font-medium text-foreground mb-4">Create Risk Rule</h4>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-[11px] text-[#71717A] mb-1 block">Rule Name</label>
+            <label className="text-2xs text-muted mb-1 block">Rule Name</label>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" placeholder="e.g. Max Daily Loss" required />
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-primary" placeholder="e.g. Max Daily Loss" required />
           </div>
           <div>
-            <label className="text-[11px] text-[#71717A] mb-1 block">Rule Type</label>
+            <label className="text-2xs text-muted mb-1 block">Rule Type</label>
             <select value={form.rule_type} onChange={(e) => setForm({ ...form, rule_type: e.target.value })}
-              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary">
               {ruleTypes.map((rt) => <option key={rt.value} value={rt.value}>{rt.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-[11px] text-[#71717A] mb-1 block">Limit Value</label>
+            <label className="text-2xs text-muted mb-1 block">Limit Value</label>
             <input type="number" step="0.1" value={form.limit_value}
               onChange={(e) => setForm({ ...form, limit_value: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary" />
           </div>
           <div>
-            <label className="text-[11px] text-[#71717A] mb-1 block">Severity</label>
+            <label className="text-2xs text-muted mb-1 block">Severity</label>
             <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })}
-              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary">
               <option value="info">Info</option>
               <option value="warning">Warning</option>
               <option value="critical">Critical</option>
@@ -108,9 +109,9 @@ function CreateRuleDialog({ projectId, onClose }: { projectId: string; onClose: 
           </div>
         </div>
         <div>
-          <label className="text-[11px] text-[#71717A] mb-1 block">Description</label>
+          <label className="text-2xs text-muted mb-1 block">Description</label>
           <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] placeholder-[#71717A] focus:outline-none focus:border-[#4F46E5]" placeholder="Optional..." />
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-primary" placeholder="Optional..." />
         </div>
         <div className="flex gap-2">
           <Button type="submit" disabled={createRule.isPending}>{createRule.isPending ? 'Creating...' : 'Create Rule'}</Button>
@@ -132,15 +133,15 @@ function PositionSizeCalculator({ projectId }: { projectId: string }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[{ k: 'account_balance', l: 'Balance ($)' }, { k: 'risk_percent', l: 'Risk %' }, { k: 'entry_price', l: 'Entry' }, { k: 'stop_loss', l: 'Stop Loss' }, { k: 'take_profit', l: 'Take Profit' }, { k: 'pip_value', l: 'Pip Value ($)' }].map(({ k, l }) => (
           <div key={k}>
-            <label className="text-[11px] text-[#71717A] mb-1 block">{l}</label>
+            <label className="text-2xs text-muted mb-1 block">{l}</label>
             <input type="number" step="0.0001" value={(form as any)[k]} onChange={(e) => setForm({ ...form, [k]: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary" />
           </div>
         ))}
         <div>
-          <label className="text-[11px] text-[#71717A] mb-1 block">Instrument</label>
+          <label className="text-2xs text-muted mb-1 block">Instrument</label>
           <select value={form.instrument} onChange={(e) => setForm({ ...form, instrument: e.target.value })}
-            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary">
             <option value="forex">Forex</option>
             <option value="crypto">Crypto</option>
             <option value="stocks">Stocks</option>
@@ -152,18 +153,18 @@ function PositionSizeCalculator({ projectId }: { projectId: string }) {
       {result && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Position Size', value: result.position_size.toLocaleString(), color: 'text-[#FAFAFA]' },
-            { label: 'Lot Size', value: result.lot_size, color: 'text-[#FAFAFA]' },
-            { label: 'Dollar Risk', value: `-$${result.dollar_risk}`, color: 'text-[#EF4444]' },
-            { label: 'Expected R:R', value: `${result.expected_rr}R`, color: result.expected_rr >= 1 ? 'text-[#22C55E]' : 'text-[#F59E0B]' },
-            { label: 'Potential Profit', value: `+$${result.potential_profit}`, color: 'text-[#22C55E]' },
-            { label: 'Potential Loss', value: `-$${result.potential_loss}`, color: 'text-[#EF4444]' },
-            { label: 'Stop Distance', value: `${result.stop_distance_pips} pips`, color: 'text-[#FAFAFA]' },
-            { label: 'Risk/Pip', value: `$${result.risk_per_pip}`, color: 'text-[#FAFAFA]' },
+            { label: 'Position Size', value: result.position_size.toLocaleString(), color: 'text-foreground' },
+            { label: 'Lot Size', value: result.lot_size, color: 'text-foreground' },
+            { label: 'Dollar Risk', value: `-$${result.dollar_risk}`, color: 'text-danger' },
+            { label: 'Expected R:R', value: `${result.expected_rr}R`, color: result.expected_rr >= 1 ? 'text-success' : 'text-warning' },
+            { label: 'Potential Profit', value: `+$${result.potential_profit}`, color: 'text-success' },
+            { label: 'Potential Loss', value: `-$${result.potential_loss}`, color: 'text-danger' },
+            { label: 'Stop Distance', value: `${result.stop_distance_pips} pips`, color: 'text-foreground' },
+            { label: 'Risk/Pip', value: `$${result.risk_per_pip}`, color: 'text-foreground' },
           ].map((r) => (
-            <div key={r.label} className="rounded-lg bg-[#111113] p-3 text-center">
+            <div key={r.label} className="rounded-lg bg-background p-3 text-center">
               <p className={cn('text-lg font-bold font-mono', r.color)}>{r.value}</p>
-              <p className="text-[10px] text-[#71717A] mt-0.5">{r.label}</p>
+              <p className="text-3xs text-muted mt-0.5">{r.label}</p>
             </div>
           ))}
         </div>
@@ -182,32 +183,32 @@ function TradeValidator({ projectId }: { projectId: string }) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div>
-          <label className="text-[11px] text-[#71717A] mb-1 block">Pair</label>
+          <label className="text-2xs text-muted mb-1 block">Pair</label>
           <input value={form.pair} onChange={(e) => setForm({ ...form, pair: e.target.value })}
-            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary" />
         </div>
         <div>
-          <label className="text-[11px] text-[#71717A] mb-1 block">Direction</label>
+          <label className="text-2xs text-muted mb-1 block">Direction</label>
           <select value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}
-            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]">
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary">
             <option value="LONG">Long</option>
             <option value="SHORT">Short</option>
           </select>
         </div>
         {[{ k: 'entry_price', l: 'Entry' }, { k: 'stop_loss', l: 'Stop Loss' }, { k: 'take_profit', l: 'Take Profit' }, { k: 'risk_percent', l: 'Risk %' }].map(({ k, l }) => (
           <div key={k}>
-            <label className="text-[11px] text-[#71717A] mb-1 block">{l}</label>
+            <label className="text-2xs text-muted mb-1 block">{l}</label>
             <input type="number" step="0.0001" value={(form as any)[k]} onChange={(e) => setForm({ ...form, [k]: parseFloat(e.target.value) || 0 })}
-              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#4F46E5]" />
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary" />
           </div>
         ))}
         <div className="flex items-end"><Button onClick={handleValidate} disabled={validate.isPending} className="w-full">{validate.isPending ? 'Validating...' : 'Validate Trade'}</Button></div>
       </div>
       {result && (
-        <div className={cn('rounded-xl border p-5', result.status === 'approved' ? 'border-[#22C55E]/50 bg-[#22C55E]/5' : result.status === 'warning' ? 'border-[#F59E0B]/50 bg-[#F59E0B]/5' : 'border-[#EF4444]/50 bg-[#EF4444]/5')}>
+        <div className={cn('rounded-xl border p-5', result.status === 'approved' ? 'border-success/50 bg-success/5' : result.status === 'warning' ? 'border-warning/50 bg-warning/5' : 'border-danger/50 bg-danger/5')}>
           <div className="flex items-center gap-3 mb-4">
-            {result.status === 'approved' ? <CheckCircle className="h-5 w-5 text-[#22C55E]" /> : result.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-[#F59E0B]" /> : <XCircle className="h-5 w-5 text-[#EF4444]" />}
-            <span className={cn('text-sm font-medium capitalize', result.status === 'approved' ? 'text-[#22C55E]' : result.status === 'warning' ? 'text-[#F59E0B]' : 'text-[#EF4444]')}>{result.status}</span>
+            {result.status === 'approved' ? <CheckCircle className="h-5 w-5 text-success" /> : result.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-warning" /> : <XCircle className="h-5 w-5 text-danger" />}
+            <span className={cn('text-sm font-medium capitalize', result.status === 'approved' ? 'text-success' : result.status === 'warning' ? 'text-warning' : 'text-danger')}>{result.status}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             {result.risk_amount != null && <InsightBadge label="Risk Amount" value={`$${result.risk_amount}`} />}
@@ -217,9 +218,9 @@ function TradeValidator({ projectId }: { projectId: string }) {
           </div>
           <div className="space-y-2">
             {result.checks.map((check, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg bg-[#111113] px-3 py-2">
-                {check.passed ? <CheckCircle className="h-4 w-4 text-[#22C55E] shrink-0" /> : check.severity === 'critical' ? <XCircle className="h-4 w-4 text-[#EF4444] shrink-0" /> : <AlertTriangle className="h-4 w-4 text-[#F59E0B] shrink-0" />}
-                <span className="text-xs text-[#A1A1AA] flex-1">{check.check_name}: {check.message}</span>
+              <div key={i} className="flex items-center gap-3 rounded-lg bg-background px-3 py-2">
+                {check.passed ? <CheckCircle className="h-4 w-4 text-success shrink-0" /> : check.severity === 'critical' ? <XCircle className="h-4 w-4 text-danger shrink-0" /> : <AlertTriangle className="h-4 w-4 text-warning shrink-0" />}
+                <span className="text-xs text-secondary flex-1">{check.check_name}: {check.message}</span>
                 <Badge variant={check.passed ? 'success' : check.severity === 'critical' ? 'destructive' : 'warning'} size="sm">{check.passed ? 'Pass' : check.severity}</Badge>
               </div>
             ))}
@@ -259,9 +260,9 @@ export default function RiskPage() {
 
   if (isLoading) {
     return (
-      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
         <div className="flex items-center justify-between"><div className="space-y-2"><Skeleton className="h-7 w-44" /><Skeleton className="h-4 w-60" /></div><Skeleton className="h-8 w-28 rounded-lg" /></div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{Array.from({ length: 8 }).map((_, i) => (<div key={i} className="rounded-xl border border-[#27272A] bg-[#18181B] p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-24" /></div>))}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{Array.from({ length: 8 }).map((_, i) => (<div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-24" /></div>))}</div>
         <Skeleton className="h-72 rounded-xl" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5"><Skeleton className="h-56 rounded-xl" /><Skeleton className="h-56 rounded-xl" /></div>
       </div>
@@ -269,7 +270,7 @@ export default function RiskPage() {
   }
 
   if (isError) {
-    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EF4444]/10"><Shield className="h-6 w-6 text-[#EF4444]" /></div><p className="text-sm font-medium text-[#FAFAFA]">Error loading risk data</p><p className="text-xs text-[#71717A]">There was a problem fetching risk data.</p><Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button></div></div>);
+    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Shield className="h-6 w-6 text-danger" /></div><p className="text-sm font-medium text-foreground">Error loading risk data</p><p className="text-xs text-muted">There was a problem fetching risk data.</p><Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button></div></div>);
   }
 
   const d = dashboard.data;
@@ -279,22 +280,18 @@ export default function RiskPage() {
 
   if (!d) {
     return (
-      <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Risk Management</h1><p className="text-sm text-[#71717A] mt-0.5">Risk control center</p></div></div>
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#27272A]"><Shield className="h-6 w-6 text-[#71717A]" /></div>
-          <p className="text-sm font-medium text-[#A1A1AA]">No risk data yet</p>
-          <p className="text-xs text-[#71717A] mt-1 max-w-sm">Start trading to see risk management analytics and exposure data.</p>
-        </div>
+      <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h1 className="text-xl font-semibold text-foreground tracking-tight">Risk Management</h1><p className="text-sm text-muted mt-0.5">Risk control center</p></div></div>
+        <EmptyState icon={<Shield className="h-6 w-6" />} title="No risk data yet" description="Start trading to see risk management analytics and exposure data." />
       </div>
     );
   }
 
   return (
-    <div className="p-5 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
+    <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div><h1 className="text-xl font-semibold text-[#FAFAFA] tracking-tight">Risk Management</h1><p className="text-sm text-[#71717A] mt-0.5">Risk control center</p></div>
+        <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Risk Management</h1><p className="text-sm text-muted mt-0.5">Risk control center</p></div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={handleRetry}><RotateCcw className="h-4 w-4 mr-1" />Refresh</Button>
         </div>
@@ -315,13 +312,13 @@ export default function RiskPage() {
       {/* Alert Banner */}
       {((d.active_alerts ?? 0) > 0 || (d.rule_violations ?? 0) > 0) && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <div className={cn('rounded-xl border p-4 flex items-center gap-4', (d.active_alerts ?? 0) > 0 ? 'border-[#EF4444]/50 bg-[#EF4444]/5' : 'border-[#F59E0B]/50 bg-[#F59E0B]/5')}>
-            <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', (d.active_alerts ?? 0) > 0 ? 'bg-[#EF4444]/10' : 'bg-[#F59E0B]/10')}>
-              {(d.active_alerts ?? 0) > 0 ? <AlertOctagon className="h-5 w-5 text-[#EF4444]" /> : <AlertTriangle className="h-5 w-5 text-[#F59E0B]" />}
+          <div className={cn('rounded-xl border p-4 flex items-center gap-4', (d.active_alerts ?? 0) > 0 ? 'border-danger/50 bg-danger/5' : 'border-warning/50 bg-warning/5')}>
+            <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', (d.active_alerts ?? 0) > 0 ? 'bg-danger/10' : 'bg-warning/10')}>
+              {(d.active_alerts ?? 0) > 0 ? <AlertOctagon className="h-5 w-5 text-danger" /> : <AlertTriangle className="h-5 w-5 text-warning" />}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-[#FAFAFA]">{(d.active_alerts ?? 0)} Active Alert{(d.active_alerts ?? 0) !== 1 ? 's' : ''} &bull; {(d.rule_violations ?? 0)} Rule Violation{(d.rule_violations ?? 0) !== 1 ? 's' : ''}</p>
-              <p className="text-xs text-[#71717A]">Review your risk settings and open positions</p>
+              <p className="text-sm font-medium text-foreground">{(d.active_alerts ?? 0)} Active Alert{(d.active_alerts ?? 0) !== 1 ? 's' : ''} &bull; {(d.rule_violations ?? 0)} Rule Violation{(d.rule_violations ?? 0) !== 1 ? 's' : ''}</p>
+              <p className="text-xs text-muted">Review your risk settings and open positions</p>
             </div>
           </div>
         </motion.div>
@@ -329,23 +326,23 @@ export default function RiskPage() {
 
       {/* Drawdown Timeline + Risk Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="lg:col-span-2 rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center gap-2 mb-4"><TrendingDown className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Drawdown Timeline</h3></div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="lg:col-span-2 rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-4"><TrendingDown className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Drawdown Timeline</h3></div>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dd.length > 0 ? dd : [{ date: '', drawdown: 0 }]} {...chartDefaultProps}>
-                <defs><linearGradient id="riskDDGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#EF4444" stopOpacity={0.25} /><stop offset="100%" stopColor="#EF4444" stopOpacity={0} /></linearGradient></defs>
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v}%`} />
+                <defs><linearGradient id="riskDDGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--danger))" stopOpacity={0.25} /><stop offset="100%" stopColor="hsl(var(--danger))" stopOpacity={0} /></linearGradient></defs>
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v}%`} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toFixed(2)}%`, 'Drawdown']} />
-                <Area type="monotone" dataKey="drawdown" stroke="#EF4444" strokeWidth={2} fill="url(#riskDDGrad)" dot={false} />
+                <Area type="monotone" dataKey="drawdown" stroke="hsl(var(--danger))" strokeWidth={2} fill="url(#riskDDGrad)" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center gap-2 mb-4"><Shield className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Risk Metrics</h3></div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-4"><Shield className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Risk Metrics</h3></div>
           <div className="space-y-2">
             <InsightBadge label="Open Risk" value={`${(d.open_risk ?? 0).toFixed(2)}%`} good={(d.open_risk ?? 0) < 3} />
             <InsightBadge label="Available Risk" value={`${(d.available_risk ?? 0).toFixed(2)}%`} good={(d.available_risk ?? 0) > 2} />
@@ -361,132 +358,132 @@ export default function RiskPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {[{ title: 'Exposure by Pair', key: 'by_pair', data: d.exposure?.by_pair || [] },
           { title: 'Exposure by Direction', key: 'by_direction', data: d.exposure?.by_direction || [] }].map((section) => (
-          <motion.div key={section.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-            <div className="flex items-center gap-2 mb-4"><Activity className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">{section.title}</h3></div>
+          <motion.div key={section.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 mb-4"><Activity className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">{section.title}</h3></div>
             {section.data.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="border-b border-[#27272A]"><th className="text-left px-3 py-2 text-[11px] font-medium text-[#71717A]">Name</th><th className="text-right px-3 py-2 text-[11px] font-medium text-[#71717A]">Positions</th><th className="text-right px-3 py-2 text-[11px] font-medium text-[#71717A]">Risk</th></tr></thead>
+                  <thead><tr className="border-b border-border"><th className="text-left px-3 py-2 text-2xs font-medium text-muted">Name</th><th className="text-right px-3 py-2 text-2xs font-medium text-muted">Positions</th><th className="text-right px-3 py-2 text-2xs font-medium text-muted">Risk</th></tr></thead>
                   <tbody>
                     {section.data.map((p: any, i: number) => (
-                      <tr key={p.name || i} className="border-b border-[#27272A]/50">
-                        <td className="px-3 py-2 text-xs text-[#A1A1AA]">{p.name}</td>
-                        <td className="px-3 py-2 text-xs text-right font-mono text-[#A1A1AA]">{p.count}</td>
-                        <td className="px-3 py-2 text-xs text-right font-mono text-[#FAFAFA]">{p.risk.toFixed(2)}%</td>
+                      <tr key={p.name || i} className="border-b border-border/50">
+                        <td className="px-3 py-2 text-xs text-secondary">{p.name}</td>
+                        <td className="px-3 py-2 text-xs text-right font-mono text-secondary">{p.count}</td>
+                        <td className="px-3 py-2 text-xs text-right font-mono text-foreground">{p.risk.toFixed(2)}%</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            ) : <p className="text-xs text-[#71717A] py-8 text-center">No exposure data</p>}
+            ) : <p className="text-xs text-muted py-8 text-center">No exposure data</p>}
           </motion.div>
         ))}
       </div>
 
       {/* Risk History */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-        <div className="flex items-center gap-2 mb-4"><Clock className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Risk History (30 Days)</h3></div>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2 mb-4"><Clock className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Risk History (30 Days)</h3></div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={hist} {...chartDefaultProps}>
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#71717A' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="daily_pnl" stroke="#4F46E5" strokeWidth={2} dot={false} name="Daily P&L" />
-              <Line type="monotone" dataKey="drawdown" stroke="#EF4444" strokeWidth={2} dot={false} name="Drawdown %" />
-              <Line type="monotone" dataKey="risk_percent" stroke="#F59E0B" strokeWidth={2} dot={false} name="Risk %" />
+              <Line type="monotone" dataKey="daily_pnl" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Daily P&L" />
+              <Line type="monotone" dataKey="drawdown" stroke="hsl(var(--danger))" strokeWidth={2} dot={false} name="Drawdown %" />
+              <Line type="monotone" dataKey="risk_percent" stroke="hsl(var(--warning))" strokeWidth={2} dot={false} name="Risk %" />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </motion.div>
 
       {/* Risk Rules */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Risk Rules ({ruleList.length})</h3></div>
+          <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Risk Rules ({ruleList.length})</h3></div>
           <Button size="sm" onClick={() => setShowCreateRule(!showCreateRule)}><Plus className="h-4 w-4 mr-1" />Add Rule</Button>
         </div>
         {showCreateRule && <CreateRuleDialog projectId={projectId!} onClose={() => setShowCreateRule(false)} />}
         {ruleList.length > 0 ? (
           <div className="space-y-2">
             {ruleList.map((rule) => (
-              <div key={rule.id} className="flex items-center justify-between rounded-lg bg-[#111113] px-4 py-3">
+              <div key={rule.id} className="flex items-center justify-between rounded-lg bg-background px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', rule.severity === 'critical' ? 'bg-[#EF4444]/10' : rule.severity === 'warning' ? 'bg-[#F59E0B]/10' : 'bg-[#4F46E5]/10')}>
-                    {rule.severity === 'critical' ? <Shield className="h-4 w-4 text-[#EF4444]" /> : rule.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-[#F59E0B]" /> : <Info className="h-4 w-4 text-[#4F46E5]" />}
+                  <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', rule.severity === 'critical' ? 'bg-danger/10' : rule.severity === 'warning' ? 'bg-warning/10' : 'bg-primary/10')}>
+                    {rule.severity === 'critical' ? <Shield className="h-4 w-4 text-danger" /> : rule.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-warning" /> : <Info className="h-4 w-4 text-primary" />}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#FAFAFA]">{rule.name}</p>
-                    <p className="text-xs text-[#71717A]">{rule.rule_type.replace(/_/g, ' ')} &bull; Limit: {rule.limit_value}</p>
+                    <p className="text-sm font-medium text-foreground">{rule.name}</p>
+                    <p className="text-xs text-muted">{rule.rule_type.replace(/_/g, ' ')} &bull; Limit: {rule.limit_value}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={rule.is_active ? 'success' : 'secondary'} size="sm">{rule.is_active ? 'Active' : 'Inactive'}</Badge>
                   {rule.violation_count > 0 && <Badge variant="warning" size="sm">{rule.violation_count} violations</Badge>}
-                  <Button variant="ghost" size="icon" onClick={() => deleteRule.mutate(rule.id)}><Trash2 className="h-4 w-4 text-[#EF4444]" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => deleteRule.mutate(rule.id)}><Trash2 className="h-4 w-4 text-danger" /></Button>
                 </div>
               </div>
             ))}
           </div>
-        ) : <p className="text-xs text-[#71717A] py-6 text-center">No risk rules. Create one to protect your capital.</p>}
+        ) : <p className="text-xs text-muted py-6 text-center">No risk rules. Create one to protect your capital.</p>}
       </motion.div>
 
       {/* Alerts */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-        <div className="flex items-center gap-2 mb-4"><Bell className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Alerts ({alertList.length})</h3></div>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2 mb-4"><Bell className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Alerts ({alertList.length})</h3></div>
         {alertList.length > 0 ? (
           <div className="space-y-2">
             {alertList.map((alert) => (
-              <div key={alert.id} className={cn('flex items-center justify-between rounded-lg px-4 py-3', alert.severity === 'critical' ? 'bg-[#EF4444]/5 border border-[#EF4444]/20' : alert.severity === 'warning' ? 'bg-[#F59E0B]/5 border border-[#F59E0B]/20' : 'bg-[#111113]')}>
+              <div key={alert.id} className={cn('flex items-center justify-between rounded-lg px-4 py-3', alert.severity === 'critical' ? 'bg-danger/5 border border-danger/20' : alert.severity === 'warning' ? 'bg-warning/5 border border-warning/20' : 'bg-background')}>
                 <div className="flex items-center gap-3">
-                  <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', alert.severity === 'critical' ? 'bg-[#EF4444]/10' : alert.severity === 'warning' ? 'bg-[#F59E0B]/10' : 'bg-[#4F46E5]/10')}>
-                    {alert.severity === 'critical' ? <AlertOctagon className="h-4 w-4 text-[#EF4444]" /> : alert.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-[#F59E0B]" /> : <Info className="h-4 w-4 text-[#4F46E5]" />}
+                  <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', alert.severity === 'critical' ? 'bg-danger/10' : alert.severity === 'warning' ? 'bg-warning/10' : 'bg-primary/10')}>
+                    {alert.severity === 'critical' ? <AlertOctagon className="h-4 w-4 text-danger" /> : alert.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-warning" /> : <Info className="h-4 w-4 text-primary" />}
                   </div>
                   <div>
-                    <p className="text-sm text-[#FAFAFA]">{alert.title}</p>
-                    <p className="text-xs text-[#71717A]">{alert.message} &bull; {new Date(alert.created_at).toLocaleString()}</p>
+                    <p className="text-sm text-foreground">{alert.title}</p>
+                    <p className="text-xs text-muted">{alert.message} &bull; {new Date(alert.created_at).toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={alert.severity === 'critical' ? 'destructive' : alert.severity === 'warning' ? 'warning' : 'default'} size="sm">{alert.severity}</Badge>
-                  <Button variant="ghost" size="icon" onClick={() => dismissAlert.mutate(alert.id)}><XCircle className="h-4 w-4 text-[#71717A]" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => dismissAlert.mutate(alert.id)}><XCircle className="h-4 w-4 text-muted" /></Button>
                 </div>
               </div>
             ))}
           </div>
-        ) : <p className="text-xs text-[#71717A] py-6 text-center">No active alerts</p>}
+        ) : <p className="text-xs text-muted py-6 text-center">No active alerts</p>}
       </motion.div>
 
       {/* Tools Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="rounded-xl border border-border bg-card p-5">
           <button onClick={() => setShowCalculator(!showCalculator)} className="flex items-center gap-2 w-full mb-4">
-            <Calculator className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Position Size Calculator</h3>
+            <Calculator className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Position Size Calculator</h3>
           </button>
           {showCalculator && <PositionSizeCalculator projectId={projectId!} />}
-          {!showCalculator && <p className="text-xs text-[#71717A]">Expand to calculate optimal position sizes based on risk parameters.</p>}
+          {!showCalculator && <p className="text-xs text-muted">Expand to calculate optimal position sizes based on risk parameters.</p>}
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-border bg-card p-5">
           <button onClick={() => setShowValidator(!showValidator)} className="flex items-center gap-2 w-full mb-4">
-            <ShieldCheck className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Trade Validator</h3>
+            <ShieldCheck className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Trade Validator</h3>
           </button>
           {showValidator && <TradeValidator projectId={projectId!} />}
-          {!showValidator && <p className="text-xs text-[#71717A]">Expand to validate trade ideas against active risk rules.</p>}
+          {!showValidator && <p className="text-xs text-muted">Expand to validate trade ideas against active risk rules.</p>}
         </motion.div>
       </div>
 
       {/* Rule Violations */}
       {violationList.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="rounded-xl border border-[#27272A] bg-[#18181B] p-5">
-          <div className="flex items-center gap-2 mb-4"><AlertOctagon className="h-4 w-4 text-[#71717A]" /><h3 className="text-sm font-medium text-[#FAFAFA]">Rule Violations ({violationList.length})</h3></div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-4"><AlertOctagon className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Rule Violations ({violationList.length})</h3></div>
           <DataTable
             data={violationList}
             columns={[
               { id: 'rule', header: 'Rule', accessor: (row: RuleViolation) => row.rule_name, width: '120px' },
               { id: 'type', header: 'Type', accessor: (row: RuleViolation) => row.rule_type.replace(/_/g, ' '), width: '120px', hideOnMobile: true },
               { id: 'limit', header: 'Limit', accessor: (row: RuleViolation) => String(row.limit_value), width: '60px', hideOnMobile: true },
-              { id: 'actual', header: 'Actual', accessor: (row: RuleViolation) => (<span className="text-[#EF4444]">{row.actual_value}</span>), width: '60px' },
+              { id: 'actual', header: 'Actual', accessor: (row: RuleViolation) => (<span className="text-danger">{row.actual_value}</span>), width: '60px' },
               { id: 'severity', header: 'Severity', accessor: (row: RuleViolation) => (<Badge variant={row.severity === 'critical' ? 'destructive' : 'warning'} size="sm">{row.severity}</Badge>), width: '80px' },
               { id: 'time', header: 'Time', accessor: (row: RuleViolation) => row.timestamp ? new Date(row.timestamp).toLocaleString() : '-', width: '140px', hideOnMobile: true },
             ]}

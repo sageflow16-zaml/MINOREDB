@@ -390,7 +390,7 @@ export default function StrategyBuilderPage() {
         <CardHeader><CardTitle className="flex items-center gap-2 text-sm font-medium"><BookOpen className="h-4 w-4" /> Documentation</CardTitle></CardHeader>
         <CardContent>
           <textarea className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[200px] font-mono" placeholder="Write your strategy documentation here. Supports Markdown..." value={form.documentation || ''} onChange={(e) => updateField('documentation', e.target.value)} />
-          <p className="text-[10px] text-muted-foreground mt-1">Supports Markdown formatting</p>
+          <p className="text-3xs text-muted-foreground mt-1">Supports Markdown formatting</p>
         </CardContent>
       </Card>
 

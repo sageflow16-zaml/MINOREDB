@@ -295,7 +295,7 @@ export default function TradesPage() {
                     <SectionLabel label="Trade Info" />
                     <FormField label="Pair" value={form.pair} onChange={set('pair')} />
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-medium text-muted-foreground">Market Structure</label>
+                      <label className="text-2xs font-medium text-muted-foreground">Market Structure</label>
                       <select
                         value={form.market_structure_id ?? ''}
                         onChange={(e) => setForm((prev) => ({ ...prev, market_structure_id: e.target.value || undefined }))}
@@ -349,7 +349,7 @@ export default function TradesPage() {
                     <SectionLabel label="Psychology" />
                     <FormField label="Emotion" value={form.emotion} onChange={set('emotion')} />
                     <div className="col-span-full flex flex-col gap-1.5">
-                      <label className="text-[11px] font-medium text-muted-foreground">Notes</label>
+                      <label className="text-2xs font-medium text-muted-foreground">Notes</label>
                       <textarea
                         value={form.notes ?? ''}
                         onChange={(e) => set('notes')(e.target.value)}
