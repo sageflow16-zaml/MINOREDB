@@ -12,7 +12,7 @@ describe('Input', () => {
   it('applies error styles when error is present', () => {
     const { container } = render(<Input error={true} />);
     const input = container.querySelector('input');
-    expect(input).toHaveClass('border-destructive');
+    expect(input).toHaveClass('border-danger');
     expect(input).toHaveAttribute('aria-invalid', 'true');
   });
 

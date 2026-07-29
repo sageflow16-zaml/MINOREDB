@@ -67,7 +67,7 @@ describe('ConfirmDialog', () => {
     expect(handleConfirm).not.toHaveBeenCalled();
   });
 
-  it('renders with custom confirm label', () => {
+  it('renders with custom confirm label using confirmText', () => {
     render(
       <ConfirmDialog
         isOpen={true}
@@ -75,7 +75,7 @@ describe('ConfirmDialog', () => {
         message="Sure?"
         onConfirm={() => {}}
         onCancel={() => {}}
-        confirmLabel="Yes, delete"
+        confirmText="Yes, delete"
       />
     );
     expect(screen.getByRole('button', { name: /yes, delete/i })).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe('ConfirmDialog', () => {
       />
     );
     const confirmBtn = screen.getByRole('button', { name: /confirm/i });
-    expect(confirmBtn).toHaveClass('bg-destructive');
+    expect(confirmBtn).toHaveClass('bg-danger');
   });
 
   it('renders with default variant applying default style to confirm button', () => {
@@ -108,6 +108,6 @@ describe('ConfirmDialog', () => {
       />
     );
     const confirmBtn = screen.getByRole('button', { name: /confirm/i });
-    expect(confirmBtn).not.toHaveClass('bg-destructive');
+    expect(confirmBtn).not.toHaveClass('bg-danger');
   });
 });

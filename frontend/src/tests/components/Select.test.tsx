@@ -25,7 +25,7 @@ describe("Select", () => {
     render(<Select options={options} />);
     const trigger = screen.getByRole("combobox");
     await user.click(trigger);
-    // Options are rendered in a portal — use waitFor/findBy
+    // Options are rendered in a portal ï¿½ use waitFor/findBy
     await waitFor(() => {
       expect(screen.getByText("Option 1")).toBeInTheDocument();
     });
@@ -52,7 +52,7 @@ describe("Select", () => {
   it("applies error styling when error prop is true", () => {
     const { container } = render(<Select options={options} error />);
     const trigger = container.querySelector("button[role='combobox']");
-    expect(trigger).toHaveClass("border-destructive");
+    expect(trigger).toHaveClass("border-danger");
   });
 
   it("renders with custom className", () => {
