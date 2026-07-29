@@ -17,7 +17,7 @@ import {
 import type { MarketCandle, ReplayWorkspaceState, ReplayTrade, ReplayAnnotation } from '../api/replay';
 import {
   Play, Pause, SkipBack, SkipForward,
-  Plus, X, Save, Edit3, BookOpen,
+  Plus, X, Save, Edit3, BookOpen, Upload,
   TrendingUp, Brain, Award, AlertTriangle,
   Clock, Image, Type, ArrowUpRight, Circle, Square,
   MessageSquare, BarChart3, Maximize2, Minimize2,
@@ -355,7 +355,7 @@ export default function ReplayPage() {
         <LoadingSpinner message="Loading replay data..." />
       ) : stateQuery.isError ? (
         <ErrorState message="Failed to load replay data" description={stateQuery.error?.message || 'An unexpected error occurred'} onRetry={() => stateQuery.refetch()} />
-      ) : state && (
+      ) : state ? (
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
           {/* Left panel */}
           <div className="lg:col-span-3 space-y-3">
@@ -481,6 +481,18 @@ export default function ReplayPage() {
               <h3 className="text-xs font-medium text-foreground mb-3 flex items-center gap-2"><Award className="h-3.5 w-3.5 text-muted" /> Trade Review</h3>
               <ReviewPanel projectId={projectId!} state={state} />
             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center py-20 text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-elevated">
+            <BarChart3 className="h-6 w-6 text-muted" />
+          </div>
+          <p className="text-sm font-medium text-secondary">No replay session loaded</p>
+          <p className="text-xs text-muted mt-1">Select a session above or create a new one to start replaying market data.</p>
+          <div className="flex gap-3 mt-4">
+            <Button size="sm" className="gap-1.5"><Play className="h-3.5 w-3.5" /> Create Replay</Button>
+            <Button variant="outline" size="sm" className="gap-1.5"><Upload className="h-3.5 w-3.5" /> Import Replay</Button>
           </div>
         </div>
       )}

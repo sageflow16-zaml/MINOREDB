@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Construction } from 'lucide-react';
 import { useWorkspace } from './WorkspaceContext';
 import { Panel } from './Panel';
 import { ChartContainer } from '../chart/ChartContainer';
@@ -26,7 +27,16 @@ export function WorkspaceLayout() {
   const chartPanels = layout.panels.filter((p) => p.type === 'chart');
 
   return (
-    <div className={cn('flex-1 flex gap-0 overflow-hidden', layout.focusMode && 'bg-black/95')}>
+    <div className="flex flex-col h-full">
+      {layout.previewMode && (
+        <div className="flex items-center gap-2 bg-warning/10 border-b border-warning/20 px-4 py-2 shrink-0">
+          <Construction className="h-4 w-4 text-warning shrink-0" />
+          <p className="text-xs text-warning">
+            Workspace is in preview mode. Chart data, trade execution, and AI analysis are not yet connected to live data.
+          </p>
+        </div>
+      )}
+      <div className={cn('flex-1 flex gap-0 overflow-hidden', layout.focusMode && 'bg-black/95')}>
       {/* Left sidebar - collapsed on focus */}
       {!layout.focusMode && (
         <div className="w-[280px] shrink-0 flex flex-col gap-0 border-r border-border overflow-y-auto bg-card/50">
@@ -70,13 +80,14 @@ export function WorkspaceLayout() {
       {!layout.focusMode && (
         <div className="w-[320px] shrink-0 flex flex-col border-l border-border overflow-y-auto bg-card/50">
           <div className="p-2 border-b border-border">
-            <AIPanel />
+            <AIPanel previewMode={layout.previewMode} />
           </div>
           <div className="p-2 flex-1">
             <MarketContext />
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

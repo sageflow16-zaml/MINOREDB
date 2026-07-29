@@ -84,6 +84,7 @@ const createDefaultLayout = (): WorkspaceLayout => {
     activeTheme: 'dark',
     focusMode: false,
     compactMode: false,
+    previewMode: true,
   };
 };
 
@@ -106,6 +107,7 @@ type Action =
   | { type: 'TOGGLE_CROSSHAIR' }
   | { type: 'TOGGLE_FULLSCREEN' }
   | { type: 'TOGGLE_FOCUS_MODE' }
+  | { type: 'TOGGLE_PREVIEW_MODE' }
   | { type: 'SAVE_LAYOUT'; name: string }
   | { type: 'LOAD_LAYOUT'; layoutId: string }
   | { type: 'DELETE_LAYOUT'; layoutId: string }
@@ -201,6 +203,8 @@ function reducer(state: WorkspaceState, action: Action): WorkspaceState {
       return { ...state, fullscreen: !state.fullscreen };
     case 'TOGGLE_FOCUS_MODE':
       return { ...state, layout: { ...state.layout, focusMode: !state.layout.focusMode } };
+    case 'TOGGLE_PREVIEW_MODE':
+      return { ...state, layout: { ...state.layout, previewMode: !state.layout.previewMode } };
     case 'SAVE_LAYOUT': {
       const saved = { ...state.layout, id: crypto.randomUUID(), name: action.name };
       return { ...state, savedLayouts: [...state.savedLayouts, saved] };

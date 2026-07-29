@@ -129,6 +129,7 @@ export interface WorkspaceLayout {
   activeTheme: 'dark' | 'light';
   focusMode: boolean;
   compactMode: boolean;
+  previewMode: boolean;
 }
 
 export interface ChartInstance {

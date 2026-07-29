@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/badge';
-import { Sparkles, Send, Bot, Brain, TrendingUp, BarChart3, MessageSquare } from 'lucide-react';
+import { Sparkles, Send, Bot, Brain, TrendingUp, BarChart3, MessageSquare, Construction } from 'lucide-react';
 
 const suggestions = [
   { icon: Brain, label: 'Analyze Structure', prompt: 'Analyze the current market structure with ICT concepts' },
@@ -10,7 +10,7 @@ const suggestions = [
   { icon: MessageSquare, label: 'Explain Context', prompt: 'Explain the broader market context and key levels' },
 ];
 
-export function AIPanel() {
+export function AIPanel({ previewMode }: { previewMode?: boolean }) {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
   const [input, setInput] = useState('');
 
@@ -37,6 +37,13 @@ export function AIPanel() {
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI Analyst</h3>
       </div>
 
+      {previewMode && (
+        <div className="flex items-center gap-2 mb-2 rounded-lg bg-warning/5 border border-warning/20 px-2 py-1.5">
+          <Construction className="w-3 h-3 text-warning shrink-0" />
+          <p className="text-3xs text-warning">Trading actions disabled in preview mode</p>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-2 mb-2 min-h-[100px] max-h-[300px]">
         {messages.length === 0 && (
@@ -46,7 +53,8 @@ export function AIPanel() {
               <button
                 key={i}
                 onClick={() => handleSuggestion(s.prompt)}
-                className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors text-left"
+                disabled={previewMode}
+                className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <s.icon className="w-3 h-3 text-primary shrink-0" />
                 <span className="text-2xs">{s.label}</span>
@@ -72,10 +80,11 @@ export function AIPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Ask AI..."
-          className="flex-1 px-2 py-1 text-xs bg-muted/50 border border-border rounded-md outline-none focus:border-primary/50"
+          placeholder={previewMode ? 'AI disabled in preview mode' : 'Ask AI...'}
+          disabled={previewMode}
+          className="flex-1 px-2 py-1 text-xs bg-muted/50 border border-border rounded-md outline-none focus:border-primary/50 disabled:opacity-40"
         />
-        <Button size="sm" className="h-7 px-2" onClick={handleSend}>
+        <Button size="sm" className="h-7 px-2" onClick={handleSend} disabled={!input.trim() || !!previewMode}>
           <Send className="w-3 h-3" />
         </Button>
       </div>

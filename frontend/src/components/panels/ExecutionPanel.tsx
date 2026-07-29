@@ -12,6 +12,7 @@ import {
 export function ExecutionPanel() {
   const { state, dispatch } = useWorkspace();
   const { execution } = state;
+  const previewMode = state.layout.previewMode;
   const [positionSize, setPositionSize] = useState('1.0');
   const [stopLoss, setStopLoss] = useState('20');
   const [takeProfit, setTakeProfit] = useState('40');
@@ -40,10 +41,10 @@ export function ExecutionPanel() {
 
       {/* Quick trade buttons */}
       <div className="flex gap-1 mb-2">
-        <Button size="sm" className="flex-1 h-7 text-2xs bg-success hover:bg-success/90">
+        <Button size="sm" className="flex-1 h-7 text-2xs bg-success hover:bg-success/90" disabled={previewMode}>
           <TrendingUp className="w-3 h-3 mr-1" /> Buy
         </Button>
-        <Button size="sm" className="flex-1 h-7 text-2xs bg-destructive hover:bg-destructive/90">
+        <Button size="sm" className="flex-1 h-7 text-2xs bg-destructive hover:bg-destructive/90" disabled={previewMode}>
           <TrendingDown className="w-3 h-3 mr-1" /> Sell
         </Button>
       </div>

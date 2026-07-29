@@ -36,7 +36,7 @@ import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Separator } from '../components/ui/separator';
-import { AccordionItem } from '../components/ui/accordion';
+import { AccordionItem, AccordionGroup } from '../components/ui/accordion';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '../components/ui/dialog';
@@ -712,20 +712,22 @@ export default function ResearchPage() {
                   <Separator />
 
                   {/* Quick Tools */}
-                  <AccordionItem title="Quick Tools" icon={<Sparkles className="h-3.5 w-3.5 text-warning" />} defaultOpen={false}>
-                    <div className="space-y-1.5">
-                      {QUICK_TOOLS.map(tool => (
-                        <Button key={tool.id} variant="outline" size="sm" className="w-full justify-start gap-2 text-xs"
-                          onClick={() => runTool(tool.id)}
-                          isLoading={(tool.id === 'flashcards' && flashcardsMutation.isPending) || (tool.id === 'compare-docs' && compareMutation.isPending) || (tool.id === 'confluences-tool' && confluencesMutation.isPending) || (tool.id === 'quiz' && quizMutation.isPending) || (tool.id === 'study-notes' && studyNotesMutation.isPending)}
-                          disabled={selectedDocIds.length === 0}
-                        >
-                          <tool.icon className="h-3.5 w-3.5 shrink-0" />
-                          {tool.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </AccordionItem>
+                  <AccordionGroup type="single" collapsible>
+                    <AccordionItem title="Quick Tools" icon={<Sparkles className="h-3.5 w-3.5 text-warning" />} defaultOpen={false}>
+                      <div className="space-y-1.5">
+                        {QUICK_TOOLS.map(tool => (
+                          <Button key={tool.id} variant="outline" size="sm" className="w-full justify-start gap-2 text-xs"
+                            onClick={() => runTool(tool.id)}
+                            isLoading={(tool.id === 'flashcards' && flashcardsMutation.isPending) || (tool.id === 'compare-docs' && compareMutation.isPending) || (tool.id === 'confluences-tool' && confluencesMutation.isPending) || (tool.id === 'quiz' && quizMutation.isPending) || (tool.id === 'study-notes' && studyNotesMutation.isPending)}
+                            disabled={selectedDocIds.length === 0}
+                          >
+                            <tool.icon className="h-3.5 w-3.5 shrink-0" />
+                            {tool.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </AccordionItem>
+                  </AccordionGroup>
                 </div>
               </ScrollArea>
             </div>
