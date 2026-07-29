@@ -51,14 +51,17 @@ jobs:
 
   deploy-frontend:
     name: Deploy Frontend to Vercel
-    needs: [deploy-supabase]
+    needs: [lint-and-typecheck]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      - uses: amondnet/vercel-action@v25
+      - uses: actions/setup-node@v4
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: --prod
-          working-directory: frontend
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
