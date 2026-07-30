@@ -43,7 +43,10 @@ const navSections: NavSection[] = [
   {
     title: 'Workspace',
     icon: LayoutDashboard,
-    items: [{ name: 'Dashboard', path: 'dashboard', icon: LayoutDashboard }],
+    items: [
+      { name: 'Dashboard', path: 'dashboard', icon: LayoutDashboard },
+      { name: 'Timeline', path: 'timeline', icon: Clock },
+    ],
   },
   {
     title: 'Trading',

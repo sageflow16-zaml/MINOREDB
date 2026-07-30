@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStableQuery } from './useStableQuery';
 import { tradeService, type TradeRead, type TradeCreate, type TradeUpdate } from '../api';
+import { callEdgeFunction } from '../lib/edgeFunctions';
 import toast from 'react-hot-toast';
 import { createEvent, eventBus } from '../lib/ai/eventBus';
 
@@ -23,11 +24,24 @@ export const useTrade = (projectId: string, tradeId: string) => {
 export const useCreateTrade = (projectId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: TradeCreate) => tradeService.create(projectId, data),
+    mutationFn: (data: TradeCreate) => {
+      const enriched = { ...data };
+      if (!enriched.london_session && !enriched.asian_session && !enriched.newyork_session && data.open_time) {
+        const hour = new Date(data.open_time).getUTCHours();
+        if (hour >= 0 && hour < 8) enriched.asian_session = 'Asian';
+        else if (hour >= 8 && hour < 16) enriched.london_session = 'London';
+        else if (hour >= 16 && hour < 24) enriched.newyork_session = 'New York';
+      }
+      return tradeService.create(projectId, enriched);
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trades', projectId] });
       toast.success('Trade created');
       eventBus.emit(createEvent('TRADE_RECORDED', projectId, { tradeId: data?.id, pair: (data as any)?.pair }));
+      if (data && (data as any).status === 'CLOSED') {
+        callEdgeFunction('ai', { operation: 'analyze-trade', project_id: projectId, data: { trade_id: data.id } }).catch(() => {});
+        callEdgeFunction('ai', { operation: 'generate-debrief', project_id: projectId, data: { trade_id: data.id } }).catch(() => {});
+      }
     },
     onError: () => toast.error('Failed to create trade'),
   });
@@ -38,9 +52,13 @@ export const useUpdateTrade = (projectId: string) => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: TradeUpdate }) =>
       tradeService.update(projectId, id, data),
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['trades', projectId] });
       toast.success('Trade updated');
+      if ((variables.data as any)?.status === 'CLOSED') {
+        callEdgeFunction('ai', { operation: 'analyze-trade', project_id: projectId, data: { trade_id: variables.id } }).catch(() => {});
+        callEdgeFunction('ai', { operation: 'generate-debrief', project_id: projectId, data: { trade_id: variables.id } }).catch(() => {});
+      }
     },
     onError: () => toast.error('Failed to update trade'),
   });

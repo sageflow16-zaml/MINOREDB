@@ -1,7 +1,7 @@
 export async function extractTextFromFile(file: File): Promise<string> {
   const ext = '.' + file.name.split('.').pop()?.toLowerCase();
 
-  if (ext === '.txt') {
+  if (ext === '.txt' || ext === '.md') {
     return file.text();
   }
 
@@ -13,13 +13,15 @@ export async function extractTextFromFile(file: File): Promise<string> {
     return extractDOCXText(file);
   }
 
+  if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'].includes(ext)) {
+    return extractImageText(file);
+  }
+
   return '';
 }
 
 async function extractPDFText(file: File): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist');
-
-  // Use the bundled worker served from our own domain
   const baseUrl = document.querySelector('base')?.href ?? window.location.origin + '/';
   pdfjsLib.GlobalWorkerOptions.workerSrc = `${baseUrl}pdf.worker.mjs`;
 
@@ -53,11 +55,7 @@ async function extractDOCXText(file: File): Promise<string> {
     while (offset < zip.length) {
       const sig = readString(4);
       if (sig === 'PK\x03\x04') {
-        const version = readString(2);
-        const flags = readString(2);
-        const method = readString(2);
-        const lastMod = readString(4);
-        const crc32 = readString(4);
+        readString(2); readString(2); readString(2); readString(4); readString(4);
         const compSize = new DataView(zip.buffer, zip.byteOffset + offset, 4).getUint32(0, true);
         offset += 4;
         const uncompSize = new DataView(zip.buffer, zip.byteOffset + offset, 4).getUint32(0, true);
@@ -70,10 +68,9 @@ async function extractDOCXText(file: File): Promise<string> {
         offset += extraLen;
 
         if (fileName === 'word/document.xml') {
-          if (method === '\x00\x00') {
+          if (compSize === 0) {
             const content = readString(uncompSize);
-            const textMatch = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-            return textMatch;
+            return content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
           }
           return '';
         }
@@ -86,4 +83,16 @@ async function extractDOCXText(file: File): Promise<string> {
     /* DOCX parsing failed */
   }
   return '';
+}
+
+async function extractImageText(file: File): Promise<string> {
+  try {
+    const Tesseract = await import('tesseract.js');
+    const { data } = await Tesseract.recognize(file, 'eng', {
+      logger: () => {},
+    });
+    return data.text || '';
+  } catch {
+    return '';
+  }
 }

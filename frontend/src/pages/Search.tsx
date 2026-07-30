@@ -5,9 +5,10 @@ import { useSearch } from '../hooks/useSearch';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { ErrorState, EmptyState } from '../components/ui/Feedback';
-import { Search as SearchIcon, FileText, MessageCircle, TrendingUp, Tag, Globe, BookOpen, LucideIcon } from 'lucide-react';
+import { Search as SearchIcon, FileText, MessageCircle, TrendingUp, Tag, Globe, BookOpen, Layers, LucideIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
@@ -16,7 +17,17 @@ const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 const TYPE_ICONS: Record<string, LucideIcon> = {
   source: FileText, claim: MessageCircle, trade: TrendingUp, concept: Tag,
   interpretation: Globe, document: BookOpen, rule: BookOpen, pattern: TrendingUp,
+  document_chunk: Layers,
 };
+
+const ENTITY_FILTERS = [
+  { label: 'All', value: '' },
+  { label: 'Sources', value: 'source' },
+  { label: 'Claims', value: 'claim' },
+  { label: 'Concepts', value: 'concept' },
+  { label: 'Trades', value: 'trade' },
+  { label: 'Chunks', value: 'document_chunk' },
+];
 
 function guessType(result: Record<string, unknown>): string {
   return (result.type as string) || (result.entity_type as string) || (result.kind as string) || 'unknown';
@@ -29,11 +40,10 @@ function renderValue(v: unknown): string {
   return '';
 }
 
-const KNOWN_META_KEYS = new Set(['id', 'project_id', 'created_at', 'updated_at', 'type', 'entity_type', 'kind', 'score', 'rank', 'similarity']);
-
 export default function SearchPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [searchTrigger, setSearchTrigger] = useState('');
   const { data, isLoading, error, refetch } = useSearch(projectId!, searchTrigger);
 
@@ -51,7 +61,7 @@ export default function SearchPage() {
       <motion.div variants={item}>
         <PageHeader
           title="Search Knowledge Graph"
-          description="Find concepts, claims, sources, and relationships"
+          description="Find concepts, claims, sources, trades, and document chunks"
           actions={
             <div className="flex gap-2">
               <div className="relative">
@@ -72,12 +82,29 @@ export default function SearchPage() {
         />
       </motion.div>
 
+      <motion.div variants={item} className="flex gap-2 flex-wrap">
+        {ENTITY_FILTERS.map((f) => (
+          <button
+            key={f.value}
+            onClick={() => setTypeFilter(f.value)}
+            className={cn(
+              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+              typeFilter === f.value
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+      </motion.div>
+
       {!searchTrigger && !data && (
         <motion.div variants={item}>
           <EmptyState
             icon={<SearchIcon className="h-6 w-6" />}
             title="Search the knowledge graph"
-            description="Enter a term above and press Search to find related concepts, claims, and sources."
+            description="Enter a term above and press Search to find related concepts, claims, trades, and sources."
           />
         </motion.div>
       )}
@@ -109,7 +136,7 @@ export default function SearchPage() {
                   const type = guessType(r);
                   const Icon = TYPE_ICONS[type] || SearchIcon;
                   const content = renderValue(r.content || r.text || r.description || r.verbatim_text || r.name || r.title || '');
-                  const metaKeys = Object.keys(r).filter(k => !KNOWN_META_KEYS.has(k) && k !== 'content' && k !== 'text' && k !== 'description' && k !== 'verbatim_text' && k !== 'name' && k !== 'title');
+                  const similarity = r.similarity as number | undefined;
                   return (
                     <motion.div key={'result-' + i} variants={item}>
                       <Card className="transition-all hover:shadow-md">
@@ -121,26 +148,30 @@ export default function SearchPage() {
                             <div className="min-w-0 flex-1 space-y-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-3xs font-medium uppercase tracking-wider text-muted-foreground">{type}</span>
-                                {r.score != null && (
-                                  <span className="text-3xs text-muted-foreground">Score: {Number(r.score).toFixed(2)}</span>
+                                {similarity != null && (
+                                  <Badge variant="outline" size="sm">
+                                    {(similarity * 100).toFixed(0)}% match
+                                  </Badge>
+                                )}
+                                {(r as any).filename && (
+                                  <span className="text-3xs text-muted-foreground">{(r as any).filename}</span>
+                                )}
+                                {(r as any).page != null && (
+                                  <span className="text-3xs text-muted-foreground">p.{(r as any).page}</span>
+                                )}
+                                {(r as any).result && (
+                                  <Badge variant={(r as any).result === 'WIN' ? 'success' : (r as any).result === 'LOSS' ? 'danger' : 'default'} size="sm">
+                                    {(r as any).result}
+                                  </Badge>
+                                )}
+                                {(r as any).pnl != null && (
+                                  <span className={cn('text-3xs font-mono', (r as any).pnl >= 0 ? 'text-success' : 'text-danger')}>
+                                    {(r as any).pnl >= 0 ? '+' : ''}{Number((r as any).pnl).toFixed(2)}
+                                  </span>
                                 )}
                               </div>
                               {content && (
                                 <p className="text-xs text-foreground leading-relaxed">{content}</p>
-                              )}
-                              {metaKeys.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                  {metaKeys.slice(0, 4).map((k) => {
-                                    const v = renderValue(r[k]);
-                                    if (!v) return null;
-                                    return (
-                                      <span key={k} className="inline-flex items-center gap-1 rounded-md bg-muted/30 px-2 py-0.5 text-3xs text-muted-foreground">
-                                        <Tag className="w-2.5 h-2.5" />
-                                        {k}: {v.length > 60 ? v.slice(0, 60) + '...' : v}
-                                      </span>
-                                    );
-                                  })}
-                                </div>
                               )}
                             </div>
                           </div>

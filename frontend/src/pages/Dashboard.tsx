@@ -15,7 +15,7 @@ import {
   TrendingUp, BarChart3, DollarSign, Activity,
   BookOpen, Sparkles, Plus, Award,
   Brain, Bot, ChevronRight, ArrowUpRight, ArrowDownRight,
-  CalendarDays,
+  CalendarDays, Network, Clock, Layers, Lightbulb,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -521,6 +521,35 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+
+          {/* Knowledge Growth */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Network className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-medium text-foreground">Knowledge Growth</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-background p-3 text-center">
+                <p className="text-2xl font-bold text-primary font-mono">{s?.graph_nodes ?? 0}</p>
+                <p className="text-3xs text-muted mt-0.5">Graph Nodes</p>
+              </div>
+              <div className="rounded-lg bg-background p-3 text-center">
+                <p className="text-2xl font-bold text-secondary font-mono">{s?.graph_edges ?? 0}</p>
+                <p className="text-3xs text-muted mt-0.5">Connections</p>
+              </div>
+              <div className="rounded-lg bg-background p-3 text-center">
+                <p className="text-2xl font-bold text-warning font-mono">{s?.total_trades ?? 0}</p>
+                <p className="text-3xs text-muted mt-0.5">Trades</p>
+              </div>
+              <div className="rounded-lg bg-background p-3 text-center">
+                <p className="text-2xl font-bold text-success font-mono">{s?.win_rate ?? 0}%</p>
+                <p className="text-3xs text-muted mt-0.5">Win Rate</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="w-full mt-3 text-xs" onClick={() => navigate(`/projects/${projectId}/timeline`)}>
+              <Clock className="h-3 w-3 mr-1" /> View Timeline
+            </Button>
+          </div>
         </div>
       </div>
     </div>

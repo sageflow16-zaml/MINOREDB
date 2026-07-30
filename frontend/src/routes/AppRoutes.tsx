@@ -102,6 +102,7 @@ const CollectionsPage = lazy(() => import('../pages/Collections'));
 const NotesPage = lazy(() => import('../pages/Notes'));
 const BookmarksPage = lazy(() => import('../pages/Bookmarks'));
 const GraphPage = lazy(() => import('../pages/Graph'));
+const TimelinePage = lazy(() => import('../pages/Timeline'));
 
 /**
  * Authenticated application routes. Every module under /projects/:projectId is
@@ -214,6 +215,7 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/notes" element={<NotesPage />} />
           <Route path="/projects/:projectId/bookmarks" element={<BookmarksPage />} />
           <Route path="/projects/:projectId/graph" element={<GraphPage />} />
+          <Route path="/projects/:projectId/timeline" element={<TimelinePage />} />
         </Route>
       </Routes>
     </Suspense>

@@ -717,24 +717,49 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   }
 }
 
-function chunkText(text: string, maxTokens = 500): string[] {
-  const words = text.split(/\s+/);
+function chunkTextAdvanced(text: string, maxTokens = 500, overlap = 50): { chunks: string[]; sections: string[] } {
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
   const chunks: string[] = [];
-  let current: string[] = [];
-  let currentTokens = 0;
+  const sections: string[] = [];
 
-  for (const word of words) {
-    const estimatedTokens = Math.ceil(word.length / 4) || 1;
-    if (currentTokens + estimatedTokens > maxTokens && current.length > 0) {
-      chunks.push(current.join(' '));
-      current = [];
-      currentTokens = 0;
+  let currentChunk: string[] = [];
+  let currentTokens = 0;
+  let lastSectionTitle = '';
+
+  for (const para of paragraphs) {
+    const sectionMatch = para.match(/^#{1,3}\s+(.+)/m);
+    if (sectionMatch) lastSectionTitle = sectionMatch[1].trim();
+
+    const paraTokens = para.split(/\s+/).reduce((sum, w) => sum + Math.ceil(w.length / 4) || 1, 0);
+
+    if (currentTokens + paraTokens > maxTokens && currentChunk.length > 0) {
+      const chunkText = currentChunk.join('\n\n');
+      chunks.push(chunkText);
+      sections.push(lastSectionTitle);
+
+      if (overlap > 0) {
+        const overlapWords = chunkText.split(/\s+/).slice(-overlap);
+        currentChunk = [overlapWords.join(' ')];
+        currentTokens = overlapWords.reduce((sum, w) => sum + Math.ceil(w.length / 4) || 1, 0);
+      } else {
+        currentChunk = [];
+        currentTokens = 0;
+      }
     }
-    current.push(word);
-    currentTokens += estimatedTokens;
+    currentChunk.push(para);
+    currentTokens += paraTokens;
   }
-  if (current.length > 0) chunks.push(current.join(' '));
-  return chunks;
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk.join('\n\n'));
+    sections.push(lastSectionTitle);
+  }
+
+  return { chunks, sections };
+}
+
+function chunkText(text: string, maxTokens = 500): string[] {
+  return chunkTextAdvanced(text, maxTokens, 0).chunks;
 }
 
 async function ingestDocument(supabase: ReturnType<typeof createClient>, projectId: string, sourceId: string) {
@@ -746,7 +771,7 @@ async function ingestDocument(supabase: ReturnType<typeof createClient>, project
 
   const wordCount = text.split(/\s+/).length;
   const pageEstimate = Math.ceil(wordCount / 300) || 1;
-  const chunks = chunkText(text);
+  const { chunks, sections } = chunkTextAdvanced(text, 500, 50);
   if (chunks.length === 0) return { chunks_created: 0, warning: 'Text too short to chunk' };
 
   const filename = source.source_metadata?.original_name ?? source.id;
@@ -765,23 +790,30 @@ async function ingestDocument(supabase: ReturnType<typeof createClient>, project
   if (ingestError || !ingestion) throw new Error('Failed to create ingestion record');
 
   let created = 0;
-  for (let i = 0; i < chunks.length; i++) {
+  const batchSize = 5;
+  for (let i = 0; i < chunks.length; i += batchSize) {
     await supabase.from('ai_document_ingestion').update({
       progress: { stage: 'embeddings', pct: Math.round(10 + (i / chunks.length) * 80) },
     }).eq('id', ingestion.id);
 
-    const embedding = await generateEmbedding(chunks[i]);
-    const pageNum = Math.min(Math.ceil((chunks.slice(0, i + 1).join(' ').split(/\s+/).length) / 300) || 1, pageEstimate);
-    const { error: chunkError } = await supabase.from('ai_document_chunk').insert({
-      project_id: projectId,
-      ingestion_id: ingestion.id,
-      chunk_index: i,
-      content: chunks[i],
-      page: pageNum,
-      embedding: embedding ?? undefined,
-      token_count: Math.ceil(chunks[i].split(/\s+/).length),
-    });
-    if (!chunkError) created++;
+    const batch = chunks.slice(i, i + batchSize);
+    const embeddings = await Promise.all(batch.map(c => generateEmbedding(c)));
+
+    for (let j = 0; j < batch.length; j++) {
+      const idx = i + j;
+      const pageNum = Math.min(Math.ceil((chunks.slice(0, idx + 1).join(' ').split(/\s+/).length) / 300) || 1, pageEstimate);
+      const { error: chunkError } = await supabase.from('ai_document_chunk').insert({
+        project_id: projectId,
+        ingestion_id: ingestion.id,
+        chunk_index: idx,
+        content: batch[j],
+        page: pageNum,
+        section_title: sections[idx] || null,
+        embedding: embeddings[j] ?? undefined,
+        token_count: Math.ceil(batch[j].split(/\s+/).length),
+      });
+      if (!chunkError) created++;
+    }
   }
 
   await supabase.from('ai_document_ingestion').update({
@@ -818,6 +850,15 @@ async function ingestDocument(supabase: ReturnType<typeof createClient>, project
     autoExtract('StudyNotes', () => generateStudyNotes(supabase, projectId, docIds)),
   ]);
 
+  await supabase.from('learning_event').insert({
+    project_id: projectId, event_type: 'document_ingested', entity_type: 'source',
+    entity_id: sourceId, status: 'completed',
+    summary: `Ingested document with ${created} chunks, ${pageEstimate} pages`,
+    metadata_json: { chunk_count: created, page_count: pageEstimate, word_count: wordCount, filename },
+  });
+
+  refreshKnowledgeGraph(supabase, projectId).catch(() => {});
+
   return {
     chunks_created: created,
     total_chunks: chunks.length,
@@ -842,14 +883,40 @@ async function researchChat(supabase: ReturnType<typeof createClient>, projectId
       documentContext += `\n\n--- Document: ${doc.name || doc.id} ---\n${text.substring(0, 4000)}`;
     }
   } else {
-    const { data: chunks } = await supabase.from('ai_document_chunk')
-      .select('content, page, ai_document_ingestion!inner(filename)')
-      .eq('project_id', projectId)
-      .limit(15);
-    if (chunks && chunks.length > 0) {
-      documentContext = '\n\nRelevant document chunks:\n' + chunks.map((c: any) =>
-        `[${c.ai_document_ingestion?.filename || 'Doc'}${c.page ? ` p.${c.page}` : ''}] ${c.content}`
-      ).join('\n');
+    if (openaiApiKey) {
+      try {
+        const embeddingResp = await fetch(`${openaiBaseUrl}/embeddings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiApiKey}` },
+          body: JSON.stringify({ model: 'text-embedding-3-small', input: message }),
+        });
+        if (embeddingResp.ok) {
+          const embedJson = await embeddingResp.json();
+          const embedding = embedJson.data[0].embedding;
+          const { data: results } = await supabase.rpc('search_documents', {
+            query_embedding: embedding,
+            match_threshold: 0.5,
+            match_count: 15,
+            p_project_id: projectId,
+          });
+          if (results && results.length > 0) {
+            documentContext = '\n\nRelevant document chunks:\n' + results.map((c: any) =>
+              `[${c.filename || 'Doc'}${c.page ? ` p.${c.page}` : ''}] ${c.content}`
+            ).join('\n');
+          }
+        }
+      } catch { /* fall through to random chunks */ }
+    }
+    if (!documentContext) {
+      const { data: chunks } = await supabase.from('ai_document_chunk')
+        .select('content, page, ai_document_ingestion!inner(filename)')
+        .eq('project_id', projectId)
+        .limit(15);
+      if (chunks && chunks.length > 0) {
+        documentContext = '\n\nRelevant document chunks:\n' + chunks.map((c: any) =>
+          `[${c.ai_document_ingestion?.filename || 'Doc'}${c.page ? ` p.${c.page}` : ''}] ${c.content}`
+        ).join('\n');
+      }
     }
   }
 
@@ -1269,6 +1336,73 @@ async function getKnowledgeGraphData(supabase: ReturnType<typeof createClient>, 
   };
 }
 
+async function getRelevantMemories(supabase: ReturnType<typeof createClient>, projectId: string, query: string, limit = 10) {
+  if (!openaiApiKey) {
+    const { data: memories } = await supabase.from('ai_memory')
+      .select('id, key, value, category, memory_type, text_value, importance')
+      .eq('project_id', projectId)
+      .order('importance', { ascending: false })
+      .limit(limit);
+    return { memories: memories || [], method: 'importance' };
+  }
+
+  try {
+    const embeddingResp = await fetch(`${openaiBaseUrl}/embeddings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiApiKey}` },
+      body: JSON.stringify({ model: 'text-embedding-3-small', input: query }),
+    });
+    if (embeddingResp.ok) {
+      const embedJson = await embeddingResp.json();
+      const embedding = embedJson.data[0].embedding;
+      const { data: memories } = await supabase.rpc('search_memories', {
+        query_embedding: embedding,
+        match_threshold: 0.6,
+        match_count: limit,
+        p_project_id: projectId,
+      });
+      if (memories && memories.length > 0) return { memories, method: 'vector' };
+    }
+  } catch { /* fallback */ }
+
+  const { data: memories } = await supabase.from('ai_memory')
+    .select('id, key, value, category, memory_type, text_value, importance')
+    .eq('project_id', projectId)
+    .order('importance', { ascending: false })
+    .limit(limit);
+  return { memories: memories || [], method: 'importance' };
+}
+
+async function storeMemory(supabase: ReturnType<typeof createClient>, projectId: string, key: string, value: string, category: string, importance = 1) {
+  let embedding: number[] | null = null;
+  if (openaiApiKey) {
+    try {
+      const resp = await fetch(`${openaiBaseUrl}/embeddings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiApiKey}` },
+        body: JSON.stringify({ model: 'text-embedding-3-small', input: `${key}: ${value}` }),
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        embedding = json.data?.[0]?.embedding ?? null;
+      }
+    } catch { /* continue without embedding */ }
+  }
+
+  const { data, error } = await supabase.from('ai_memory').upsert({
+    project_id: projectId,
+    key,
+    value,
+    category,
+    memory_type: 'observation',
+    text_value: value,
+    importance,
+    embedding: embedding ?? undefined,
+  }, { onConflict: 'project_id,key' }).select().single();
+
+  return { memory: data || { id: '', key, value }, error };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -1534,6 +1668,56 @@ serve(async (req) => {
           last_event: lastEvent.data || null,
           last_snapshot: lastSnapshot.data || null,
         });
+      }
+      case 'relevant-memories': {
+        const memQuery = data?.query || '';
+        const memLimit = data?.limit || 10;
+        const memResult = await getRelevantMemories(supabase, project_id, memQuery, memLimit);
+        return successResponse(memResult);
+      }
+      case 'store-memory': {
+        const memKey = data?.key;
+        const memValue = data?.value;
+        const memCategory = data?.category || 'observation';
+        const memImportance = data?.importance || 1;
+        if (!memKey || !memValue) return errorResponse('Missing key or value');
+        const stResult = await storeMemory(getServiceClient(), project_id, memKey, memValue, memCategory, memImportance);
+        return successResponse(stResult);
+      }
+      case 'auto-link': {
+        const { data: claims } = await supabase.from('claim')
+          .select('id, verbatim_text, source_id').eq('project_id', project_id).is('deleted_at', null).limit(50);
+        const { data: trades } = await supabase.from('trade')
+          .select('id, pair, notes, result').eq('project_id', project_id).is('deleted_at', null).limit(50);
+        const { data: concepts } = await supabase.from('knowledge_concept')
+          .select('id, title, summary').eq('project_id', project_id).limit(50);
+
+        const linkPairs: { source: string; sourceId: string; target: string; targetId: string; relationship: string }[] = [];
+
+        for (const claim of claims || []) {
+          for (const trade of trades || []) {
+            if (trade.notes && claim.verbatim_text && trade.notes.toLowerCase().includes(claim.verbatim_text.substring(0, 20).toLowerCase())) {
+              linkPairs.push({ source: 'claim', sourceId: claim.id, target: 'trade', targetId: trade.id, relationship: 'informs' });
+            }
+          }
+          for (const concept of concepts || []) {
+            if (concept.title && claim.verbatim_text && claim.verbatim_text.toLowerCase().includes(concept.title.toLowerCase())) {
+              linkPairs.push({ source: 'claim', sourceId: claim.id, target: 'concept', targetId: concept.id, relationship: 'references' });
+            }
+          }
+        }
+
+        let linked = 0;
+        for (const pair of linkPairs) {
+          const { error } = await supabase.from('knowledge_link').upsert({
+            project_id, source_type: pair.source, source_id: pair.sourceId,
+            target_type: pair.target, target_id: pair.targetId,
+            relationship: pair.relationship, strength: 0.5,
+          }, { onConflict: 'source_type,source_id,target_type,target_id' });
+          if (!error) linked++;
+        }
+
+        return successResponse({ links_created: linked, total_candidates: linkPairs.length });
       }
       case 'rebuild-learning': {
         const [tRes, sRes, clRes, coRes, iRes, pRes, mRes] = await Promise.all([
