@@ -4339,3 +4339,40 @@ export interface AgentDashboard {
   avg_confidence: number | null;
   success_rate: number | null;
 }
+
+/* ── Playbooks ── */
+export interface PlaybookStep {
+  id: string;
+  title: string;
+  description?: string;
+  type: 'entry' | 'exit' | 'confirmation' | 'invalidation' | 'risk' | 'management' | 'psychology' | 'note';
+  action?: string;
+  conditions?: string[];
+  expected?: string;
+  validation?: { metric: string; operator: string; value: number }[];
+}
+
+export interface PlaybookBase {
+  name: string;
+  description?: string;
+  category?: string;
+  status?: string;
+  tags?: string[];
+  steps?: PlaybookStep[];
+  linked_trades?: string[];
+  linked_research?: string[];
+  linked_documents?: string[];
+}
+
+export interface PlaybookCreate extends PlaybookBase {
+  name: string;
+}
+
+export type PlaybookUpdate = Partial<PlaybookBase>;
+
+export interface PlaybookRead extends PlaybookBase {
+  id: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+}

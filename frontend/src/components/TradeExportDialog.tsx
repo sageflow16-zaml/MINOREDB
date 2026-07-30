@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X, FileSpreadsheet, FileJson, FileText } from 'lucide-react';
+import { Download, X, FileSpreadsheet, FileJson, FileText, Printer } from 'lucide-react';
 import { Button } from './ui/Button';
 import { FormField } from './ui/form-field';
 import { useExportTrades } from '../hooks/useTradeImportExport';
+import { tradeImportExportService } from '../api/tradeImportExport';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export default function TradeExportDialog({ projectId, open, onClose, selectedIds, availableStrategies }: Props) {
-  const [format, setFormat] = useState<'csv' | 'xlsx' | 'json'>('csv');
+  const [format, setFormat] = useState<'csv' | 'xlsx' | 'json' | 'pdf'>('csv');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [strategyId, setStrategyId] = useState('');
@@ -24,7 +25,7 @@ export default function TradeExportDialog({ projectId, open, onClose, selectedId
   const [statusFilter, setStatusFilter] = useState('');
   const exportMutation = useExportTrades(projectId);
 
-  const handleExport = () => {
+  const getParams = () => {
     const params: Record<string, any> = {};
     if (selectedIds?.length) params.ids = selectedIds;
     if (dateFrom) params.date_from = new Date(dateFrom).toISOString();
@@ -33,7 +34,16 @@ export default function TradeExportDialog({ projectId, open, onClose, selectedId
     if (symbol) params.symbol = symbol;
     if (result) params.result = result;
     if (statusFilter) params.status = statusFilter;
+    return params;
+  };
 
+  const handleExport = () => {
+    const params = getParams();
+    if (format === 'pdf') {
+      tradeImportExportService.openPdfReport(projectId, params);
+      onClose();
+      return;
+    }
     exportMutation.mutate(
       { format, params },
       {
@@ -46,6 +56,7 @@ export default function TradeExportDialog({ projectId, open, onClose, selectedId
   const formatIcon = (f: string) => {
     if (f === 'csv') return <FileText className="h-4 w-4" />;
     if (f === 'xlsx') return <FileSpreadsheet className="h-4 w-4" />;
+    if (f === 'pdf') return <Printer className="h-4 w-4" />;
     return <FileJson className="h-4 w-4" />;
   };
 
@@ -80,7 +91,7 @@ export default function TradeExportDialog({ projectId, open, onClose, selectedId
               <div>
                 <label className="text-2xs font-medium text-muted-foreground mb-2 block">Format</label>
                 <div className="flex gap-2">
-                  {(['csv', 'xlsx', 'json'] as const).map((f) => (
+                  {(['csv', 'xlsx', 'json', 'pdf'] as const).map((f) => (
                     <button
                       key={f}
                       onClick={() => setFormat(f)}

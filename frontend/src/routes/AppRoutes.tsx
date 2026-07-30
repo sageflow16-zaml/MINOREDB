@@ -39,6 +39,8 @@ const TraderIntelligence = lazy(() => import('../pages/TraderIntelligence'));
 const Strategies = lazy(() => import('../pages/Strategies'));
 const StrategyDetail = lazy(() => import('../pages/StrategyDetail'));
 const StrategyBuilder = lazy(() => import('../pages/StrategyBuilder'));
+const Playbooks = lazy(() => import('../pages/Playbooks'));
+const PlaybookDetail = lazy(() => import('../pages/PlaybookDetail'));
 const Performance = lazy(() => import('../pages/Performance'));
 const Risk = lazy(() => import('../pages/Risk'));
 const Planning = lazy(() => import('../pages/Planning'));
@@ -129,6 +131,8 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/strategies/new" element={<StrategyBuilder />} />
           <Route path="/projects/:projectId/strategies/:strategyId" element={<StrategyDetail />} />
           <Route path="/projects/:projectId/strategies/:strategyId/edit" element={<StrategyBuilder />} />
+          <Route path="/projects/:projectId/playbooks" element={<Playbooks />} />
+          <Route path="/projects/:projectId/playbooks/:playbookId" element={<PlaybookDetail />} />
           <Route path="/projects/:projectId/market-structure" element={<MarketStructure />} />
           <Route path="/projects/:projectId/collectors" element={<Collectors />} />
 <Route path="/projects/:projectId/statistics" element={<Statistics />} />

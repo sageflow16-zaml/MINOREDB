@@ -20,10 +20,11 @@ import { KpiCard } from '../components/ui/KpiCard';
 import { FormField, SectionLabel } from '../components/ui/form-field';
 import TradeImportDialog from '../components/TradeImportDialog';
 import TradeExportDialog from '../components/TradeExportDialog';
+import { ImageUpload } from '../components/ui/ImageUpload';
 import {
   Plus, X, Pencil, Trash2, Eye, TrendingUp, TrendingDown,
   DollarSign, BarChart3, Target, Activity, Search, ArrowUpDown,
-  Upload, Download
+  Upload, Download, Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { TradeRead, TradeCreate, TradeUpdate } from '../types';
@@ -245,6 +246,11 @@ export default function TradesPage() {
               <Badge variant={row.status === 'OPEN' ? 'info' : 'secondary'} size="sm">{row.status || '-'}</Badge>
             )},
             { header: 'Date', accessor: (row: any) => new Date(row.created_at).toLocaleDateString(), hideOnMobile: true },
+            { header: 'Imgs', accessor: (row: any) => (
+              row.before_image || row.after_image
+                ? <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                : null
+            ), className: 'w-[40px]' },
             { header: '', accessor: (row: any) => (
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); setViewTrade(row); }}>
@@ -357,6 +363,22 @@ export default function TradesPage() {
                         className="rounded-lg border border-input bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                       />
                     </div>
+
+                    <SectionLabel label="Screenshots" />
+                    <div className="col-span-full">
+                      <ImageUpload
+                        label="Before Trade"
+                        value={form.before_image}
+                        onChange={(url) => setForm((prev) => ({ ...prev, before_image: url }))}
+                      />
+                    </div>
+                    <div className="col-span-full">
+                      <ImageUpload
+                        label="After Trade"
+                        value={form.after_image}
+                        onChange={(url) => setForm((prev) => ({ ...prev, after_image: url }))}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-4">
@@ -435,6 +457,18 @@ export default function TradesPage() {
                           <span className="text-xs font-medium text-foreground">{String(val)}</span>
                         </div>
                       ) : null
+                    )}
+                    {viewTrade.before_image && (
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">Before Trade</span>
+                        <img src={viewTrade.before_image} alt="Before trade" className="w-full rounded-lg border border-border/50 max-h-[200px] object-contain bg-muted/20" />
+                      </div>
+                    )}
+                    {viewTrade.after_image && (
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">After Trade</span>
+                        <img src={viewTrade.after_image} alt="After trade" className="w-full rounded-lg border border-border/50 max-h-[200px] object-contain bg-muted/20" />
+                      </div>
                     )}
                   </div>
                 </div>

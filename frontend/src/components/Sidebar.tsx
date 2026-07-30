@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '../lib/animate';
 import {
-  LayoutDashboard, BarChart3, BookOpen, Brain, Database, Settings,
+  LayoutDashboard, BarChart3,   BookOpen, BookTemplate, Brain, Database, Settings,
   ChevronDown, Search, LogOut, PanelLeftClose, PanelLeft, Activity,
   CandlestickChart, Sparkles, LineChart, Target, Network, Layers,
   MessageSquare, AlertTriangle, Lightbulb, PieChart, Globe, Zap,
@@ -56,6 +56,7 @@ const navSections: NavSection[] = [
       { name: 'Workspace', path: 'workspace', icon: Monitor },
       { name: 'Journal', path: 'learning', icon: Notebook },
       { name: 'Strategies', path: 'strategies', icon: Lightbulb },
+      { name: 'Playbooks', path: 'playbooks', icon: BookTemplate },
       // Replay hidden behind feature flag — not yet implemented
       { name: 'Planning', path: 'planning', icon: Calendar },
     ],

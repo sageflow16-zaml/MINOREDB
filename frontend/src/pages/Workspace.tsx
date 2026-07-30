@@ -51,9 +51,8 @@ export default function Workspace() {
         </div>
       </div>
 
-      <WorkspaceToolbar />
-
       <WorkspaceProvider>
+        <WorkspaceToolbar />
         <WorkspaceLayout />
       </WorkspaceProvider>
     </div>
