@@ -84,6 +84,51 @@ serve(async (req) => {
         return successResponse({ toggled: !status?.enabled });
       }
 
+      case 'fetch-ohlc': {
+        const symbol = payload?.symbol;
+        const timeframe = payload?.timeframe || '1d';
+        if (!symbol) return errorResponse('Missing symbol parameter');
+        if (!alphavantageKey) return errorResponse('AlphaVantage API key not configured. Set ALPHAVANTAGE_API_KEY in project secrets to enable market data.');
+
+        let functionName: string;
+        let interval: string | undefined;
+        switch (timeframe) {
+          case '1m': functionName = 'TIME_SERIES_INTRADAY'; interval = '1min'; break;
+          case '5m': functionName = 'TIME_SERIES_INTRADAY'; interval = '5min'; break;
+          case '15m': functionName = 'TIME_SERIES_INTRADAY'; interval = '15min'; break;
+          case '30m': functionName = 'TIME_SERIES_INTRADAY'; interval = '30min'; break;
+          case '1h': functionName = 'TIME_SERIES_INTRADAY'; interval = '60min'; break;
+          case '4h': functionName = 'TIME_SERIES_DAILY'; break;
+          case '1d': functionName = 'TIME_SERIES_DAILY'; break;
+          case '1w': functionName = 'TIME_SERIES_WEEKLY'; break;
+          default: functionName = 'TIME_SERIES_DAILY';
+        }
+
+        let url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${symbol}&apikey=${alphavantageKey}&outputsize=compact`;
+        if (interval) url += `&interval=${interval}`;
+
+        const resp = await fetch(url);
+        const json = await resp.json();
+
+        const timeSeriesKey = Object.keys(json).find(k => k.includes('Time Series'));
+        if (!timeSeriesKey) {
+          const errorMsg = json.Note || json['Error Message'] || JSON.stringify(json);
+          return errorResponse(`AlphaVantage error: ${errorMsg}`);
+        }
+
+        const timeSeries = json[timeSeriesKey];
+        const candles = Object.entries(timeSeries).map(([timestamp, values]: [string, any]) => ({
+          time: Math.floor(new Date(timestamp).getTime() / 1000),
+          open: parseFloat(values['1. open']),
+          high: parseFloat(values['2. high']),
+          low: parseFloat(values['3. low']),
+          close: parseFloat(values['4. close']),
+          volume: parseInt(values['5. volume']),
+        })).sort((a, b) => a.time - b.time);
+
+        return successResponse(candles);
+      }
+
       default:
         return errorResponse(`Unknown operation: ${operation}`);
     }

@@ -71,9 +71,11 @@ export const replayService = {
   },
 
   getSession: async (projectId: string, sessionId: string): Promise<ReplayWorkspaceState> => {
-    const [sessionRes, candlesRes, tradesRes, bookmarksRes, annotationsRes, timelineRes, reviewRes, mistakesRes, screenshotsRes] = await Promise.all([
-      supabase.from('replay_session').select('*').eq('id', sessionId).eq('project_id', projectId).single(),
-      supabase.from('market_candle').select('*').eq('symbol', 'placeholder'),
+    const sessionRes = await supabase.from('replay_session').select('*').eq('id', sessionId).eq('project_id', projectId).single();
+    if (sessionRes.error) throw sessionRes.error;
+    const sessionPair = (sessionRes.data as unknown as ReplaySession)?.pair || 'EURUSD';
+    const [candlesRes, tradesRes, bookmarksRes, annotationsRes, timelineRes, reviewRes, mistakesRes, screenshotsRes] = await Promise.all([
+      supabase.from('market_candle').select('*').eq('symbol', sessionPair),
       supabase.from('replay_trade').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
       supabase.from('replay_bookmark').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
       supabase.from('replay_annotation').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
@@ -82,7 +84,6 @@ export const replayService = {
       supabase.from('replay_mistake').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
       supabase.from('replay_screenshot').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
     ]);
-    if (sessionRes.error) throw sessionRes.error;
     if (tradesRes.error) throw tradesRes.error;
     if (bookmarksRes.error) throw bookmarksRes.error;
     if (annotationsRes.error) throw annotationsRes.error;

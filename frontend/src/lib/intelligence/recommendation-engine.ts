@@ -130,7 +130,6 @@ function tradingDNAProvider(context: IntelligenceContext): UnifiedRecommendation
     });
   }
 
-  const badAssets: string[] = []; // Placeholder for future
   return recs;
 }
 

@@ -1,10 +1,11 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { createChart, CandlestickSeries, ColorType, type IChartApi, type ISeriesApi } from 'lightweight-charts';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWorkspace } from '../workspace/WorkspaceContext';
 import { renderICT } from './ICTChartRenderer';
 import { ChartToolbar } from './ChartToolbar';
-import { BarChart3, Settings } from 'lucide-react';
+import { BarChart3, Settings, Loader2, AlertTriangle, Database } from 'lucide-react';
+import { useOhlcData } from '../../hooks/useOhlcData';
 import type { ChartConfig, PanelId } from '../workspace/types';
 
 interface ChartContainerProps {
@@ -96,7 +97,31 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     dispatch({ type: 'SET_TIMEFRAME', panelId, timeframe: tf as any });
   }, [dispatch, panelId]);
 
+  const { data: candles, isLoading, error } = useOhlcData(
+    config.symbol,
+    config.timeframe,
+    !previewMode
+  );
+
+  const [dataApplied, setDataApplied] = useState(false);
+
+  useEffect(() => {
+    if (!seriesRef.current || !candles || candles.length === 0) return;
+    seriesRef.current.setData(candles);
+    setDataApplied(true);
+  }, [candles]);
+
+  useEffect(() => {
+    if (!seriesRef.current) return;
+    seriesRef.current.setData([]);
+    setDataApplied(false);
+  }, [config.symbol, config.timeframe]);
+
   const chartExists = !!chartRef.current;
+  const showChart = chartExists && dataApplied && !error;
+  const showEmpty = previewMode || (!showChart && !isLoading && !error);
+  const showError = !previewMode && error && !isLoading;
+  const showLoading = !previewMode && isLoading && !dataApplied;
 
   return (
     <div className="flex flex-col h-full">
@@ -111,12 +136,35 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
         onToggleSessions={() => dispatch({ type: 'TOGGLE_SESSION', panelId })}
       />
       <div className="relative flex-1 min-h-[200px]">
-        <div ref={containerRef} className={chartExists ? 'absolute inset-0' : 'hidden'} />
-        {!chartExists && (
+        <div ref={containerRef} className={showChart ? 'absolute inset-0' : 'hidden'} />
+        {showLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
-            <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
+            <Loader2 className="w-6 h-6 text-muted-foreground/40 animate-spin" />
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              Loading market data for {config.symbol}...
+            </p>
+          </div>
+        )}
+        {showError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
+            <AlertTriangle className="w-8 h-8 text-amber-500/60" />
+            <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[300px]">
+              {(error as Error)?.message?.includes('AlphaVantage API key not configured')
+                ? 'Market data feed requires an AlphaVantage API key. Add ALPHAVANTAGE_API_KEY to your Supabase project secrets to enable live charts.'
+                : (error as Error)?.message || 'Failed to load market data. Check your API configuration.'}
+            </p>
+            <span className="text-[10px] text-muted-foreground/50 font-mono">
+              {config.symbol} ({config.timeframe})
+            </span>
+          </div>
+        )}
+        {showEmpty && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
+            <Database className="w-8 h-8 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[260px]">
-              Chart unavailable. Connect a project with market data to display live charts.
+              {previewMode
+                ? 'Chart unavailable in preview mode. Open a project to view live market data.'
+                : 'No market data received. Select a symbol to begin.'}
             </p>
             {projectId ? (
               <button

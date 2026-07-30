@@ -6,11 +6,30 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/ui/skeleton';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { Search as SearchIcon, Sparkles } from 'lucide-react';
+import { ErrorState, EmptyState } from '../components/ui/Feedback';
+import { Search as SearchIcon, FileText, MessageCircle, TrendingUp, Tag, Globe, BookOpen, LucideIcon } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
+
+const TYPE_ICONS: Record<string, LucideIcon> = {
+  source: FileText, claim: MessageCircle, trade: TrendingUp, concept: Tag,
+  interpretation: Globe, document: BookOpen, rule: BookOpen, pattern: TrendingUp,
+};
+
+function guessType(result: Record<string, unknown>): string {
+  return (result.type as string) || (result.entity_type as string) || (result.kind as string) || 'unknown';
+}
+
+function renderValue(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') return String(v);
+  return '';
+}
+
+const KNOWN_META_KEYS = new Set(['id', 'project_id', 'created_at', 'updated_at', 'type', 'entity_type', 'kind', 'score', 'rank', 'similarity']);
 
 export default function SearchPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -85,17 +104,51 @@ export default function SearchPage() {
             <>
               <p className="text-xs text-muted-foreground">{data.length} result{data.length !== 1 ? 's' : ''} found</p>
               <div className="space-y-3">
-                {data.map((result, i) => (
-                  <motion.div key={'result-' + i} variants={item}>
-                    <Card className="transition-all hover:shadow-md">
-                      <CardContent className="p-4">
-                        <pre className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
-                          {JSON.stringify(result, null, 2)}
-                        </pre>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                {data.map((result, i) => {
+                  const r = result as Record<string, unknown>;
+                  const type = guessType(r);
+                  const Icon = TYPE_ICONS[type] || SearchIcon;
+                  const content = renderValue(r.content || r.text || r.description || r.verbatim_text || r.name || r.title || '');
+                  const metaKeys = Object.keys(r).filter(k => !KNOWN_META_KEYS.has(k) && k !== 'content' && k !== 'text' && k !== 'description' && k !== 'verbatim_text' && k !== 'name' && k !== 'title');
+                  return (
+                    <motion.div key={'result-' + i} variants={item}>
+                      <Card className="transition-all hover:shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                              <Icon className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1 space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-3xs font-medium uppercase tracking-wider text-muted-foreground">{type}</span>
+                                {r.score != null && (
+                                  <span className="text-3xs text-muted-foreground">Score: {Number(r.score).toFixed(2)}</span>
+                                )}
+                              </div>
+                              {content && (
+                                <p className="text-xs text-foreground leading-relaxed">{content}</p>
+                              )}
+                              {metaKeys.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                  {metaKeys.slice(0, 4).map((k) => {
+                                    const v = renderValue(r[k]);
+                                    if (!v) return null;
+                                    return (
+                                      <span key={k} className="inline-flex items-center gap-1 rounded-md bg-muted/30 px-2 py-0.5 text-3xs text-muted-foreground">
+                                        <Tag className="w-2.5 h-2.5" />
+                                        {k}: {v.length > 60 ? v.slice(0, 60) + '...' : v}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
               </div>
             </>
           )}
