@@ -113,23 +113,28 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
       <div className="relative flex-1 min-h-[200px]">
         <div ref={containerRef} className={chartExists ? 'absolute inset-0' : 'hidden'} />
         {!chartExists && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card/50 border border-dashed border-border rounded-lg mx-1 mb-1">
-            <BarChart3 className="w-12 h-12 text-muted-foreground/40" />
-            <div className="text-center max-w-[300px]">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Chart Unavailable</p>
-              <p className="text-2xs text-muted-foreground/60 leading-relaxed mb-3">
-                Connect a project with market data to display live charts. An active data feed and configured broker or market data source is required.
-              </p>
-              {projectId && (
-                <button
-                  onClick={() => navigate(`/projects/${projectId}/settings`)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  Open Project Settings
-                </button>
-              )}
-            </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
+            <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[260px]">
+              Chart unavailable. Connect a project with market data to display live charts.
+            </p>
+            {projectId ? (
+              <button
+                onClick={() => navigate(`/projects/${projectId}/settings`)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                Project Settings
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/projects')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                Select Project
+              </button>
+            )}
           </div>
         )}
       </div>

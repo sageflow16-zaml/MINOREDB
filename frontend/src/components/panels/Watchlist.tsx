@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useWorkspace } from '../workspace/WorkspaceContext';
 import { cn } from '../../lib/utils';
-import { Search, Star, Plus, TrendingUp, TrendingDown } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 
 const FAVORITES_KEY = 'minore_watchlist_favorites';
 
@@ -38,10 +38,10 @@ export function Watchlist() {
   );
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Watchlist</h3>
-      </div>
+    <div className="flex flex-col h-full">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+        <Star className="w-3.5 h-3.5" /> Watchlist
+      </h3>
       <div className="relative mb-2">
         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
         <input
@@ -51,7 +51,13 @@ export function Watchlist() {
           className="w-full pl-7 pr-2 py-1 text-xs bg-muted/50 border border-border rounded-md outline-none focus:border-primary/50"
         />
       </div>
-      <div className="space-y-0.5 max-h-[240px] overflow-y-auto">
+      <div className="flex-1 space-y-0.5 overflow-y-auto">
+        {items.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-2 py-4 px-2">
+            <Search className="w-6 h-6 text-muted-foreground/30" />
+            <p className="text-xs text-muted-foreground text-center">No symbols match your search.</p>
+          </div>
+        )}
         {items.map((item) => (
           <div
             key={item.symbol}
