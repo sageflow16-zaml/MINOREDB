@@ -6,7 +6,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/ui/skeleton';
-import { cn } from '../lib/utils';
+import { cn, safeToFixed } from '../lib/utils';
 import { useMarketEvents } from '../hooks/useMarketIntelligence';
 import { useOhlcData } from '../hooks/useOhlcData';
 import {
@@ -99,7 +99,7 @@ export default function MacroIntelligencePage() {
           <div key={k.title} className="rounded-lg border border-border bg-card px-3 py-2">
             <p className="text-3xs font-medium text-muted-foreground uppercase tracking-wider">{k.title}</p>
             <p className="text-sm font-semibold font-mono text-foreground mt-0.5">
-              {k.value != null ? k.value.toFixed(2) : '—'}
+              {safeToFixed(k.value, 2)}
             </p>
           </div>
         ))}

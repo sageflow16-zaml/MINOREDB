@@ -76,3 +76,13 @@ export function normalizeObject<T extends Record<string, unknown>>(value: T | nu
 export function safeArray<T>(value: T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
+
+export function safeToFixed(value: unknown, decimals: number = 2, fallback: string = '—'): string {
+  if (value == null) return fallback;
+  if (typeof value === 'number' && !Number.isNaN(value)) return value.toFixed(decimals);
+  if (typeof value === 'string') {
+    const num = Number(value);
+    if (!Number.isNaN(num)) return num.toFixed(decimals);
+  }
+  return fallback;
+}

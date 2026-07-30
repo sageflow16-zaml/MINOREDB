@@ -1,4 +1,4 @@
-import { cn } from '../../lib/utils';
+import { cn, safeToFixed } from '../../lib/utils';
 
 interface CalendarHeatmapProps {
   data: Record<string, number>;
@@ -101,7 +101,7 @@ export function CalendarHeatmap({
                     backgroundColor: day.pnl === 0 ? 'transparent' : color,
                     opacity: day.pnl === 0 ? 1 : bgOpacity,
                   }}
-                  title={showTooltip ? `${day.date.toLocaleDateString()}: ${day.pnl >= 0 ? '+' : ''}${day.pnl.toFixed(2)}` : undefined}
+                  title={showTooltip ? `${day.date.toLocaleDateString()}: ${day.pnl >= 0 ? '+' : ''}${safeToFixed(day.pnl, 2)}` : undefined}
                 >
                   <span className={cn(
                     'absolute inset-0 flex items-center justify-center text-3xs font-medium',

@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { MainLayout } from '../layouts/MainLayout';
 import { LoadingSpinner } from '../components/ui/Feedback';
+import { ErrorFallback } from '../components/ui/ErrorFallback';
 import { ProtectedRoute } from './ProtectedRoute';
 
 const Dashboard = lazy(() => import('../pages/Dashboard'));
@@ -118,7 +120,7 @@ export const AppRoutes = () => (
         <Route path="/" element={<Navigate to="/projects" />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/:projectId/dashboard" element={<Dashboard />} />
+          <Route path="/projects/:projectId/dashboard" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Dashboard /></ErrorBoundary>} />
           <Route path="/projects/:projectId/projects" element={<Projects />} />
           <Route path="/projects/:projectId/sources" element={<Sources />} />
           <Route path="/projects/:projectId/claims" element={<Claims />} />
@@ -142,7 +144,7 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/similarity" element={<Similarity />} />
           <Route path="/projects/:projectId/decision" element={<DecisionSupport />} />
           <Route path="/projects/:projectId/learning" element={<Learning />} />
-          <Route path="/projects/:projectId/macro" element={<MacroIntelligence />} />
+          <Route path="/projects/:projectId/macro" element={<ErrorBoundary FallbackComponent={ErrorFallback}><MacroIntelligence /></ErrorBoundary>} />
           <Route path="/projects/:projectId/mt5" element={<MT5Integration />} />
           <Route path="/projects/:projectId/tradingview" element={<TradingViewPage />} />
           <Route path="/projects/:projectId/conflicts" element={<Conflicts />} />
@@ -156,11 +158,11 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/knowledge-graph" element={<KnowledgeGraph />} />
           <Route path="/projects/:projectId/knowledge-engine" element={<KnowledgeEngine />} />
           <Route path="/projects/:projectId/analyst" element={<Analyst />} />
-          <Route path="/projects/:projectId/research" element={<Research />} />
+          <Route path="/projects/:projectId/research" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Research /></ErrorBoundary>} />
           {/* <Route path="/projects/:projectId/replay" element={<Replay />} /> */}
           <Route path="/projects/:projectId/trader-intelligence" element={<TraderIntelligence />} />
           <Route path="/projects/:projectId/knowledge-center" element={<KnowledgeCenter />} />
-          <Route path="/projects/:projectId/ai" element={<AIDashboard />} />
+          <Route path="/projects/:projectId/ai" element={<ErrorBoundary FallbackComponent={ErrorFallback}><AIDashboard /></ErrorBoundary>} />
           <Route path="/projects/:projectId/ai/coach" element={<AICoach />} />
           <Route path="/projects/:projectId/ai/profile" element={<AIProfile />} />
           <Route path="/projects/:projectId/ai/knowledge" element={<KnowledgeExplorer />} />
@@ -211,7 +213,7 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/broker/setup" element={<BrokerSetup />} />
           <Route path="/projects/:projectId/broker/:connectionId" element={<BrokerDetail />} />
           <Route path="/projects/:projectId/broker/analytics" element={<BrokerAnalyticsPage />} />
-          <Route path="/projects/:projectId/workspace" element={<Workspace />} />
+          <Route path="/projects/:projectId/workspace" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Workspace /></ErrorBoundary>} />
           <Route path="/projects/:projectId/ict" element={<ICTSmartEngine />} />
           <Route path="/projects/:projectId/brain" element={<BrainDashboard />} />
           <Route path="/projects/:projectId/intelligence" element={<IntelligenceDashboard />} />

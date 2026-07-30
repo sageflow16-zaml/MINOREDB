@@ -1,10 +1,49 @@
+import { useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProject } from '../context/ProjectContext';
 import { useProjects } from '../hooks/useProjects';
-import { WorkspaceProvider } from '../components/workspace/WorkspaceContext';
+import { WorkspaceProvider, useWorkspace } from '../components/workspace/WorkspaceContext';
 import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout';
 import { WorkspaceToolbar } from '../components/workspace/WorkspaceToolbar';
-import { FolderOpen, ChevronDown } from 'lucide-react';
+import { FolderOpen, ChevronDown, BarChart3, Settings } from 'lucide-react';
+
+function WorkspaceContent({ hasProject }: { hasProject: boolean }) {
+  const { state, dispatch } = useWorkspace();
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+    if (hasProject && state.layout.previewMode) {
+      dispatch({ type: 'TOGGLE_PREVIEW_MODE' });
+    }
+    initialized.current = true;
+  }, [hasProject, state.layout.previewMode, dispatch]);
+
+  if (!hasProject) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md px-8">
+          <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/40" />
+          <h3 className="text-base font-semibold">No Project Selected</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Select a project from the dropdown above to view your workspace charts.
+          </p>
+          <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            To use live market data, ensure your Supabase project has a valid
+            Twelve Data API key in the project secrets.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <WorkspaceToolbar />
+      <WorkspaceLayout />
+    </>
+  );
+}
 
 export default function Workspace() {
   const { projectId: urlProjectId } = useParams<{ projectId: string }>();
@@ -52,8 +91,7 @@ export default function Workspace() {
       </div>
 
       <WorkspaceProvider>
-        <WorkspaceToolbar />
-        <WorkspaceLayout />
+        <WorkspaceContent hasProject={!!activeProjectId} />
       </WorkspaceProvider>
     </div>
   );

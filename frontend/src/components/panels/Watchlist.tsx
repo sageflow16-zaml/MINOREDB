@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useWorkspace } from '../workspace/WorkspaceContext';
-import { cn } from '../../lib/utils';
+import { cn, safeToFixed } from '../../lib/utils';
 import { Search, Star, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 const FAVORITES_KEY = 'minore_watchlist_favorites';
@@ -122,7 +122,7 @@ export function Watchlist() {
               <div className="flex items-center gap-2 shrink-0">
                 {item.last > 0 && (
                   <span className="text-xs font-mono text-muted-foreground">
-                    {item.last.toFixed(item.last > 100 ? 2 : item.last > 1 ? 4 : 6)}
+                    {safeToFixed(item.last, item.last > 100 ? 2 : item.last > 1 ? 4 : 6)}
                   </span>
                 )}
                 {item.change !== 0 && (
@@ -133,7 +133,7 @@ export function Watchlist() {
                     {item.change > 0 ? <TrendingUp className="w-2.5 h-2.5" />
                       : item.change < 0 ? <TrendingDown className="w-2.5 h-2.5" />
                       : <Minus className="w-2.5 h-2.5" />}
-                    {item.changePercent.toFixed(2)}%
+                    {safeToFixed(item.changePercent, 2)}%
                   </span>
                 )}
               </div>

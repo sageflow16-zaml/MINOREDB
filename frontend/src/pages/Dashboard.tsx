@@ -17,7 +17,7 @@ import {
   Brain, Bot, ChevronRight, ArrowUpRight, ArrowDownRight,
   CalendarDays, Network, Clock, Layers, Lightbulb,
 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, safeToFixed } from '../lib/utils';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -104,10 +104,24 @@ const tooltipStyle = chartTooltipStyle.contentStyle;
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
-  const stats = useDashboardStats(projectId!);
-  const trades = useTrades(projectId!);
-  const { data: learningEvents } = useLearningEvents(projectId!, 5);
-  const { data: rawEquityCurve } = useEquityCurve(projectId!);
+  if (!projectId) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Layers className="h-14 w-14 text-muted" />
+          <p className="text-sm font-medium text-foreground">No Project Selected</p>
+          <p className="text-xs text-muted">Select a project to view your dashboard.</p>
+          <Button variant="outline" size="sm" onClick={() => navigate('/projects')}>
+            Browse Projects
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  const stats = useDashboardStats(projectId);
+  const trades = useTrades(projectId);
+  const { data: learningEvents } = useLearningEvents(projectId, 5);
+  const { data: rawEquityCurve } = useEquityCurve(projectId);
   const [equityPeriod, setEquityPeriod] = useState('1M');
 
   if (stats.isLoading) {
@@ -140,13 +154,13 @@ export default function DashboardPage() {
   if (stats.isError) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10">
             <TrendingUp className="h-6 w-6 text-danger" />
           </div>
           <p className="text-sm font-medium text-foreground">Error loading dashboard</p>
-          <p className="text-xs text-muted">There was a problem fetching your data.</p>
-          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+          <p className="text-xs text-muted">{(stats.error as Error)?.message || 'There was a problem fetching your data.'}</p>
+          <Button variant="outline" size="sm" onClick={() => stats.refetch()}>
             Try Again
           </Button>
         </div>
@@ -260,7 +274,7 @@ export default function DashboardPage() {
         />
         <KpiCard
           title="Max Drawdown"
-          value={s?.max_drawdown != null ? `${s.max_drawdown.toFixed(1)}%` : '—'}
+          value={s?.max_drawdown != null ? `${safeToFixed(s.max_drawdown, 1)}%` : '—'}
           icon={Award}
           variant={(s?.max_drawdown ?? 0) > 20 ? 'danger' : (s?.max_drawdown ?? 0) > 10 ? 'warning' : 'success'}
         />
@@ -338,7 +352,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData} {...chartDefaultProps}>
                   <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`$${v.toFixed(2)}`, 'P&L']} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`$${safeToFixed(v, 2)}`, 'P&L']} />
                   <Bar
                     dataKey="pnl"
                     shape={(props: any) => {
@@ -395,11 +409,11 @@ export default function DashboardPage() {
                   if (row.pnl == null) return '-';
                   return (
                     <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>
-                      {row.pnl >= 0 ? '+' : ''}${row.pnl?.toFixed(2)}
+                      {row.pnl >= 0 ? '+' : ''}${safeToFixed(row.pnl, 2)}
                     </span>
                   );
                 }, width: '100px' },
-                { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr?.toFixed(2) ?? '-', width: '60px', hideOnMobile: true },
+                { id: 'rr', header: 'R:R', accessor: (row: any) => safeToFixed(row.rr, 2), width: '60px', hideOnMobile: true },
                 { id: 'result', header: 'Result', accessor: (row: any) => {
                   if (!row.result) return '-';
                   return (
