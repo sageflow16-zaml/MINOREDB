@@ -5,6 +5,116 @@ import { successResponse, errorResponse } from '../_shared/response.ts';
 
 const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || '';
 const alphavantageKey = Deno.env.get('ALPHAVANTAGE_API_KEY') || '';
+const twelveDataKey = Deno.env.get('TWELVEDATA_API_KEY') || '';
+
+const TWELVEDATA_BASE = 'https://api.twelvedata.com';
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+function mapSymbol(symbol: string): string {
+  if (/^[A-Z]{6}$/.test(symbol)) {
+    const major = symbol.slice(0, 3);
+    const minor = symbol.slice(3);
+    const forexMajors = ['EUR', 'GBP', 'USD', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF'];
+    if ((forexMajors.includes(major) && forexMajors.includes(minor)) ||
+        symbol === 'XAUUSD' || symbol === 'XAGUSD' || symbol === 'XPTUSD' || symbol === 'XPDUSD') {
+      return `${major}/${minor}`;
+    }
+  }
+  if (symbol === 'BTCUSD' || symbol === 'ETHUSD') {
+    return `${symbol.slice(0, 3)}/${symbol.slice(3)}`;
+  }
+  const indexMap: Record<string, string> = { DXY: 'USDX', US30: 'DJI', SPX500: 'SPX', NAS100: 'IXIC', UK100: 'UKX', JPN225: 'NI225', VIX: 'VIX' };
+  return indexMap[symbol] || symbol;
+}
+
+function mapInterval(timeframe: string): string {
+  const map: Record<string, string> = { '1m': '1min', '5m': '5min', '15m': '15min', '30m': '30min', '1h': '1h', '4h': '4h', '1d': '1day', '1w': '1week' };
+  return map[timeframe] || '1day';
+}
+
+async function fetchTwelveData(symbol: string, interval: string, attempt = 1): Promise<{ status: string; values?: any[]; error?: string }> {
+  const url = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&apikey=${twelveDataKey}&outputsize=5000`;
+  const resp = await fetch(url);
+  const json = await resp.json();
+  if (json.status === 'error') {
+    if (resp.status === 429) {
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+        return fetchTwelveData(symbol, interval, attempt + 1);
+      }
+      return { status: 'error', error: 'Rate limit exceeded. Try again later.' };
+    }
+    if (resp.status >= 500 && attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+      return fetchTwelveData(symbol, interval, attempt + 1);
+    }
+    return { status: 'error', error: json.message || json.error || 'Twelve Data API error.' };
+  }
+  if (!json.values || json.values.length === 0) {
+    return { status: 'error', error: 'No data returned from market provider.' };
+  }
+  return { status: 'ok', values: json.values };
+}
+
+function parseTwelveCandles(values: any[]): { time: number; open: number; high: number; low: number; close: number; volume: number }[] {
+  return values.map((v: any) => {
+    const dt = v.datetime.endsWith('Z') ? v.datetime : v.datetime.includes(' ') ? v.datetime.replace(' ', 'T') + 'Z' : v.datetime + 'T00:00:00Z';
+    return {
+      time: Math.floor(new Date(dt).getTime() / 1000),
+      open: parseFloat(v.open),
+      high: parseFloat(v.high),
+      low: parseFloat(v.low),
+      close: parseFloat(v.close),
+      volume: parseInt(v.volume) || 0,
+    };
+  }).filter(c => !isNaN(c.time)).sort((a, b) => a.time - b.time);
+}
+
+async function fetchOhlc(supabase: ReturnType<typeof createClient>, symbol: string, timeframe: string, projectId?: string) {
+  if (!twelveDataKey) {
+    return errorResponse('TWELVEDATA_API_KEY not configured. Chart data unavailable. Add this secret in Supabase project settings.');
+  }
+  const mappedSymbol = mapSymbol(symbol);
+  const interval = mapInterval(timeframe);
+
+  if (projectId) {
+    const { data: cached } = await supabase.from('market_data_cache')
+      .select('data, expires_at')
+      .eq('project_id', projectId)
+      .eq('symbol', symbol)
+      .eq('timeframe', timeframe)
+      .eq('data_type', 'ohlc')
+      .maybeSingle();
+    if (cached && cached.expires_at && new Date(cached.expires_at) > new Date()) {
+      return successResponse(cached.data);
+    }
+  }
+
+  const result = await fetchTwelveData(mappedSymbol, interval);
+  if (result.status === 'error') {
+    return errorResponse(result.error || 'Market data unavailable.');
+  }
+  const candles = parseTwelveCandles(result.values!);
+  if (candles.length === 0) {
+    return errorResponse('No candle data returned for this symbol/timeframe.');
+  }
+
+  if (projectId) {
+    const ttlMs = ['1day', '1week', '1month'].includes(interval) ? 3_600_000 : 60_000;
+    await supabase.from('market_data_cache').upsert({
+      project_id: projectId,
+      symbol,
+      timeframe,
+      data_type: 'ohlc',
+      data: candles,
+      cached_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + ttlMs).toISOString(),
+    }, { onConflict: 'project_id, symbol, timeframe, data_type', ignoreDuplicates: false });
+  }
+
+  return successResponse(candles);
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -33,6 +143,7 @@ serve(async (req) => {
             if (news.feed) {
               for (const item of news.feed) {
                 await supabase.from('macro_event').insert({
+                  project_id,
                   event_date: item.time_published,
                   title: item.title,
                   category: 'news',
@@ -51,6 +162,7 @@ serve(async (req) => {
             if (cal.entries) {
               for (const entry of cal.entries) {
                 await supabase.from('macro_event').insert({
+                  project_id,
                   event_date: entry.date,
                   title: entry.event,
                   country: entry.country,
@@ -84,50 +196,8 @@ serve(async (req) => {
         return successResponse({ toggled: !status?.enabled });
       }
 
-      case 'fetch-ohlc': {
-        const symbol = payload?.symbol;
-        const timeframe = payload?.timeframe || '1d';
-        if (!symbol) return errorResponse('Missing symbol parameter');
-        if (!alphavantageKey) return errorResponse('AlphaVantage API key not configured. Set ALPHAVANTAGE_API_KEY in project secrets to enable market data.');
-
-        let functionName: string;
-        let interval: string | undefined;
-        switch (timeframe) {
-          case '1m': functionName = 'TIME_SERIES_INTRADAY'; interval = '1min'; break;
-          case '5m': functionName = 'TIME_SERIES_INTRADAY'; interval = '5min'; break;
-          case '15m': functionName = 'TIME_SERIES_INTRADAY'; interval = '15min'; break;
-          case '30m': functionName = 'TIME_SERIES_INTRADAY'; interval = '30min'; break;
-          case '1h': functionName = 'TIME_SERIES_INTRADAY'; interval = '60min'; break;
-          case '4h': functionName = 'TIME_SERIES_DAILY'; break;
-          case '1d': functionName = 'TIME_SERIES_DAILY'; break;
-          case '1w': functionName = 'TIME_SERIES_WEEKLY'; break;
-          default: functionName = 'TIME_SERIES_DAILY';
-        }
-
-        let url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${symbol}&apikey=${alphavantageKey}&outputsize=compact`;
-        if (interval) url += `&interval=${interval}`;
-
-        const resp = await fetch(url);
-        const json = await resp.json();
-
-        const timeSeriesKey = Object.keys(json).find(k => k.includes('Time Series'));
-        if (!timeSeriesKey) {
-          const errorMsg = json.Note || json['Error Message'] || JSON.stringify(json);
-          return errorResponse(`AlphaVantage error: ${errorMsg}`);
-        }
-
-        const timeSeries = json[timeSeriesKey];
-        const candles = Object.entries(timeSeries).map(([timestamp, values]: [string, any]) => ({
-          time: Math.floor(new Date(timestamp).getTime() / 1000),
-          open: parseFloat(values['1. open']),
-          high: parseFloat(values['2. high']),
-          low: parseFloat(values['3. low']),
-          close: parseFloat(values['4. close']),
-          volume: parseInt(values['5. volume']),
-        })).sort((a, b) => a.time - b.time);
-
-        return successResponse(candles);
-      }
+      case 'fetch-ohlc':
+        return await fetchOhlc(supabase, payload?.symbol, payload?.timeframe || '1d', project_id);
 
       default:
         return errorResponse(`Unknown operation: ${operation}`);

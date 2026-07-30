@@ -1,20 +1,29 @@
+import { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from 'recharts';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { KpiCard } from '../components/ui/KpiCard';
+import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { ErrorState } from '../components/ui/Feedback';
-import { Skeleton, SkeletonCard } from '../components/ui/skeleton';
-import { useMacroState, useMacroRefresh } from '../hooks/useMacro';
-import { RefreshCw, TrendingUp, DollarSign, BarChart3, Activity, List, Database, AlertCircle } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
+import { cn } from '../lib/utils';
+import { useMarketEvents } from '../hooks/useMarketIntelligence';
+import { useOhlcData } from '../hooks/useOhlcData';
+import {
+  Calendar, Globe, Search, Filter, Clock, TrendingUp, Activity,
+  AlertTriangle, DollarSign, RefreshCw
+} from 'lucide-react';
 
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
-const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
-const tooltipStyle = { background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' };
-
-const importanceBadge: Record<string, 'destructive' | 'warning' | 'default'> = { high: 'destructive', medium: 'warning', low: 'default' };
+const COUNTRY_FLAGS: Record<string, string> = {
+  US: '🇺🇸', EU: '🇪🇺', UK: '🇬🇧', JP: '🇯🇵', AU: '🇦🇺', CA: '🇨🇦', CH: '🇨🇭', CN: '🇨🇳', NZ: '🇳🇿', SE: '🇸🇪', NO: '🇳🇴',
+};
+const COUNTRY_CURRENCY: Record<string, string> = {
+  US: 'USD', EU: 'EUR', UK: 'GBP', JP: 'JPY', AU: 'AUD', CA: 'CAD', CH: 'CHF', CN: 'CNY', NZ: 'NZD',
+};
+const IMPACT_VARIANT: Record<string, 'destructive' | 'warning' | 'info'> = { high: 'destructive', medium: 'warning', low: 'info' };
+const COUNTRIES = ['All', 'US', 'EU', 'UK', 'JP', 'AU', 'CA', 'CH', 'NZ'];
+const IMPACTS = ['All', 'high', 'medium', 'low'];
+const PERIODS = ['Today', 'This Week', 'All'];
 
 function importanceLabel(v: any): string {
   if (typeof v === 'string') return v;
@@ -24,213 +33,171 @@ function importanceLabel(v: any): string {
   return 'low';
 }
 
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.03 } } };
+const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } };
+
 export default function MacroIntelligencePage() {
-  const state = useMacroState();
-  const refresh = useMacroRefresh();
+  const { projectId } = useParams<{ projectId: string }>();
+  const [period, setPeriod] = useState('Today');
+  const [country, setCountry] = useState('All');
+  const [impact, setImpact] = useState('All');
+  const [search, setSearch] = useState('');
 
-  if (state.isLoading) {
-    return (
-      <div className="p-4 md:p-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Array.from({ length: 7 }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-72 rounded-xl" />
-          <Skeleton className="h-72 rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-  if (state.isError) return <ErrorState message="Error loading macro data." onRetry={() => state.refetch()} />;
+  const { data: rawEvents = [], isLoading, error, refetch } = useMarketEvents(
+    projectId!, undefined, undefined,
+    country === 'All' ? undefined : country,
+    impact === 'All' ? undefined : impact,
+  );
 
-  const data = state.data;
-  const snapshot = null;
-  const todayEvents = data?.events_today || [];
-  const upcoming = data?.upcoming_events || [];
-  const recent = data?.recent_releases || [];
+  const { data: dxy } = useOhlcData('DXY', '1h', projectId, !!projectId);
+  const { data: gold } = useOhlcData('XAUUSD', '1h', projectId, !!projectId);
+  const { data: vix } = useOhlcData('VIX', '1h', projectId, !!projectId);
 
-  const macroTimeline = (todayEvents as any[]).map((e) => {
-    const imp = importanceLabel(e.importance);
-    return { name: e.event_name || e.title || 'Unknown', importance: imp === 'high' ? 3 : imp === 'medium' ? 2 : 1, actual: e.actual, forecast: e.forecast };
-  });
+  useEffect(() => {
+    const timer = setInterval(() => refetch(), 120_000);
+    return () => clearInterval(timer);
+  }, [refetch]);
+
+  const latestPx = (data: any[] | undefined) => data && data.length > 0 ? data[data.length - 1].close : null;
+
+  const filtered = useMemo(() => {
+    const now = new Date();
+    const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+    const todayStr = now.toISOString().slice(0, 10);
+
+    return rawEvents.filter((ev: any) => {
+      if (search && !(ev.event_name || ev.title || '').toLowerCase().includes(search.toLowerCase())) return false;
+      const dateStr = (ev.event_date || '').slice(0, 10);
+      if (period === 'Today' && dateStr !== todayStr) return false;
+      if (period === 'This Week') {
+        const d = new Date(ev.event_date);
+        if (d < weekStart || d > now) return false;
+      }
+      return true;
+    }).sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+  }, [rawEvents, period, search]);
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="p-4 md:p-6 space-y-6">
-      <motion.div variants={item} className="flex items-center justify-between">
-        <PageHeader title="Macro Intelligence" description="Global market data and economic calendar" />
-        <Button variant="outline" size="sm" onClick={() => refresh.mutate()} isLoading={refresh.isPending}>
+    <motion.div variants={container} initial="hidden" animate="show" className="p-4 md:p-6 space-y-5">
+      <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <PageHeader title="Macro Terminal" description="Bloomberg-style economic calendar and market dashboard" />
+        <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isLoading}>
           <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Refresh
         </Button>
       </motion.div>
 
-      {/* Market Dashboard Cards — snapshot currently unavailable */}
-      <motion.div variants={item}>
-        <div className="flex items-center gap-2 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3 mb-4">
-          <AlertCircle className="h-4 w-4 text-warning shrink-0" />
-          <p className="text-xs text-warning">Market snapshot data is not available. The <code className="text-3xs bg-warning/10 px-1 rounded">market_snapshot</code> table requires a collector to populate it.</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          <KpiCard title="DXY" value="--" icon={DollarSign} variant="info" size="sm" />
-          <KpiCard title="US10Y" value="--" icon={TrendingUp} variant="info" size="sm" />
-          <KpiCard title="US02Y" value="--" icon={TrendingUp} variant="info" size="sm" />
-          <KpiCard title="Yield Curve" value="--" icon={Activity} variant="info" size="sm" />
-          <KpiCard title="Gold" value="--" icon={BarChart3} variant="info" size="sm" />
-          <KpiCard title="Oil" value="--" icon={BarChart3} variant="info" size="sm" />
-          <KpiCard title="VIX" value="--" icon={Activity} variant="info" size="sm" />
-        </div>
+      <motion.div variants={item} className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        {[
+          { title: 'DXY', value: latestPx(dxy), icon: DollarSign },
+          { title: 'XAUUSD', value: latestPx(gold), icon: TrendingUp },
+          { title: 'VIX', value: latestPx(vix), icon: Activity },
+          { title: 'US10Y', value: '—', icon: TrendingUp },
+          { title: 'US02Y', value: '—', icon: TrendingUp },
+          { title: 'Yield', value: '—', icon: Activity },
+          { title: 'Oil', value: '—', icon: Activity },
+        ].map((k) => (
+          <div key={k.title} className="rounded-lg border border-border bg-card px-3 py-2">
+            <p className="text-3xs font-medium text-muted-foreground uppercase tracking-wider">{k.title}</p>
+            <p className="text-sm font-semibold font-mono text-foreground mt-0.5">
+              {k.value != null ? k.value.toFixed(2) : '—'}
+            </p>
+          </div>
+        ))}
       </motion.div>
 
-      {/* Charts Row */}
-      <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Yield History</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Database className="h-8 w-8 text-muted mb-2" />
-              <p className="text-xs text-muted">Chart data unavailable</p>
-              <p className="text-3xs text-muted mt-1">No market snapshot history has been collected yet.</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">DXY Trend</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Database className="h-8 w-8 text-muted mb-2" />
-              <p className="text-xs text-muted">Chart data unavailable</p>
-              <p className="text-3xs text-muted mt-1">No market snapshot history has been collected yet.</p>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Macro Timeline */}
       <motion.div variants={item}>
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Macro Timeline</CardTitle></CardHeader>
-          <CardContent>
-            {macroTimeline.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={macroTimeline}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="importance" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} name="Importance" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Database className="h-8 w-8 text-muted mb-2" />
-                <p className="text-xs text-muted">No events today</p>
-                <p className="text-3xs text-muted mt-1">Events will appear here after the economic calendar collector runs.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Economic Calendar */}
-      <motion.div variants={item}>
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Economic Calendar</CardTitle></CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30 text-left text-3xs font-medium uppercase text-muted-foreground">
-                    <th className="px-4 py-2.5">Event</th>
-                    <th className="px-4 py-2.5">Country</th>
-                    <th className="px-4 py-2.5">Importance</th>
-                    <th className="px-4 py-2.5 text-right">Actual</th>
-                    <th className="px-4 py-2.5 text-right">Forecast</th>
-                    <th className="px-4 py-2.5 text-right">Previous</th>
-                    <th className="px-4 py-2.5">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {todayEvents.map((event: any) => {
-                    const name = event.event_name || event.title || 'Unknown';
-                    const imp = importanceLabel(event.importance);
-                    const time = event.release_time || event.event_date || '';
-                    return (
-                      <tr key={event.id} className="hover:bg-muted/20 transition-colors">
-                        <td className="px-4 py-2.5 font-medium text-foreground">{name}</td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{event.country || '—'}</td>
-                        <td className="px-4 py-2.5">
-                          <Badge variant={importanceBadge[imp] || 'default'} size="sm">{imp}</Badge>
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-foreground">{event.actual ?? '—'}</td>
-                        <td className="px-4 py-2.5 text-right text-muted-foreground">{event.forecast ?? '—'}</td>
-                        <td className="px-4 py-2.5 text-right text-muted-foreground">{event.previous ?? '—'}</td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{time ? new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                      </tr>
-                    );
-                  })}
-                  {todayEvents.length === 0 && (
-                    <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground text-xs">No events today</td></tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 border-b border-border bg-muted/20">
+              <div className="flex items-center gap-1">
+                {PERIODS.map((p) => (
+                  <button key={p} onClick={() => setPeriod(p)}
+                    className={cn('px-2.5 py-1 text-xs font-medium rounded-md transition-colors',
+                      period === p ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    )}>{p}</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5 ml-auto">
+                <Globe className="w-3 h-3 text-muted-foreground" />
+                <select value={country} onChange={e => setCountry(e.target.value)}
+                  className="h-7 rounded border border-border bg-background px-2 text-xs outline-none focus:border-primary/50">
+                  {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <Filter className="w-3 h-3 text-muted-foreground" />
+                <select value={impact} onChange={e => setImpact(e.target.value)}
+                  className="h-7 rounded border border-border bg-background px-2 text-xs outline-none focus:border-primary/50">
+                  {IMPACTS.map(i => <option key={i} value={i}>{i}</option>)}
+                </select>
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <input value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="Search events..."
+                    className="h-7 w-36 rounded border border-border bg-background pl-7 pr-2 text-xs outline-none focus:border-primary/50"
+                  />
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
 
-      {/* Upcoming Events & Recent Releases */}
-      <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-2">
-            <List className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {(upcoming as any[]).slice(0, 5).map((event: any) => {
-              const name = event.event_name || event.title || 'Unknown';
-              const imp = importanceLabel(event.importance);
-              const date = event.release_time || event.event_date || '';
-              return (
-                <div key={event.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-foreground truncate">{name}</p>
-                    <p className="text-3xs text-muted-foreground">{event.country || '—'}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant={importanceBadge[imp] || 'default'} size="sm">{imp}</Badge>
-                    <span className="text-3xs text-muted-foreground">{date ? new Date(date).toLocaleDateString() : '—'}</span>
-                  </div>
-                </div>
-              );
-            })}
-            {upcoming.length === 0 && (
-              <p className="py-4 text-center text-xs text-muted-foreground">No upcoming events</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-2">
-            <Activity className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium">Recent Releases</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {(recent as any[]).slice(0, 5).map((event: any) => {
-              const name = event.event_name || event.title || 'Unknown';
-              return (
-                <div key={event.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-foreground truncate">{name}</p>
-                    <p className="text-3xs text-muted-foreground">{event.country || '—'}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-medium text-foreground">Actual: {event.actual ?? '—'}</p>
-                    <p className="text-3xs text-muted-foreground">Forecast: {event.forecast ?? '—'}</p>
-                  </div>
-                </div>
-              );
-            })}
-            {recent.length === 0 && (
-              <p className="py-4 text-center text-xs text-muted-foreground">No recent releases</p>
+            {isLoading ? (
+              <div className="p-6 space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <AlertTriangle className="h-8 w-8 text-amber-500/60 mb-2" />
+                <p className="text-xs text-muted-foreground">Failed to load calendar data.</p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>Retry</Button>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Calendar className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                <p className="text-xs text-muted-foreground">No events found for the selected filters.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30 text-left text-3xs font-medium uppercase text-muted-foreground">
+                      <th className="px-3 py-2.5 w-8"></th>
+                      <th className="px-3 py-2.5">Country</th>
+                      <th className="px-3 py-2.5">Currency</th>
+                      <th className="px-3 py-2.5">Time</th>
+                      <th className="px-3 py-2.5">Event</th>
+                      <th className="px-3 py-2.5 w-20">Impact</th>
+                      <th className="px-3 py-2.5 text-right w-20">Previous</th>
+                      <th className="px-3 py-2.5 text-right w-20">Forecast</th>
+                      <th className="px-3 py-2.5 text-right w-20">Actual</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filtered.map((ev: any) => {
+                      const name = ev.event_name || ev.title || 'Unknown';
+                      const imp = importanceLabel(ev.importance);
+                      const ctry = ev.country || '—';
+                      const flag = COUNTRY_FLAGS[ctry] || '';
+                      const currency = COUNTRY_CURRENCY[ctry] || ev.currency || '';
+                      const time = ev.event_date || '';
+                      return (
+                        <tr key={ev.id} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-3 py-2.5 text-base">{flag}</td>
+                          <td className="px-3 py-2.5 font-medium text-foreground">{ctry}</td>
+                          <td className="px-3 py-2.5 text-muted-foreground">{currency}</td>
+                          <td className="px-3 py-2.5 text-muted-foreground">
+                            {time ? new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </td>
+                          <td className="px-3 py-2.5 font-medium text-foreground max-w-[240px] truncate">{name}</td>
+                          <td className="px-3 py-2.5"><Badge variant={IMPACT_VARIANT[imp] || 'info'} size="sm">{imp}</Badge></td>
+                          <td className="px-3 py-2.5 text-right text-muted-foreground">{ev.previous ?? '—'}</td>
+                          <td className="px-3 py-2.5 text-right text-muted-foreground">{ev.forecast ?? '—'}</td>
+                          <td className={cn('px-3 py-2.5 text-right font-medium',
+                            ev.actual != null ? 'text-foreground' : 'text-muted-foreground'
+                          )}>{ev.actual ?? '—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </CardContent>
         </Card>

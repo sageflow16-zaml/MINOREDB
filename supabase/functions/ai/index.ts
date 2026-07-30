@@ -790,6 +790,34 @@ async function ingestDocument(supabase: ReturnType<typeof createClient>, project
     progress: { stage: 'indexed', pct: 100 },
   }).eq('id', ingestion.id);
 
+  const docIds = [sourceId];
+
+  const autoExtract = async (label: string, fn: () => Promise<any>) => {
+    try {
+      const result = await fn();
+      await supabase.from('learning_event').insert({
+        project_id: projectId, event_type: 'document_analysis', entity_type: 'source',
+        status: 'completed', summary: `${label}: ${JSON.stringify(result).substring(0, 200)}`,
+      });
+    } catch (e: any) {
+      await supabase.from('learning_event').insert({
+        project_id: projectId, event_type: 'document_analysis', entity_type: 'source',
+        status: 'failed', summary: `${label}: ${e?.message || 'unknown error'}`,
+      });
+    }
+  };
+
+  await Promise.allSettled([
+    autoExtract('Summary', () => {
+      const prompt = `Summarize this trading document concisely. Extract: summary (2-3 sentences), keywords (up to 10), trading_relevance (high/medium/low), action_items (array of strings). Return JSON.`;
+      return callAI(prompt, text.substring(0, 6000), defaultModel, 1024);
+    }),
+    autoExtract('Rules', () => extractRules(supabase, projectId, sourceId)),
+    autoExtract('Flashcards', () => generateFlashcards(supabase, projectId, docIds)),
+    autoExtract('Questions', () => suggestQuestions(supabase, projectId, sourceId)),
+    autoExtract('StudyNotes', () => generateStudyNotes(supabase, projectId, docIds)),
+  ]);
+
   return {
     chunks_created: created,
     total_chunks: chunks.length,

@@ -100,6 +100,7 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const { data: candles, isLoading, error } = useOhlcData(
     config.symbol,
     config.timeframe,
+    projectId,
     !previewMode
   );
 
@@ -149,8 +150,8 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
             <AlertTriangle className="w-8 h-8 text-amber-500/60" />
             <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[300px]">
-              {(error as Error)?.message?.includes('AlphaVantage API key not configured')
-                ? 'Market data feed requires an AlphaVantage API key. Add ALPHAVANTAGE_API_KEY to your Supabase project secrets to enable live charts.'
+              {(error as Error)?.message?.includes('TWELVEDATA_API_KEY')
+                ? 'Market data feed requires a Twelve Data API key. Add TWELVEDATA_API_KEY to your Supabase project secrets to enable live charts.'
                 : (error as Error)?.message || 'Failed to load market data. Check your API configuration.'}
             </p>
             <span className="text-[10px] text-muted-foreground/50 font-mono">

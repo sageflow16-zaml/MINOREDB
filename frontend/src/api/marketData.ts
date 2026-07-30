@@ -10,9 +10,10 @@ export interface OhlcCandle {
 }
 
 export const marketDataService = {
-  fetchOhlc: async (symbol: string, timeframe: string): Promise<OhlcCandle[]> => {
+  fetchOhlc: async (symbol: string, timeframe: string, projectId?: string): Promise<OhlcCandle[]> => {
     return callEdgeFunction<OhlcCandle[]>('collector', {
       operation: 'fetch-ohlc',
+      project_id: projectId,
       data: { symbol, timeframe },
     });
   },
