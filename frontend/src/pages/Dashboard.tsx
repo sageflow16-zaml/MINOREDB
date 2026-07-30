@@ -104,6 +104,12 @@ const tooltipStyle = chartTooltipStyle.contentStyle;
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
+  const stats = useDashboardStats(projectId || '');
+  const trades = useTrades(projectId || '');
+  const { data: learningEvents } = useLearningEvents(projectId || '', 5);
+  const { data: rawEquityCurve } = useEquityCurve(projectId || '');
+  const [equityPeriod, setEquityPeriod] = useState('1M');
+
   if (!projectId) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
@@ -118,11 +124,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-  const stats = useDashboardStats(projectId);
-  const trades = useTrades(projectId);
-  const { data: learningEvents } = useLearningEvents(projectId, 5);
-  const { data: rawEquityCurve } = useEquityCurve(projectId);
-  const [equityPeriod, setEquityPeriod] = useState('1M');
 
   if (stats.isLoading) {
     return (
