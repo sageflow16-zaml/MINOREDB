@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useStableQuery } from './useStableQuery';
 import { replayService, type ReplaySession, type ReplayWorkspaceState, type ReplayBookmark, type MarketCandle } from '../api/replay';
 
 export const useCreateSession = (projectId: string) => {
@@ -14,14 +15,14 @@ export const useCreateSession = (projectId: string) => {
 };
 
 export const useReplaySessions = (projectId: string) =>
-  useQuery({
+  useStableQuery({
     queryKey: ['replay-sessions', projectId],
     queryFn: () => replayService.listSessions(projectId),
     enabled: !!projectId,
   });
 
 export const useReplayState = (projectId: string, sessionId: string | null) =>
-  useQuery({
+  useStableQuery({
     queryKey: ['replay-state', projectId, sessionId],
     queryFn: () => replayService.getSession(projectId, sessionId!),
     enabled: !!sessionId,
@@ -145,7 +146,7 @@ export const useUpdateBookmark = (projectId: string) => {
 };
 
 export const useReplayDashboard = (projectId: string) =>
-  useQuery({
+  useStableQuery({
     queryKey: ['replay-dashboard', projectId],
     queryFn: () => replayService.getDashboard(projectId),
     enabled: !!projectId,

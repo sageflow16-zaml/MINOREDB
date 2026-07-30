@@ -1,81 +1,17 @@
-import { Badge } from '../ui/badge';
-import { Globe, TrendingUp, TrendingDown, Activity, BarChart3, DollarSign, Zap, Flame } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { Globe, Radio } from 'lucide-react';
 
-const marketData = [
-  { label: 'DXY', value: '104.32', change: '+0.15' },
-  { label: 'US10Y', value: '4.28%', change: '-0.02' },
-  { label: 'US02Y', value: '4.63%', change: '+0.01' },
-  { label: 'VIX', value: '14.25', change: '-0.85' },
-  { label: 'XAUUSD', value: '2,348.50', change: '+12.30' },
-  { label: 'USOIL', value: '78.45', change: '-0.60' },
-];
-
-const news = [
-  { time: '09:30', headline: 'US Non-Farm Payrolls beat expectations by 28K', impact: 'high' },
-  { time: '08:00', headline: 'ECB holds rates steady at 4.25% as expected', impact: 'medium' },
-  { time: '07:15', headline: 'ISM Services PMI rises to 54.2 vs 53.8 forecast', impact: 'high' },
-];
-
-export function MarketContext() {
+export function MarketContext({ previewMode }: { previewMode?: boolean }) {
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <div className="flex items-center gap-1 mb-2">
         <Globe className="w-3.5 h-3.5 text-primary" />
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Market Context</h3>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Research Context</h3>
       </div>
-
-      {/* Market data grid */}
-      <div className="grid grid-cols-2 gap-1 mb-3">
-        {marketData.map((m) => {
-          const isUp = m.change.startsWith('+');
-          return (
-            <div key={m.label} className="flex items-center justify-between px-2 py-1 rounded border bg-card/50">
-              <div className="flex items-center gap-1">
-                <span className="text-3xs font-medium text-muted-foreground">{m.label}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-mono">{m.value}</span>
-                <span className={cn('text-3xs flex items-center', isUp ? 'text-success' : 'text-destructive')}>
-                  {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-                  {m.change}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Regime indicator */}
-      <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-lg border bg-card/50">
-        <Activity className="w-3.5 h-3.5 text-warning" />
-        <div className="flex-1">
-          <div className="text-3xs text-muted-foreground">Market Regime</div>
-          <div className="text-xs font-semibold text-warning">Trending / Risk-On</div>
-        </div>
-        <Badge variant="outline" className="text-3xs">High Vol</Badge>
-      </div>
-
-      {/* News */}
-      <div>
-        <h4 className="text-3xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
-          <Flame className="w-2.5 h-2.5" /> Latest News
-        </h4>
-        <div className="space-y-1">
-          {news.map((n, i) => (
-            <div key={i} className="px-2 py-1 rounded hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-1 mb-0.5">
-                <span className="text-3xs text-muted-foreground">{n.time}</span>
-                <Badge variant="outline" className={cn('text-[8px] px-1 py-0',
-                  n.impact === 'high' ? 'border-destructive/30 text-destructive' : 'border-warning/30 text-warning'
-                )}>
-                  {n.impact}
-                </Badge>
-              </div>
-              <p className="text-2xs leading-tight">{n.headline}</p>
-            </div>
-          ))}
-        </div>
+      <div className="flex flex-col items-center justify-center gap-2 flex-1 py-4 px-2 border border-dashed border-border rounded-lg bg-muted/20">
+        <Radio className="w-6 h-6 text-muted-foreground/40" />
+        <p className="text-2xs text-muted-foreground text-center leading-relaxed">
+          Market context — including correlated instruments, economic data, regime detection, and news — will populate automatically once a project with live data sources is connected. No simulated or placeholder data is displayed.
+        </p>
       </div>
     </div>
   );

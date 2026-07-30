@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useStableQuery } from './useStableQuery';
 import { statisticsService, type StatisticsResponse, type EquityPoint, type DistributionData, type MonthlyReturn, type RollingStats, type WeeklyReturn, type YearlyReturn, type RiskAnalytics, type PsychologyAnalytics, type CalendarHeatmap, type ScatterData } from '../api';
 
 export const useStatisticsOverview = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'overview'],
     queryFn: () => statisticsService.overview(projectId),
     enabled: !!projectId,
@@ -10,7 +10,7 @@ export const useStatisticsOverview = (projectId: string) => {
 };
 
 export const useStatisticsRisk = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'risk'],
     queryFn: () => statisticsService.risk(projectId),
     enabled: !!projectId,
@@ -18,7 +18,7 @@ export const useStatisticsRisk = (projectId: string) => {
 };
 
 export const useStatisticsByPair = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byPair'],
     queryFn: () => statisticsService.byPair(projectId),
     enabled: !!projectId,
@@ -26,7 +26,7 @@ export const useStatisticsByPair = (projectId: string) => {
 };
 
 export const useStatisticsByDirection = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byDirection'],
     queryFn: () => statisticsService.byDirection(projectId),
     enabled: !!projectId,
@@ -34,7 +34,7 @@ export const useStatisticsByDirection = (projectId: string) => {
 };
 
 export const useStatisticsByBias = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byBias'],
     queryFn: () => statisticsService.byBias(projectId),
     enabled: !!projectId,
@@ -42,7 +42,7 @@ export const useStatisticsByBias = (projectId: string) => {
 };
 
 export const useStatisticsBySession = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'bySession'],
     queryFn: () => statisticsService.bySession(projectId),
     enabled: !!projectId,
@@ -50,7 +50,7 @@ export const useStatisticsBySession = (projectId: string) => {
 };
 
 export const useStatisticsByMarketPhase = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byMarketPhase'],
     queryFn: () => statisticsService.byMarketPhase(projectId),
     enabled: !!projectId,
@@ -58,7 +58,7 @@ export const useStatisticsByMarketPhase = (projectId: string) => {
 };
 
 export const useStatisticsByTrend = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byTrend'],
     queryFn: () => statisticsService.byTrend(projectId),
     enabled: !!projectId,
@@ -66,7 +66,7 @@ export const useStatisticsByTrend = (projectId: string) => {
 };
 
 export const useMonthlyReturns = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'monthlyReturns'],
     queryFn: () => statisticsService.monthlyReturns(projectId),
     enabled: !!projectId,
@@ -74,7 +74,7 @@ export const useMonthlyReturns = (projectId: string) => {
 };
 
 export const useRollingStats = (projectId: string, window: number = 10) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'rolling', window],
     queryFn: () => statisticsService.rolling(projectId, window),
     enabled: !!projectId,
@@ -82,7 +82,7 @@ export const useRollingStats = (projectId: string, window: number = 10) => {
 };
 
 export const useEquityCurve = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'equityCurve'],
     queryFn: () => statisticsService.equityCurve(projectId),
     enabled: !!projectId,
@@ -90,7 +90,7 @@ export const useEquityCurve = (projectId: string) => {
 };
 
 export const usePnlDistribution = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'pnlDistribution'],
     queryFn: () => statisticsService.pnlDistribution(projectId),
     enabled: !!projectId,
@@ -98,7 +98,7 @@ export const usePnlDistribution = (projectId: string) => {
 };
 
 export const useRrDistribution = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'rrDistribution'],
     queryFn: () => statisticsService.rrDistribution(projectId),
     enabled: !!projectId,
@@ -106,7 +106,7 @@ export const useRrDistribution = (projectId: string) => {
 };
 
 export const useFullStatistics = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'full'],
     queryFn: () => statisticsService.full(projectId),
     enabled: !!projectId,
@@ -115,7 +115,7 @@ export const useFullStatistics = (projectId: string) => {
 
 // NEW: Phase 2.5 hooks
 export const useStatisticsByStrategy = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byStrategy'],
     queryFn: () => statisticsService.byStrategy(projectId),
     enabled: !!projectId,
@@ -123,7 +123,7 @@ export const useStatisticsByStrategy = (projectId: string) => {
 };
 
 export const useStatisticsByWeekday = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byWeekday'],
     queryFn: () => statisticsService.byWeekday(projectId),
     enabled: !!projectId,
@@ -131,7 +131,7 @@ export const useStatisticsByWeekday = (projectId: string) => {
 };
 
 export const useStatisticsByTimeframe = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byTimeframe'],
     queryFn: () => statisticsService.byTimeframe(projectId),
     enabled: !!projectId,
@@ -139,7 +139,7 @@ export const useStatisticsByTimeframe = (projectId: string) => {
 };
 
 export const useStatisticsByMarketCondition = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byMarketCondition'],
     queryFn: () => statisticsService.byMarketCondition(projectId),
     enabled: !!projectId,
@@ -147,7 +147,7 @@ export const useStatisticsByMarketCondition = (projectId: string) => {
 };
 
 export const useStatisticsByVolatility = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byVolatility'],
     queryFn: () => statisticsService.byVolatility(projectId),
     enabled: !!projectId,
@@ -155,7 +155,7 @@ export const useStatisticsByVolatility = (projectId: string) => {
 };
 
 export const useStatisticsByNews = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'byNews'],
     queryFn: () => statisticsService.byNews(projectId),
     enabled: !!projectId,
@@ -163,7 +163,7 @@ export const useStatisticsByNews = (projectId: string) => {
 };
 
 export const useStatisticsBySetup = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'bySetup'],
     queryFn: () => statisticsService.bySetup(projectId),
     enabled: !!projectId,
@@ -171,7 +171,7 @@ export const useStatisticsBySetup = (projectId: string) => {
 };
 
 export const useWeeklyReturns = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'weeklyReturns'],
     queryFn: () => statisticsService.weeklyReturns(projectId),
     enabled: !!projectId,
@@ -179,7 +179,7 @@ export const useWeeklyReturns = (projectId: string) => {
 };
 
 export const useYearlyReturns = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'yearlyReturns'],
     queryFn: () => statisticsService.yearlyReturns(projectId),
     enabled: !!projectId,
@@ -187,7 +187,7 @@ export const useYearlyReturns = (projectId: string) => {
 };
 
 export const useRiskAnalytics = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'riskAnalytics'],
     queryFn: () => statisticsService.riskAnalytics(projectId),
     enabled: !!projectId,
@@ -195,7 +195,7 @@ export const useRiskAnalytics = (projectId: string) => {
 };
 
 export const usePsychologyAnalytics = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'psychologyAnalytics'],
     queryFn: () => statisticsService.psychologyAnalytics(projectId),
     enabled: !!projectId,
@@ -203,7 +203,7 @@ export const usePsychologyAnalytics = (projectId: string) => {
 };
 
 export const useCalendarHeatmap = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'calendarHeatmap'],
     queryFn: () => statisticsService.calendarHeatmap(projectId),
     enabled: !!projectId,
@@ -211,7 +211,7 @@ export const useCalendarHeatmap = (projectId: string) => {
 };
 
 export const useScatterData = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'scatterData'],
     queryFn: () => statisticsService.scatterData(projectId),
     enabled: !!projectId,
@@ -219,7 +219,7 @@ export const useScatterData = (projectId: string) => {
 };
 
 export const useFilteredStatistics = (projectId: string, startDate?: string, endDate?: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['statistics', projectId, 'filtered', startDate, endDate],
     queryFn: () => statisticsService.filtered(projectId, startDate, endDate),
     enabled: !!projectId && (!!startDate || !!endDate),

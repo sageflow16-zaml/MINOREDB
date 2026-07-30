@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useStableQuery } from './useStableQuery';
 import { dashboardService, type DashboardStats } from '../api';
 
 export const useDashboardStats = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['dashboard-stats', projectId],
     queryFn: () => dashboardService.stats(projectId),
     enabled: !!projectId,

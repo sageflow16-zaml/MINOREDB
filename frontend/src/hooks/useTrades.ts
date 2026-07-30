@@ -1,10 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useStableQuery } from './useStableQuery';
 import { tradeService, type TradeRead, type TradeCreate, type TradeUpdate } from '../api';
 import toast from 'react-hot-toast';
 import { createEvent, eventBus } from '../lib/ai/eventBus';
 
 export const useTrades = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['trades', projectId],
     queryFn: () => tradeService.list(projectId),
     enabled: !!projectId,
@@ -12,7 +13,7 @@ export const useTrades = (projectId: string) => {
 };
 
 export const useTrade = (projectId: string, tradeId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['trades', projectId, tradeId],
     queryFn: () => tradeService.get(projectId, tradeId),
     enabled: !!projectId && !!tradeId,

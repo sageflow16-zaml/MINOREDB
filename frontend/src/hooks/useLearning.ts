@@ -1,9 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useStableQuery } from './useStableQuery';
 import { learningService } from '../api/learning';
 import { createEvent, eventBus } from '../lib/ai/eventBus';
 
 export const useLearningEvents = (projectId: string, limit?: number) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['learning', projectId, 'events', limit],
     queryFn: () => learningService.events(projectId, limit),
     enabled: !!projectId,
@@ -11,7 +12,7 @@ export const useLearningEvents = (projectId: string, limit?: number) => {
 };
 
 export const useLearningSnapshots = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['learning', projectId, 'snapshots'],
     queryFn: () => learningService.snapshots(projectId),
     enabled: !!projectId,
@@ -19,7 +20,7 @@ export const useLearningSnapshots = (projectId: string) => {
 };
 
 export const useLearningStatus = (projectId: string) => {
-  return useQuery({
+  return useStableQuery({
     queryKey: ['learning', projectId, 'status'],
     queryFn: () => learningService.status(projectId),
     enabled: !!projectId,
