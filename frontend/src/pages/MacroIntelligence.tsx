@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/ui/skeleton';
 import { cn, safeToFixed } from '../lib/utils';
 import { useMarketEvents } from '../hooks/useMarketIntelligence';
-import { useOhlcData } from '../hooks/useOhlcData';
+import { useMarketData } from '../hooks/useMarketData';
 import {
   Calendar, Globe, Search, Filter, Clock, TrendingUp, Activity,
   AlertTriangle, DollarSign, RefreshCw
@@ -49,9 +49,12 @@ export default function MacroIntelligencePage() {
     impact === 'All' ? undefined : impact,
   );
 
-  const { data: dxy } = useOhlcData('DXY', '1h', projectId, !!projectId);
-  const { data: gold } = useOhlcData('XAUUSD', '1h', projectId, !!projectId);
-  const { data: vix } = useOhlcData('VIX', '1h', projectId, !!projectId);
+  const { data: dxyRaw } = useMarketData('DXY', '1h', projectId, !!projectId);
+  const { data: goldRaw } = useMarketData('XAUUSD', '1h', projectId, !!projectId);
+  const { data: vixRaw } = useMarketData('VIX', '1h', projectId, !!projectId);
+  const dxy = dxyRaw?.success ? dxyRaw.candles : undefined;
+  const gold = goldRaw?.success ? goldRaw.candles : undefined;
+  const vix = vixRaw?.success ? vixRaw.candles : undefined;
 
   useEffect(() => {
     const timer = setInterval(() => refetch(), 120_000);

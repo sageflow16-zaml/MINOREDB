@@ -1,11 +1,14 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { createChart, CandlestickSeries, ColorType, type IChartApi, type ISeriesApi } from 'lightweight-charts';
+import {
+  createChart, CandlestickSeries, HistogramSeries,
+  ColorType, type IChartApi, type ISeriesApi, type Time,
+} from 'lightweight-charts';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWorkspace } from '../workspace/WorkspaceContext';
 import { renderICT } from './ICTChartRenderer';
 import { ChartToolbar } from './ChartToolbar';
 import { BarChart3, Settings, Loader2, AlertTriangle, Database } from 'lucide-react';
-import { useOhlcData } from '../../hooks/useOhlcData';
+import { useMarketData } from '../../hooks/useMarketData';
 import type { ChartConfig, PanelId } from '../workspace/types';
 
 interface ChartContainerProps {
@@ -13,56 +16,78 @@ interface ChartContainerProps {
   config: ChartConfig;
 }
 
+function getTheme(): 'dark' | 'light' {
+  if (typeof document === 'undefined') return 'dark';
+  return document.documentElement.classList.contains('light') ? 'light' : 'dark';
+}
+
 export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const { state, dispatch } = useWorkspace();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const previewMode = state.layout.previewMode;
 
+  const { data: result, isLoading, isError } = useMarketData(
+    config.symbol, config.timeframe, projectId, !previewMode
+  );
+
   useEffect(() => {
     if (previewMode || !containerRef.current) return;
     const container = containerRef.current;
+    const isDark = getTheme() === 'dark';
 
     try {
       const chart = createChart(container, {
         width: container.clientWidth,
         height: container.clientHeight || 400,
         layout: {
-          background: { type: ColorType.Solid, color: 'hsl(var(--card))' },
-          textColor: 'hsl(var(--muted-foreground))',
+          background: { type: ColorType.Solid, color: isDark ? 'hsl(var(--card))' : '#ffffff' },
+          textColor: isDark ? 'hsl(var(--muted-foreground))' : '#6b7280',
           fontSize: 11,
         },
         grid: {
-          vertLines: { color: 'hsl(var(--border))' },
-          horzLines: { color: 'hsl(var(--border))' },
+          vertLines: { color: isDark ? 'hsl(var(--border))' : '#e5e7eb' },
+          horzLines: { color: isDark ? 'hsl(var(--border))' : '#e5e7eb' },
         },
         timeScale: {
-          borderColor: 'hsl(var(--border))',
+          borderColor: isDark ? 'hsl(var(--border))' : '#e5e7eb',
           timeVisible: true,
           secondsVisible: false,
         },
-        rightPriceScale: { borderColor: 'hsl(var(--border))' },
+        rightPriceScale: { borderColor: isDark ? 'hsl(var(--border))' : '#e5e7eb' },
         crosshair: {
           mode: state.syncedCrosshair ? 1 : 0,
-          vertLine: { color: 'hsl(var(--primary)/0.3)', width: 1, style: 2, labelBackgroundColor: 'hsl(var(--primary))' },
-          horzLine: { color: 'hsl(var(--primary)/0.3)', width: 1, style: 2, labelBackgroundColor: 'hsl(var(--primary))' },
+          vertLine: { color: isDark ? 'hsl(var(--primary)/0.3)' : '#3b82f680', width: 1, style: 2, labelBackgroundColor: isDark ? 'hsl(var(--primary))' : '#3b82f6' },
+          horzLine: { color: isDark ? 'hsl(var(--primary)/0.3)' : '#3b82f680', width: 1, style: 2, labelBackgroundColor: isDark ? 'hsl(var(--primary))' : '#3b82f6' },
         },
       });
 
-      const series = chart.addSeries(CandlestickSeries, {
-        upColor: 'hsl(var(--success))',
-        downColor: 'hsl(var(--destructive))',
-        borderDownColor: 'hsl(var(--destructive))',
-        borderUpColor: 'hsl(var(--success))',
-        wickDownColor: 'hsl(var(--destructive))',
-        wickUpColor: 'hsl(var(--success))',
+      const candleSeries = chart.addSeries(CandlestickSeries, {
+        upColor: isDark ? 'hsl(var(--success))' : '#22c55e',
+        downColor: isDark ? 'hsl(var(--destructive))' : '#ef4444',
+        borderDownColor: isDark ? 'hsl(var(--destructive))' : '#ef4444',
+        borderUpColor: isDark ? 'hsl(var(--success))' : '#22c55e',
+        wickDownColor: isDark ? 'hsl(var(--destructive))' : '#ef4444',
+        wickUpColor: isDark ? 'hsl(var(--success))' : '#22c55e',
+        priceFormat: { type: 'price', precision: 5, minMove: 0.00001 },
+      });
+
+      const volumeSeries = chart.addSeries(HistogramSeries, {
+        priceFormat: { type: 'volume' },
+        priceScaleId: 'volume',
+      });
+      chart.priceScale('volume').applyOptions({
+        scaleMargins: { top: 0.85, bottom: 0 },
+        visible: false,
       });
 
       chartRef.current = chart;
-      seriesRef.current = series;
+      candleSeriesRef.current = candleSeries;
+      volumeSeriesRef.current = volumeSeries;
 
       const handleResize = () => {
         if (container) {
@@ -76,18 +101,41 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
         observer.disconnect();
         chart.remove();
         chartRef.current = null;
-        seriesRef.current = null;
+        candleSeriesRef.current = null;
+        volumeSeriesRef.current = null;
       };
     } catch {
       chartRef.current = null;
-      seriesRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
     }
   }, [config.symbol, config.timeframe, config.showICT, config.showSessions, state.syncedCrosshair, previewMode]);
 
   useEffect(() => {
-    if (!chartRef.current || !seriesRef.current) return;
-    renderICT(chartRef.current, seriesRef.current, config, state.ictOverlays[panelId] || []);
+    if (!chartRef.current || !candleSeriesRef.current) return;
+    renderICT(chartRef.current, candleSeriesRef.current, config, state.ictOverlays[panelId] || []);
   }, [config, state.ictOverlays[panelId], config.showICT]);
+
+  useEffect(() => {
+    if (!candleSeriesRef.current) return;
+    if (result?.success && result.candles.length > 0) {
+      candleSeriesRef.current.setData(result.candles as any);
+      if (volumeSeriesRef.current) {
+        volumeSeriesRef.current.setData(
+          result.candles.map(c => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }))
+        );
+      }
+    } else {
+      candleSeriesRef.current.setData([]);
+      volumeSeriesRef.current?.setData([]);
+    }
+  }, [result]);
+
+  useEffect(() => {
+    if (!candleSeriesRef.current) return;
+    candleSeriesRef.current.setData([]);
+    volumeSeriesRef.current?.setData([]);
+  }, [config.symbol, config.timeframe]);
 
   const handleSymbolChange = useCallback((symbol: string) => {
     dispatch({ type: 'SET_SYMBOL', panelId, symbol });
@@ -97,32 +145,12 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     dispatch({ type: 'SET_TIMEFRAME', panelId, timeframe: tf as any });
   }, [dispatch, panelId]);
 
-  const { data: candles, isLoading, error } = useOhlcData(
-    config.symbol,
-    config.timeframe,
-    projectId,
-    !previewMode
-  );
-
-  const [dataApplied, setDataApplied] = useState(false);
-
-  useEffect(() => {
-    if (!seriesRef.current || !candles || candles.length === 0) return;
-    seriesRef.current.setData(candles);
-    setDataApplied(true);
-  }, [candles]);
-
-  useEffect(() => {
-    if (!seriesRef.current) return;
-    seriesRef.current.setData([]);
-    setDataApplied(false);
-  }, [config.symbol, config.timeframe]);
-
   const chartExists = !!chartRef.current;
-  const showChart = chartExists && dataApplied && !error;
-  const showEmpty = previewMode || (!showChart && !isLoading && !error);
-  const showError = !previewMode && error && !isLoading;
-  const showLoading = !previewMode && isLoading && !dataApplied;
+  const dataApplied = result?.success && (result.candles?.length ?? 0) > 0;
+  const showChart = chartExists && dataApplied;
+  const showLoading = !previewMode && isLoading;
+  const showError = !previewMode && !isLoading && result && !result.success;
+  const showEmpty = previewMode || (!showChart && !showLoading && !showError);
 
   return (
     <div className="flex flex-col h-full">
@@ -150,9 +178,9 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
             <AlertTriangle className="w-8 h-8 text-amber-500/60" />
             <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[300px]">
-              {(error as Error)?.message?.includes('TWELVEDATA_API_KEY')
+              {result?.reason?.includes('Twelve Data API key')
                 ? 'Market data feed requires a Twelve Data API key. Add TWELVEDATA_API_KEY to your Supabase project secrets to enable live charts.'
-                : (error as Error)?.message || 'Failed to load market data. Check your API configuration.'}
+                : result?.reason || 'Market data temporarily unavailable.'}
             </p>
             <span className="text-[10px] text-muted-foreground/50 font-mono">
               {config.symbol} ({config.timeframe})
@@ -190,5 +218,3 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     </div>
   );
 }
-
-
