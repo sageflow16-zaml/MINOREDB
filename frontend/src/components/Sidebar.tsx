@@ -53,7 +53,7 @@ const navSections: NavSection[] = [
       { name: 'Workspace', path: 'workspace', icon: Monitor },
       { name: 'Journal', path: 'learning', icon: Notebook },
       { name: 'Strategies', path: 'strategies', icon: Lightbulb },
-      { name: 'Replay', path: 'replay', icon: RefreshCw },
+      // Replay hidden behind feature flag — not yet implemented
       { name: 'Planning', path: 'planning', icon: Calendar },
     ],
   },

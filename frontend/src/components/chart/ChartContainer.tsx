@@ -1,10 +1,10 @@
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { createChart, CandlestickSeries, ColorType, type IChartApi, type ISeriesApi } from 'lightweight-charts';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useWorkspace } from '../workspace/WorkspaceContext';
 import { renderICT } from './ICTChartRenderer';
 import { ChartToolbar } from './ChartToolbar';
-import { BarChart3 } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { BarChart3, Settings } from 'lucide-react';
 import type { ChartConfig, PanelId } from '../workspace/types';
 
 interface ChartContainerProps {
@@ -16,11 +16,13 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  const [chartReady, setChartReady] = useState(false);
   const { state, dispatch } = useWorkspace();
+  const navigate = useNavigate();
+  const { projectId } = useParams<{ projectId: string }>();
+  const previewMode = state.layout.previewMode;
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (previewMode || !containerRef.current) return;
     const container = containerRef.current;
 
     try {
@@ -60,7 +62,6 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
 
       chartRef.current = chart;
       seriesRef.current = series;
-      setChartReady(true);
 
       const handleResize = () => {
         if (container) {
@@ -75,12 +76,12 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
         chart.remove();
         chartRef.current = null;
         seriesRef.current = null;
-        setChartReady(false);
       };
     } catch {
-      setChartReady(false);
+      chartRef.current = null;
+      seriesRef.current = null;
     }
-  }, [config.symbol, config.timeframe, config.showICT, config.showSessions, state.syncedCrosshair]);
+  }, [config.symbol, config.timeframe, config.showICT, config.showSessions, state.syncedCrosshair, previewMode]);
 
   useEffect(() => {
     if (!chartRef.current || !seriesRef.current) return;
@@ -95,6 +96,8 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     dispatch({ type: 'SET_TIMEFRAME', panelId, timeframe: tf as any });
   }, [dispatch, panelId]);
 
+  const chartExists = !!chartRef.current;
+
   return (
     <div className="flex flex-col h-full">
       <ChartToolbar
@@ -108,15 +111,24 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
         onToggleSessions={() => dispatch({ type: 'TOGGLE_SESSION', panelId })}
       />
       <div className="relative flex-1 min-h-[200px]">
-        <div ref={containerRef} className={cn('absolute inset-0', !chartReady && 'hidden')} />
-        {!chartReady && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card/50 border border-dashed border-border rounded-lg">
+        <div ref={containerRef} className={chartExists ? 'absolute inset-0' : 'hidden'} />
+        {!chartExists && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card/50 border border-dashed border-border rounded-lg mx-1 mb-1">
             <BarChart3 className="w-12 h-12 text-muted-foreground/40" />
-            <div className="text-center max-w-[280px]">
+            <div className="text-center max-w-[300px]">
               <p className="text-sm font-medium text-muted-foreground mb-1">Chart Unavailable</p>
-              <p className="text-2xs text-muted-foreground/60 leading-relaxed">
-                Connect to a project with market data to display live charts. TradingView and lightweight-charts rendering requires an active data feed.
+              <p className="text-2xs text-muted-foreground/60 leading-relaxed mb-3">
+                Connect a project with market data to display live charts. An active data feed and configured broker or market data source is required.
               </p>
+              {projectId && (
+                <button
+                  onClick={() => navigate(`/projects/${projectId}/settings`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Open Project Settings
+                </button>
+              )}
             </div>
           </div>
         )}

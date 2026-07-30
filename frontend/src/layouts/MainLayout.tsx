@@ -45,7 +45,7 @@ const allPageRoutes: { section: string; items: { label: string; path: string; ic
       { label: 'Trades', path: 'trades', icon: BarChart3, shortcut: 'T' },
       { label: 'Journal', path: 'learning', icon: Notebook, shortcut: 'G J' },
       { label: 'Strategies', path: 'strategies', icon: Lightbulb },
-      { label: 'Replay', path: 'replay', icon: RefreshCw },
+      // { label: 'Replay', path: 'replay', icon: RefreshCw },
     ],
   },
   {

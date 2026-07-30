@@ -60,7 +60,7 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
     mt5: 'MT5 Integration',
     search: 'Search',
     collectors: 'Collectors',
-    replay: 'Replay',
+    // replay: 'Replay',
     projects: 'Projects',
   };
 

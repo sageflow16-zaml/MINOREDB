@@ -6,6 +6,7 @@ import { AIPanel } from '../panels/AIPanel';
 import { MarketContext } from '../panels/MarketContext';
 import { ExecutionPanel } from '../panels/ExecutionPanel';
 import { ChartNotes } from '../panels/ChartNotes';
+import { ActiveResearch } from '../panels/ActiveResearch';
 import { cn } from '../../lib/utils';
 
 export function WorkspaceLayout() {
@@ -54,9 +55,8 @@ export function WorkspaceLayout() {
             <div className="p-2 overflow-y-auto">
               <ChartNotes />
             </div>
-            <div className="p-2 overflow-y-auto flex flex-col">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Active Research</h3>
-              <p className="text-2xs text-muted-foreground italic">Connect a project with market data sources to begin research analysis.</p>
+            <div className="p-2 overflow-y-auto">
+              <ActiveResearch />
             </div>
             <div className="p-2 overflow-y-auto">
               <ExecutionPanel />

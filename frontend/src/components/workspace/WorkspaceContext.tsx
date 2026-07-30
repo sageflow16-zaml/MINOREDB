@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react';
 import type {
   WorkspaceState, WorkspaceLayout, WorkspacePanel, ChartConfig,
   ICTOverlay, SessionOverlay, Drawing, ChartNote, PanelId,
@@ -69,9 +69,14 @@ const defaultSession = (): SessionOverlay[] => [
 
 const symbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'XAUUSD', 'XAGUSD', 'BTCUSD'];
 
+const NOTES_STORAGE_KEY = 'minore_workspace_notes';
+const WATCHLIST_STORAGE_KEY = 'minore_workspace_watchlist';
+
 const createDefaultLayout = (): WorkspaceLayout => {
   const panels = defaultPanels('4');
-  const configs: Record<string, ChartConfig> = {};
+  const configs: Record<string, ChartConfig> = {
+    'chart-main': defaultChartConfig('EURUSD'),
+  };
   panels.forEach((p, i) => {
     configs[p.id] = defaultChartConfig(symbols[i % symbols.length]);
   });
@@ -87,6 +92,35 @@ const createDefaultLayout = (): WorkspaceLayout => {
     previewMode: true,
   };
 };
+
+function loadPersistedNotes(): ChartNote[] {
+  try {
+    const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistNotes(notes: ChartNote[]) {
+  try {
+    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+  } catch {}
+}
+
+function loadPersistedWatchlist(): WatchlistItem[] {
+  try {
+    const raw = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return symbols.map((s) => ({ symbol: s, name: s, last: 0, change: 0, changePercent: 0 }));
+}
+
+function persistWatchlist(items: WatchlistItem[]) {
+  try {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+}
 
 type Action =
   | { type: 'SET_LAYOUT'; layout: ChartLayout }
@@ -111,7 +145,8 @@ type Action =
   | { type: 'SAVE_LAYOUT'; name: string }
   | { type: 'LOAD_LAYOUT'; layoutId: string }
   | { type: 'DELETE_LAYOUT'; layoutId: string }
-  | { type: 'SET_ACTIVE_PANEL'; panelId: PanelId | null };
+  | { type: 'SET_ACTIVE_PANEL'; panelId: PanelId | null }
+  | { type: 'SET_WATCHLIST'; items: WatchlistItem[] };
 
 function reducer(state: WorkspaceState, action: Action): WorkspaceState {
   switch (action.type) {
@@ -182,10 +217,20 @@ function reducer(state: WorkspaceState, action: Action): WorkspaceState {
       drawings[action.panelId] = (drawings[action.panelId] || []).filter((d) => d.id !== action.drawingId);
       return { ...state, drawings };
     }
-    case 'ADD_NOTE':
-      return { ...state, notes: [...state.notes, action.note] };
-    case 'REMOVE_NOTE':
-      return { ...state, notes: state.notes.filter((n) => n.id !== action.noteId) };
+    case 'ADD_NOTE': {
+      const updatedNotes = [...state.notes, action.note];
+      persistNotes(updatedNotes);
+      return { ...state, notes: updatedNotes };
+    }
+    case 'REMOVE_NOTE': {
+      const updatedNotes = state.notes.filter((n) => n.id !== action.noteId);
+      persistNotes(updatedNotes);
+      return { ...state, notes: updatedNotes };
+    }
+    case 'SET_WATCHLIST': {
+      persistWatchlist(action.items);
+      return { ...state, watchlist: action.items };
+    }
     case 'SYNC_SYMBOL': {
       if (!state.syncedSymbol) return state;
       const configs = { ...state.layout.chartConfigs };
@@ -241,7 +286,7 @@ function initState(): WorkspaceState {
     ictOverlays: ict,
     sessionOverlays: sessions,
     drawings: {},
-    notes: [],
+    notes: loadPersistedNotes(),
     execution: {
       account: 'Demo',
       balance: 100000,
@@ -251,7 +296,7 @@ function initState(): WorkspaceState {
       openPositions: [],
       pendingOrders: [],
     },
-    watchlist: symbols.map((s) => ({ symbol: s, name: s, last: 0, change: 0, changePercent: 0 })),
+    watchlist: loadPersistedWatchlist(),
     hotkeys: {},
     fullscreen: false,
   };
