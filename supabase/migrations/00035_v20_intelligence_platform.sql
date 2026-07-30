@@ -28,8 +28,10 @@ $$;
 
 -- ============= PERFORMANCE INDEXES =============
 CREATE INDEX IF NOT EXISTS idx_ai_memory_project_embedding ON public.ai_memory USING ivfflat (embedding vector_cosine_ops) WHERE embedding IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_ai_document_chunk_project_embedding ON public.ai_document_chunk USING ivfflat (embedding vector_cosine_ops) WHERE embedding IS NOT NULL;
 
+SET maintenance_work_mem = '128MB';
+CREATE INDEX IF NOT EXISTS idx_ai_document_chunk_project_embedding ON public.ai_document_chunk USING ivfflat (embedding vector_cosine_ops) WHERE embedding IS NOT NULL;
+RESET maintenance_work_mem;
 CREATE INDEX IF NOT EXISTS idx_learning_event_project_created ON public.learning_event(project_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_learning_event_type ON public.learning_event(event_type);
 CREATE INDEX IF NOT EXISTS idx_trade_project_created ON public.trade(project_id, created_at DESC) WHERE deleted_at IS NULL;

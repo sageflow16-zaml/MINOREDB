@@ -23,7 +23,7 @@ ALTER TABLE playbook ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "playbook_project_access"
   ON playbook
   USING (project_id IN (
-    SELECT project_id FROM project_member WHERE user_id = auth.uid()
+    SELECT id FROM public.project WHERE user_id = auth.uid()
   ));
 
 CREATE OR REPLACE FUNCTION get_playbook_stats(p_project_id UUID)
