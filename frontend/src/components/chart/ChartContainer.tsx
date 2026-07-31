@@ -54,6 +54,7 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const testSeriesAddedRef = useRef(false);
   const { state, dispatch } = useWorkspace();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
@@ -148,22 +149,75 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     const chart = chartRef.current;
     const series = candleSeriesRef.current;
     const volume = volumeSeriesRef.current;
-    if (!chart || !series) return;
+    const container = containerRef.current;
+    if (!chart || !series || !container) return;
 
     if (result?.success && Array.isArray(result.candles) && result.candles.length > 0) {
       const candles = normalizeCandles(result.candles);
       if (candles.length > 0) {
         try {
           series.setData(candles as any);
+          chart.timeScale().fitContent();
+        } catch (err) {
+          console.warn('[ChartContainer] setData failed', err);
+        }
+        try {
           volume?.setData(
             candles.map(c => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }))
           );
-          chart.timeScale().fitContent();
-          const first = candles[0];
-          const last = candles[candles.length - 1];
-          console.log('[ChartContainer] setData executed', { length: candles.length, first, last });
         } catch (err) {
-          console.warn('[ChartContainer] setData failed', err);
+          console.warn('[ChartContainer] volume setData failed', err);
+        }
+
+        const first = candles[0];
+        const last = candles[candles.length - 1];
+        console.log('[ChartContainer] setData executed', { length: candles.length, first, last });
+        console.log('[ChartContainer][diag] dataByIndex(0)', series.dataByIndex?.(0));
+        console.log('[ChartContainer][diag] priceScale right options', chart.priceScale('right').options());
+        console.log('[ChartContainer][diag] first candle', {
+          time: first.time, open: first.open, high: first.high, low: first.low, close: first.close,
+          typeof_open: typeof first.open, typeof_high: typeof first.high,
+          typeof_low: typeof first.low, typeof_close: typeof first.close,
+        });
+        const sanityBad = candles.filter(c => c.high < Math.max(c.open, c.close) || c.low > Math.min(c.open, c.close));
+        const nanCount = candles.filter(c => [c.open, c.high, c.low, c.close].some(v => Number.isNaN(v))).length;
+        console.log('[ChartContainer][diag] OHLC sanity violations', sanityBad.length, sanityBad.slice(0, 3));
+        console.log('[ChartContainer][diag] NaN candles', nanCount);
+        console.log('[ChartContainer][diag] container', {
+          clientWidth: container.clientWidth, clientHeight: container.clientHeight,
+          rect: (() => { const r = container.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })(),
+        });
+        const canvasInfo: any[] = [];
+        container.querySelectorAll('canvas').forEach((cv, i) => {
+          const cs = getComputedStyle(cv);
+          const r = cv.getBoundingClientRect();
+          canvasInfo.push({
+            index: i, backingWidth: cv.width, backingHeight: cv.height,
+            cssWidth: cs.width, cssHeight: cs.height,
+            display: cs.display, visibility: cs.visibility, opacity: cs.opacity,
+            rect: { x: r.x, y: r.y, width: r.width, height: r.height },
+          });
+        });
+        console.log('[ChartContainer][diag] canvases', canvasInfo);
+
+        if (!testSeriesAddedRef.current) {
+          try {
+            const testSeries = chart.addSeries(CandlestickSeries, {
+              upColor: '#22c55e', downColor: '#ef4444',
+              borderUpColor: '#22c55e', borderDownColor: '#ef4444',
+              wickUpColor: '#22c55e', wickDownColor: '#ef4444',
+              priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+            });
+            testSeries.setData([
+              { time: 1700000000 as Time, open: 100, high: 105, low: 95, close: 102 },
+              { time: 1700003600 as Time, open: 102, high: 108, low: 101, close: 107 },
+            ]);
+            chart.timeScale().fitContent();
+            testSeriesAddedRef.current = true;
+            console.log('[ChartContainer][diag] hardcoded test series added, dataByIndex(0)=', testSeries.dataByIndex?.(0));
+          } catch (err) {
+            console.warn('[ChartContainer][diag] hardcoded test series failed', err);
+          }
         }
         return;
       }
