@@ -23,7 +23,7 @@ export interface MarketDataError {
 export type MarketDataResult = MarketDataSuccess | MarketDataError;
 
 const CACHE_PREFIX = 'minore_ohlc_';
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 60 * 1000;
 
 function cacheKey(symbol: string, timeframe: string): string {
   return `${CACHE_PREFIX}${symbol}_${timeframe}`;
@@ -115,5 +115,25 @@ export const marketDataService = {
     } catch {}
 
     return { success: false, reason: shouldHumanize(lastError) };
+  },
+
+  async fetchLatest(symbol: string, timeframe: string, projectId?: string): Promise<OhlcCandle | null> {
+    try {
+      const data = await callEdgeFunction<any>('collector', {
+        operation: 'fetch-latest',
+        project_id: projectId,
+        data: { symbol, timeframe },
+      });
+      const candle = data?.candle;
+      const time = Math.floor(Number(candle?.time));
+      const open = Number(candle?.open);
+      const high = Number(candle?.high);
+      const low = Number(candle?.low);
+      const close = Number(candle?.close);
+      if (!Number.isFinite(time) || !Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) return null;
+      return { time, open, high, low, close, volume: Number(candle?.volume) || 0 };
+    } catch {
+      return null;
+    }
   },
 };

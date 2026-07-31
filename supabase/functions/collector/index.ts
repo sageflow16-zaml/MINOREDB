@@ -34,7 +34,7 @@ function mapInterval(timeframe: string): string {
 }
 
 async function fetchTwelveData(symbol: string, interval: string, attempt = 1): Promise<{ status: string; values?: any[]; error?: string }> {
-  const url = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&apikey=${twelveDataKey}&outputsize=5000`;
+  const url = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&apikey=${twelveDataKey}&outputsize=5000&timezone=UTC`;
   const resp = await fetch(url);
   if (!resp.ok) {
     const body = await resp.text().catch(() => '');
@@ -78,9 +78,9 @@ function parseTwelveCandles(values: any[]): { time: number; open: number; high: 
   }).filter(c => !isNaN(c.time)).sort((a, b) => a.time - b.time);
 }
 
-async function fetchOhlc(supabase: ReturnType<typeof createClient>, symbol: string, timeframe: string, projectId?: string) {
+async function loadCandles(supabase: ReturnType<typeof createClient>, symbol: string, timeframe: string, projectId?: string): Promise<{ candles: ReturnType<typeof parseTwelveCandles> } | { error: string }> {
   if (!twelveDataKey) {
-    return errorResponse('TWELVEDATA_API_KEY not configured. Chart data unavailable. Add this secret in Supabase project settings.');
+    return { error: 'TWELVEDATA_API_KEY not configured. Chart data unavailable. Add this secret in Supabase project settings.' };
   }
   const mappedSymbol = mapSymbol(symbol);
   const interval = mapInterval(timeframe);
@@ -94,17 +94,17 @@ async function fetchOhlc(supabase: ReturnType<typeof createClient>, symbol: stri
       .eq('data_type', 'ohlc')
       .maybeSingle();
     if (cached && cached.expires_at && new Date(cached.expires_at) > new Date()) {
-      return successResponse(cached.data);
+      return { candles: cached.data };
     }
   }
 
   const result = await fetchTwelveData(mappedSymbol, interval);
   if (result.status === 'error') {
-    return errorResponse(result.error || 'Market data unavailable.');
+    return { error: result.error || 'Market data unavailable.' };
   }
   const candles = parseTwelveCandles(result.values!);
   if (candles.length === 0) {
-    return errorResponse('No candle data returned for this symbol/timeframe.');
+    return { error: 'No candle data returned for this symbol/timeframe.' };
   }
 
   if (projectId) {
@@ -120,7 +120,7 @@ async function fetchOhlc(supabase: ReturnType<typeof createClient>, symbol: stri
     }, { onConflict: 'project_id, symbol, timeframe, data_type', ignoreDuplicates: false });
   }
 
-  return successResponse(candles);
+  return { candles };
 }
 
 serve(async (req) => {
@@ -203,8 +203,22 @@ serve(async (req) => {
         return successResponse({ toggled: !status?.enabled });
       }
 
-      case 'fetch-ohlc':
-        return await fetchOhlc(supabase, payload?.symbol, payload?.timeframe || '1d', project_id);
+      case 'fetch-ohlc': {
+        const res = await loadCandles(supabase, payload?.symbol, payload?.timeframe || '1d', project_id);
+        if ('error' in res) return errorResponse(res.error);
+        return successResponse(res.candles);
+      }
+
+      case 'fetch-latest': {
+        const res = await loadCandles(supabase, payload?.symbol, payload?.timeframe || '1d', project_id);
+        if ('error' in res) return errorResponse(res.error);
+        const candles = res.candles;
+        if (candles.length === 0) return errorResponse('No candle data available.');
+        return successResponse({
+          candle: candles[candles.length - 1],
+          server_now: new Date().toISOString(),
+        });
+      }
 
       default:
         return errorResponse(`Unknown operation: ${operation}`);

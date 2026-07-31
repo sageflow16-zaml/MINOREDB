@@ -8,8 +8,7 @@ export function useMarketData(symbol: string, timeframe: string, projectId?: str
     queryKey: [...QUERY_KEY, symbol, timeframe, projectId],
     queryFn: () => marketDataService.fetchOHLC(symbol, timeframe, projectId),
     enabled: enabled && !!symbol,
-    refetchInterval: 60_000,
-    retry: false,
+    refetchOnWindowFocus: false,
     staleTime: 30_000,
   });
 }

@@ -9,6 +9,7 @@ import { renderICT } from './ICTChartRenderer';
 import { ChartToolbar } from './ChartToolbar';
 import { BarChart3, Settings, Loader2, AlertTriangle, Database } from 'lucide-react';
 import { useMarketData } from '../../hooks/useMarketData';
+import { marketDataService } from '../../services/marketDataService';
 import type { ChartConfig, PanelId } from '../workspace/types';
 
 interface ChartContainerProps {
@@ -54,6 +55,8 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const lastCandleTimeRef = useRef<number | null>(null);
+  const liveFetchingRef = useRef(false);
   const { state, dispatch } = useWorkspace();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
@@ -171,6 +174,7 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
             candles.map(c => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }))
           );
           chart.timeScale().fitContent();
+          lastCandleTimeRef.current = candles[candles.length - 1].time;
         } catch (err) {
           console.warn('[ChartContainer] setData failed', err);
         }
@@ -179,6 +183,7 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     }
     series.setData([]);
     volume?.setData([]);
+    lastCandleTimeRef.current = null;
   }, [result, config.symbol, config.timeframe]);
 
   const handleSymbolChange = useCallback((symbol: string) => {
@@ -195,6 +200,35 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const showLoading = !previewMode && isLoading;
   const showError = !previewMode && !isLoading && result && !result.success;
   const showEmpty = previewMode || (!showChart && !showLoading && !showError);
+
+  useEffect(() => {
+    if (previewMode || !dataApplied || !chartRef.current || !candleSeriesRef.current) return;
+
+    const tick = async () => {
+      if (liveFetchingRef.current) return;
+      liveFetchingRef.current = true;
+      try {
+        const candle = await marketDataService.fetchLatest(config.symbol, config.timeframe, projectId);
+        if (!candle) return;
+        const series = candleSeriesRef.current;
+        const volume = volumeSeriesRef.current;
+        if (!series) return;
+        const last = lastCandleTimeRef.current;
+        if (last != null && candle.time < last) return;
+        series.update(candle as any);
+        volume?.update({ time: candle.time as Time, value: candle.volume, color: candle.close >= candle.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' });
+        lastCandleTimeRef.current = candle.time;
+        chartRef.current?.timeScale().scrollToRealTime();
+        const age = Math.max(0, Math.floor(Date.now() / 1000 - candle.time));
+        console.log(`Latest candle age: ${age} seconds`);
+      } finally {
+        liveFetchingRef.current = false;
+      }
+    };
+
+    const interval = window.setInterval(tick, 5000);
+    return () => window.clearInterval(interval);
+  }, [previewMode, dataApplied, config.symbol, config.timeframe, projectId]);
 
   return (
     <div className="flex flex-col h-full">
