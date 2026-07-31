@@ -171,9 +171,6 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
             candles.map(c => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }))
           );
           chart.timeScale().fitContent();
-          const first = candles[0];
-          const last = candles[candles.length - 1];
-          console.log('[ChartContainer] setData executed', { length: candles.length, first, last });
         } catch (err) {
           console.warn('[ChartContainer] setData failed', err);
         }
