@@ -16,6 +16,34 @@ interface ChartContainerProps {
   config: ChartConfig;
 }
 
+interface NormalizedCandle {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+function normalizeCandles(candles: any[]): NormalizedCandle[] {
+  const seen = new Set<number>();
+  const out: NormalizedCandle[] = [];
+  for (const c of candles ?? []) {
+    const time = Math.floor(Number(c?.time));
+    const open = Number(c?.open);
+    const high = Number(c?.high);
+    const low = Number(c?.low);
+    const close = Number(c?.close);
+    const volume = Number(c?.volume) || 0;
+    if (!Number.isFinite(time) || !Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) continue;
+    if (seen.has(time)) continue;
+    seen.add(time);
+    out.push({ time, open, high, low, close, volume });
+  }
+  out.sort((a, b) => a.time - b.time);
+  return out;
+}
+
 function getTheme(): 'dark' | 'light' {
   if (typeof document === 'undefined') return 'dark';
   return document.documentElement.classList.contains('light') ? 'light' : 'dark';
@@ -117,25 +145,32 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   }, [config, state.ictOverlays[panelId], config.showICT]);
 
   useEffect(() => {
-    if (!candleSeriesRef.current) return;
-    if (result?.success && result.candles.length > 0) {
-      candleSeriesRef.current.setData(result.candles as any);
-      if (volumeSeriesRef.current) {
-        volumeSeriesRef.current.setData(
-          result.candles.map(c => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }))
-        );
-      }
-    } else {
-      candleSeriesRef.current.setData([]);
-      volumeSeriesRef.current?.setData([]);
-    }
-  }, [result]);
+    const chart = chartRef.current;
+    const series = candleSeriesRef.current;
+    const volume = volumeSeriesRef.current;
+    if (!chart || !series) return;
 
-  useEffect(() => {
-    if (!candleSeriesRef.current) return;
-    candleSeriesRef.current.setData([]);
-    volumeSeriesRef.current?.setData([]);
-  }, [config.symbol, config.timeframe]);
+    if (result?.success && Array.isArray(result.candles) && result.candles.length > 0) {
+      const candles = normalizeCandles(result.candles);
+      if (candles.length > 0) {
+        try {
+          series.setData(candles as any);
+          volume?.setData(
+            candles.map(c => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }))
+          );
+          chart.timeScale().fitContent();
+          const first = candles[0];
+          const last = candles[candles.length - 1];
+          console.log('[ChartContainer] setData executed', { length: candles.length, first, last });
+        } catch (err) {
+          console.warn('[ChartContainer] setData failed', err);
+        }
+        return;
+      }
+    }
+    series.setData([]);
+    volume?.setData([]);
+  }, [result, config.symbol, config.timeframe]);
 
   const handleSymbolChange = useCallback((symbol: string) => {
     dispatch({ type: 'SET_SYMBOL', panelId, symbol });
@@ -165,7 +200,7 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
         onToggleSessions={() => dispatch({ type: 'TOGGLE_SESSION', panelId })}
       />
       <div className="relative flex-1 min-h-[200px]">
-        <div ref={containerRef} className={showChart ? 'absolute inset-0' : 'hidden'} />
+        <div ref={containerRef} className="absolute inset-0" />
         {showLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
             <Loader2 className="w-6 h-6 text-muted-foreground/40 animate-spin" />
