@@ -5,7 +5,6 @@ import { useProjects } from '../hooks/useProjects';
 import { WorkspaceProvider, useWorkspace } from '../components/workspace/WorkspaceContext';
 import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout';
 import { WorkspaceToolbar } from '../components/workspace/WorkspaceToolbar';
-import { ChartContainer } from '../components/chart/ChartContainer';
 import { FolderOpen, ChevronDown, BarChart3, Settings } from 'lucide-react';
 
 function WorkspaceContent({ hasProject }: { hasProject: boolean }) {
@@ -39,12 +38,10 @@ function WorkspaceContent({ hasProject }: { hasProject: boolean }) {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#000' }}>
-      <ChartContainer
-        panelId="diag-chart"
-        config={{ symbol: 'EURUSD', timeframe: '1h', indicators: [], showICT: false, showSessions: false, drawings: [] }}
-      />
-    </div>
+    <>
+      <WorkspaceToolbar />
+      <WorkspaceLayout />
+    </>
   );
 }
 

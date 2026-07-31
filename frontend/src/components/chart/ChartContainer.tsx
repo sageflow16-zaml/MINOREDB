@@ -54,7 +54,6 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
-  const testSeriesAddedRef = useRef(false);
   const { state, dispatch } = useWorkspace();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
@@ -65,74 +64,92 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   );
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (previewMode || !containerRef.current) return;
     const container = containerRef.current;
-    container.setAttribute('data-chart-diag', 'true');
+    const isDark = getTheme() === 'dark';
+
+    const resolveColor = (t: string) => {
+      try {
+        const d = document.createElement('div');
+        d.style.display = 'none';
+        document.body.appendChild(d);
+        d.style.color = t;
+        const c = window.getComputedStyle(d).color;
+        document.body.removeChild(d);
+        return c || t;
+      } catch { return t; }
+    };
 
     try {
       const chart = createChart(container, {
-        width: 1200,
-        height: 700,
+        width: container.clientWidth,
+        height: container.clientHeight || 400,
         layout: {
-          background: { type: ColorType.Solid, color: '#000000' },
-          textColor: '#ffffff',
+          background: { type: ColorType.Solid, color: isDark ? resolveColor('hsl(var(--card))') : '#ffffff' },
+          textColor: isDark ? resolveColor('hsl(var(--muted-foreground))') : '#6b7280',
+          fontSize: 11,
+        },
+        grid: {
+          vertLines: { color: isDark ? resolveColor('hsl(var(--border))') : '#e5e7eb' },
+          horzLines: { color: isDark ? resolveColor('hsl(var(--border))') : '#e5e7eb' },
+        },
+        timeScale: {
+          borderColor: isDark ? resolveColor('hsl(var(--border))') : '#e5e7eb',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        rightPriceScale: { borderColor: isDark ? resolveColor('hsl(var(--border))') : '#e5e7eb' },
+        crosshair: {
+          mode: state.syncedCrosshair ? 1 : 0,
+          vertLine: { color: isDark ? resolveColor('hsl(var(--primary)/0.3)') : '#3b82f680', width: 1, style: 2, labelBackgroundColor: isDark ? resolveColor('hsl(var(--primary))') : '#3b82f6' },
+          horzLine: { color: isDark ? resolveColor('hsl(var(--primary)/0.3)') : '#3b82f680', width: 1, style: 2, labelBackgroundColor: isDark ? resolveColor('hsl(var(--primary))') : '#3b82f6' },
         },
       });
 
       const candleSeries = chart.addSeries(CandlestickSeries, {
-        upColor: '#26a69a',
-        downColor: '#ef5350',
-        borderVisible: false,
-        wickUpColor: '#26a69a',
-        wickDownColor: '#ef5350',
+        upColor: isDark ? resolveColor('hsl(var(--success))') : '#22c55e',
+        downColor: isDark ? resolveColor('hsl(var(--danger))') : '#ef4444',
+        borderUpColor: isDark ? resolveColor('hsl(var(--success))') : '#22c55e',
+        borderDownColor: isDark ? resolveColor('hsl(var(--danger))') : '#ef4444',
+        wickUpColor: isDark ? resolveColor('hsl(var(--success))') : '#22c55e',
+        wickDownColor: isDark ? resolveColor('hsl(var(--danger))') : '#ef4444',
+        priceFormat: { type: 'price', precision: 5, minMove: 0.00001 },
+      });
+
+      const volumeSeries = chart.addSeries(HistogramSeries, {
+        priceFormat: { type: 'volume' },
+        priceScaleId: 'volume',
+      });
+      chart.priceScale('volume').applyOptions({
+        scaleMargins: { top: 0.85, bottom: 0 },
+        visible: false,
       });
 
       chartRef.current = chart;
       candleSeriesRef.current = candleSeries;
-      volumeSeriesRef.current = null;
+      volumeSeriesRef.current = volumeSeries;
 
-      const styleEl = document.createElement('style');
-      styleEl.id = 'chart-diag-style';
-      styleEl.textContent = '[data-chart-diag] canvas { border: 3px solid red !important; box-sizing: border-box; }';
-      document.head.appendChild(styleEl);
-
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          const report: any[] = [];
-          for (const el of [container, ...container.querySelectorAll('canvas')]) {
-            const r = el.getBoundingClientRect();
-            const cs = getComputedStyle(el);
-            const backing = (el as HTMLCanvasElement).width !== undefined
-              ? { width: (el as HTMLCanvasElement).width, height: (el as HTMLCanvasElement).height }
-              : null;
-            report.push({
-              tag: el.tagName,
-              className: (el as HTMLElement).className || (el as HTMLElement).getAttribute('class'),
-              rect: { x: r.x, y: r.y, width: r.width, height: r.height },
-              canvasBacking: backing,
-              zIndex: cs.zIndex, visibility: cs.visibility, display: cs.display,
-              overflow: cs.overflow, opacity: cs.opacity, position: cs.position,
-              pointerEvents: cs.pointerEvents, backgroundColor: cs.backgroundColor,
-            });
-          }
-          console.log('[ChartContainer][diag] full metrics', report);
-        }, 500);
-      });
+      const handleResize = () => {
+        if (container) {
+          chart.applyOptions({ width: container.clientWidth, height: container.clientHeight || 400 });
+        }
+      };
+      const observer = new ResizeObserver(handleResize);
+      observer.observe(container);
 
       return () => {
-        document.getElementById('chart-diag-style')?.remove();
+        observer.disconnect();
         chart.remove();
         chartRef.current = null;
         candleSeriesRef.current = null;
         volumeSeriesRef.current = null;
       };
-    } catch (err) {
-      console.warn('[ChartContainer][diag] chart init failed', err);
+    } catch {
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
     }
-  }, []);
+  }, [config.symbol, config.timeframe, config.showICT, config.showSessions, state.syncedCrosshair, previewMode]);
 
   useEffect(() => {
     if (!chartRef.current || !candleSeriesRef.current) return;
@@ -143,75 +160,22 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     const chart = chartRef.current;
     const series = candleSeriesRef.current;
     const volume = volumeSeriesRef.current;
-    const container = containerRef.current;
-    if (!chart || !series || !container) return;
+    if (!chart || !series) return;
 
     if (result?.success && Array.isArray(result.candles) && result.candles.length > 0) {
       const candles = normalizeCandles(result.candles);
       if (candles.length > 0) {
         try {
           series.setData(candles as any);
-          chart.timeScale().fitContent();
-        } catch (err) {
-          console.warn('[ChartContainer] setData failed', err);
-        }
-        try {
           volume?.setData(
             candles.map(c => ({ time: c.time as Time, value: c.volume, color: c.close >= c.open ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }))
           );
+          chart.timeScale().fitContent();
+          const first = candles[0];
+          const last = candles[candles.length - 1];
+          console.log('[ChartContainer] setData executed', { length: candles.length, first, last });
         } catch (err) {
-          console.warn('[ChartContainer] volume setData failed', err);
-        }
-
-        const first = candles[0];
-        const last = candles[candles.length - 1];
-        console.log('[ChartContainer] setData executed', { length: candles.length, first, last });
-        console.log('[ChartContainer][diag] dataByIndex(0)', series.dataByIndex?.(0));
-        console.log('[ChartContainer][diag] priceScale right options', chart.priceScale('right').options());
-        console.log('[ChartContainer][diag] first candle', {
-          time: first.time, open: first.open, high: first.high, low: first.low, close: first.close,
-          typeof_open: typeof first.open, typeof_high: typeof first.high,
-          typeof_low: typeof first.low, typeof_close: typeof first.close,
-        });
-        const sanityBad = candles.filter(c => c.high < Math.max(c.open, c.close) || c.low > Math.min(c.open, c.close));
-        const nanCount = candles.filter(c => [c.open, c.high, c.low, c.close].some(v => Number.isNaN(v))).length;
-        console.log('[ChartContainer][diag] OHLC sanity violations', sanityBad.length, sanityBad.slice(0, 3));
-        console.log('[ChartContainer][diag] NaN candles', nanCount);
-        console.log('[ChartContainer][diag] container', {
-          clientWidth: container.clientWidth, clientHeight: container.clientHeight,
-          rect: (() => { const r = container.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })(),
-        });
-        const canvasInfo: any[] = [];
-        container.querySelectorAll('canvas').forEach((cv, i) => {
-          const cs = getComputedStyle(cv);
-          const r = cv.getBoundingClientRect();
-          canvasInfo.push({
-            index: i, backingWidth: cv.width, backingHeight: cv.height,
-            cssWidth: cs.width, cssHeight: cs.height,
-            display: cs.display, visibility: cs.visibility, opacity: cs.opacity,
-            rect: { x: r.x, y: r.y, width: r.width, height: r.height },
-          });
-        });
-        console.log('[ChartContainer][diag] canvases', canvasInfo);
-
-        if (!testSeriesAddedRef.current) {
-          try {
-            const testSeries = chart.addSeries(CandlestickSeries, {
-              upColor: '#22c55e', downColor: '#ef4444',
-              borderUpColor: '#22c55e', borderDownColor: '#ef4444',
-              wickUpColor: '#22c55e', wickDownColor: '#ef4444',
-              priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
-            });
-            testSeries.setData([
-              { time: 1700000000 as Time, open: 100, high: 105, low: 95, close: 102 },
-              { time: 1700003600 as Time, open: 102, high: 108, low: 101, close: 107 },
-            ]);
-            chart.timeScale().fitContent();
-            testSeriesAddedRef.current = true;
-            console.log('[ChartContainer][diag] hardcoded test series added, dataByIndex(0)=', testSeries.dataByIndex?.(0));
-          } catch (err) {
-            console.warn('[ChartContainer][diag] hardcoded test series failed', err);
-          }
+          console.warn('[ChartContainer] setData failed', err);
         }
         return;
       }
@@ -220,9 +184,84 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
     volume?.setData([]);
   }, [result, config.symbol, config.timeframe]);
 
+  const handleSymbolChange = useCallback((symbol: string) => {
+    dispatch({ type: 'SET_SYMBOL', panelId, symbol });
+  }, [dispatch, panelId]);
+
+  const handleTimeframeChange = useCallback((tf: string) => {
+    dispatch({ type: 'SET_TIMEFRAME', panelId, timeframe: tf as any });
+  }, [dispatch, panelId]);
+
+  const chartExists = !!chartRef.current;
+  const dataApplied = result?.success && (result.candles?.length ?? 0) > 0;
+  const showChart = chartExists && dataApplied;
+  const showLoading = !previewMode && isLoading;
+  const showError = !previewMode && !isLoading && result && !result.success;
+  const showEmpty = previewMode || (!showChart && !showLoading && !showError);
+
   return (
-    <div style={{ width: 1200, height: 700, position: 'relative' }}>
-      <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+    <div className="flex flex-col h-full">
+      <ChartToolbar
+        symbol={config.symbol}
+        timeframe={config.timeframe}
+        onSymbolChange={handleSymbolChange}
+        onTimeframeChange={handleTimeframeChange}
+        showICT={config.showICT}
+        showSessions={config.showSessions}
+        onToggleICT={() => dispatch({ type: 'TOGGLE_ICT', panelId })}
+        onToggleSessions={() => dispatch({ type: 'TOGGLE_SESSION', panelId })}
+      />
+      <div className="relative flex-1 min-h-[200px]">
+        <div ref={containerRef} className="absolute inset-0" />
+        {showLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
+            <Loader2 className="w-6 h-6 text-muted-foreground/40 animate-spin" />
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              Loading market data for {config.symbol}...
+            </p>
+          </div>
+        )}
+        {showError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
+            <AlertTriangle className="w-8 h-8 text-amber-500/60" />
+            <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[300px]">
+              {result?.reason?.includes('Twelve Data API key')
+                ? 'Market data feed requires a Twelve Data API key. Add TWELVEDATA_API_KEY to your Supabase project secrets to enable live charts.'
+                : result?.reason || 'Market data temporarily unavailable.'}
+            </p>
+            <span className="text-[10px] text-muted-foreground/50 font-mono">
+              {config.symbol} ({config.timeframe})
+            </span>
+          </div>
+        )}
+        {showEmpty && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 mx-2 my-2 border border-dashed border-border rounded-lg bg-muted/20">
+            <Database className="w-8 h-8 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[260px]">
+              {previewMode
+                ? 'Chart unavailable in preview mode. Open a project to view live market data.'
+                : 'No market data received. Select a symbol to begin.'}
+            </p>
+            {projectId ? (
+              <button
+                onClick={() => navigate(`/projects/${projectId}/settings`)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                Project Settings
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/projects')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                Select Project
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
