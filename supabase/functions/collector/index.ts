@@ -36,8 +36,9 @@ function mapInterval(timeframe: string): string {
 async function fetchTwelveData(symbol: string, interval: string, attempt = 1): Promise<{ status: string; values?: any[]; error?: string }> {
   const url = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&apikey=${twelveDataKey}&outputsize=5000`;
   const resp = await fetch(url);
-  const json = await resp.json();
-  if (json.status === 'error') {
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    if (resp.status === 401) return { status: 'error', error: 'Twelve Data API key is invalid or expired. Update TWELVEDATA_API_KEY in Supabase project settings.' };
     if (resp.status === 429) {
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
@@ -49,6 +50,12 @@ async function fetchTwelveData(symbol: string, interval: string, attempt = 1): P
       await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
       return fetchTwelveData(symbol, interval, attempt + 1);
     }
+    let msg = 'Twelve Data API error.';
+    try { const j = JSON.parse(body); msg = j.message || j.error || msg; } catch {}
+    return { status: 'error', error: `${msg} (HTTP ${resp.status})` };
+  }
+  const json = await resp.json();
+  if (json.status === 'error') {
     return { status: 'error', error: json.message || json.error || 'Twelve Data API error.' };
   }
   if (!json.values || json.values.length === 0) {

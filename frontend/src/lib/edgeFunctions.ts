@@ -16,9 +16,10 @@ export async function callEdgeFunction<T = any>(
     body: request,
   });
   if (error) {
-    if (response && response.headers.get('content-type')?.includes('json')) {
+    const res = response || (error as any).context;
+    if (res && res.headers?.get?.('content-type')?.includes('json')) {
       try {
-        const body = await response.clone().json();
+        const body = await res.clone().json();
         throw new Error(body.error || body.message || error.message);
       } catch (e) {
         if (e instanceof Error) throw e;

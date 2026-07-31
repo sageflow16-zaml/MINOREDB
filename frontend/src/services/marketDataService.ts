@@ -63,12 +63,12 @@ function writeLocalCache(symbol: string, timeframe: string, candles: OhlcCandle[
 
 function shouldHumanize(message: string): string {
   const lower = message.toLowerCase();
-  if (lower.includes('twelvedata_api_key')) return 'Market data feed requires a Twelve Data API key. Add it in Supabase project settings.';
+  if (lower.includes('twelvedata_api_key') || lower.includes('apikey') || lower.includes('api key')) return 'Market data feed requires a valid Twelve Data API key. Configure it in Supabase project settings.';
   if (lower.includes('rate limit')) return 'Market data rate limit reached. Please wait a moment and try again.';
   if (lower.includes('unauthorized')) return 'Session expired. Please refresh the page.';
   if (lower.includes('fetch failed') || lower.includes('network') || lower.includes('econnrefused')) return 'Network error. Check your internet connection.';
   if (lower.includes('non-2xx') || lower.includes('edge function')) return 'Market data temporarily unavailable.';
-  return 'Market data temporarily unavailable.';
+  return message;
 }
 
 export const marketDataService = {
