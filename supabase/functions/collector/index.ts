@@ -33,6 +33,19 @@ function mapInterval(timeframe: string): string {
   return map[timeframe] || '1day';
 }
 
+function parseAlphaVantageDate(value: string | undefined | null): string | null {
+  if (!value) return null;
+  const withTime = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/);
+  if (withTime) {
+    return `${withTime[1]}-${withTime[2]}-${withTime[3]}T${withTime[4]}:${withTime[5]}:${withTime[6]}Z`;
+  }
+  const dateOnly = value.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (dateOnly) {
+    return `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}T00:00:00Z`;
+  }
+  return value;
+}
+
 async function fetchTwelveData(symbol: string, interval: string, attempt = 1): Promise<{ status: string; values?: any[]; error?: string }> {
   const url = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&apikey=${twelveDataKey}&outputsize=5000&timezone=UTC`;
   const resp = await fetch(url);
@@ -78,7 +91,7 @@ function parseTwelveCandles(values: any[]): { time: number; open: number; high: 
   }).filter(c => !isNaN(c.time)).sort((a, b) => a.time - b.time);
 }
 
-async function loadCandles(supabase: ReturnType<typeof createClient>, symbol: string, timeframe: string, projectId?: string): Promise<{ candles: ReturnType<typeof parseTwelveCandles> } | { error: string }> {
+async function loadCandles(supabase: any, symbol: string, timeframe: string, projectId?: string): Promise<{ candles: ReturnType<typeof parseTwelveCandles> } | { error: string }> {
   if (!twelveDataKey) {
     return { error: 'TWELVEDATA_API_KEY not configured. Chart data unavailable. Add this secret in Supabase project settings.' };
   }
@@ -86,15 +99,15 @@ async function loadCandles(supabase: ReturnType<typeof createClient>, symbol: st
   const interval = mapInterval(timeframe);
 
   if (projectId) {
-    const { data: cached } = await supabase.from('market_data_cache')
+    const { data: cached } = (await supabase.from('market_data_cache')
       .select('data, expires_at')
       .eq('project_id', projectId)
       .eq('symbol', symbol)
       .eq('timeframe', timeframe)
       .eq('data_type', 'ohlc')
-      .maybeSingle();
+      .maybeSingle()) as unknown as { data: { data: unknown; expires_at?: string } | null };
     if (cached && cached.expires_at && new Date(cached.expires_at) > new Date()) {
-      return { candles: cached.data };
+      return { candles: cached.data as ReturnType<typeof parseTwelveCandles> };
     }
   }
 
@@ -141,66 +154,123 @@ serve(async (req) => {
     switch (operation) {
       case 'run': {
         if (!collectorName) return errorResponse('Missing collector_name');
-        const results: any = { collected: 0, errors: 0 };
+        const startedAt = Date.now();
+        const results: { collected: number; errors: number; messages: string[] } = { collected: 0, errors: 0, messages: [] };
 
-        if (collectorName === 'market_news' && alphavantageKey) {
-          try {
-            const resp = await fetch(`https://www.alphavantage.co/query?function=NEWS_SENTIMENT&apikey=${alphavantageKey}&limit=10`);
-            const news = await resp.json();
-            if (news.feed) {
-              for (const item of news.feed) {
-                await supabase.from('macro_event').insert({
-                  project_id,
-                  event_date: item.time_published,
-                  title: item.title,
-                  category: 'news',
-                  source: 'alphavantage',
-                });
-                results.collected++;
+        const insertMacroEvent = async (row: Record<string, unknown>) => {
+          const { error } = await supabase.from('macro_event').insert({ project_id, ...row });
+          if (error) {
+            results.errors++;
+            results.messages.push(error.message);
+          } else {
+            results.collected++;
+          }
+        };
+
+        let status = 'success';
+        let skippedReason: string | undefined;
+
+        if (collectorName === 'market_news' || collectorName === 'economic_calendar') {
+          if (!alphavantageKey) {
+            status = 'skipped';
+            skippedReason = 'ALPHAVANTAGE_API_KEY is not configured';
+          } else {
+            try {
+              if (collectorName === 'market_news') {
+                const resp = await fetch(`https://www.alphavantage.co/query?function=NEWS_SENTIMENT&apikey=${alphavantageKey}&limit=10`);
+                const news = await resp.json();
+                if (!news.feed) {
+                  status = 'skipped';
+                  skippedReason = 'Alpha Vantage returned no news feed';
+                } else {
+                  for (const item of news.feed) {
+                    await insertMacroEvent({
+                      event_date: parseAlphaVantageDate(item.time_published),
+                      title: item.title,
+                      category: 'news',
+                      source: 'alphavantage',
+                    });
+                  }
+                }
+              } else {
+                const resp = await fetch(`https://www.alphavantage.co/query?function=ECONOMIC_CALENDAR&apikey=${alphavantageKey}`);
+                const cal = await resp.json();
+                if (!cal.entries) {
+                  status = 'skipped';
+                  skippedReason = 'Alpha Vantage returned no calendar entries';
+                } else {
+                  for (const entry of cal.entries) {
+                    await insertMacroEvent({
+                      event_date: parseAlphaVantageDate(entry.date),
+                      title: entry.event,
+                      country: entry.country,
+                      importance: entry.importance || 1,
+                      source: 'alphavantage',
+                    });
+                  }
+                }
               }
+            } catch {
+              status = 'error';
+              results.errors++;
+              results.messages.push('Alpha Vantage request failed');
             }
-          } catch { results.errors++; }
+          }
+        } else {
+          status = 'skipped';
+          skippedReason = `No bulk ingestion source for collector '${collectorName}'`;
         }
 
-        if (collectorName === 'economic_calendar') {
-          try {
-            const resp = await fetch(`https://www.alphavantage.co/query?function=ECONOMIC_CALENDAR&apikey=${alphavantageKey}`);
-            const cal = await resp.json();
-            if (cal.entries) {
-              for (const entry of cal.entries) {
-                await supabase.from('macro_event').insert({
-                  project_id,
-                  event_date: entry.date,
-                  title: entry.event,
-                  country: entry.country,
-                  importance: entry.importance || 1,
-                  source: 'alphavantage',
-                });
-                results.collected++;
-              }
-            }
-          } catch { results.errors++; }
-        }
+        if (status === 'success' && results.errors > 0) status = 'error';
 
         await supabase.from('collector_status').upsert({
           project_id,
           collector_name: collectorName,
-          status: 'completed',
+          status,
           last_run_at: new Date().toISOString(),
           records_collected: results.collected,
+          errors: results.errors,
         }, { onConflict: 'project_id,collector_name' });
 
-        return successResponse(results);
+        await supabase.from('collector_log').insert({
+          project_id,
+          collector_name: collectorName,
+          status,
+          records_count: results.collected,
+          errors_count: results.errors,
+          error_message: skippedReason ?? (results.errors > 0 ? results.messages.slice(0, 5).join('; ') : undefined),
+          started_at: new Date(startedAt).toISOString(),
+          finished_at: new Date().toISOString(),
+          duration_ms: Date.now() - startedAt,
+        });
+
+        return successResponse({
+          collector_name: collectorName,
+          status,
+          records_collected: results.collected,
+          errors_count: results.errors,
+          error_message: skippedReason ?? (results.errors > 0 ? results.messages.slice(0, 5).join('; ') : undefined),
+          duration_ms: Date.now() - startedAt,
+        });
       }
 
       case 'toggle': {
         if (!collectorName) return errorResponse('Missing collector_name');
-        const { data: status } = await supabase.from('collector_status')
-          .select('enabled').eq('project_id', project_id).eq('collector_name', collectorName).single();
-        await supabase.from('collector_status').update({
-          enabled: !status?.enabled,
-        }).eq('project_id', project_id).eq('collector_name', collectorName);
-        return successResponse({ toggled: !status?.enabled });
+        const { data: existing } = await supabase.from('collector_status')
+          .select('enabled').eq('project_id', project_id).eq('collector_name', collectorName).maybeSingle();
+        const next = !(existing?.enabled ?? false);
+        if (existing) {
+          await supabase.from('collector_status').update({ enabled: next })
+            .eq('project_id', project_id).eq('collector_name', collectorName);
+        } else {
+          await supabase.from('collector_status').insert({
+            project_id,
+            collector_name: collectorName,
+            enabled: next,
+            status: 'idle',
+          });
+        }
+        return successResponse({ name: collectorName, enabled: next });
       }
 
       case 'fetch-ohlc': {

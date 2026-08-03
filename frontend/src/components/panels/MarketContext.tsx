@@ -8,9 +8,9 @@ export function MarketContext({ previewMode }: { previewMode?: boolean }) {
   const navigate = useNavigate();
 
   const { data: events, isLoading, error } = useQuery({
-    queryKey: ['macro-events', 10],
-    queryFn: () => macroService.events(10),
-    enabled: !previewMode,
+    queryKey: ['macro-events', projectId, 10],
+    queryFn: () => macroService.events(projectId!, 10),
+    enabled: !!projectId && !previewMode,
     refetchInterval: 120_000,
   });
 
@@ -50,11 +50,11 @@ export function MarketContext({ previewMode }: { previewMode?: boolean }) {
           {events.slice(0, 6).map((ev) => (
             <div key={ev.id} className="px-2 py-1.5 rounded border bg-card/50 text-xs">
               <div className="flex items-center justify-between gap-1">
-                <span className="font-medium truncate">{ev.event_name}</span>
+                <span className="font-medium truncate">{ev.title}</span>
                 <span className={`shrink-0 text-3xs px-1 rounded ${
-                  ev.impact === 'high' || ev.impact === 'very_high' ? 'bg-destructive/10 text-destructive' :
-                  ev.impact === 'medium' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'
-                }`}>{ev.impact}</span>
+                  (ev.importance ?? 0) >= 4 ? 'bg-destructive/10 text-destructive' :
+                  (ev.importance ?? 0) >= 3 ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'
+                }`}>{ev.importance ?? 0}</span>
               </div>
               <div className="text-3xs text-muted-foreground mt-0.5">
                 {ev.event_date ? new Date(ev.event_date).toLocaleDateString() : ''}
@@ -70,7 +70,7 @@ export function MarketContext({ previewMode }: { previewMode?: boolean }) {
             </div>
           ))}
           <div className="pt-1">
-            <button onClick={() => macroService.refresh()}
+            <button onClick={() => macroService.refresh(projectId!)}
               className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted/50 transition-colors"
             >
               <RefreshCw className="w-3 h-3" /> Refresh Data

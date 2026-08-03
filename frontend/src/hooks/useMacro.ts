@@ -3,40 +3,44 @@ import { macroService } from '../api/macro';
 
 export const MACRO_KEYS = {
   all: ['macro'] as const,
-  snapshot: () => [...MACRO_KEYS.all, 'snapshot'] as const,
-  events: (limit?: number, importance?: string) => [...MACRO_KEYS.all, 'events', { limit, importance }] as const,
-  calendar: () => [...MACRO_KEYS.all, 'calendar'] as const,
-  state: () => [...MACRO_KEYS.all, 'state'] as const,
+  snapshot: (projectId?: string) => [...MACRO_KEYS.all, 'snapshot', projectId] as const,
+  events: (projectId?: string, limit?: number, importance?: string) => [...MACRO_KEYS.all, 'events', projectId, { limit, importance }] as const,
+  calendar: (projectId?: string) => [...MACRO_KEYS.all, 'calendar', projectId] as const,
+  state: (projectId?: string) => [...MACRO_KEYS.all, 'state', projectId] as const,
 };
 
-export const useMacroSnapshot = () =>
+export const useMacroSnapshot = (projectId?: string) =>
   useQuery({
-    queryKey: MACRO_KEYS.snapshot(),
-    queryFn: () => macroService.snapshot(),
+    queryKey: MACRO_KEYS.snapshot(projectId),
+    queryFn: () => macroService.snapshot(projectId!),
+    enabled: !!projectId,
   });
 
-export const useMacroEvents = (limit?: number, importance?: string) =>
+export const useMacroEvents = (projectId?: string, limit?: number, importance?: string) =>
   useQuery({
-    queryKey: MACRO_KEYS.events(limit, importance),
-    queryFn: () => macroService.events(limit, importance),
+    queryKey: MACRO_KEYS.events(projectId, limit, importance),
+    queryFn: () => macroService.events(projectId!, limit, importance),
+    enabled: !!projectId,
   });
 
-export const useMacroCalendar = () =>
+export const useMacroCalendar = (projectId?: string) =>
   useQuery({
-    queryKey: MACRO_KEYS.calendar(),
-    queryFn: () => macroService.calendar(),
+    queryKey: MACRO_KEYS.calendar(projectId),
+    queryFn: () => macroService.calendar(projectId!),
+    enabled: !!projectId,
   });
 
-export const useMacroState = () =>
+export const useMacroState = (projectId?: string) =>
   useQuery({
-    queryKey: MACRO_KEYS.state(),
-    queryFn: () => macroService.state(),
+    queryKey: MACRO_KEYS.state(projectId),
+    queryFn: () => macroService.state(projectId!),
+    enabled: !!projectId,
   });
 
-export const useMacroRefresh = () => {
+export const useMacroRefresh = (projectId?: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => macroService.refresh(),
+    mutationFn: () => macroService.refresh(projectId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MACRO_KEYS.all });
     },

@@ -5,7 +5,6 @@ import { useLearningEvents } from '../hooks/useLearning';
 import { useSources } from '../hooks/useSources';
 import { useTrades } from '../hooks/useTrades';
 import { PageHeader } from '../components/PageHeader';
-import { Button } from '../components/Button';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { EmptyState, ErrorState } from '../components/ui/Feedback';

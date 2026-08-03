@@ -16,7 +16,11 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@tanstack/react-query-real": ["node_modules/@tanstack/react-query/build/modern/index.d.ts"]
+    }
   },
   "include": ["src"]
 }

@@ -1051,17 +1051,16 @@ export interface LearningRebuildResponse {
 
 export interface MacroEvent {
   id: string;
-  provider: string;
-  event_name: string;
-  country: string;
-  currency: string;
-  category: string;
-  importance: string;
-  actual?: number;
-  forecast?: number;
-  previous?: number;
-  unit: string;
-  release_time?: string;
+  project_id?: string;
+  event_date?: string;
+  title?: string;
+  country?: string;
+  category?: string;
+  importance?: number;
+  actual?: number | null;
+  forecast?: number | null;
+  previous?: number | null;
+  source?: string;
   created_at: string;
 }
 
