@@ -1143,23 +1143,27 @@ export interface MT5SyncResponse {
 
 export interface MarketEvent {
   id: string;
-  symbol: string;
-  timeframe: string;
-  timestamp: string;
+  project_id: string;
   event_type: string;
-  price?: number;
-  event_metadata?: Record<string, unknown>;
-  source: string;
+  symbol?: string;
+  timeframe?: string;
+  price?: number | null;
+  direction?: string;
+  raw_data?: Record<string, unknown>;
+  processed?: boolean;
   created_at: string;
 }
 
 export interface WebhookLog {
   id: string;
-  received_at: string;
+  project_id: string;
+  source?: string;
+  event_type?: string;
   status: string;
   payload?: Record<string, unknown>;
-  processing_time_ms?: number;
-  message?: string;
+  response?: Record<string, unknown>;
+  error?: string;
+  ip_address?: string;
   created_at: string;
 }
 

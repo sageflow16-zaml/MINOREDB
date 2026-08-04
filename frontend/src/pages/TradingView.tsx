@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/Button';
 import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
-import { useTVEvents, useTVLogs, useTVStats } from '../hooks/useTradingView';
+import { useTVEvents, useTVLogs, useTVStats, useTVWebhookSecret, useTVRotateSecret } from '../hooks/useTradingView';
 
 import { cn } from '../lib/utils';
 
@@ -19,12 +21,28 @@ const logStatusVariant: Record<string, 'success' | 'destructive' | 'default'> = 
 };
 
 export default function TradingViewPage() {
+  const { projectId = '' } = useParams<{ projectId: string }>();
   const [symbolFilter, setSymbolFilter] = useState('');
   const [timeframeFilter, setTimeframeFilter] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  const stats = useTVStats();
-  const events = useTVEvents({ limit: 50, symbol: symbolFilter || undefined, timeframe: timeframeFilter || undefined });
-  const logs = useTVLogs(30);
+  const stats = useTVStats(projectId);
+  const events = useTVEvents(projectId, { limit: 50, symbol: symbolFilter || undefined, timeframe: timeframeFilter || undefined });
+  const logs = useTVLogs(projectId, 30);
+  const secret = useTVWebhookSecret(projectId);
+  const rotate = useTVRotateSecret(projectId);
+
+  const webhookUrl = useMemo(() => {
+    if (!projectId || !secret.data) return '';
+    const base = import.meta.env.VITE_SUPABASE_URL || 'https://wlpukdzvcidbwwwehiql.supabase.co';
+    return `${base}/functions/v1/tv-webhook?project_id=${projectId}&secret=${secret.data}`;
+  }, [projectId, secret.data]);
+
+  const copyUrl = async () => {
+    await navigator.clipboard.writeText(webhookUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (stats.isLoading || events.isLoading) return <LoadingSpinner />;
   if (stats.isError || events.isError) return <ErrorState message="Error loading TradingView data." onRetry={() => { stats.refetch(); events.refetch(); }} />;
@@ -40,10 +58,35 @@ export default function TradingViewPage() {
         description="Webhook-based market structure events"
       >
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-          Webhook Active
+          <span className={cn('h-2 w-2 rounded-full animate-pulse', secret.data ? 'bg-success' : 'bg-destructive')} />
+          {secret.data ? 'Webhook Active' : 'Not Configured'}
         </div>
       </PageHeader>
+
+      {/* Webhook Setup */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Webhook URL</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {secret.isLoading ? (
+            <LoadingSpinner />
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground">
+                In TradingView, create an alert and set <span className="font-mono text-foreground">Webhook URL</span> to the address below.
+                The alert message is stored as-is when a custom message is set.
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 truncate rounded-lg bg-muted/30 px-3 py-2 font-mono text-[11px] text-foreground">{webhookUrl}</code>
+                <Button size="sm" variant="outline" onClick={copyUrl}>{copied ? 'Copied' : 'Copy'}</Button>
+                <Button size="sm" variant="outline" disabled={rotate.isPending} onClick={() => rotate.mutate()}>Regenerate Secret</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Keep the secret private — it authorizes alerts for this project.</p>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -104,7 +147,7 @@ export default function TradingViewPage() {
               <tbody className="divide-y divide-border">
                 {eventsData.slice(0, 20).map((e, i) => (
                   <tr key={i} className="hover:bg-muted/20">
-                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{new Date(e.timestamp).toLocaleTimeString()}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{new Date(e.created_at).toLocaleTimeString()}</td>
                     <td className="px-4 py-2.5">
                       <Badge variant={eventTypeVariant[e.event_type] || 'secondary'} size="sm">{e.event_type.replace(/_/g, ' ')}</Badge>
                     </td>
@@ -151,18 +194,18 @@ export default function TradingViewPage() {
                   <th className="px-4 py-2.5">Received At</th>
                   <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Message</th>
-                  <th className="px-4 py-2.5 text-right">Processing Time</th>
+                  <th className="px-4 py-2.5">Event Type</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {logsData.map((log) => (
                   <tr key={log.id} className="hover:bg-muted/20">
-                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{new Date(log.received_at).toLocaleString()}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
                     <td className="px-4 py-2.5">
                       <Badge variant={logStatusVariant[log.status] || 'default'} size="sm">{log.status}</Badge>
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground max-w-xs truncate">{log.message || '--'}</td>
-                    <td className="px-4 py-2.5 text-right text-muted-foreground">{log.processing_time_ms != null ? `${log.processing_time_ms}ms` : '--'}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground max-w-xs truncate">{typeof log.payload === 'string' ? log.payload : (log.payload?.message as string) || log.event_type || '--'}</td>
+                    <td className="px-4 py-2.5 text-right text-muted-foreground">{log.event_type || '--'}</td>
                   </tr>
                 ))}
               </tbody>
