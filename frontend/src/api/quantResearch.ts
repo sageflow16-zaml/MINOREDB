@@ -128,13 +128,43 @@ export const quantResearchService = {
   },
 
   runBacktest: async (projectId: string, data: Record<string, unknown>): Promise<BacktestRun> => {
+    const config = (data.config as Record<string, unknown>) ?? {};
+    const costs = (data.costs as Record<string, unknown>) ?? {};
+    const symbols = Array.isArray(data.symbols) ? data.symbols : [];
+    const strategyConfig = {
+      backtest_type: data.backtest_type ?? 'single',
+      config,
+      costs,
+      symbols,
+    };
     const { data: row, error } = await supabase
       .from('quant_backtest_run')
-      .insert({ ...data, project_id: projectId, status: 'pending' })
+      .insert({
+        name: data.name ?? 'Backtest',
+        symbol: typeof config.symbol === 'string' ? config.symbol : symbols[0] ?? null,
+        timeframe: typeof config.timeframe === 'string' ? config.timeframe : null,
+        start_date: data.start_date ?? null,
+        end_date: data.end_date ?? null,
+        initial_capital: config.initial_capital ?? 10000,
+        strategy_config: strategyConfig,
+        project_id: projectId,
+        status: 'pending',
+      })
       .select()
       .single();
     if (error) throw error;
-    return row as unknown as BacktestRun;
+    await callEdgeFunction('quant', {
+      operation: 'run-backtest',
+      project_id: projectId,
+      data: { run_id: (row as unknown as Record<string, unknown>).id },
+    });
+    const { data: refreshed, error: refetchError } = await supabase
+      .from('quant_backtest_run')
+      .select('*')
+      .eq('id', (row as unknown as Record<string, unknown>).id)
+      .single();
+    if (refetchError) throw refetchError;
+    return refreshed as unknown as BacktestRun;
   },
 
   getBacktest: async (projectId: string, id: string): Promise<BacktestRun> => {
@@ -227,11 +257,29 @@ export const quantResearchService = {
   runSimulation: async (projectId: string, data: Record<string, unknown>): Promise<SimulationRun> => {
     const { data: row, error } = await supabase
       .from('quant_simulation_run')
-      .insert({ ...data, project_id: projectId, status: 'pending' })
+      .insert({
+        name: data.name ?? 'Simulation',
+        simulation_type: data.simulation_type ?? 'monte_carlo',
+        iterations: data.num_simulations ?? data.iterations ?? 1000,
+        config: data.config ?? {},
+        project_id: projectId,
+        status: 'pending',
+      })
       .select()
       .single();
     if (error) throw error;
-    return row as unknown as SimulationRun;
+    await callEdgeFunction('quant', {
+      operation: 'run-simulation',
+      project_id: projectId,
+      data: { simulation_id: (row as unknown as Record<string, unknown>).id },
+    });
+    const { data: refreshed, error: refetchError } = await supabase
+      .from('quant_simulation_run')
+      .select('*')
+      .eq('id', (row as unknown as Record<string, unknown>).id)
+      .single();
+    if (refetchError) throw refetchError;
+    return refreshed as unknown as SimulationRun;
   },
 
   getSimulation: async (projectId: string, id: string): Promise<SimulationRun> => {
@@ -264,7 +312,6 @@ export const quantResearchService = {
     if (error) throw error;
     return ((data as unknown as Record<string, unknown>)?.distribution as { bucket: number; count: number }[]) ?? [];
   },
-
   // Walk-Forward
   walkforwardRuns: async (projectId: string, params?: { experiment_id?: string; limit?: number }): Promise<WalkForwardRun[]> => {
     let query = supabase

@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-type EdgeFunctionName = 'ai' | 'context' | 'tv-webhook' | 'collector' | 'broker-sync' | 'automation-connector' | 'obsidian-sync' | 'replay-data' | 'mt5';
+type EdgeFunctionName = 'ai' | 'context' | 'tv-webhook' | 'collector' | 'broker-sync' | 'automation-connector' | 'obsidian-sync' | 'replay-data' | 'mt5' | 'quant';
 
 interface EdgeFunctionRequest {
   operation: string;
