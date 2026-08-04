@@ -1862,6 +1862,7 @@ export interface Vault {
   health_status: string;
   health_message?: string;
   permission_level: string;
+  api_key?: string;
   settings_json?: Record<string, unknown>;
   metadata_json?: Record<string, unknown>;
 }

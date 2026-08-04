@@ -22,7 +22,7 @@ export const useVault = (projectId: string, vaultId: string) => {
 export const useCreateVault = (projectId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; path: string; vault_type?: string }) => obsidianService.createVault(projectId, data),
+    mutationFn: (data: { name: string; path: string; vault_type?: string; api_key?: string }) => obsidianService.createVault(projectId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['obsidian', projectId, 'vaults'] }),
   });
 };

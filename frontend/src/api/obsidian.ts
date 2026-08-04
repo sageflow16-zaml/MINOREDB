@@ -68,13 +68,25 @@ export const obsidianService = {
   checkHealth: async (projectId: string, vaultId: string): Promise<{ status: string; message?: string }> => {
     const { data, error } = await supabase
       .from('vault')
-      .select('health_status, health_message')
+      .select('health_status, health_message, api_key')
       .eq('id', vaultId)
       .eq('project_id', projectId)
       .single();
 
     if (error) throw error;
-    return { status: data.health_status, message: data.health_message };
+    if (!data.api_key) {
+      return { status: data.health_status ?? 'unknown', message: data.health_message ?? 'Set the Obsidian Local REST API token to enable sync.' };
+    }
+    try {
+      const res = await callEdgeFunction<{ status: string; message?: string }>('obsidian-sync', {
+        operation: 'check-health',
+        project_id: projectId,
+        data: { vault_id: vaultId },
+      });
+      return { status: res.status, message: res.message };
+    } catch {
+      return { status: data.health_status ?? 'unknown', message: data.health_message };
+    }
   },
 
   // Notes — Supabase client (obsidian_note table migrated)

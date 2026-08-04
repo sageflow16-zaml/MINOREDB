@@ -17,7 +17,7 @@ const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 export default function VaultManagerPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: '', path: '', vault_type: 'local' });
+  const [form, setForm] = useState({ name: '', path: '', vault_type: 'local', api_key: '' });
 
   const vaults = useVaults(projectId!);
   const createVault = useCreateVault(projectId!);
@@ -45,27 +45,32 @@ export default function VaultManagerPage() {
         <motion.div variants={item}>
           <Card>
             <CardContent className="p-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Vault Name</label>
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My Trading Vault" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Vault Path</label>
-                  <input value={form.path} onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/path/to/vault" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Type</label>
+                  <label className="text-xs text-muted-foreground mb-1 block">Vault Type</label>
                   <select value={form.vault_type} onChange={(e) => setForm({ ...form, vault_type: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
                     <option value="local">Local</option>
                     <option value="remote">Remote</option>
                     <option value="cloud">Cloud</option>
                   </select>
                 </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">REST API URL</label>
+                  <input value={form.path} onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="http://127.0.0.1:27123" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">API Token</label>
+                  <input type="password" value={form.api_key ?? ''} onChange={(e) => setForm({ ...form, api_key: e.target.value })} placeholder="Obsidian Local REST API token" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+                </div>
               </div>
+              <p className="text-xs text-muted mt-2">Install the "Local REST API" community plugin in Obsidian, enable it, and use its API key here. The REST API URL is the local port shown in the plugin settings.</p>
               <div className="flex gap-2 mt-3">
                 <Button size="sm" onClick={() => {
-                  createVault.mutate(form, { onSuccess: () => { setShowCreate(false); setForm({ name: '', path: '', vault_type: 'local' }); }});
+                  createVault.mutate(form, { onSuccess: () => { setShowCreate(false); setForm({ name: '', path: '', vault_type: 'local', api_key: '' }); }});
                 }} disabled={!form.name || !form.path || createVault.isPending}>Connect</Button>
                 <Button size="sm" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
               </div>
