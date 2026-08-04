@@ -178,7 +178,7 @@ export const aiFoundationService = {
   getSummaries: async (projectId: string, summaryType?: string, period?: string): Promise<AISummary[]> => {
     let query = supabase.from('ai_summary').select('*').eq('project_id', projectId);
     if (summaryType) query = query.eq('summary_type', summaryType);
-    if (period) query = query.eq('period_start', period);
+    if (period) query = query.eq('period', period);
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
     return (data ?? []) as AISummary[];

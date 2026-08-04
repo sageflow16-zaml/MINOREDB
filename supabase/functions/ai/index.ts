@@ -13,6 +13,7 @@ import {
 import {
   generateDebrief, detectPatterns, generateRules, buildProfile, generateCoaching,
   generateTradeMemory, analyzeTrade, evaluateCurrent, learningStatus,
+  analyzeProfile, generateRecommendations, generatePerformanceSummary, buildContext,
 } from './trading.ts';
 import {
   ragChat, ragSearch, researchChat, semanticSearch, getRelevantMemories, storeMemory,
@@ -191,8 +192,9 @@ serve(async (req) => {
         return successResponse(result);
       }
       case 'generate-coaching': {
-        const coachingType = data?.coaching_type;
-        const result = await generateCoaching(supabase, project_id, coachingType);
+        const coachingType = data?.session_type ?? data?.coaching_type;
+        const sessionDate = data?.date;
+        const result = await generateCoaching(supabase, project_id, coachingType, sessionDate);
         return successResponse(result);
       }
       case 'detect-patterns': {
@@ -207,6 +209,28 @@ serve(async (req) => {
         const result = await buildProfile(supabase, project_id);
         return successResponse(result);
       }
+      case 'analyze-profile': {
+        const result = await analyzeProfile(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'evaluate-trade': {
+        const tradeId = data?.trade_id;
+        if (!tradeId) return errorResponse('Missing trade_id');
+        const result = await analyzeTrade(supabase, project_id, tradeId);
+        return successResponse(result);
+      }
+      case 'generate-recommendations': {
+        const result = await generateRecommendations(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'generate-performance-summary': {
+        const result = await generatePerformanceSummary(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'build-context': {
+        const result = await buildContext(supabase, project_id, data ?? {});
+        return successResponse(result);
+      }
       case 'generate-trade-memory': {
         const tradeId = data?.trade_id;
         if (!tradeId) return errorResponse('Missing trade_id');
@@ -214,11 +238,26 @@ serve(async (req) => {
         return successResponse(result);
       }
       case 'rag-chat': {
-        const conversationId = data?.conversation_id;
         const message = data?.message;
-        if (!conversationId || !message) return errorResponse('Missing conversation_id or message');
+        if (!message) return errorResponse('Missing message');
+        let conversationId = data?.conversation_id;
+        if (!conversationId) {
+          const { data: conv, error: convErr } = await supabase.from('ai_conversation').insert({
+            project_id,
+            title: message.substring(0, 80),
+          }).select().single();
+          if (convErr || !conv) return errorResponse(convErr?.message || 'Failed to create conversation', 400);
+          conversationId = conv.id;
+        }
         const result = await ragChat(supabase, project_id, conversationId, message);
-        return successResponse(result);
+        if (result?.warning) return errorResponse(result.warning, 503);
+        return successResponse({
+          ...result,
+          answer: result?.assistant_message?.content ?? '',
+          sources: [],
+          evidence: [],
+          conversation_id: conversationId,
+        });
       }
       case 'rag-search': {
         const query = data?.query;
@@ -306,7 +345,8 @@ serve(async (req) => {
         const confResult = await findConfluences(supabase, project_id, confDocIds);
         return successResponse(confResult);
       }
-      case 'knowledge-graph-data': {
+      case 'knowledge-graph-data':
+      case 'knowledge-graph': {
         const graphResult = await getKnowledgeGraphData(supabase, project_id);
         return successResponse(graphResult);
       }

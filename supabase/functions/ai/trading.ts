@@ -141,7 +141,7 @@ export async function buildProfile(supabase: any, projectId: string) {
   return { profile_built: true };
 }
 
-export async function generateCoaching(supabase: any, projectId: string, coachingType?: string) {
+export async function generateCoaching(supabase: any, projectId: string, coachingType?: string, sessionDate?: string) {
   const { data: trades } = await supabase.from('trade').select('pair, direction, result, pnl, rr, entry_price, exit_price, notes, created_at').eq('project_id', projectId).is('deleted_at', null).order('created_at', { ascending: false }).limit(20);
   if (!trades || trades.length < 3) return { coaching: null, warning: 'Not enough trades for coaching' };
 
@@ -157,11 +157,11 @@ export async function generateCoaching(supabase: any, projectId: string, coachin
   const { data: row } = await supabase.from('coaching_session').insert({
     project_id: projectId,
     session_type: coachingType || 'general',
-    title: coaching.title || 'Coaching Session',
-    summary: coaching.summary || '',
-    category: coaching.category || 'general',
-    priority: coaching.priority || 'medium',
+    session_date: sessionDate ? new Date(sessionDate).toISOString() : new Date().toISOString(),
+    summary: `${coaching.title || 'Coaching Session'}: ${coaching.summary || ''}`,
+    key_findings: [coaching.category || 'general', coaching.priority || 'medium'],
     action_items: coaching.action_items || [],
+    metrics_snapshot: { trade_count: (trades || []).length },
     is_read: false,
   }).select().single();
   return { coaching: row };
@@ -279,4 +279,184 @@ export async function learningStatus(supabase: any, projectId: string) {
     last_event: lastEvent.data || null,
     last_snapshot: lastSnapshot.data || null,
   };
+}
+
+export async function analyzeProfile(supabase: any, projectId: string) {
+  const { data: trades } = await supabase.from('trade').select('*').eq('project_id', projectId).is('deleted_at', null).limit(500);
+  const closed = (trades || []).filter((t: any) => t.status === 'CLOSED' && t.pnl != null);
+  const wins = closed.filter((t: any) => t.result === 'WIN');
+  const losses = closed.filter((t: any) => t.result === 'LOSS');
+  const totalPnl = closed.reduce((s: number, t: any) => s + Number(t.pnl), 0);
+  const winRate = closed.length ? (wins.length / closed.length) * 100 : 0;
+  const avgRr = closed.length ? closed.reduce((s: number, t: any) => s + (Number(t.rr) || 0), 0) / closed.length : 0;
+  const avgRisk = closed.length ? closed.reduce((s: number, t: any) => s + (Number(t.risk_percent) || 0), 0) / closed.length : 0;
+
+  let maxDrawdownPct = 0;
+  let equity = 10000, peak = 10000;
+  for (const t of closed) {
+    equity += Number(t.pnl) || 0;
+    if (equity > peak) peak = equity;
+    if (peak > 0) maxDrawdownPct = Math.max(maxDrawdownPct, (peak - equity) / peak * 100);
+  }
+
+  let avgHoldingMin: number | null = null;
+  const holding = closed.filter((t: any) => t.open_time && t.close_time)
+    .map((t: any) => (new Date(t.close_time).getTime() - new Date(t.open_time).getTime()) / 60000);
+  if (holding.length) avgHoldingMin = Math.round(holding.reduce((a: number, b: number) => a + b, 0) / holding.length);
+
+  const sessions: Record<string, number> = {};
+  const timeframes: Record<string, number> = {};
+  const pairs: Record<string, number> = {};
+  for (const t of closed) {
+    for (const s of ['asian_session', 'london_session', 'newyork_session']) if (t[s]) sessions[t[s]] = (sessions[t[s]] || 0) + 1;
+    if (t.timeframe) timeframes[t.timeframe] = (timeframes[t.timeframe] || 0) + 1;
+    if (t.pair) pairs[t.pair] = (pairs[t.pair] || 0) + 1;
+  }
+  const top = (o: Record<string, number>, n: number) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k);
+
+  const emotions = [...new Set(closed.map((t: any) => t.emotion).filter(Boolean))];
+  const { data: debriefs } = await supabase.from('trade_debrief').select('*').eq('project_id', projectId).limit(50);
+
+  const statsBlock = JSON.stringify({
+    trades: closed.length, wins: wins.length, losses: losses.length, winRate: Math.round(winRate),
+    totalPnl: Math.round(totalPnl), avgRr: Number(avgRr.toFixed(2)), avgRiskPct: Number(avgRisk.toFixed(2)),
+    maxDrawdownPct: Number(maxDrawdownPct.toFixed(1)), avgHoldingMin,
+    topPairs: top(pairs, 5), topTimeframes: top(timeframes, 5), sessions: top(sessions, 3), emotions,
+    debriefMistakes: (debriefs || []).slice(0, 10).map((d: any) => d.mistakes).filter(Boolean),
+    debriefStrengths: (debriefs || []).slice(0, 10).map((d: any) => d.strengths).filter(Boolean),
+  });
+
+  const result = await callAI(
+    'You are a trading psychologist. Build a trader profile from statistics. Return JSON ONLY with keys: trading_style (string), risk_profile (conservative/balanced/aggressive), best_conditions (object of string->string), worst_conditions (object of string->string), psychological_patterns (array of {pattern: string, frequency: number, impact: string}), most_common_mistakes (array of {note: string}), most_successful_behaviors (array of {behavior: string}), overall_score (0-100).',
+    `Trading statistics:\n${statsBlock}`
+  );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
+  let p: any;
+  try { p = JSON.parse(result); } catch { return { warning: 'Failed to parse AI profile response' }; }
+
+  const profile = {
+    trading_style: p.trading_style || null,
+    risk_profile: p.risk_profile || null,
+    preferred_sessions: top(sessions, 3),
+    preferred_markets: top(pairs, 3),
+    preferred_timeframes: top(timeframes, 3),
+    preferred_pairs: top(pairs, 3),
+    avg_rr: Number(avgRr.toFixed(2)),
+    avg_holding_time_min: avgHoldingMin,
+    avg_risk_per_trade: Number(avgRisk.toFixed(2)),
+    max_drawdown_pct: Number(maxDrawdownPct.toFixed(2)),
+    best_conditions: p.best_conditions || {},
+    worst_conditions: p.worst_conditions || {},
+    psychological_patterns: p.psychological_patterns || [],
+    most_common_mistakes: p.most_common_mistakes || [],
+    most_successful_behaviors: p.most_successful_behaviors || [],
+    overall_score: p.overall_score ?? Math.round(winRate * 0.7 + Math.min(Math.max(avgRr, 0), 3) / 3 * 30),
+    total_trades_analyzed: closed.length,
+    last_analyzed_at: new Date().toISOString(),
+  };
+
+  const { data: row, error } = await supabase.from('ai_profile').upsert(
+    { project_id: projectId, ...profile, updated_at: new Date().toISOString() },
+    { onConflict: 'project_id' },
+  ).select().single();
+  if (error) throw error;
+  return { profile: row, profile_built: true };
+}
+
+export async function generateRecommendations(supabase: any, projectId: string) {
+  const { data: trades } = await supabase.from('trade').select('*').eq('project_id', projectId).is('deleted_at', null).limit(300);
+  const closed = (trades || []).filter((t: any) => t.status === 'CLOSED' && t.pnl != null);
+  const { data: patterns } = await supabase.from('personal_pattern').select('*').eq('project_id', projectId).eq('active', true).limit(20);
+  const { data: rules } = await supabase.from('personal_rule').select('*').eq('project_id', projectId).eq('status', 'active').limit(20);
+
+  const result = await callAI(
+    'You are a trading improvement coach. Based on trade history, patterns and rules, return JSON ONLY: an array of objects with keys: recommendation_type (strategy/risk/psychology/process), title, description, rationale, priority (high/medium/low). Max 5 items.',
+    `Trades (${closed.length}):\n${JSON.stringify(closed.slice(-30).map((t: any) => ({ pair: t.pair, result: t.result, pnl: t.pnl, rr: t.rr, emotion: t.emotion, notes: t.notes?.substring(0, 80) })))}\n\nPatterns:\n${JSON.stringify((patterns || []).map((p: any) => ({ name: p.name, category: p.category, description: p.description })))}\n\nRules:\n${JSON.stringify((rules || []).map((r: any) => ({ name: r.name, description: r.description })))}`
+  );
+  if (isAiError(result)) return { recommendations_created: 0, warning: JSON.parse(result)._error };
+
+  let recs: any[];
+  try { recs = JSON.parse(result); } catch { return { recommendations_created: 0, warning: 'Failed to parse AI response' }; }
+
+  let created = 0;
+  for (const r of recs) {
+    const { error } = await supabase.from('ai_recommendation').insert({
+      project_id: projectId,
+      recommendation_type: r.recommendation_type || 'strategy',
+      priority: r.priority || 'medium',
+      title: r.title || 'Recommendation',
+      description: r.description || '',
+      rationale: r.rationale || '',
+      is_dismissed: false,
+      is_completed: false,
+    });
+    if (!error) created++;
+  }
+  return { recommendations_created: created };
+}
+
+export async function generatePerformanceSummary(supabase: any, projectId: string) {
+  const { data: trades } = await supabase.from('trade').select('*').eq('project_id', projectId).is('deleted_at', null).limit(500);
+  const closed = (trades || []).filter((t: any) => t.status === 'CLOSED' && t.pnl != null);
+  const wins = closed.filter((t: any) => t.result === 'WIN');
+  const losses = closed.filter((t: any) => t.result === 'LOSS');
+  const totalPnl = closed.reduce((s: number, t: any) => s + Number(t.pnl), 0);
+  const stats = {
+    trades: closed.length, wins: wins.length, losses: losses.length, breakevens: closed.length - wins.length - losses.length,
+    winRate: closed.length ? Math.round(wins.length / closed.length * 100) : 0,
+    totalPnl: Math.round(totalPnl), avgWin: wins.length ? wins.reduce((s: number, t: any) => s + Number(t.pnl), 0) / wins.length : 0,
+    avgLoss: losses.length ? losses.reduce((s: number, t: any) => s + Number(t.pnl), 0) / losses.length : 0,
+  };
+
+  const result = await callAI(
+    'You are a performance analyst. Write a concise performance summary. Return JSON ONLY with keys: text_summary (2-3 sentences), keywords (array of strings), sentiment (positive/neutral/negative), content (object with any extra metrics).',
+    `Performance statistics:\n${JSON.stringify(stats)}`
+  );
+  if (isAiError(result)) return { warning: JSON.parse(result)._error };
+
+  let s: any;
+  try { s = JSON.parse(result); } catch { return { warning: 'Failed to parse AI response' }; }
+
+  const { data: row, error } = await supabase.from('ai_summary').insert({
+    project_id: projectId,
+    summary_type: 'performance',
+    period: 'all',
+    content: s.content || {},
+    text_summary: s.text_summary || '',
+    keywords: s.keywords || [],
+    sentiment: s.sentiment || 'neutral',
+    importance: 'medium',
+  }).select().single();
+  if (error) throw error;
+  return row;
+}
+
+export async function buildContext(supabase: any, projectId: string, options: Record<string, any> = {}) {
+  const { data: profile } = await supabase.from('ai_profile').select('*').eq('project_id', projectId).maybeSingle();
+  const { data: trades } = await supabase.from('trade').select('*').eq('project_id', projectId).is('deleted_at', null).order('created_at', { ascending: false }).limit(20);
+  const { data: patterns } = await supabase.from('detected_pattern').select('*').eq('project_id', projectId).eq('is_active', true).limit(10);
+  const { data: insights } = await supabase.from('ai_insight').select('*').eq('project_id', projectId).eq('is_dismissed', false).limit(5);
+  const { data: rules } = await supabase.from('knowledge_rule').select('*').eq('project_id', projectId).limit(10);
+
+  const context = {
+    generated_at: new Date().toISOString(),
+    project_id: projectId,
+    profile: profile || null,
+    recent_trades: (trades || []).map((t: any) => ({
+      pair: t.pair, direction: t.direction, result: t.result, pnl: t.pnl, rr: t.rr, status: t.status, emotion: t.emotion,
+    })),
+    active_patterns: (patterns || []).map((p: any) => ({ pattern_type: p.pattern_type, confidence: p.confidence, win_rate: p.win_rate })),
+    latest_insights: (insights || []).map((i: any) => ({ title: i.title, description: i.description, confidence: i.confidence })),
+    knowledge_rules: (rules || []).map((r: any) => ({ title: r.title, description: r.description })),
+    ...options,
+  };
+
+  await supabase.from('ai_context_snapshot').insert({
+    project_id: projectId,
+    snapshot_type: 'context',
+    context,
+  });
+
+  return context;
 }
