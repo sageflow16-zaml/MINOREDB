@@ -130,13 +130,14 @@ async function ensureCandles(supabase: any, projectId: string, symbol: string, t
 }
 
 async function loadCandles(supabase: any, projectId: string, symbol: string, timeframe: string, startDate?: string, endDate?: string): Promise<any[]> {
-  let query = supabase.from('market_candle').eq('project_id', projectId).eq('symbol', symbol).eq('timeframe', timeframe).order('open_time', { ascending: true });
-  if (startDate) query = query.gte('open_time', toIso(startDate));
-  if (endDate) query = query.lte('open_time', toIso(endDate));
+  let base = supabase.from('market_candle').select('*').eq('project_id', projectId).eq('symbol', symbol).eq('timeframe', timeframe);
+  if (startDate) base = base.gte('open_time', toIso(startDate));
+  if (endDate) base = base.lte('open_time', toIso(endDate));
+  base = base.order('open_time', { ascending: true });
   const rows: any[] = [];
   let from = 0;
   while (true) {
-    const { data, error } = await query.range(from, from + 999).select('*');
+    const { data, error } = await base.range(from, from + 999);
     if (error) throw new Error(`Failed to load candles: ${error.message}`);
     if (!data || data.length === 0) break;
     rows.push(...data);

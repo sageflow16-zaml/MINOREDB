@@ -159,11 +159,11 @@ async function fetchTwelveData(symbol: string, interval: string, startDate?: str
   return { status: 'ok', values: json.values };
 }
 
-async function selectAllCandles(query: any): Promise<any[]> {
+async function selectAllCandles(base: any): Promise<any[]> {
   const rows: any[] = [];
   let from = 0;
   while (true) {
-    const { data, error } = await query.range(from, from + 999).select('*');
+    const { data, error } = await base.range(from, from + 999);
     if (error) throw new Error(`Failed to load candles: ${error.message}`);
     if (!data || data.length === 0) break;
     rows.push(...data);
@@ -176,10 +176,11 @@ async function selectAllCandles(query: any): Promise<any[]> {
 async function ensureCandles(supabase: any, projectId: string, symbol: string, timeframe: string, startDate: string | null, endDate: string | null): Promise<any[]> {
   const startIso = toIso(startDate);
   const endIso = toIso(endDate);
-  let query = supabase.from('market_candle').eq('symbol', symbol).eq('timeframe', timeframe).order('open_time', { ascending: true });
-  if (startIso) query = query.gte('open_time', startIso);
-  if (endIso) query = query.lte('open_time', endIso);
-  const data = await selectAllCandles(query);
+  let base = supabase.from('market_candle').select('*').eq('symbol', symbol).eq('timeframe', timeframe);
+  if (startIso) base = base.gte('open_time', startIso);
+  if (endIso) base = base.lte('open_time', endIso);
+  base = base.order('open_time', { ascending: true });
+  const data = await selectAllCandles(base);
   if (data.length > 0) return data;
 
   if (!twelveDataKey) throw new Error('No cached candles and TWELVEDATA_API_KEY not configured. Add this secret in Supabase project settings.');
