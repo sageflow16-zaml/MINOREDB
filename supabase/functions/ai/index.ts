@@ -22,6 +22,10 @@ import {
   copilotChat, listCopilotTools, executeCopilotTool, copilotSearch,
   copilotIngest, executeCopilotWorkflow, getMessageCitations,
 } from './copilot.ts';
+import {
+  askPortfolioAI, detectMarketRegime, checkMarketAlerts,
+  autoPopulateTimeline, marketAIContext,
+} from './market.ts';
 
 export const openaiApiKey = Deno.env.get('OPENROUTER_API_KEY') || '';
 export const openaiBaseUrl = Deno.env.get('OPENAI_BASE_URL') || 'https://openrouter.ai/api/v1';
@@ -185,6 +189,28 @@ serve(async (req) => {
       }
       case 'context': {
         const result = await buildContext(supabase, project_id, data?.options || {});
+        return successResponse(result);
+      }
+      case 'ask': {
+        const question = data?.question;
+        if (!question) return errorResponse('Missing question');
+        const result = await askPortfolioAI(supabase, project_id, question);
+        return successResponse(result);
+      }
+      case 'detect-regime': {
+        const result = await detectMarketRegime(supabase, project_id, data?.symbol, data?.metrics);
+        return successResponse(result);
+      }
+      case 'check-news-alerts': {
+        const result = await checkMarketAlerts(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'auto-populate-timeline': {
+        const result = await autoPopulateTimeline(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'market-context': {
+        const result = await marketAIContext(supabase, project_id);
         return successResponse(result);
       }
       case 'extract-claims': {

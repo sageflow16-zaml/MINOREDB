@@ -19,6 +19,9 @@ serve(async (req) => {
     const { operation, project_id, data } = await req.json() as any;
     if (!operation) return errorResponse('Missing operation');
 
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) return errorResponse('Unauthorized', 401);
+
     switch (operation) {
       case 'market_context':
       case 'multi_timeframe': {
