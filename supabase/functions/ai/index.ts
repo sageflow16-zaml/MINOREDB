@@ -31,12 +31,6 @@ function getSupabaseClient(req: Request) {
   });
 }
 
-function getServiceClient() {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  return createClient(supabaseUrl, serviceKey);
-}
-
 export function aiNotConfiguredMsg() {
   return 'AI service is not configured. Set OPENROUTER_API_KEY in your project secrets to enable AI features.';
 }
@@ -141,6 +135,9 @@ serve(async (req) => {
     if (!project_id) return errorResponse('Missing project_id');
 
     const supabase = getSupabaseClient(req);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return errorResponse('Unauthorized', 401);
 
     switch (operation) {
       case 'extract-claims': {
@@ -249,7 +246,7 @@ serve(async (req) => {
       case 'ingest-document': {
         const sourceId = data?.source_id;
         if (!sourceId) return errorResponse('Missing source_id');
-        const result = await ingestDocument(getServiceClient(), project_id, sourceId);
+        const result = await ingestDocument(supabase, project_id, sourceId);
         return successResponse(result);
       }
       case 'research-chat': {
@@ -362,7 +359,7 @@ serve(async (req) => {
         const memCategory = data?.category || 'observation';
         const memImportance = data?.importance || 1;
         if (!memKey || !memValue) return errorResponse('Missing key or value');
-        const stResult = await storeMemory(getServiceClient(), project_id, memKey, memValue, memCategory, memImportance);
+        const stResult = await storeMemory(supabase, project_id, memKey, memValue, memCategory, memImportance);
         return successResponse(stResult);
       }
       case 'auto-link': {

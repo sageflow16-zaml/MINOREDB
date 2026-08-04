@@ -105,3 +105,17 @@ backend = "postgres"
 
 [experimental]
 orioledb_version = ""
+
+# Edge function JWT verification policy.
+# ai/collector require an authenticated user session (frontend always sends the
+# user JWT via supabase.functions.invoke). tv-webhook must stay open because
+# TradingView posts webhooks without authentication; the function itself
+# validates the project_id from the caller JWT or webhook payload.
+[functions.ai]
+verify_jwt = true
+
+[functions.collector]
+verify_jwt = true
+
+[functions.tv-webhook]
+verify_jwt = false
