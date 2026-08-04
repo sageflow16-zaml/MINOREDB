@@ -9,7 +9,7 @@ import {
   MessageSquare, AlertTriangle, Lightbulb, PieChart, Globe, Zap,
   RefreshCw, Library, ScrollText, GraduationCap, Notebook, UserCircle2,
   FolderOpen, FileText, Star, Clock, MoreHorizontal, Shield, Calendar, Bot, BookMarked,
-  Radar, Bell, Link2, FlaskConical, Beaker, Dices, Heart,
+  Radar, Bell, Link2, FlaskConical, Beaker, Dices, Heart, History,
   Workflow, GitBranch, BellRing, DollarSign, TrendingUp, Repeat, Briefcase,
   Wifi, TestTube, ExternalLink, Monitor, Cpu,
 } from 'lucide-react';
@@ -57,7 +57,7 @@ const navSections: NavSection[] = [
       { name: 'Journal', path: 'learning', icon: Notebook },
       { name: 'Strategies', path: 'strategies', icon: Lightbulb },
       { name: 'Playbooks', path: 'playbooks', icon: BookTemplate },
-      // Replay hidden behind feature flag — not yet implemented
+      { name: 'Replay', path: 'replay', icon: History },
       { name: 'Planning', path: 'planning', icon: Calendar },
     ],
   },

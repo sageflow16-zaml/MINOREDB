@@ -35,7 +35,7 @@ const Knowledge = lazy(() => import('../pages/Knowledge'));
 const KnowledgeGraph = lazy(() => import('../pages/KnowledgeGraph'));
 const Analyst = lazy(() => import('../pages/Analyst'));
 const Research = lazy(() => import('../pages/Research'));
-// const Replay = lazy(() => import('../pages/Replay'));
+const Replay = lazy(() => import('../pages/Replay'));
 const KnowledgeCenter = lazy(() => import('../pages/KnowledgeCenter'));
 const TraderIntelligence = lazy(() => import('../pages/TraderIntelligence'));
 const Strategies = lazy(() => import('../pages/Strategies'));
@@ -159,7 +159,7 @@ export const AppRoutes = () => (
           <Route path="/projects/:projectId/knowledge-engine" element={<KnowledgeEngine />} />
           <Route path="/projects/:projectId/analyst" element={<Analyst />} />
           <Route path="/projects/:projectId/research" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Research /></ErrorBoundary>} />
-          {/* <Route path="/projects/:projectId/replay" element={<Replay />} /> */}
+          <Route path="/projects/:projectId/replay" element={<Replay />} />
           <Route path="/projects/:projectId/trader-intelligence" element={<TraderIntelligence />} />
           <Route path="/projects/:projectId/knowledge-center" element={<KnowledgeCenter />} />
           <Route path="/projects/:projectId/ai" element={<ErrorBoundary FallbackComponent={ErrorFallback}><AIDashboard /></ErrorBoundary>} />

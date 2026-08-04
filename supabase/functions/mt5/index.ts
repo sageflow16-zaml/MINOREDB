@@ -329,6 +329,37 @@ serve(async (req) => {
         });
       }
 
+      case 'logs': {
+        const limit = Math.min(Number(data?.limit ?? 100) || 100, 500);
+        const { data: projects } = await supabase.from('project').select('id').eq('user_id', user.id);
+        const projectIds = (projects || []).map((p: any) => p.id);
+        if (projectIds.length === 0) return successResponse([]);
+        const { data: connections } = await supabase
+          .from('broker_connection_new')
+          .select('id, label')
+          .in('project_id', projectIds)
+          .eq('provider', 'metatrader5');
+        const connectionIds = (connections || []).map((c: any) => c.id);
+        if (connectionIds.length === 0) return successResponse([]);
+        const { data: rows, error } = await supabase
+          .from('sync_history_new')
+          .select('*')
+          .in('connection_id', connectionIds)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+        if (error) throw new Error(error.message);
+        const byId = new Map((connections || []).map((c: any) => [c.id, c.label || 'MT5']));
+        return successResponse((rows || []).map((r: any) => ({
+          id: r.id,
+          broker: byId.get(r.connection_id) || 'metatrader5',
+          trade_ticket: r.items_synced ?? 0,
+          sync_time: r.created_at,
+          status: r.status,
+          message: r.error_message || `${r.items_created ?? 0} created, ${r.items_updated ?? 0} updated, ${r.items_duplicates ?? 0} duplicates`,
+          created_at: r.created_at,
+        })));
+      }
+
       default:
         return errorResponse(`Unknown operation: ${operation}`);
     }

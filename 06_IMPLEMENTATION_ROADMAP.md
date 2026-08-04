@@ -2,6 +2,7 @@
 
 > Follows the operating priority order: fix broken → complete unfinished → connect placeholders → connect integrations → remove fake data → detect missing logic → make everything work → verify E2E → cleanup.
 > No code was modified during this audit.
+> Status as of 2026-08-04: Phase 0 and the flagship integration tasks (Phase 1/2) are shipped and production-verified. Remaining work is Phase 3 cleanup and Phase 4 hardening. `✅` = done + prod-verified.
 
 ---
 
@@ -18,28 +19,29 @@
 
 | # | Task | Effort | Risk |
 |---|---|---|---|
-| 1.1 | `macro_event.project_id` + RLS + collector `run` error propagation (stop fake success) | M | High |
+| 1.1 | ✅ `macro_event.project_id` + RLS + collector `run` error propagation (stop fake success) — 00042 | M | High |
 | 1.2 | `search_knowledge` RPC — use real source columns | S | Medium |
 | 1.3 | `get_analytics_time_series` — disambiguate result + GRANT | S | Low |
 | 1.4 | `agent` table (or rewrite `get_distinct_agent_names` over agent_workflow) | S | Medium |
 | 1.5 | Analyst: create conversation before `rag-chat` (or tolerate empty id) | S | Medium |
 | 1.6 | Implement 6 missing AI Foundation ops + fix `generate-coaching` param | M | Medium |
 | 1.7 | Implement Copilot ops (`chat`, `execute-workflow`, `list-tools`, `execute-tool`, `search`, `ingest`, `citations`, `context`) or disable the surface | L | Medium |
-| 1.8 | Fix collector `toggle` `.single()` 500 | S | Low |
+| 1.8 | ✅ collector `toggle` `.single()` 500 | S | Low |
 
 ## Phase 2 — Connect placeholders & integrations
 
 | # | Task | Effort | Risk |
 |---|---|---|---|
-| 2.1 | Implement `obsidian-sync` (import/export/auto-link/search/render-template) + deploy; wire `parse-markdown` on `ai` | L | Medium |
-| 2.2 | Implement `broker-sync` (connect/sync/status) + `ai` `execution-analysis` + portfolio `ask` | L | Medium |
-| 2.3 | Implement `automation-connector` (execute-rule/run-connector) + report ops on `ai`; deploy | L | Medium |
-| 2.4 | Implement `mt5` ops (or mark feature beta/disabled) | L | Medium |
-| 2.5 | Settings persistence: create `settings` table + api module + wire Save | M | Medium |
+| 2.1 | ✅ `obsidian-sync` (check-health/import/import-data/export/resolve-conflict/auto-link) + VaultManager REST URL/token — v7 prod | L | Medium |
+| 2.2 | ✅ `broker-sync` (test-connection/sync/sync-account/execution-analysis/check-health) + credentials_encrypted mapping fix — v8 prod | L | Medium |
+| 2.3 | ✅ `automation-connector` (evaluate-rules/generate_*_report/test/sync/run_jobs) + pg_cron scheduler 00051 — v8 prod | L | Medium |
+| 2.4 | ✅ `mt5` (connect/disconnect/status/sync/logs via MetaApi REST) — v8 prod | L | Medium |
+| 2.5 | ✅ Settings persistence: `user_settings` table 00048 + api module + autosave + CSV import/export | M | Medium |
 | 2.6 | Market Intelligence AI ops (`detect-regime`, `check-news-alerts`, `auto-populate-timeline`, `market-context`) | M | Medium |
-| 2.7 | Quant: real backtest execution engine (or honest "manual entry" mode) | XL | High |
+| 2.7 | ✅ Quant backtest engine (SMA/RSI/Bollinger/MACD/price-range, ATR SL/TP, pip-based costs) + Monte Carlo/bootstrap simulation runner + market_candle cache — v4 prod | XL | High |
 | 2.8 | Decide `context` fn: wire to a consumer (AI market context) or delete | S | Low |
 | 2.9 | OAuth/SSO providers (optional) | S | Low |
+| 2.10 | ✅ Replay: TwelveData candle fetch + market_candle cache + workspace navigation (load-workspace/next/prev/jump) + review columns 00050 — v9 prod | L | Medium |
 
 ## Phase 3 — Remove fake/missing data & logic
 
@@ -65,7 +67,8 @@
 
 ## Phase 5 — Cleanup (only after everything works)
 
-- Delete dead pages (`Replay` or resurrect, `ProjectSettings` or route it), dead `context` fn, legacy `extension/`/`obsidian-plugin/` (or rewire to edge functions), vestigial `backend/`, dead components/hooks from FRONTEND_AUDIT.md.
+- Delete dead pages (`ProjectSettings` or route it), dead `context` fn, legacy `extension/`/`obsidian-plugin/` (or rewire to edge functions), vestigial `backend/`, dead components/hooks from FRONTEND_AUDIT.md.
+- ✅ Replay resurrected and routed (`/projects/:projectId/replay`) + sidebar item enabled.
 - Merge dual toast systems; unify nav registries; restore `@` alias config; remove monkey-patched React Query + `useStableQuery` once verified.
 - Consolidate duplicate EvidencePanel/MetricCard/intelligence-panel components; replace ivfflat with HNSW at scale.
 
