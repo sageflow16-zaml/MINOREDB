@@ -490,7 +490,7 @@ Return a JSON object with keys: mistakes (array of {mistake, examples[], severit
 export async function generateFlashcards(supabase: any, projectId: string, documentIds: string[]) {
   let context = '';
   for (const docId of documentIds) {
-    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    const { data: source } = await supabase.from('source').select('*').eq('id', docId).single();
     if (source) {
       context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 3000)}`;
     }
@@ -508,7 +508,7 @@ export async function generateFlashcards(supabase: any, projectId: string, docum
 export async function compareDocuments(supabase: any, projectId: string, documentIds: string[]) {
   let contexts: any[] = [];
   for (const docId of documentIds) {
-    const { data: source } = await supabase.from('source').select('id, name, normalized_text, raw_text').eq('id', docId).single();
+    const { data: source } = await supabase.from('source').select('*').eq('id', docId).single();
     if (source) {
       contexts.push({
         id: source.id,
@@ -536,7 +536,7 @@ Return a JSON object with keys: similarities (array), differences (array), compl
 }
 
 export async function extractRules(supabase: any, projectId: string, documentId: string) {
-  const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', documentId).single();
+  const { data: source } = await supabase.from('source').select('*').eq('id', documentId).single();
   if (!source) throw new Error('Source not found');
   const text = source.normalized_text || source.raw_text;
   if (!text) return { rules: [], warning: 'No text content' };
@@ -552,7 +552,7 @@ export async function extractRules(supabase: any, projectId: string, documentId:
 export async function generateQuiz(supabase: any, projectId: string, documentIds: string[]) {
   let context = '';
   for (const docId of documentIds) {
-    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    const { data: source } = await supabase.from('source').select('*').eq('id', docId).single();
     if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 3000)}`;
   }
   if (!context) return { questions: [], warning: 'No document content found' };
@@ -568,7 +568,7 @@ export async function generateQuiz(supabase: any, projectId: string, documentIds
 export async function generateStudyNotes(supabase: any, projectId: string, documentIds: string[]) {
   let context = '';
   for (const docId of documentIds) {
-    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    const { data: source } = await supabase.from('source').select('*').eq('id', docId).single();
     if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 4000)}`;
   }
   if (!context) return { notes: null, warning: 'No document content found' };
@@ -586,7 +586,7 @@ Return a JSON object with keys: title (string), topics (array of {topic, subtopi
 export async function findConfluences(supabase: any, projectId: string, documentIds: string[]) {
   let context = '';
   for (const docId of documentIds) {
-    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    const { data: source } = await supabase.from('source').select('*').eq('id', docId).single();
     if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 3000)}`;
   }
   if (!context) return { confluences: [], warning: 'No document content found' };
@@ -605,7 +605,7 @@ Return a JSON array of objects with keys: concept (string), documents (string[] 
 }
 
 export async function suggestQuestions(supabase: any, projectId: string, documentId: string) {
-  const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', documentId).single();
+  const { data: source } = await supabase.from('source').select('*').eq('id', documentId).single();
   if (!source) return { questions: [], warning: 'Document not found' };
   const text = (source.normalized_text || source.raw_text || '').substring(0, 4000);
 
@@ -628,7 +628,7 @@ Example: "How does the concept of liquidity sweeps in this document differ from 
 }
 
 export async function findRelatedDocuments(supabase: any, projectId: string, documentId: string) {
-  const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', documentId).single();
+  const { data: source } = await supabase.from('source').select('*').eq('id', documentId).single();
   if (!source) return { related: [], warning: 'Document not found' };
 
   const query = (source.normalized_text || source.raw_text || '').substring(0, 2000);
@@ -650,11 +650,16 @@ export async function findRelatedDocuments(supabase: any, projectId: string, doc
     p_project_id: projectId,
   });
 
+  const { data: ingestions } = await supabase.from('ai_document_ingestion')
+    .select('id, source_id').in('id', (results || []).map((r: any) => r.id));
+  const ingMap = new Map((ingestions || []).map((i: any) => [i.id, i.source_id]));
+
   const related = (results || [])
-    .filter((r: any) => r.source_id !== documentId)
+    .map((r: any) => ({ ...r, src: ingMap.get(r.id) }))
+    .filter((r: any) => r.src && r.src !== documentId)
     .map((r: any) => ({
-      source_id: r.source_id,
-      title: r.filename || r.source_id.slice(0, 8),
+      source_id: r.src,
+      title: r.filename || (r.src || '').slice(0, 8),
       similarity: r.similarity,
       snippet: r.content?.substring(0, 200) || '',
     }));
@@ -665,7 +670,7 @@ export async function findRelatedDocuments(supabase: any, projectId: string, doc
 export async function crossDocumentReasoning(supabase: any, projectId: string, documentIds: string[]) {
   let context = '';
   for (const docId of documentIds) {
-    const { data: source } = await supabase.from('source').select('name, normalized_text, raw_text').eq('id', docId).single();
+    const { data: source } = await supabase.from('source').select('*').eq('id', docId).single();
     if (source) context += `\n\n--- ${source.name || docId} ---\n${(source.normalized_text || source.raw_text || '').substring(0, 2500)}`;
   }
   if (!context) return { reasoning: null, warning: 'No document content found' };
@@ -691,7 +696,7 @@ Return ONLY valid JSON with this structure:
 export async function getRecommendations(supabase: any, projectId: string, documentIds: string[]) {
   let context = '';
   const { data: allSources } = await supabase.from('source')
-    .select('id, name, normalized_text, raw_text, origin_type')
+    .select('*')
     .eq('project_id', projectId)
     .limit(10);
   const docsToAnalyze = documentIds.length > 0

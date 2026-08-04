@@ -20,10 +20,15 @@ export async function askPortfolioAI(supabase: any, projectId: string, question:
     'You are a portfolio advisor. Answer the user question using the provided portfolio data. Return JSON ONLY with keys: answer (string), confidence (0-1 number), sources (array of strings).',
     `Portfolio stats: ${JSON.stringify(stats)}\n\nRecent trades: ${JSON.stringify((trades || []).slice(0, 10).map((t: any) => ({ pair: t.pair, result: t.result, pnl: t.pnl, rr: t.rr })))}\n\nNotes: ${JSON.stringify((notes || []).slice(0, 5).map((n: any) => n.content || n.description).filter(Boolean))}\n\nQuestion: ${question}`
   );
-  if (isAiError(result)) throw new Error(JSON.parse(result)._error);
+  if (isAiError(result)) return { question, answer: result, confidence: 0, sources: [], generated_at: new Date().toISOString() };
 
   let parsed: any;
-  try { parsed = JSON.parse(result); } catch { throw new Error('Failed to parse AI response'); }
+  try {
+    const cleaned = result.replace(/```json/gi, '').replace(/```/g, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch {
+    return { question, answer: result, confidence: 0.5, sources: [], generated_at: new Date().toISOString() };
+  }
 
   return {
     question,

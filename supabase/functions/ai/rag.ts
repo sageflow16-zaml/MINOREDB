@@ -83,7 +83,7 @@ export async function researchChat(supabase: any, projectId: string, conversatio
 
   let documentContext = '';
   if (documentIds && documentIds.length > 0) {
-    const { data: docs } = await supabase.from('source').select('id, name, normalized_text, raw_text').in('id', documentIds);
+    const { data: docs } = await supabase.from('source').select('*').in('id', documentIds);
     for (const doc of docs || []) {
       const text = doc.normalized_text || doc.raw_text || '';
       documentContext += `\n\n--- Document: ${doc.name || doc.id} ---\n${text.substring(0, 4000)}`;
