@@ -44,7 +44,13 @@ export const brokerService = {
   },
 
   createConnection: async (projectId: string, data: Partial<BrokerHubConnection>): Promise<BrokerHubConnection> => {
-    const { data: row, error } = await supabase.from('broker_connection_new').insert({ ...data, project_id: projectId }).select().single();
+    const { credentials, ...rest } = data as any;
+    const payload = {
+      ...rest,
+      credentials_encrypted: credentials ? JSON.stringify(credentials) : null,
+      project_id: projectId,
+    };
+    const { data: row, error } = await supabase.from('broker_connection_new').insert(payload).select().single();
     if (error) throw error;
     return row as unknown as BrokerHubConnection;
   },
