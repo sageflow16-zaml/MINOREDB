@@ -8,9 +8,13 @@ export const searchService = {
 
     const { data: knowledgeResults, error } = await supabase.rpc('search_knowledge', { p_project_id: projectId, p_query: q });
     if (!error && knowledgeResults) {
+      const resultsArr = (knowledgeResults as any[]).map((r: any) => ({
+        ...r,
+        entity_type: r.entity_type ?? r.type,
+      }));
       const filtered = typeFilter
-        ? (knowledgeResults as any[]).filter((r: any) => r.entity_type === typeFilter)
-        : knowledgeResults;
+        ? resultsArr.filter((r) => r.entity_type === typeFilter)
+        : resultsArr;
       results.push(...(filtered as unknown as SearchResult[]));
     }
 
