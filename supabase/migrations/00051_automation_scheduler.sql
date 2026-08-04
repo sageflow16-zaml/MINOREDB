@@ -10,7 +10,7 @@ BEGIN
     PERFORM cron.schedule(
       'automation-run-jobs',
       '*/5 * * * *',
-      $$
+      $cmd$
       SELECT net.http_post(
         url := 'https://wlpukdzvcidbwwwehiql.supabase.co/functions/v1/automation-connector',
         headers := jsonb_build_object(
@@ -19,7 +19,7 @@ BEGIN
         ),
         body := jsonb_build_object('operation', 'run_jobs')
       );
-      $$
+      $cmd$
     );
   END IF;
 END $$;
