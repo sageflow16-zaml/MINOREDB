@@ -130,12 +130,20 @@ async function ensureCandles(supabase: any, projectId: string, symbol: string, t
 }
 
 async function loadCandles(supabase: any, projectId: string, symbol: string, timeframe: string, startDate?: string, endDate?: string): Promise<any[]> {
-  let query = supabase.from('market_candle').select('*').eq('project_id', projectId).eq('symbol', symbol).eq('timeframe', timeframe).order('open_time', { ascending: true });
+  let query = supabase.from('market_candle').eq('project_id', projectId).eq('symbol', symbol).eq('timeframe', timeframe).order('open_time', { ascending: true });
   if (startDate) query = query.gte('open_time', toIso(startDate));
   if (endDate) query = query.lte('open_time', toIso(endDate));
-  const { data, error } = await query;
-  if (error) throw new Error(`Failed to load candles: ${error.message}`);
-  return data || [];
+  const rows: any[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await query.range(from, from + 999).select('*');
+    if (error) throw new Error(`Failed to load candles: ${error.message}`);
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+    if (data.length < 1000) break;
+    from += 1000;
+  }
+  return rows;
 }
 
 function toWorkspace(session: any, candles: any[], currentIndex: number, related: Record<string, any[]>): any {
