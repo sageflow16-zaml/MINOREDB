@@ -159,7 +159,7 @@ async function fetchTwelveData(symbol: string, interval: string, startDate?: str
   return { status: 'ok', values: json.values };
 }
 
-async function ensureCandles(supabase: any, symbol: string, timeframe: string, startDate: string | null, endDate: string | null): Promise<any[]> {
+async function ensureCandles(supabase: any, projectId: string, symbol: string, timeframe: string, startDate: string | null, endDate: string | null): Promise<any[]> {
   const startIso = toIso(startDate);
   const endIso = toIso(endDate);
   let query = supabase.from('market_candle').select('*').eq('symbol', symbol).eq('timeframe', timeframe).order('open_time', { ascending: true });
@@ -178,7 +178,7 @@ async function ensureCandles(supabase: any, symbol: string, timeframe: string, s
     .map((v: any) => {
       const raw = v.datetime.endsWith('Z') ? v.datetime : v.datetime.includes(' ') ? v.datetime.replace(' ', 'T') + 'Z' : v.datetime + 'T00:00:00Z';
       return {
-        symbol, timeframe, open_time: new Date(raw).toISOString(),
+        project_id: projectId, symbol, timeframe, open_time: new Date(raw).toISOString(),
         open: parseFloat(v.open), high: parseFloat(v.high), low: parseFloat(v.low), close: parseFloat(v.close),
         volume: parseInt(v.volume) || 0,
       };
@@ -186,7 +186,8 @@ async function ensureCandles(supabase: any, symbol: string, timeframe: string, s
     .filter((c: any) => !isNaN(Date.parse(c.open_time)))
     .sort((a: any, b: any) => a.open_time.localeCompare(b.open_time));
   if (rows.length > 0) {
-    await supabase.from('market_candle').upsert(rows, { onConflict: 'symbol,timeframe,open_time', ignoreDuplicates: true });
+    const { error: upsertErr } = await supabase.from('market_candle').upsert(rows, { onConflict: 'project_id,symbol,timeframe,open_time', ignoreDuplicates: true });
+    if (upsertErr) throw new Error(`Failed to cache candles: ${upsertErr.message}`);
   }
   if (rows.length === 0) throw new Error(`No candle data returned for ${symbol} ${timeframe}`);
   return rows;
@@ -283,7 +284,7 @@ function runBacktestEngine(candles: Candle[], cfg: Record<string, any>, costs: R
       }
       if (exitPrice != null) {
         const rawProfit = (exitPrice - open.entry) * open.size * (isLong ? 1 : -1);
-        const fees = (commission * open.size + spread * open.size + slippage * open.size) * (isLong ? 1 : 1);
+        const fees = commission + (spread + slippage) * open.size;
         const profit = rawProfit - fees;
         balance += profit;
         const rr = open.tp - open.entry !== 0
@@ -322,7 +323,7 @@ function runBacktestEngine(candles: Candle[], cfg: Record<string, any>, costs: R
   if (open) {
     const c = candles[candles.length - 1];
     const rawProfit = (c.close - open.entry) * open.size * (open.direction === 'LONG' ? 1 : -1);
-    const fees = commission * open.size + spread * open.size + slippage * open.size;
+    const fees = commission + (spread + slippage) * open.size;
     trades.push({
       entry_date: open.entryTime,
       exit_date: c.open_time,
@@ -498,7 +499,7 @@ serve(async (req) => {
           const symbols = strategyConfig.symbols || [run.symbol].filter(Boolean);
           const symbol = symbols[0] || 'EURUSD';
           const timeframe = cfg.timeframe || run.timeframe || '1h';
-          const candles = await ensureCandles(supabase, symbol, timeframe, run.start_date, run.end_date);
+          const candles = await ensureCandles(supabase, project_id, symbol, timeframe, run.start_date, run.end_date);
           if (candles.length < 50) throw new Error(`Not enough candle data for ${symbol} ${timeframe} (${candles.length} bars)`);
 
           const initialCapital = Number(run.initial_capital ?? cfg.initial_capital ?? 10000);

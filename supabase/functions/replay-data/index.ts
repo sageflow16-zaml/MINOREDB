@@ -93,10 +93,10 @@ function parseTwelveCandles(values: any[]): { open_time: string; open: number; h
   }).filter((c) => !isNaN(Date.parse(c.open_time))).sort((a, b) => a.open_time.localeCompare(b.open_time));
 }
 
-async function ensureCandles(supabase: any, symbol: string, timeframe: string, startDate?: string, endDate?: string, force = false): Promise<{ count: number; source: string; error?: string }> {
+async function ensureCandles(supabase: any, projectId: string, symbol: string, timeframe: string, startDate?: string, endDate?: string, force = false): Promise<{ count: number; source: string; error?: string }> {
   const startIso = startDate ? toIso(startDate) : null;
   const endIso = endDate ? toIso(endDate) : null;
-  let query = supabase.from('market_candle').select('id', { count: 'exact', head: true }).eq('symbol', symbol).eq('timeframe', timeframe);
+  let query = supabase.from('market_candle').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('symbol', symbol).eq('timeframe', timeframe);
   if (startIso) query = query.gte('open_time', startIso);
   if (endIso) query = query.lte('open_time', endIso);
   const { count } = await query;
@@ -120,16 +120,17 @@ async function ensureCandles(supabase: any, symbol: string, timeframe: string, s
   const candles = parseTwelveCandles(result.values);
   if (candles.length > 0) {
     const rows = candles.map((c) => ({
-      symbol, timeframe, open_time: c.open_time,
+      project_id: projectId, symbol, timeframe, open_time: c.open_time,
       open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume,
     }));
-    await supabase.from('market_candle').upsert(rows, { onConflict: 'symbol,timeframe,open_time', ignoreDuplicates: true });
+    const { error: upsertErr } = await supabase.from('market_candle').upsert(rows, { onConflict: 'project_id,symbol,timeframe,open_time', ignoreDuplicates: true });
+    if (upsertErr) return { count: candles.length, source: 'provider', error: `Failed to cache candles: ${upsertErr.message}` };
   }
   return { count: candles.length, source: 'provider' };
 }
 
-async function loadCandles(supabase: any, symbol: string, timeframe: string, startDate?: string, endDate?: string): Promise<any[]> {
-  let query = supabase.from('market_candle').select('*').eq('symbol', symbol).eq('timeframe', timeframe).order('open_time', { ascending: true });
+async function loadCandles(supabase: any, projectId: string, symbol: string, timeframe: string, startDate?: string, endDate?: string): Promise<any[]> {
+  let query = supabase.from('market_candle').select('*').eq('project_id', projectId).eq('symbol', symbol).eq('timeframe', timeframe).order('open_time', { ascending: true });
   if (startDate) query = query.gte('open_time', toIso(startDate));
   if (endDate) query = query.lte('open_time', toIso(endDate));
   const { data, error } = await query;
@@ -174,12 +175,12 @@ async function buildWorkspace(supabase: any, projectId: string, sessionId: strin
   if (sessionErr) throw new Error(sessionErr.message);
   if (!session) throw new Error('Session not found');
 
-  const ensure = await ensureCandles(supabase, session.symbol, session.timeframe, session.start_date, session.end_date);
+  const ensure = await ensureCandles(supabase, projectId, session.symbol, session.timeframe, session.start_date, session.end_date);
   if (ensure.error && ensure.count === 0) {
     throw new Error(ensure.error);
   }
 
-  const candles = await loadCandles(supabase, session.symbol, session.timeframe, session.start_date, session.end_date);
+  const candles = await loadCandles(supabase, projectId, session.symbol, session.timeframe, session.start_date, session.end_date);
   if (session.total_candles !== candles.length) {
     await supabase.from('replay_session').update({ total_candles: candles.length }).eq('id', sessionId);
     session.total_candles = candles.length;
@@ -238,7 +239,7 @@ serve(async (req) => {
         const symbol = data?.symbol;
         const timeframe = data?.timeframe;
         if (!symbol || !timeframe) return errorResponse('Missing symbol or timeframe');
-        const result = await ensureCandles(supabase, symbol, timeframe, data?.start_date, data?.end_date, !!data?.force);
+        const result = await ensureCandles(supabase, project_id, symbol, timeframe, data?.start_date, data?.end_date, !!data?.force);
         if (result.error && result.count === 0) return errorResponse(result.error, 502);
         return successResponse({ symbol, timeframe, count: result.count, source: result.source });
       }
