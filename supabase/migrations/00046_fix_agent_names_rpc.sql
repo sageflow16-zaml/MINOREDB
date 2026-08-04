@@ -7,14 +7,14 @@ SET search_path = ''
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT DISTINCT agent_name
-  FROM public.agent_task
-  WHERE project_id = p_project_id AND agent_name IS NOT NULL
+  SELECT DISTINCT t.agent_name
+  FROM public.agent_task t
+  WHERE t.project_id = p_project_id AND t.agent_name IS NOT NULL
   UNION
-  SELECT DISTINCT agent_name
-  FROM public.agent_execution
-  WHERE project_id = p_project_id AND agent_name IS NOT NULL
-  ORDER BY agent_name;
+  SELECT DISTINCT e.agent_name
+  FROM public.agent_execution e
+  WHERE e.project_id = p_project_id AND e.agent_name IS NOT NULL
+  ORDER BY 1;
 END;
 $$;
 
