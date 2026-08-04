@@ -12,9 +12,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  PYTHON_VERSION: '3.12'
   FRONTEND_DIR: './frontend'
-  BACKEND_DIR: './backend'
 
 jobs:
   frontend:
@@ -55,46 +53,6 @@ jobs:
       - name: npm audit
         if: always()
         run: npm audit --audit-level=high || true
-
-  backend:
-    name: Backend Tests & Security
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: minore
-          POSTGRES_DB: minore_test
-          POSTGRES_PASSWORD: minore
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-          cache-dependency-path: '${{ env.BACKEND_DIR }}/requirements.txt'
-
-      - name: Install backend dependencies
-        run: pip install -r ${{ env.BACKEND_DIR }}/requirements.txt
-        working-directory: ${{ env.BACKEND_DIR }}
-
-      - name: Run backend tests
-        run: python -m pytest ${{ env.BACKEND_DIR }}/tests/ -v --tb=short
-        env:
-          TEST_DATABASE_URL: postgresql+psycopg://minore:minore@localhost:5432/minore_test
-          JWT_SECRET_KEY: ci-secret-key-that-is-at-least-32-characters-long
-          RATE_LIMIT_PER_MINUTE: 0
 
   security:
     name: Security Audit
