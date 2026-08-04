@@ -1,0 +1,25 @@
+-- Migration 00051: automation scheduler (pg_cron + pg_net)
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+-- Runs the automation-connector job runner every 5 minutes.
+-- The x-cron-secret header is validated by the function against its CRON_SECRET env var.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'automation-run-jobs') THEN
+    PERFORM cron.schedule(
+      'automation-run-jobs',
+      '*/5 * * * *',
+      $$
+      SELECT net.http_post(
+        url := 'https://wlpukdzvcidbwwwehiql.supabase.co/functions/v1/automation-connector',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'x-cron-secret', 'ab6f590832fa770f46e7858d372e52f96f0bb132d87d7e1b'
+        ),
+        body := jsonb_build_object('operation', 'run_jobs')
+      );
+      $$
+    );
+  END IF;
+END $$;
