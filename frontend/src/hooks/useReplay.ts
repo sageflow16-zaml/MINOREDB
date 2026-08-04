@@ -2,6 +2,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStableQuery } from './useStableQuery';
 import { replayService, type ReplaySession, type ReplayWorkspaceState, type ReplayBookmark, type MarketCandle } from '../api/replay';
 
+export const useFetchCandles = (projectId: string) => {
+  return useMutation({
+    mutationFn: (data: { symbol: string; timeframe: string; start_date?: string; end_date?: string; force?: boolean }) =>
+      replayService.fetchCandles(projectId, data),
+  });
+};
+
 export const useCreateSession = (projectId: string) => {
   const qc = useQueryClient();
   return useMutation({

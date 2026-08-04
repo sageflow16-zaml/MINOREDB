@@ -71,38 +71,13 @@ export const replayService = {
   },
 
   getSession: async (projectId: string, sessionId: string): Promise<ReplayWorkspaceState> => {
-    const sessionRes = await supabase.from('replay_session').select('*').eq('id', sessionId).eq('project_id', projectId).single();
-    if (sessionRes.error) throw sessionRes.error;
-    const sessionPair = (sessionRes.data as unknown as ReplaySession)?.pair || 'EURUSD';
-    const [candlesRes, tradesRes, bookmarksRes, annotationsRes, timelineRes, reviewRes, mistakesRes, screenshotsRes] = await Promise.all([
-      supabase.from('market_candle').select('*').eq('symbol', sessionPair),
-      supabase.from('replay_trade').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
-      supabase.from('replay_bookmark').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
-      supabase.from('replay_annotation').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
-      supabase.from('replay_timeline_event').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
-      supabase.from('replay_review').select('*').eq('session_id', sessionId).maybeSingle(),
-      supabase.from('replay_mistake').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
-      supabase.from('replay_screenshot').select('*').eq('session_id', sessionId).order('candle_index', { ascending: true }),
-    ]);
-    if (tradesRes.error) throw tradesRes.error;
-    if (bookmarksRes.error) throw bookmarksRes.error;
-    if (annotationsRes.error) throw annotationsRes.error;
-    if (timelineRes.error) throw timelineRes.error;
-    if (reviewRes.error) throw reviewRes.error;
-    if (mistakesRes.error) throw mistakesRes.error;
-    if (screenshotsRes.error) throw screenshotsRes.error;
-    return {
-      session: sessionRes.data as unknown as ReplaySession,
-      candle: null, candles_visible: [],
-      trades: (tradesRes.data ?? []) as unknown as ReplayTrade[],
-      bookmarks: (bookmarksRes.data ?? []) as unknown as ReplayBookmark[],
-      annotations: (annotationsRes.data ?? []) as unknown as ReplayAnnotation[],
-      timeline_events: (timelineRes.data ?? []) as unknown as ReplayTimelineEvent[],
-      review: (reviewRes.data ?? null) as unknown as ReplayReview | null,
-      mistakes: (mistakesRes.data ?? []) as unknown as ReplayMistake[],
-      screenshots: (screenshotsRes.data ?? []) as unknown as ReplayScreenshot[],
-    };
+    const { error } = await supabase.from('replay_session').select('id').eq('id', sessionId).eq('project_id', projectId).single();
+    if (error) throw error;
+    return callEdgeFunction<ReplayWorkspaceState>('replay-data', { operation: 'load-workspace', project_id: projectId, data: { session_id: sessionId } });
   },
+
+  fetchCandles: async (projectId: string, data: { symbol: string; timeframe: string; start_date?: string; end_date?: string; force?: boolean }): Promise<{ symbol: string; timeframe: string; count: number; source: string }> =>
+    callEdgeFunction('replay-data', { operation: 'fetch-candles', project_id: projectId, data }),
 
   nextCandle: (projectId: string, sessionId: string) =>
     callEdgeFunction<ReplayWorkspaceState>('replay-data', { operation: 'next-candle', project_id: projectId, data: { session_id: sessionId } }),
