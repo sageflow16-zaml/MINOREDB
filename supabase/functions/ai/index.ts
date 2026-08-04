@@ -18,6 +18,10 @@ import {
 import {
   ragChat, ragSearch, researchChat, semanticSearch, getRelevantMemories, storeMemory,
 } from './rag.ts';
+import {
+  copilotChat, listCopilotTools, executeCopilotTool, copilotSearch,
+  copilotIngest, executeCopilotWorkflow, getMessageCitations,
+} from './copilot.ts';
 
 export const openaiApiKey = Deno.env.get('OPENROUTER_API_KEY') || '';
 export const openaiBaseUrl = Deno.env.get('OPENAI_BASE_URL') || 'https://openrouter.ai/api/v1';
@@ -141,6 +145,48 @@ serve(async (req) => {
     if (!user) return errorResponse('Unauthorized', 401);
 
     switch (operation) {
+      case 'chat': {
+        const message = data?.message;
+        if (!message) return errorResponse('Missing message');
+        const result = await copilotChat(supabase, project_id, message, data?.conversation_id, data?.agent_type, data?.options || {});
+        return successResponse(result);
+      }
+      case 'list-tools': {
+        const result = await listCopilotTools();
+        return successResponse(result);
+      }
+      case 'execute-tool': {
+        const toolName = data?.tool_name;
+        if (!toolName) return errorResponse('Missing tool_name');
+        const result = await executeCopilotTool(supabase, project_id, toolName, data?.params || {});
+        return successResponse(result);
+      }
+      case 'search': {
+        const query = data?.query;
+        if (!query) return errorResponse('Missing query');
+        const result = await copilotSearch(supabase, project_id, query, data?.source_type, data?.limit);
+        return successResponse(result);
+      }
+      case 'ingest': {
+        const result = await copilotIngest(supabase, project_id);
+        return successResponse(result);
+      }
+      case 'execute-workflow': {
+        const workflowId = data?.workflow_id;
+        if (!workflowId) return errorResponse('Missing workflow_id');
+        const result = await executeCopilotWorkflow(supabase, project_id, workflowId);
+        return successResponse(result);
+      }
+      case 'citations': {
+        const messageId = data?.message_id;
+        if (!messageId) return errorResponse('Missing message_id');
+        const result = await getMessageCitations(supabase, project_id, messageId);
+        return successResponse(result);
+      }
+      case 'context': {
+        const result = await buildContext(supabase, project_id, data?.options || {});
+        return successResponse(result);
+      }
       case 'extract-claims': {
         const sourceId = data?.source_id;
         if (!sourceId) return errorResponse('Missing source_id');
