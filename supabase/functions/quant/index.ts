@@ -253,16 +253,25 @@ function computeSignals(candles: Candle[], cfg: Record<string, any>): ('LONG' | 
   return signals;
 }
 
-function runBacktestEngine(candles: Candle[], cfg: Record<string, any>, costs: Record<string, any>, initialCapital: number): { trades: any[]; equity: number[] } {
+function pipSize(symbol: string): number {
+  const s = (symbol || '').toUpperCase();
+  if (s.endsWith('JPY')) return 0.01;
+  if (s === 'XAUUSD' || s === 'XAGUSD') return 0.1;
+  if (s.startsWith('BTC') || s.startsWith('ETH') || s.startsWith('SOL') || s.startsWith('XRP')) return 1;
+  return 0.0001;
+}
+
+function runBacktestEngine(symbol: string, candles: Candle[], cfg: Record<string, any>, costs: Record<string, any>, initialCapital: number): { trades: any[]; equity: number[] } {
   const signals = computeSignals(candles, cfg);
   const atrPeriod = cfg.atr_period || 14;
   const atrValues = atr(candles.map((c) => c.high), candles.map((c) => c.low), candles.map((c) => c.close), atrPeriod);
   const slAtr = cfg.sl_atr ?? 2;
   const tpAtr = cfg.tp_atr ?? 3;
   const riskPercent = (cfg.risk_percent ?? 1) / 100;
+  const pip = pipSize(symbol);
   const commission = Number(costs?.commission ?? 0);
-  const spread = Number(costs?.spread ?? 0);
-  const slippage = Number(costs?.slippage ?? 0);
+  const spreadPrice = Number(costs?.spread ?? 0) * pip;
+  const slippagePrice = Number(costs?.slippage ?? 0) * pip;
 
   const trades: any[] = [];
   const equity: number[] = [];
@@ -284,7 +293,7 @@ function runBacktestEngine(candles: Candle[], cfg: Record<string, any>, costs: R
       }
       if (exitPrice != null) {
         const rawProfit = (exitPrice - open.entry) * open.size * (isLong ? 1 : -1);
-        const fees = commission + (spread + slippage) * open.size;
+        const fees = commission + (spreadPrice + slippagePrice) * open.size;
         const profit = rawProfit - fees;
         balance += profit;
         const rr = open.tp - open.entry !== 0
@@ -310,7 +319,7 @@ function runBacktestEngine(candles: Candle[], cfg: Record<string, any>, costs: R
       const signal = signals[i];
       if (signal) {
         const atrNow = atrValues[i] || cfg.fallback_atr || (c.high - c.low) * 2;
-        const entry = c.close + (signal === 'LONG' ? spread : -spread);
+        const entry = c.close + (signal === 'LONG' ? spreadPrice : -spreadPrice);
         const sl = signal === 'LONG' ? entry - slAtr * atrNow : entry + slAtr * atrNow;
         const tp = signal === 'LONG' ? entry + tpAtr * atrNow : entry - tpAtr * atrNow;
         const riskPerUnit = Math.abs(entry - sl);
@@ -323,7 +332,7 @@ function runBacktestEngine(candles: Candle[], cfg: Record<string, any>, costs: R
   if (open) {
     const c = candles[candles.length - 1];
     const rawProfit = (c.close - open.entry) * open.size * (open.direction === 'LONG' ? 1 : -1);
-    const fees = commission + (spread + slippage) * open.size;
+    const fees = commission + (spreadPrice + slippagePrice) * open.size;
     trades.push({
       entry_date: open.entryTime,
       exit_date: c.open_time,
@@ -503,7 +512,7 @@ serve(async (req) => {
           if (candles.length < 50) throw new Error(`Not enough candle data for ${symbol} ${timeframe} (${candles.length} bars)`);
 
           const initialCapital = Number(run.initial_capital ?? cfg.initial_capital ?? 10000);
-          const { trades, equity } = runBacktestEngine(candles, cfg, costs, initialCapital);
+          const { trades, equity } = runBacktestEngine(symbol, candles, cfg, costs, initialCapital);
           const metrics = computeMetrics(trades, initialCapital);
           const finalEquity = equity.length > 0 ? equity[equity.length - 1] : initialCapital;
 
