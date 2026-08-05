@@ -2,12 +2,61 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { logger, CircuitBreaker, RetryStrategy } from '../_shared/logging.ts';
 
 const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPENROUTER_API_KEY') || '';
 const openaiBaseUrl = Deno.env.get('OPENAI_BASE_URL') || 'https://api.openai.com/v1';
+const openaiCircuitBreaker = new CircuitBreaker('openai-context', 5, 60000, 60000);
+
+async function callAIContext(systemPrompt: string, userContent: string): Promise<any | null> {
+  if (!openaiApiKey) return null;
+  try {
+    return await openaiCircuitBreaker.call(() =>
+      RetryStrategy.withBackoff(
+        async () => {
+          const aiResp = await fetch(`${openaiBaseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiApiKey}` },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userContent }],
+              max_tokens: 1024,
+              temperature: 0.3,
+            }),
+          });
+          if (!aiResp.ok) {
+            const errText = await aiResp.text();
+            if (aiResp.status === 429 || aiResp.status >= 500) {
+              const error = new Error(`AI error ${aiResp.status}`) as Error & { status: number; retryable: boolean };
+              error.status = aiResp.status;
+              error.retryable = true;
+              throw error;
+            }
+            logger.error('AI API non-retryable error', { status: aiResp.status, error: errText.slice(0, 200) });
+            return null;
+          }
+          const aiJson = await aiResp.json();
+          return JSON.parse(aiJson.choices[0].message.content);
+        },
+        {
+          maxRetries: 2,
+          baseDelayMs: 500,
+          shouldRetry: (err) => {
+            const e = err as Error & { status?: number; retryable?: boolean };
+            return e.retryable ?? (e.status !== undefined && (e.status >= 500 || e.status === 429));
+          },
+        }
+      )
+    );
+  } catch (err) {
+    logger.warn('AI API circuit breaker or retry exhausted', { error: (err as Error).message });
+    return null;
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const timer = logger.time('context-function');
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -22,7 +71,10 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
     if (authErr || !user) return errorResponse('Unauthorized', 401);
 
-    switch (operation) {
+    const log = logger.with({ project_id, operation, user_id: user.id });
+
+    try {
+      switch (operation) {
       case 'market_context':
       case 'multi_timeframe': {
         const symbols = data?.symbols || [];
@@ -56,26 +108,12 @@ serve(async (req) => {
           let analysis: Record<string, unknown> = {};
           if (openaiApiKey) {
             const context = `Symbol: ${symbol}\nTimeframes: ${timeframes.join(', ')}\nRecent structures: ${JSON.stringify(structures || [])}\nTrades: ${wins}W / ${losses}L`;
-            const aiResp = await fetch(`${openaiBaseUrl}/chat/completions`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiApiKey}` },
-              body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [{
-                  role: 'system',
-                  content: 'You are a market context analyst. Analyze market data and return JSON with keys: bias (bullish/bearish/neutral), strength (0-100), market_phase, trend, confidence_score (0-100), technical_summary, risk_assessment.'
-                }, {
-                  role: 'user',
-                  content: context
-                }],
-                max_tokens: 1024,
-                temperature: 0.3,
-              }),
-            });
-            if (aiResp.ok) {
-              const aiJson = await aiResp.json();
-              analysis = JSON.parse(aiJson.choices[0].message.content);
-            }
+            const timer = logger.time('ai-analysis');
+            analysis = await callAIContext(
+              'You are a market context analyst. Analyze market data and return JSON with keys: bias (bullish/bearish/neutral), strength (0-100), market_phase, trend, confidence_score (0-100), technical_summary, risk_assessment.',
+              context
+            ) || {};
+            timer.end();
           }
 
           results.push({
@@ -180,6 +218,12 @@ serve(async (req) => {
 
       default:
         return errorResponse(`Unknown operation: ${operation}`);
+    }
+    } catch (err) {
+      log.error('Operation failed', { error: err instanceof Error ? err.message : String(err) });
+      return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
+    } finally {
+      timer.end();
     }
   } catch (err) {
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
