@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { logger, CircuitBreaker, RetryStrategy, isRetryableError } from '../_shared/logging.ts';
 import {
   extractClaims, extractConcepts, detectConflicts, interpretClaim, generateQuestion,
   generateHypothesis, generateInsights, detectObservations, refreshKnowledgeRules,
@@ -31,6 +32,8 @@ export const openaiApiKey = Deno.env.get('OPENROUTER_API_KEY') || '';
 export const openaiBaseUrl = Deno.env.get('OPENAI_BASE_URL') || 'https://openrouter.ai/api/v1';
 export const defaultModel = Deno.env.get('AI_MODEL') || 'openrouter/auto';
 
+const openaiCircuitBreaker = new CircuitBreaker('openai', 5, 60000, 60000);
+
 function getSupabaseClient(req: Request) {
   const authHeader = req.headers.get('Authorization') || '';
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -48,33 +51,85 @@ export async function callAI(systemPrompt: string, userPrompt: string, model = d
   if (!openaiApiKey) {
     return JSON.stringify({ _error: aiNotConfiguredMsg() });
   }
-  const response = await fetch(`${openaiBaseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openaiApiKey}`,
-      'HTTP-Referer': 'https://minoredb.vercel.app',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: maxTokens,
-      temperature: 0.3,
-    }),
-  });
-  if (!response.ok) {
-    const err = await response.text();
-    console.error(`AI API error: ${response.status} - ${err}`);
-    return JSON.stringify({ _error: `AI service error (${response.status}). Please try again later.` });
+
+  try {
+    const result = await openaiCircuitBreaker.call(() =>
+      RetryStrategy.withBackoff(
+        async () => {
+          const response = await fetch(`${openaiBaseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${openaiApiKey}`,
+              'HTTP-Referer': 'https://minoredb.vercel.app',
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+              ],
+              max_tokens: maxTokens,
+              temperature: 0.3,
+            }),
+          });
+
+          if (!response.ok) {
+            const err = await response.text();
+            const retryable = response.status >= 500 || response.status === 429;
+            logger.error('AI API error', {
+              status: response.status,
+              retryable,
+              model,
+              error_preview: err.slice(0, 200),
+            });
+
+            if (response.status === 429 || response.status >= 500) {
+              const error = new Error(`AI service error (${response.status})`) as Error & { status: number; retryable: boolean };
+              error.status = response.status;
+              error.retryable = retryable;
+              throw error;
+            }
+
+            return JSON.stringify({ _error: `AI service error (${response.status}). Please try again later.` });
+          }
+
+          const json = await response.json();
+          return json.choices[0].message.content;
+        },
+        {
+          maxRetries: 3,
+          baseDelayMs: 1000,
+          maxDelayMs: 10000,
+          shouldRetry: (err) => {
+            const e = err as Error & { status?: number; retryable?: boolean };
+            return e.retryable ?? isRetryableError(err);
+          },
+          onRetry: (err, attempt) => {
+            logger.warn('AI API retry', { attempt, error: (err as Error).message });
+          },
+        }
+      )
+    );
+
+    if (typeof result === 'string' && result.includes('_error')) {
+      return result;
+    }
+
+    const content = typeof result === 'string' ? result : result.choices?.[0]?.message?.content;
+    if (!content) {
+      return JSON.stringify({ _error: 'AI response was empty. Please try again.' });
+    }
+    const trimmed = content.trim();
+    const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+    return match ? match[1].trim() : trimmed;
+  } catch (err) {
+    if (openaiCircuitBreaker.currentFailure > 0) {
+      return JSON.stringify({ _error: 'AI service temporarily unavailable due to repeated failures. Please try again in a minute.' });
+    }
+    logger.error('AI API fatal error', { error: (err as Error).message, stack: (err as Error).stack });
+    return JSON.stringify({ _error: 'AI service error. Please try again later.' });
   }
-  const json = await response.json();
-  const content = json.choices[0].message.content;
-  const trimmed = content.trim();
-  const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-  return match ? match[1].trim() : trimmed;
 }
 
 export function isAiError(result: string): boolean {
@@ -138,6 +193,7 @@ async function generateSummary(supabase: any, projectId: string, summaryType: st
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const timer = logger.time('ai-function');
   try {
     const { operation, project_id, data } = await req.json() as { operation: string; project_id: string; data?: Record<string, any> };
     if (!operation) return errorResponse('Missing operation');
@@ -148,7 +204,10 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return errorResponse('Unauthorized', 401);
 
-    switch (operation) {
+    const log = logger.with({ project_id, operation, user_id: user.id });
+
+    try {
+      switch (operation) {
       case 'chat': {
         const message = data?.message;
         if (!message) return errorResponse('Missing message');
@@ -484,6 +543,12 @@ serve(async (req) => {
       }
       default:
         return errorResponse(`Unknown operation: ${operation}`);
+    }
+    } catch (err) {
+      log.error('Operation failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
+      return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
+    } finally {
+      timer.end();
     }
   } catch (err) {
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
