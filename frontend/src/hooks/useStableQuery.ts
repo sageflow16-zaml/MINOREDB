@@ -7,6 +7,11 @@ export function useStableQuery<TQueryFnData = unknown, TError = Error, TData = T
   const stableOptions = useMemo(() => options, [
     JSON.stringify(options.queryKey),
     options.enabled,
+    options.staleTime,
+    options.refetchInterval,
+    options.retry,
+    options.retryDelay,
+    options.gcTime,
   ]);
   return useQuery(stableOptions);
 }
