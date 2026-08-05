@@ -119,8 +119,8 @@ export const copilotService = {
   },
 
   usePrompt: async (projectId: string, promptId: string): Promise<void> => {
-    const { data: prompt } = await supabase.from('ai_saved_prompt').select('usage_count').eq('id', promptId).eq('project_id', projectId).single();
-    const { error } = await supabase.from('ai_saved_prompt').update({ usage_count: (prompt?.usage_count ?? 0) + 1, last_used_at: new Date().toISOString() }).eq('id', promptId).eq('project_id', projectId);
+    const { data: prompt } = await supabase.from('ai_saved_prompt').select('use_count').eq('id', promptId).eq('project_id', projectId).single();
+    const { error } = await supabase.from('ai_saved_prompt').update({ use_count: (prompt?.use_count ?? 0) + 1 }).eq('id', promptId).eq('project_id', projectId);
     if (error) throw error;
   },
 
