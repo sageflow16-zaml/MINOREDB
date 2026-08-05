@@ -49,6 +49,7 @@ jobs:
           supabase functions deploy mt5
           supabase functions deploy tv-webhook
           supabase functions deploy quant
+          supabase functions deploy context
 
   deploy-frontend:
     name: Deploy Frontend to Vercel
