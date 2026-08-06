@@ -2,14 +2,19 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger, CircuitBreaker, RetryStrategy } from '../_shared/logging.ts';
 
-const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || '';
 const alphavantageKey = Deno.env.get('ALPHAVANTAGE_API_KEY') || '';
 const twelveDataKey = Deno.env.get('TWELVEDATA_API_KEY') || '';
+
+const logger = new Logger({ function: 'collector' });
 
 const TWELVEDATA_BASE = 'https://api.twelvedata.com';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
+
+const twelvedataBreaker = new CircuitBreaker('twelvedata', 5, 60000, 30000);
+const alphavantageBreaker = new CircuitBreaker('alphavantage', 5, 60000, 30000);
 
 function mapSymbol(symbol: string): string {
   if (/^[A-Z]{6}$/.test(symbol)) {
@@ -53,6 +58,7 @@ async function fetchTwelveData(symbol: string, interval: string, attempt = 1): P
     const body = await resp.text().catch(() => '');
     if (resp.status === 401) return { status: 'error', error: 'Twelve Data API key is invalid or expired. Update TWELVEDATA_API_KEY in Supabase project settings.' };
     if (resp.status === 429) {
+      logger.warn('TwelveData rate limited', { symbol, interval, attempt });
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
         return fetchTwelveData(symbol, interval, attempt + 1);
@@ -60,21 +66,51 @@ async function fetchTwelveData(symbol: string, interval: string, attempt = 1): P
       return { status: 'error', error: 'Rate limit exceeded. Try again later.' };
     }
     if (resp.status >= 500 && attempt < MAX_RETRIES) {
+      logger.warn('TwelveData server error, retrying', { symbol, interval, attempt, status: resp.status });
       await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
       return fetchTwelveData(symbol, interval, attempt + 1);
     }
     let msg = 'Twelve Data API error.';
     try { const j = JSON.parse(body); msg = j.message || j.error || msg; } catch {}
+    logger.error('TwelveData request failed', { symbol, interval, status: resp.status, error: msg });
     return { status: 'error', error: `${msg} (HTTP ${resp.status})` };
   }
   const json = await resp.json();
   if (json.status === 'error') {
+    logger.error('TwelveData returned API error', { symbol, interval, error: json.message || json.error });
     return { status: 'error', error: json.message || json.error || 'Twelve Data API error.' };
   }
   if (!json.values || json.values.length === 0) {
+    logger.warn('TwelveData returned no values', { symbol, interval });
     return { status: 'error', error: 'No data returned from market provider.' };
   }
   return { status: 'ok', values: json.values };
+}
+
+async function fetchAlphaVantage(url: string, label: string): Promise<any> {
+  return alphavantageBreaker.call(() =>
+    RetryStrategy.withBackoff(
+      async () => {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          const e = new Error(`Alpha Vantage request failed (HTTP ${resp.status})`) as Error & { status?: number };
+          e.status = resp.status;
+          throw e;
+        }
+        return await resp.json();
+      },
+      {
+        maxRetries: 2,
+        baseDelayMs: 1000,
+        maxDelayMs: 5000,
+        shouldRetry: (err) => {
+          const status = (err as { status?: number })?.status;
+          return status === 429 || (status !== undefined && status >= 500);
+        },
+        onRetry: (_err, attempt) => logger.warn('Alpha Vantage retry', { label, attempt }),
+      },
+    ),
+  );
 }
 
 function parseTwelveCandles(values: any[]): { time: number; open: number; high: number; low: number; close: number; volume: number }[] {
@@ -111,7 +147,10 @@ async function loadCandles(supabase: any, symbol: string, timeframe: string, pro
     }
   }
 
-  const result = await fetchTwelveData(mappedSymbol, interval);
+  const result = await twelvedataBreaker.call(() => fetchTwelveData(mappedSymbol, interval)).catch((err): Awaited<ReturnType<typeof fetchTwelveData>> => {
+    logger.error('TwelveData circuit breaker failure', { symbol, mappedSymbol, interval, error: err instanceof Error ? err.message : 'unknown' });
+    return { status: 'error' as const, error: err instanceof Error ? err.message : 'Market data unavailable.' };
+  });
   if (result.status === 'error') {
     return { error: result.error || 'Market data unavailable.' };
   }
@@ -138,6 +177,9 @@ async function loadCandles(supabase: any, symbol: string, timeframe: string, pro
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
+  let op = 'unknown';
+  let projectId: string | undefined;
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -149,12 +191,15 @@ serve(async (req) => {
     if (!user) return errorResponse('Unauthorized', 401);
 
     const { operation, project_id, data: payload } = await req.json() as any;
+    op = operation;
+    projectId = project_id;
+    const reqLogger = logger.with({ project_id, operation: op });
     const collectorName = payload?.collector_name;
 
     switch (operation) {
       case 'run': {
         if (!collectorName) return errorResponse('Missing collector_name');
-        const startedAt = Date.now();
+        const runStartedAt = Date.now();
         const results: { collected: number; errors: number; messages: string[] } = { collected: 0, errors: 0, messages: [] };
 
         const insertMacroEvent = async (row: Record<string, unknown>) => {
@@ -177,8 +222,7 @@ serve(async (req) => {
           } else {
             try {
               if (collectorName === 'market_news') {
-                const resp = await fetch(`https://www.alphavantage.co/query?function=NEWS_SENTIMENT&apikey=${alphavantageKey}&limit=10`);
-                const news = await resp.json();
+                const news = await fetchAlphaVantage(`https://www.alphavantage.co/query?function=NEWS_SENTIMENT&apikey=${alphavantageKey}&limit=10`, 'news_sentiment');
                 if (!news.feed) {
                   status = 'skipped';
                   skippedReason = 'Alpha Vantage returned no news feed';
@@ -193,8 +237,7 @@ serve(async (req) => {
                   }
                 }
               } else {
-                const resp = await fetch(`https://www.alphavantage.co/query?function=ECONOMIC_CALENDAR&apikey=${alphavantageKey}`);
-                const cal = await resp.json();
+                const cal = await fetchAlphaVantage(`https://www.alphavantage.co/query?function=ECONOMIC_CALENDAR&apikey=${alphavantageKey}`, 'economic_calendar');
                 if (!cal.entries) {
                   status = 'skipped';
                   skippedReason = 'Alpha Vantage returned no calendar entries';
@@ -239,10 +282,12 @@ serve(async (req) => {
           records_count: results.collected,
           errors_count: results.errors,
           error_message: skippedReason ?? (results.errors > 0 ? results.messages.slice(0, 5).join('; ') : undefined),
-          started_at: new Date(startedAt).toISOString(),
+          started_at: new Date(runStartedAt).toISOString(),
           finished_at: new Date().toISOString(),
-          duration_ms: Date.now() - startedAt,
+          duration_ms: Date.now() - runStartedAt,
         });
+
+        reqLogger.info('collector run finished', { collector_name: collectorName, status, collected: results.collected, errors: results.errors, duration_ms: Date.now() - runStartedAt });
 
         return successResponse({
           collector_name: collectorName,
@@ -250,7 +295,7 @@ serve(async (req) => {
           records_collected: results.collected,
           errors_count: results.errors,
           error_message: skippedReason ?? (results.errors > 0 ? results.messages.slice(0, 5).join('; ') : undefined),
-          duration_ms: Date.now() - startedAt,
+          duration_ms: Date.now() - runStartedAt,
         });
       }
 
@@ -270,12 +315,14 @@ serve(async (req) => {
             status: 'idle',
           });
         }
+        reqLogger.info('collector toggled', { collector_name: collectorName, enabled: next });
         return successResponse({ name: collectorName, enabled: next });
       }
 
       case 'fetch-ohlc': {
         const res = await loadCandles(supabase, payload?.symbol, payload?.timeframe || '1d', project_id);
         if ('error' in res) return errorResponse(res.error);
+        reqLogger.info('ohlc fetched', { symbol: payload?.symbol, timeframe: payload?.timeframe || '1d', candles: res.candles.length, duration_ms: Date.now() - startedAt });
         return successResponse(res.candles);
       }
 
@@ -284,6 +331,7 @@ serve(async (req) => {
         if ('error' in res) return errorResponse(res.error);
         const candles = res.candles;
         if (candles.length === 0) return errorResponse('No candle data available.');
+        reqLogger.info('latest candle fetched', { symbol: payload?.symbol, timeframe: payload?.timeframe || '1d', duration_ms: Date.now() - startedAt });
         return successResponse({
           candle: candles[candles.length - 1],
           server_now: new Date().toISOString(),
@@ -294,6 +342,7 @@ serve(async (req) => {
         return errorResponse(`Unknown operation: ${operation}`);
     }
   } catch (err) {
+    logger.error('collector failed', { operation: op, project_id: projectId, error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
   }
 });

@@ -2,11 +2,15 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger, CircuitBreaker } from '../_shared/logging.ts';
 
 const twelveDataKey = Deno.env.get('TWELVEDATA_API_KEY') || '';
 const TWELVEDATA_BASE = 'https://api.twelvedata.com';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
+
+const logger = new Logger({ function: 'replay-data' });
+const twelvedataBreaker = new CircuitBreaker('twelvedata', 5, 60000, 30000);
 
 function mapSymbol(symbol: string): string {
   if (/^[A-Z]{6}$/.test(symbol)) {
@@ -55,6 +59,7 @@ async function fetchTwelveData(symbol: string, interval: string, startDate?: str
     const body = await resp.text().catch(() => '');
     if (resp.status === 401) return { status: 'error', error: 'Twelve Data API key is invalid or expired. Update TWELVEDATA_API_KEY in Supabase project settings.' };
     if (resp.status === 429) {
+      logger.warn('TwelveData rate limited', { symbol, interval, attempt });
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
         return fetchTwelveData(symbol, interval, startDate, endDate, attempt + 1);
@@ -62,18 +67,22 @@ async function fetchTwelveData(symbol: string, interval: string, startDate?: str
       return { status: 'error', error: 'Rate limit exceeded. Try again later.' };
     }
     if (resp.status >= 500 && attempt < MAX_RETRIES) {
+      logger.warn('TwelveData server error, retrying', { symbol, interval, attempt, status: resp.status });
       await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
       return fetchTwelveData(symbol, interval, startDate, endDate, attempt + 1);
     }
     let msg = 'Twelve Data API error.';
     try { const j = JSON.parse(body); msg = j.message || j.error || msg; } catch {}
+    logger.error('TwelveData request failed', { symbol, interval, status: resp.status, error: msg });
     return { status: 'error', error: `${msg} (HTTP ${resp.status})` };
   }
   const json = await resp.json();
   if (json.status === 'error') {
+    logger.error('TwelveData returned API error', { symbol, interval, error: json.message || json.error });
     return { status: 'error', error: json.message || json.error || 'Twelve Data API error.' };
   }
   if (!json.values || json.values.length === 0) {
+    logger.warn('TwelveData returned no values', { symbol, interval });
     return { status: 'error', error: 'No data returned from market provider.' };
   }
   return { status: 'ok', values: json.values };
@@ -111,7 +120,10 @@ async function ensureCandles(supabase: any, projectId: string, symbol: string, t
 
   const from = startIso ? startIso.replace('T', ' ').replace('Z', '') : undefined;
   const to = endIso ? endIso.replace('T', ' ').replace('Z', '') : undefined;
-  const result = await fetchTwelveData(symbol, mapInterval(timeframe), from, to);
+  const result = await twelvedataBreaker.call(() => fetchTwelveData(symbol, mapInterval(timeframe), from, to)).catch((err) => {
+    logger.error('TwelveData circuit breaker failure', { symbol, timeframe, error: err instanceof Error ? err.message : 'unknown' });
+    return { status: 'error' as const, error: err instanceof Error ? err.message : 'Market data unavailable.' };
+  });
   if (result.status !== 'ok' || !result.values) {
     if (count) return { count, source: 'cache' };
     return { count: 0, source: 'none', error: result.error || 'Failed to fetch candles.' };
@@ -230,6 +242,9 @@ async function advanceSession(supabase: any, projectId: string, sessionId: strin
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
+  let op = 'unknown';
+  let projectId: string | undefined;
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -241,7 +256,10 @@ serve(async (req) => {
     if (authErr || !user) return errorResponse('Unauthorized', 401);
 
     const { operation, project_id, data } = await req.json() as any;
+    op = operation;
+    projectId = project_id;
     if (!project_id) return errorResponse('Missing project_id');
+    const reqLogger = logger.with({ project_id, operation: op });
 
     switch (operation) {
       case 'fetch-candles': {
@@ -250,13 +268,16 @@ serve(async (req) => {
         if (!symbol || !timeframe) return errorResponse('Missing symbol or timeframe');
         const result = await ensureCandles(supabase, project_id, symbol, timeframe, data?.start_date, data?.end_date, !!data?.force);
         if (result.error && result.count === 0) return errorResponse(result.error, 502);
+        reqLogger.info('candles ensured', { symbol, timeframe, count: result.count, source: result.source, duration_ms: Date.now() - startedAt });
         return successResponse({ symbol, timeframe, count: result.count, source: result.source });
       }
 
       case 'load-workspace': {
         const sessionId = data?.session_id;
         if (!sessionId) return errorResponse('Missing session_id');
-        return successResponse(await buildWorkspace(supabase, project_id, sessionId));
+        const workspace = await buildWorkspace(supabase, project_id, sessionId);
+        reqLogger.info('workspace loaded', { session_id: sessionId, candles: workspace.total_candles, duration_ms: Date.now() - startedAt });
+        return successResponse(workspace);
       }
 
       case 'next-candle': {
@@ -282,6 +303,7 @@ serve(async (req) => {
         return errorResponse(`Unknown operation: ${operation}`);
     }
   } catch (err) {
+    logger.error('replay-data failed', { operation: op, project_id: projectId, error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
   }
 });

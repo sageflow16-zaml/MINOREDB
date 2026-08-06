@@ -2,6 +2,9 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger } from '../_shared/logging.ts';
+
+const logger = new Logger({ function: 'broker-sync' });
 
 const TIMEOUT_MS = 10_000;
 
@@ -412,6 +415,9 @@ async function executionAnalysis(supabase: any, connection: any): Promise<any> {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
+  let op = 'unknown';
+  let projectId: string | undefined;
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -423,9 +429,12 @@ serve(async (req) => {
     if (authErr || !user) return errorResponse('Unauthorized', 401);
 
     const { operation, project_id, data } = await req.json() as any;
+    op = operation;
+    projectId = project_id;
     if (!project_id) return errorResponse('Missing project_id');
     const connectionId = data?.connection_id;
     if (!connectionId) return errorResponse('Missing connection_id');
+    const reqLogger = logger.with({ project_id, operation: op, connection_id: connectionId });
 
     const { data: connection, error: connErr } = await supabase
       .from('broker_connection_new').select('*').eq('id', connectionId).eq('project_id', project_id).maybeSingle();
@@ -433,11 +442,17 @@ serve(async (req) => {
     if (!connection) return errorResponse('Connection not found');
 
     switch (operation) {
-      case 'test-connection':
-        return successResponse(await testConnection(supabase, connection));
+      case 'test-connection': {
+        const result = await testConnection(supabase, connection);
+        reqLogger.info('connection tested', { provider: connection.provider, success: result.success, duration_ms: Date.now() - startedAt });
+        return successResponse(result);
+      }
 
-      case 'sync':
-        return successResponse(await syncConnection(supabase, connection));
+      case 'sync': {
+        const result = await syncConnection(supabase, connection);
+        reqLogger.info('sync completed', { provider: connection.provider, status: result.status, duration_ms: Date.now() - startedAt });
+        return successResponse(result);
+      }
 
       case 'sync-account': {
         const accountId = data?.account_id;
@@ -445,16 +460,21 @@ serve(async (req) => {
         const { data: account } = await supabase.from('broker_account').select('id').eq('id', accountId).eq('connection_id', connectionId).maybeSingle();
         if (!account) return errorResponse('Account not found');
         const result = await syncConnection(supabase, connection, accountId);
+        reqLogger.info('account synced', { provider: connection.provider, account_id: accountId, status: result.status, duration_ms: Date.now() - startedAt });
         return successResponse({ status: result.status, created: result.created, duplicates: result.duplicates, accounts_synced: result.accounts_synced });
       }
 
-      case 'execution-analysis':
-        return successResponse(await executionAnalysis(supabase, connection));
+      case 'execution-analysis': {
+        const result = await executionAnalysis(supabase, connection);
+        reqLogger.info('execution analysis done', { provider: connection.provider, duration_ms: Date.now() - startedAt });
+        return successResponse(result);
+      }
 
       case 'check-health': {
         const result = await testConnection(supabase, connection);
         const { data: health } = await supabase.from('broker_health')
           .select('*').eq('connection_id', connectionId).eq('project_id', project_id).maybeSingle();
+        reqLogger.info('health checked', { provider: connection.provider, reachable: result.success, duration_ms: Date.now() - startedAt });
         return successResponse(health || { connection_id: connectionId, is_reachable: result.success, latency_ms: result.latency_ms, error_message: result.message });
       }
 
@@ -462,6 +482,7 @@ serve(async (req) => {
         return errorResponse(`Unknown operation: ${operation}`);
     }
   } catch (err) {
+    logger.error('broker-sync failed', { operation: op, project_id: projectId, error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
   }
 });

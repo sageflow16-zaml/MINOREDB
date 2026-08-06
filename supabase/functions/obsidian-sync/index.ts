@@ -2,6 +2,9 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger, RetryStrategy } from '../_shared/logging.ts';
+
+const logger = new Logger({ function: 'obsidian-sync' });
 
 async function hashText(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);
@@ -51,24 +54,39 @@ function vaultApi(vault: any) {
     headers['x-api-key'] = vault.api_key;
   }
   const get = async (path: string) => {
-    const res = await fetch(`${base}/vault/${encodeURIComponent(path)}`, { headers });
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Obsidian REST API ${res.status}: ${await res.text().catch(() => '')}`);
-    return await res.text();
+    return RetryStrategy.withBackoff(
+      async () => {
+        const res = await fetch(`${base}/vault/${encodeURIComponent(path)}`, { headers });
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Obsidian REST API ${res.status}: ${await res.text().catch(() => '')}`);
+        return await res.text();
+      },
+      { maxRetries: 1, baseDelayMs: 500, maxDelayMs: 2000, onRetry: (_e, attempt) => logger.warn('Obsidian get retry', { path, attempt }) },
+    );
   };
   const list = async () => {
-    const res = await fetch(`${base}/vault/`, { headers });
-    if (!res.ok) throw new Error(`Obsidian REST API list ${res.status}`);
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    return RetryStrategy.withBackoff(
+      async () => {
+        const res = await fetch(`${base}/vault/`, { headers });
+        if (!res.ok) throw new Error(`Obsidian REST API list ${res.status}`);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      },
+      { maxRetries: 1, baseDelayMs: 500, maxDelayMs: 2000, onRetry: (_e, attempt) => logger.warn('Obsidian list retry', { attempt }) },
+    );
   };
   const put = async (path: string, content: string) => {
-    const res = await fetch(`${base}/vault/${encodeURIComponent(path)}`, {
-      method: 'PUT',
-      headers: { ...headers, 'Content-Type': 'text/markdown' },
-      body: content,
-    });
-    if (!res.ok) throw new Error(`Obsidian REST API write ${res.status}`);
+    return RetryStrategy.withBackoff(
+      async () => {
+        const res = await fetch(`${base}/vault/${encodeURIComponent(path)}`, {
+          method: 'PUT',
+          headers: { ...headers, 'Content-Type': 'text/markdown' },
+          body: content,
+        });
+        if (!res.ok) throw new Error(`Obsidian REST API write ${res.status}`);
+      },
+      { maxRetries: 1, baseDelayMs: 500, maxDelayMs: 2000, onRetry: (_e, attempt) => logger.warn('Obsidian put retry', { path, attempt }) },
+    );
   };
   return { get, list, put, base };
 }
@@ -110,6 +128,9 @@ function writeSyncLog(supabase: any, vaultId: string, entry: Record<string, any>
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
+  let op = 'unknown';
+  let projectId: string | undefined;
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -121,7 +142,10 @@ serve(async (req) => {
     if (authErr || !user) return errorResponse('Unauthorized', 401);
 
     const { operation, project_id, data } = await req.json() as any;
+    op = operation;
+    projectId = project_id;
     if (!project_id) return errorResponse('Missing project_id');
+    const reqLogger = logger.with({ project_id, operation: op });
 
     const loadVault = async (vaultId?: string) => {
       if (!vaultId) throw new Error('Missing vault_id');
@@ -339,6 +363,7 @@ serve(async (req) => {
         return errorResponse(`Unknown operation: ${operation}`);
     }
   } catch (err) {
+    logger.error('obsidian-sync failed', { operation: op, project_id: projectId, error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
   }
 });

@@ -2,28 +2,59 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger, CircuitBreaker, RetryStrategy } from '../_shared/logging.ts';
 
 const METAPI_TOKEN = Deno.env.get('METAPI_TOKEN') || '';
 const METAPI_BASE = 'https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai';
 const TIMEOUT_MS = 20_000;
 
+const logger = new Logger({ function: 'mt5' });
+const metaApiBreaker = new CircuitBreaker('metaapi', 5, 60000, 30000);
+
 async function metaApi(path: string, method = 'GET', body?: unknown): Promise<{ ok: boolean; status: number; data: any }> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await fetch(`${METAPI_BASE}${path}`, {
-      method,
-      headers: { 'auth-token': METAPI_TOKEN, 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
-    });
-    const text = await res.text();
-    let data: any = null;
-    try { data = JSON.parse(text); } catch {}
-    return { ok: res.ok, status: res.status, data };
-  } finally {
-    clearTimeout(timer);
-  }
+  return metaApiBreaker.call(() =>
+    RetryStrategy.withBackoff(
+      async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        try {
+          const res = await fetch(`${METAPI_BASE}${path}`, {
+            method,
+            headers: { 'auth-token': METAPI_TOKEN, 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: body ? JSON.stringify(body) : undefined,
+            signal: controller.signal,
+          });
+          const text = await res.text();
+          let data: any = null;
+          try { data = JSON.parse(text); } catch {}
+          if (!res.ok && (res.status === 429 || res.status >= 500)) {
+            const e = new Error(`MetaApi HTTP ${res.status}`) as Error & { status?: number };
+            e.status = res.status;
+            throw e;
+          }
+          return { ok: res.ok, status: res.status, data };
+        } finally {
+          clearTimeout(timer);
+        }
+      },
+      {
+        maxRetries: 2,
+        baseDelayMs: 1000,
+        maxDelayMs: 5000,
+        shouldRetry: (err) => {
+          const status = (err as { status?: number })?.status;
+          if (status === 429 || (status !== undefined && status >= 500)) return true;
+          const msg = err instanceof Error ? err.message : '';
+          return msg.includes('timeout') || msg.includes('abort');
+        },
+        onRetry: (_err, attempt) => logger.warn('MetaApi retry', { path, method, attempt }),
+      },
+    ),
+  ).catch((err) => {
+    const status = (err as { status?: number })?.status ?? 502;
+    logger.error('MetaApi request failed', { path, method, status, error: err instanceof Error ? err.message : 'unknown' });
+    return { ok: false, status, data: null };
+  });
 }
 
 async function hashImport(t: Record<string, unknown>): Promise<string> {
@@ -100,6 +131,9 @@ function accountInfoToRow(info: any, connection: any): Record<string, unknown> {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
+  let op = 'unknown';
+  let projectId: string | undefined;
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -111,7 +145,27 @@ serve(async (req) => {
     if (authErr || !user) return errorResponse('Unauthorized', 401);
 
     const { operation, project_id, data } = await req.json() as any;
+    op = operation;
+    projectId = project_id;
+    const reqLogger = logger.with({ project_id, operation: op });
+    const response = await handleOperation(supabase, user, operation, project_id, data, reqLogger);
+    return response;
+  } catch (err) {
+    logger.error('mt5 failed', { operation: op, project_id: projectId, error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
+    return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
+  }
+});
 
+async function handleOperation(
+  supabase: any,
+  user: any,
+  operation: string,
+  project_id: string | undefined,
+  data: any,
+  reqLogger: Logger,
+): Promise<Response> {
+  const startedAt = Date.now();
+  try {
     switch (operation) {
       case 'connect': {
         const account = data?.account;
@@ -363,7 +417,7 @@ serve(async (req) => {
       default:
         return errorResponse(`Unknown operation: ${operation}`);
     }
-  } catch (err) {
-    return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
+  } finally {
+    reqLogger.info('operation finished', { duration_ms: Date.now() - startedAt });
   }
-});
+}

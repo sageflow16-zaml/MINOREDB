@@ -2,6 +2,32 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger, RetryStrategy } from '../_shared/logging.ts';
+
+const logger = new Logger({ function: 'automation-connector' });
+
+async function postWithRetry(url: string, headers: Record<string, string>, payload: unknown, label: string): Promise<Response> {
+  return RetryStrategy.withBackoff(
+    async () => {
+      const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const e = Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+        throw e;
+      }
+      return res;
+    },
+    {
+      maxRetries: 1,
+      baseDelayMs: 500,
+      maxDelayMs: 2000,
+      shouldRetry: (err) => {
+        const status = (err as { status?: number })?.status;
+        return status === 429 || (status !== undefined && status >= 500);
+      },
+      onRetry: (_err, attempt) => logger.warn('Webhook retry', { label, attempt }),
+    },
+  );
+}
 
 // ---------- Safe expression evaluation ----------
 
@@ -348,7 +374,7 @@ async function testConnector(supabase: any, projectId: string, connectorId: stri
           : (cfg.payload || { ping: true, ts: new Date().toISOString() });
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (cfg.headers) Object.assign(headers, cfg.headers);
-      const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
+      const res = await postWithRetry(url, headers, payload, `test_${connector.connector_type}`);
       if (!res.ok) throw new Error(`Webhook responded ${res.status}`);
       ok = true;
       message = 'Connected';
@@ -377,12 +403,10 @@ async function syncConnector(supabase: any, projectId: string, connectorId: stri
   const url = cfg.url || cfg.webhook_url;
   if (url) {
     try {
-      await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(cfg.headers || {}) },
-        body: JSON.stringify({ event: 'sync', connector_id: connectorId, ts: new Date().toISOString() }),
-      });
-    } catch {}
+      await postWithRetry(url, { 'Content-Type': 'application/json', ...(cfg.headers || {}) }, { event: 'sync', connector_id: connectorId, ts: new Date().toISOString() }, `sync_${connectorId}`);
+    } catch (err) {
+      logger.warn('connector sync webhook failed', { connector_id: connectorId, error: err instanceof Error ? err.message : 'unknown' });
+    }
   }
   await supabase.from('automation_connector').update({
     status: 'connected',
@@ -457,11 +481,7 @@ async function runJob(supabase: any, job: any): Promise<string | null> {
       case 'webhook': {
         const url = cfg.url;
         if (url) {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...(cfg.headers || {}) },
-            body: JSON.stringify(cfg.payload || { event: 'scheduled_job', job_id: job.id, ts: now }),
-          });
+          const res = await postWithRetry(url, { 'Content-Type': 'application/json', ...(cfg.headers || {}) }, cfg.payload || { event: 'scheduled_job', job_id: job.id, ts: now }, `job_webhook_${job.id}`);
           if (!res.ok) throw new Error(`Webhook responded ${res.status}`);
         }
         break;
@@ -473,11 +493,30 @@ async function runJob(supabase: any, job: any): Promise<string | null> {
       case 'api_call': {
         const url = cfg.url;
         if (url) {
-          const res = await fetch(url, {
-            method: cfg.method || 'GET',
-            headers: { 'Content-Type': 'application/json', ...(cfg.headers || {}) },
-            body: cfg.payload ? JSON.stringify(cfg.payload) : undefined,
-          });
+          const method = cfg.method || 'GET';
+          const res = await RetryStrategy.withBackoff(
+            async () => {
+              const r = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json', ...(cfg.headers || {}) },
+                body: cfg.payload ? JSON.stringify(cfg.payload) : undefined,
+              });
+              if (!r.ok) {
+                const e = Object.assign(new Error(`API responded ${r.status}`), { status: r.status });
+                throw e;
+              }
+              return r;
+            },
+            {
+              maxRetries: 1,
+              baseDelayMs: 500,
+              maxDelayMs: 2000,
+              shouldRetry: (err) => {
+                const status = (err as { status?: number })?.status;
+                return status === 429 || (status !== undefined && status >= 500);
+              },
+            },
+          );
           if (!res.ok) throw new Error(`API responded ${res.status}`);
         }
         break;
@@ -542,6 +581,7 @@ async function runJobs(supabase: any): Promise<any> {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
   try {
     const cronSecret = Deno.env.get('CRON_SECRET') || '';
     const isCron = req.headers.get('x-cron-secret') === cronSecret;
@@ -550,6 +590,7 @@ serve(async (req) => {
     let projectId = '';
     let operation = '';
     let data: any = {};
+    let reqLogger = logger;
 
     if (isCron) {
       supabase = createClient(
@@ -575,10 +616,12 @@ serve(async (req) => {
       data = body.data || {};
       if (!projectId) return errorResponse('Missing project_id');
     }
+    reqLogger = logger.with({ project_id: projectId || undefined, operation });
 
     switch (operation) {
       case 'evaluate_rules': {
         const matched = await evaluateRules(supabase, projectId, (data?.context || {}) as Record<string, unknown>);
+        reqLogger.info('rules evaluated', { matched: matched.length, duration_ms: Date.now() - startedAt });
         return successResponse({ matched });
       }
 
@@ -596,9 +639,11 @@ serve(async (req) => {
             .update({ last_generated_at: new Date().toISOString(), last_generated_result: markdown })
             .eq('id', reportId).select().single();
           if (updErr) throw new Error(updErr.message);
+          reqLogger.info('report generated', { report_id: reportId, duration_ms: Date.now() - startedAt });
           return successResponse({ report: updated, stats });
         }
         const { report, stats } = await generateReportFor(supabase, projectId, reportId);
+        reqLogger.info('report generated', { report_type: reportId, duration_ms: Date.now() - startedAt });
         return successResponse({ report, stats });
       }
 
@@ -620,23 +665,30 @@ serve(async (req) => {
 
       case 'test_connector': {
         if (!data?.connector_id) return errorResponse('Missing connector_id');
-        return successResponse(await testConnector(supabase, projectId, data.connector_id));
+        const result = await testConnector(supabase, projectId, data.connector_id);
+        reqLogger.info('connector tested', { connector_id: data.connector_id, ok: result.ok, duration_ms: Date.now() - startedAt });
+        return successResponse(result);
       }
 
       case 'sync_connector': {
         if (!data?.connector_id) return errorResponse('Missing connector_id');
-        return successResponse(await syncConnector(supabase, projectId, data.connector_id));
+        const result = await syncConnector(supabase, projectId, data.connector_id);
+        reqLogger.info('connector synced', { connector_id: data.connector_id, duration_ms: Date.now() - startedAt });
+        return successResponse(result);
       }
 
       case 'run_jobs': {
         if (!isCron) return errorResponse('Forbidden', 403);
-        return successResponse(await runJobs(supabase));
+        const result = await runJobs(supabase);
+        reqLogger.info('jobs ran', { processed: result.processed, duration_ms: Date.now() - startedAt });
+        return successResponse(result);
       }
 
       default:
         return errorResponse(`Unknown operation: ${operation}`);
     }
   } catch (err) {
+    logger.error('automation-connector failed', { error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
   }
 });

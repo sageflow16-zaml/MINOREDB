@@ -2,6 +2,9 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger } from '../_shared/logging.ts';
+
+const logger = new Logger({ function: 'tv-webhook' });
 
 function getServiceClient() {
   return createClient(
@@ -24,6 +27,8 @@ function parseWebhookPayload(raw: string): Record<string, unknown> {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
+  let projectId = '';
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -46,7 +51,8 @@ serve(async (req) => {
     try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
 
     const operation = body.operation || 'webhook';
-    const projectId = body.project_id || url.searchParams.get('project_id') || '';
+    projectId = body.project_id || url.searchParams.get('project_id') || '';
+    const reqLogger = logger.with({ project_id: projectId || undefined, operation });
 
     if (operation === 'ingest') {
       if (!isUser) return errorResponse('Unauthorized', 401);
@@ -61,6 +67,7 @@ serve(async (req) => {
         raw_data: raw_data || {},
       }).select().single();
       if (error) return errorResponse(error.message, 400);
+      reqLogger.info('market event ingested', { event_type: event_type || 'alert', symbol, duration_ms: Date.now() - startedAt });
       return successResponse(event);
     }
 
@@ -71,7 +78,10 @@ serve(async (req) => {
       const { data: config } = await secretClient.from('webhook_config')
         .select('secret').eq('project_id', projectId).maybeSingle();
       if (!config?.secret) return errorResponse('Webhook secret not configured. Open the TradingView page in the app to generate one.', 503);
-      if (config.secret !== querySecret && config.secret !== headerSecret) return errorResponse('Unauthorized', 401);
+      if (config.secret !== querySecret && config.secret !== headerSecret) {
+        reqLogger.warn('webhook rejected: invalid secret', { duration_ms: Date.now() - startedAt });
+        return errorResponse('Unauthorized', 401);
+      }
     }
 
     if (!projectId) return errorResponse('Missing project_id', 400);
@@ -85,8 +95,10 @@ serve(async (req) => {
       payload,
     }).select().single();
     if (error) return errorResponse(error.message, 400);
+    reqLogger.info('webhook received', { event_type: payload.event_type || body.event_type || 'unknown', log_id: log?.id, duration_ms: Date.now() - startedAt });
     return successResponse({ received: true, id: log?.id });
   } catch (err) {
+    logger.error('tv-webhook failed', { project_id: projectId || undefined, error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
   }
 });

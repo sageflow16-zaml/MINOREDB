@@ -2,9 +2,13 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
+import { Logger, CircuitBreaker } from '../_shared/logging.ts';
 
 const twelveDataKey = Deno.env.get('TWELVEDATA_API_KEY') || '';
 const TWELVEDATA_BASE = 'https://api.twelvedata.com';
+
+const logger = new Logger({ function: 'quant' });
+const twelvedataBreaker = new CircuitBreaker('twelvedata', 5, 60000, 30000);
 
 // ---------- Indicators ----------
 
@@ -138,6 +142,7 @@ function toIso(date: string | null): string | null {
 }
 
 async function fetchTwelveData(symbol: string, interval: string, startDate?: string, endDate?: string, attempt = 0): Promise<{ status: string; values?: any[]; error?: string }> {
+  return twelvedataBreaker.call(async () => {
   const params = new URLSearchParams({ symbol: mapSymbol(symbol), interval, apikey: twelveDataKey, outputsize: '5000', timezone: 'UTC' });
   if (startDate) params.set('start_date', startDate);
   if (endDate) params.set('end_date', endDate);
@@ -145,10 +150,12 @@ async function fetchTwelveData(symbol: string, interval: string, startDate?: str
   if (!resp.ok) {
     if (resp.status === 401) return { status: 'error', error: 'Twelve Data API key is invalid or expired. Update TWELVEDATA_API_KEY in Supabase project settings.' };
     if (resp.status === 429 && attempt < 3) {
+      logger.warn('TwelveData rate limited', { symbol, interval, attempt });
       await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
       return fetchTwelveData(symbol, interval, startDate, endDate, attempt + 1);
     }
     if (resp.status >= 500 && attempt < 3) {
+      logger.warn('TwelveData server error, retrying', { symbol, interval, attempt, status: resp.status });
       await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
       return fetchTwelveData(symbol, interval, startDate, endDate, attempt + 1);
     }
@@ -157,6 +164,10 @@ async function fetchTwelveData(symbol: string, interval: string, startDate?: str
   const json = await resp.json();
   if (json.status === 'error') return { status: 'error', error: json.message || 'Twelve Data API error' };
   return { status: 'ok', values: json.values };
+  }).catch((err) => {
+    logger.error('TwelveData circuit breaker failure', { symbol, interval, error: err instanceof Error ? err.message : 'unknown' });
+    return { status: 'error', error: err instanceof Error ? err.message : 'Market data unavailable.' };
+  });
 }
 
 async function selectAllCandles(base: any): Promise<any[]> {
@@ -492,6 +503,9 @@ function runSimulationEngine(cfg: Record<string, any>, iterations: number, type:
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const startedAt = Date.now();
+  let op = 'unknown';
+  let projectId: string | undefined;
   try {
     const authHeader = req.headers.get('Authorization') || '';
     const supabase = createClient(
@@ -503,7 +517,10 @@ serve(async (req) => {
     if (authErr || !user) return errorResponse('Unauthorized', 401);
 
     const { operation, project_id, data } = await req.json() as any;
+    op = operation;
+    projectId = project_id;
     if (!project_id) return errorResponse('Missing project_id');
+    const reqLogger = logger.with({ project_id, operation: op });
 
     switch (operation) {
       case 'run-backtest': {
@@ -556,9 +573,11 @@ serve(async (req) => {
           }).eq('id', runId);
           if (updateErr) throw new Error(updateErr.message);
 
+          reqLogger.info('backtest completed', { run_id: runId, symbol, timeframe, trades: trades.length, duration_ms: Date.now() - startedAt });
           return successResponse({ status: 'completed', run_id: runId, metrics, trades: trades.length });
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Backtest failed';
+          reqLogger.error('backtest failed', { run_id: runId, error: message, duration_ms: Date.now() - startedAt });
           await supabase.from('quant_backtest_run').update({ status: 'failed', error: message, completed_at: new Date().toISOString(), duration_ms: Date.now() - startedAt }).eq('id', runId);
           return errorResponse(message, 500);
         }
@@ -588,9 +607,11 @@ serve(async (req) => {
             error: null,
           }).eq('id', simId);
           if (updateErr) throw new Error(updateErr.message);
+          reqLogger.info('simulation completed', { simulation_id: simId, iterations, duration_ms: Date.now() - startedAt });
           return successResponse({ status: 'completed', simulation_id: simId, results });
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Simulation failed';
+          reqLogger.error('simulation failed', { simulation_id: simId, error: message, duration_ms: Date.now() - startedAt });
           await supabase.from('quant_simulation_run').update({ status: 'failed', error: message, completed_at: new Date().toISOString() }).eq('id', simId);
           return errorResponse(message, 500);
         }
@@ -600,6 +621,7 @@ serve(async (req) => {
         return errorResponse(`Unknown operation: ${operation}`);
     }
   } catch (err) {
+    logger.error('quant failed', { operation: op, project_id: projectId, error: err instanceof Error ? err.message : 'Unknown error', duration_ms: Date.now() - startedAt });
     return errorResponse(err instanceof Error ? err.message : 'Unknown error', 500);
   }
 });
