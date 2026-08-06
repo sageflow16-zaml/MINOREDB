@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
 import { Logger, CircuitBreaker, RetryStrategy } from '../_shared/logging.ts';
+import { hashImport } from '../_shared/hash.ts';
 
 const METAPI_TOKEN = Deno.env.get('METAPI_TOKEN') || '';
 const METAPI_BASE = 'https://mt-client-api-v1.agiliumtrade.agiliumtrade.ai';
@@ -55,12 +56,6 @@ async function metaApi(path: string, method = 'GET', body?: unknown): Promise<{ 
     logger.error('MetaApi request failed', { path, method, status, error: err instanceof Error ? err.message : 'unknown' });
     return { ok: false, status, data: null };
   });
-}
-
-async function hashImport(t: Record<string, unknown>): Promise<string> {
-  const payload = [t.external_id, t.symbol, t.open_time, t.close_time, t.profit, t.volume].map((v) => String(v ?? '')).join('|');
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function activeConnection(supabase: any, rows: any[]): any | null {

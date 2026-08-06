@@ -3,9 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
 import { Logger, CircuitBreaker } from '../_shared/logging.ts';
-
-const twelveDataKey = Deno.env.get('TWELVEDATA_API_KEY') || '';
-const TWELVEDATA_BASE = 'https://api.twelvedata.com';
+import { mapInterval, fetchTwelveData } from '../_shared/marketdata.ts';
 
 const logger = new Logger({ function: 'quant' });
 const twelvedataBreaker = new CircuitBreaker('twelvedata', 5, 60000, 30000);
@@ -115,59 +113,10 @@ function macd(values: number[], fast: number, slow: number, signal: number): { m
 
 // ---------- Candle loading ----------
 
-function mapSymbol(symbol: string): string {
-  if (/^[A-Z]{6}$/.test(symbol)) {
-    const major = symbol.slice(0, 3);
-    const minor = symbol.slice(3);
-    const forexMajors = ['EUR', 'GBP', 'USD', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF'];
-    if ((forexMajors.includes(major) && forexMajors.includes(minor)) ||
-        symbol === 'XAUUSD' || symbol === 'XAGUSD' || symbol === 'XPTUSD' || symbol === 'XPDUSD') {
-      return `${major}/${minor}`;
-    }
-    const cryptoPairs = ['BTCUSD', 'ETHUSD', 'SOLUSD', 'XRPUSD'];
-    if (cryptoPairs.includes(symbol)) return `${symbol.slice(0, 3)}/${symbol.slice(3)}`;
-  }
-  return symbol;
-}
-
-function mapInterval(timeframe: string): string {
-  const map: Record<string, string> = { '1m': '1min', '5m': '5min', '15m': '15min', '30m': '30min', '1h': '1h', '4h': '4h', '1d': '1day' };
-  return map[timeframe] || '1day';
-}
-
 function toIso(date: string | null): string | null {
   if (!date) return null;
   const cleaned = /^\d{4}-\d{2}-\d{2}/.test(date) ? date.slice(0, 10) : null;
   return cleaned ? `${cleaned}T00:00:00Z` : null;
-}
-
-async function fetchTwelveData(symbol: string, interval: string, startDate?: string, endDate?: string, attempt = 0): Promise<{ status: string; values?: any[]; error?: string }> {
-  return twelvedataBreaker.call(async () => {
-  const params = new URLSearchParams({ symbol: mapSymbol(symbol), interval, apikey: twelveDataKey, outputsize: '5000', timezone: 'UTC' });
-  if (startDate) params.set('start_date', startDate);
-  if (endDate) params.set('end_date', endDate);
-  const resp = await fetch(`${TWELVEDATA_BASE}/time_series?${params.toString()}`);
-  if (!resp.ok) {
-    if (resp.status === 401) return { status: 'error', error: 'Twelve Data API key is invalid or expired. Update TWELVEDATA_API_KEY in Supabase project settings.' };
-    if (resp.status === 429 && attempt < 3) {
-      logger.warn('TwelveData rate limited', { symbol, interval, attempt });
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-      return fetchTwelveData(symbol, interval, startDate, endDate, attempt + 1);
-    }
-    if (resp.status >= 500 && attempt < 3) {
-      logger.warn('TwelveData server error, retrying', { symbol, interval, attempt, status: resp.status });
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-      return fetchTwelveData(symbol, interval, startDate, endDate, attempt + 1);
-    }
-    return { status: 'error', error: `Twelve Data API error (HTTP ${resp.status})` };
-  }
-  const json = await resp.json();
-  if (json.status === 'error') return { status: 'error', error: json.message || 'Twelve Data API error' };
-  return { status: 'ok', values: json.values };
-  }).catch((err) => {
-    logger.error('TwelveData circuit breaker failure', { symbol, interval, error: err instanceof Error ? err.message : 'unknown' });
-    return { status: 'error', error: err instanceof Error ? err.message : 'Market data unavailable.' };
-  });
 }
 
 async function selectAllCandles(base: any): Promise<any[]> {
@@ -194,10 +143,13 @@ async function ensureCandles(supabase: any, projectId: string, symbol: string, t
   const data = await selectAllCandles(base);
   if (data.length > 0) return data;
 
-  if (!twelveDataKey) throw new Error('No cached candles and TWELVEDATA_API_KEY not configured. Add this secret in Supabase project settings.');
+  if (!Deno.env.get('TWELVEDATA_API_KEY')) throw new Error('No cached candles and TWELVEDATA_API_KEY not configured. Add this secret in Supabase project settings.');
   const from = startIso ? startIso.replace('T', ' ').replace('Z', '') : undefined;
   const to = endIso ? endIso.replace('T', ' ').replace('Z', '') : undefined;
-  const result = await fetchTwelveData(symbol, mapInterval(timeframe), from, to);
+  const result = await twelvedataBreaker.call(() => fetchTwelveData(symbol, mapInterval(timeframe), from, to)).catch((err): Awaited<ReturnType<typeof fetchTwelveData>> => {
+    logger.error('TwelveData circuit breaker failure', { symbol, timeframe, error: err instanceof Error ? err.message : 'unknown' });
+    return { status: 'error', error: err instanceof Error ? err.message : 'Market data unavailable.' };
+  });
   if (result.status !== 'ok' || !result.values) throw new Error(result.error || 'Failed to fetch candles.');
 
   const rows = (result.values as any[])

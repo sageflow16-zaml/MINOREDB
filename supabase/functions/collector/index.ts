@@ -3,40 +3,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
 import { Logger, CircuitBreaker, RetryStrategy } from '../_shared/logging.ts';
+import { mapSymbol, mapInterval, fetchTwelveData } from '../_shared/marketdata.ts';
 
 const alphavantageKey = Deno.env.get('ALPHAVANTAGE_API_KEY') || '';
-const twelveDataKey = Deno.env.get('TWELVEDATA_API_KEY') || '';
 
 const logger = new Logger({ function: 'collector' });
 
-const TWELVEDATA_BASE = 'https://api.twelvedata.com';
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
-
 const twelvedataBreaker = new CircuitBreaker('twelvedata', 5, 60000, 30000);
 const alphavantageBreaker = new CircuitBreaker('alphavantage', 5, 60000, 30000);
-
-function mapSymbol(symbol: string): string {
-  if (/^[A-Z]{6}$/.test(symbol)) {
-    const major = symbol.slice(0, 3);
-    const minor = symbol.slice(3);
-    const forexMajors = ['EUR', 'GBP', 'USD', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF'];
-    if ((forexMajors.includes(major) && forexMajors.includes(minor)) ||
-        symbol === 'XAUUSD' || symbol === 'XAGUSD' || symbol === 'XPTUSD' || symbol === 'XPDUSD') {
-      return `${major}/${minor}`;
-    }
-  }
-  if (symbol === 'BTCUSD' || symbol === 'ETHUSD') {
-    return `${symbol.slice(0, 3)}/${symbol.slice(3)}`;
-  }
-  const indexMap: Record<string, string> = { DXY: 'USDX', US30: 'DJI', SPX500: 'SPX', NAS100: 'IXIC', UK100: 'UKX', JPN225: 'NI225', VIX: 'VIX' };
-  return indexMap[symbol] || symbol;
-}
-
-function mapInterval(timeframe: string): string {
-  const map: Record<string, string> = { '1m': '1min', '5m': '5min', '15m': '15min', '30m': '30min', '1h': '1h', '4h': '4h', '1d': '1day', '1w': '1week' };
-  return map[timeframe] || '1day';
-}
 
 function parseAlphaVantageDate(value: string | undefined | null): string | null {
   if (!value) return null;
@@ -49,42 +23,6 @@ function parseAlphaVantageDate(value: string | undefined | null): string | null 
     return `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}T00:00:00Z`;
   }
   return value;
-}
-
-async function fetchTwelveData(symbol: string, interval: string, attempt = 1): Promise<{ status: string; values?: any[]; error?: string }> {
-  const url = `${TWELVEDATA_BASE}/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&apikey=${twelveDataKey}&outputsize=5000&timezone=UTC`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => '');
-    if (resp.status === 401) return { status: 'error', error: 'Twelve Data API key is invalid or expired. Update TWELVEDATA_API_KEY in Supabase project settings.' };
-    if (resp.status === 429) {
-      logger.warn('TwelveData rate limited', { symbol, interval, attempt });
-      if (attempt < MAX_RETRIES) {
-        await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
-        return fetchTwelveData(symbol, interval, attempt + 1);
-      }
-      return { status: 'error', error: 'Rate limit exceeded. Try again later.' };
-    }
-    if (resp.status >= 500 && attempt < MAX_RETRIES) {
-      logger.warn('TwelveData server error, retrying', { symbol, interval, attempt, status: resp.status });
-      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
-      return fetchTwelveData(symbol, interval, attempt + 1);
-    }
-    let msg = 'Twelve Data API error.';
-    try { const j = JSON.parse(body); msg = j.message || j.error || msg; } catch {}
-    logger.error('TwelveData request failed', { symbol, interval, status: resp.status, error: msg });
-    return { status: 'error', error: `${msg} (HTTP ${resp.status})` };
-  }
-  const json = await resp.json();
-  if (json.status === 'error') {
-    logger.error('TwelveData returned API error', { symbol, interval, error: json.message || json.error });
-    return { status: 'error', error: json.message || json.error || 'Twelve Data API error.' };
-  }
-  if (!json.values || json.values.length === 0) {
-    logger.warn('TwelveData returned no values', { symbol, interval });
-    return { status: 'error', error: 'No data returned from market provider.' };
-  }
-  return { status: 'ok', values: json.values };
 }
 
 async function fetchAlphaVantage(url: string, label: string): Promise<any> {
@@ -128,7 +66,7 @@ function parseTwelveCandles(values: any[]): { time: number; open: number; high: 
 }
 
 async function loadCandles(supabase: any, symbol: string, timeframe: string, projectId?: string): Promise<{ candles: ReturnType<typeof parseTwelveCandles> } | { error: string }> {
-  if (!twelveDataKey) {
+  if (!Deno.env.get('TWELVEDATA_API_KEY')) {
     return { error: 'TWELVEDATA_API_KEY not configured. Chart data unavailable. Add this secret in Supabase project settings.' };
   }
   const mappedSymbol = mapSymbol(symbol);
@@ -147,7 +85,7 @@ async function loadCandles(supabase: any, symbol: string, timeframe: string, pro
     }
   }
 
-  const result = await twelvedataBreaker.call(() => fetchTwelveData(mappedSymbol, interval)).catch((err): Awaited<ReturnType<typeof fetchTwelveData>> => {
+  const result = await twelvedataBreaker.call(() => fetchTwelveData(symbol, interval)).catch((err): Awaited<ReturnType<typeof fetchTwelveData>> => {
     logger.error('TwelveData circuit breaker failure', { symbol, mappedSymbol, interval, error: err instanceof Error ? err.message : 'unknown' });
     return { status: 'error' as const, error: err instanceof Error ? err.message : 'Market data unavailable.' };
   });

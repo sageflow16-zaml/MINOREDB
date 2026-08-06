@@ -51,22 +51,3 @@ jobs:
           supabase functions deploy tv-webhook
           supabase functions deploy quant
           supabase functions deploy context
-
-  deploy-frontend:
-    name: Deploy Frontend to Vercel
-    needs: [lint-and-typecheck]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - name: Deploy to Vercel (project rootDirectory=frontend)
-        run: npx vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
-        working-directory: .

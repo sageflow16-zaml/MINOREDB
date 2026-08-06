@@ -3,17 +3,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { successResponse, errorResponse } from '../_shared/response.ts';
 import { Logger } from '../_shared/logging.ts';
+import { hashImport } from '../_shared/hash.ts';
 
 const logger = new Logger({ function: 'broker-sync' });
 
 const TIMEOUT_MS = 10_000;
-
-async function hashImport(t: Record<string, unknown>): Promise<string> {
-  const payload = [t.external_id, t.symbol, t.open_time, t.close_time, t.profit, t.volume].map((v) => String(v ?? '')).join('|');
-  const data = new TextEncoder().encode(payload);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 async function log(supabase: any, connection: any, level: string, message: string, details?: Record<string, unknown>) {
   await supabase.from('broker_log').insert({
