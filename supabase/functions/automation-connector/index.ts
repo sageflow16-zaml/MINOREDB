@@ -583,25 +583,35 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const startedAt = Date.now();
   try {
-    const cronSecret = Deno.env.get('CRON_SECRET') || '';
-    const isCron = req.headers.get('x-cron-secret') === cronSecret;
+    const cronHeader = req.headers.get('x-cron-secret');
+    let isCron = false;
 
-    let supabase;
+    let supabase: any;
     let projectId = '';
     let operation = '';
     let data: any = {};
     let reqLogger = logger;
 
-    if (isCron) {
-      supabase = createClient(
+    if (cronHeader) {
+      const serviceClient = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
         { auth: { persistSession: false } },
       );
-      const body = await req.json().catch(() => ({}));
-      operation = body.operation || 'run_jobs';
-      data = body.data || {};
-    } else {
+      const { data: cronRow } = await serviceClient
+        .from('edge_cron_secrets')
+        .select('secret')
+        .eq('name', 'automation-connector')
+        .maybeSingle();
+      isCron = !!cronRow && cronHeader === cronRow.secret;
+      if (isCron) {
+        supabase = serviceClient;
+        const body = await req.json().catch(() => ({}));
+        operation = body.operation || 'run_jobs';
+        data = body.data || {};
+      }
+    }
+    if (!isCron) {
       const authHeader = req.headers.get('Authorization') || '';
       supabase = createClient(
         Deno.env.get('SUPABASE_URL')!,

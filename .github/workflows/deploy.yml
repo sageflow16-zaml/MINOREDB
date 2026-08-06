@@ -37,6 +37,8 @@ jobs:
           version: latest
       - name: Link project
         run: supabase link --project-ref $SUPABASE_PROJECT_ID
+      - name: Remove stale CRON_SECRET env (rotated to DB-backed secret)
+        run: supabase secrets unset CRON_SECRET || echo "CRON_SECRET was not set, nothing to unset"
       - name: Run migrations
         run: supabase db push
       - name: Deploy Edge Functions
