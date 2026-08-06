@@ -249,8 +249,8 @@ async function computeStats(supabase: any, projectId: string, period: string): P
 
   const list = (trades || []) as any[];
   const pnls = list.map((t) => Number(t.pnl) || 0);
-  const wins = list.filter((t) => t.result === 'WIN' || pnls[list.indexOf(t)] > 0);
-  const losses = list.filter((t) => t.result === 'LOSS' || pnls[list.indexOf(t)] < 0);
+  const wins = list.filter((t, i) => t.result === 'WIN' || pnls[i] > 0);
+  const losses = list.filter((t, i) => t.result === 'LOSS' || pnls[i] < 0);
   const grossProfit = wins.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
   const grossLoss = Math.abs(losses.reduce((s, t) => s + (Number(t.pnl) || 0), 0));
   const netProfit = pnls.reduce((s, p) => s + p, 0);
@@ -295,8 +295,8 @@ async function computeStats(supabase: any, projectId: string, period: string): P
     avg_loss: losses.length ? Math.round((grossLoss / losses.length) * 100) / 100 : 0,
     avg_rr: rrValues.length ? Math.round((rrValues.reduce((s, v) => s + v, 0) / rrValues.length) * 100) / 100 : 0,
     avg_risk_percent: riskValues.length ? Math.round((riskValues.reduce((s, v) => s + v, 0) / riskValues.length) * 100) / 100 : 0,
-    max_win: pnls.length ? Math.max(...pnls) : 0,
-    max_loss: pnls.length ? Math.min(...pnls) : 0,
+    max_win: pnls.length ? pnls.reduce((a, b) => Math.max(a, b)) : 0,
+    max_loss: pnls.length ? pnls.reduce((a, b) => Math.min(a, b)) : 0,
     max_drawdown: Math.round(maxDrawdown * 100) / 100,
     daily_pnl: dailySeries,
     by_pair: byPair,
