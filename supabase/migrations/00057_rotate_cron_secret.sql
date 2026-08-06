@@ -22,9 +22,16 @@ VALUES (
 )
 ON CONFLICT (name) DO UPDATE SET secret = EXCLUDED.secret;
 
-UPDATE cron.job
-SET command = format(
-  $cmd$SELECT net.http_post(
+DO $$
+DECLARE
+  secret TEXT := (SELECT secret FROM public.edge_cron_secrets WHERE name = 'automation-connector');
+BEGIN
+  PERFORM cron.unschedule('automation-run-jobs');
+  PERFORM cron.schedule(
+    'automation-run-jobs',
+    '*/5 * * * *',
+    format(
+      $cmd$SELECT net.http_post(
   url := 'https://wlpukdzvcidbwwwehiql.supabase.co/functions/v1/automation-connector',
   headers := jsonb_build_object(
     'Content-Type', 'application/json',
@@ -33,6 +40,7 @@ SET command = format(
   ),
   body := jsonb_build_object('operation', 'run_jobs')
 );$cmd$,
-  (SELECT secret FROM public.edge_cron_secrets WHERE name = 'automation-connector')
-)
-WHERE jobname = 'automation-run-jobs';
+      secret
+    )
+  );
+END $$;
