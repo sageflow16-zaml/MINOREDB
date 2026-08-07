@@ -110,8 +110,7 @@ const TimelinePage = lazy(() => import('../pages/Timeline'));
 
 /**
  * Authenticated application routes. Every module under /projects/:projectId is
- * wired to a page; modules that are not yet integrated render a Coming Soon
- * placeholder so the shell stays navigable end-to-end.
+ * wired to a page; every route resolves to a fully implemented module.
  */
 export const AppRoutes = () => (
   <MainLayout>

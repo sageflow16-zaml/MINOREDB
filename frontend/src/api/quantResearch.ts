@@ -467,32 +467,6 @@ export const quantResearchService = {
     if (error) throw error;
   },
 
-  // Statistics
-  describePerformance: async (projectId: string, params?: { backtest_run_id?: string }): Promise<Record<string, unknown>> => {
-    return callEdgeFunction('ai', { operation: 'describe-performance', project_id: projectId, data: params ?? {} });
-  },
-
-  // AI Research
-  aiResearch: async (projectId: string, data: { query: string; experiment_id?: string; context?: Record<string, unknown> }): Promise<Record<string, unknown>> => {
-    return callEdgeFunction('ai', { operation: 'research', project_id: projectId, data });
-  },
-
-  aiSummarize: async (projectId: string, experimentId?: string, backtestRunId?: string): Promise<AISummaryResponse> => {
-    return callEdgeFunction<AISummaryResponse>('ai', {
-      operation: 'summarize',
-      project_id: projectId,
-      data: { experiment_id: experimentId, backtest_run_id: backtestRunId },
-    });
-  },
-
-  aiSuggestImprovements: async (projectId: string, experimentId: string): Promise<AIImproveResponse> => {
-    return callEdgeFunction<AIImproveResponse>('ai', {
-      operation: 'suggest-improvements',
-      project_id: projectId,
-      data: { experiment_id: experimentId },
-    });
-  },
-
   // Notebooks
   notebooks: async (projectId: string, params?: { experiment_id?: string; content_type?: string }): Promise<ResearchNotebook[]> => {
     let query = supabase

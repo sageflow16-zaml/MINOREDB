@@ -213,13 +213,6 @@ export const useDeleteTemplate = (projectId: string) => {
   });
 };
 
-export const useRenderTemplate = (projectId: string) => {
-  return useMutation({
-    mutationFn: ({ templateId, context }: { templateId: string; context?: Record<string, string> }) =>
-      obsidianService.renderTemplate(projectId, templateId, context),
-  });
-};
-
 // ── Search ──
 
 export const useObsidianSearch = (projectId: string, query: string) => {

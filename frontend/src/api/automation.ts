@@ -472,32 +472,8 @@ export const automationService = {
   },
 
   // AI Automation
-  async aiSummarizeTrades(projectId: string, context?: Record<string, unknown>): Promise<any> {
-    return callEdgeFunction('ai', { operation: 'summarize_trades', project_id: projectId, data: context ?? {} });
-  },
-
-  async aiReviewJournal(projectId: string, context?: Record<string, unknown>): Promise<any> {
-    return callEdgeFunction('ai', { operation: 'review_journal', project_id: projectId, data: context ?? {} });
-  },
-
-  async aiAnalyzePsychology(projectId: string, context?: Record<string, unknown>): Promise<any> {
-    return callEdgeFunction('ai', { operation: 'analyze_psychology', project_id: projectId, data: context ?? {} });
-  },
-
   async aiGenerateReport(projectId: string, reportType: string, context?: Record<string, unknown>): Promise<any> {
     return callEdgeFunction('ai', { operation: 'generate_report', project_id: projectId, data: { report_type: reportType, context } });
-  },
-
-  async aiIdentifyWeaknesses(projectId: string, context?: Record<string, unknown>): Promise<any> {
-    return callEdgeFunction('ai', { operation: 'identify_weaknesses', project_id: projectId, data: context ?? {} });
-  },
-
-  async aiSuggestResearch(projectId: string, context?: Record<string, unknown>): Promise<any> {
-    return callEdgeFunction('ai', { operation: 'suggest_research', project_id: projectId, data: context ?? {} });
-  },
-
-  async aiCreateDailyPlan(projectId: string, context?: Record<string, unknown>): Promise<any> {
-    return callEdgeFunction('ai', { operation: 'create_daily_plan', project_id: projectId, data: context ?? {} });
   },
 
   async aiGenerateCoaching(projectId: string, context?: Record<string, unknown>): Promise<any> {

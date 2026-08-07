@@ -101,9 +101,6 @@ export const trackOutcome = async (projectId: string, decisionId: string, outcom
   if (error) throw error;
 };
 
-export const searchBrainSimilarity = (projectId: string, _data: SimilaritySearchRequest): Promise<any> =>
-  callEdgeFunction('ai', { operation: 'similarity-search', project_id: projectId, data: _data as any });
-
 export const getInsights = async (projectId: string, limit?: number): Promise<PersonalInsight[]> => {
   let query = supabase.from('ai_insight').select('*').eq('project_id', projectId).eq('is_dismissed', false).order('created_at', { ascending: false });
   if (limit) query = query.limit(limit);

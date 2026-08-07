@@ -158,10 +158,6 @@ export const obsidianService = {
     return (data?.backlinks ?? []) as BacklinkRef[];
   },
 
-  // Parse markdown — callEdgeFunction (ai function)
-  parseMarkdown: async (projectId: string, content: string): Promise<ParsedMarkdown> =>
-    callEdgeFunction<ParsedMarkdown>('ai', { operation: 'parse-markdown', project_id: projectId, data: { content } }),
-
   // Sync — callEdgeFunction (obsidian-sync function)
   syncImport: async (projectId: string, vaultId: string, filePaths?: string[], force = false): Promise<any> =>
     callEdgeFunction('obsidian-sync', { operation: 'import', project_id: projectId, data: { vault_id: vaultId, file_paths: filePaths, force } }),
@@ -288,9 +284,6 @@ export const obsidianService = {
 
     if (error) throw error;
   },
-
-  renderTemplate: async (projectId: string, templateId: string, context?: Record<string, string>): Promise<{ content: string }> =>
-    callEdgeFunction('obsidian-sync', { operation: 'render-template', project_id: projectId, data: { template_id: templateId, context } }),
 
   // Search — callEdgeFunction (obsidian-sync function)
   search: async (projectId: string, query: string, limit = 20): Promise<ObsidianSearchResult[]> =>

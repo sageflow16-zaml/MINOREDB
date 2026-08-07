@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
 import { useAuth } from '../auth/AuthContext';
+import { useProject } from '../context/ProjectContext';
+import { useDeleteProject } from '../hooks/useProjectMutations';
 import { supabase } from '../lib/supabase';
 import { settingsService, DEFAULT_SETTINGS, type UserSettings } from '../api/settings';
 import { tradeImportExportService } from '../api/tradeImportExport';
@@ -66,6 +68,9 @@ const EXPORT_FIELDS = ['pair', 'direction', 'result', 'pnl', 'rr', 'entry_price'
 export default function SettingsPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
   const { user } = useAuth();
+  const { setProjectId } = useProject();
+  const deleteProjectMutation = useDeleteProject();
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -158,6 +163,17 @@ export default function SettingsPage() {
       .eq('project_id', projectId)
       .is('deleted_at', null);
     setImportResult(error ? `Failed: ${error.message}` : 'All trades deleted.');
+  };
+
+  const deleteProject = async () => {
+    if (!projectId || !window.confirm('Permanently delete this project and ALL of its data? This cannot be undone.')) return;
+    try {
+      await deleteProjectMutation.mutateAsync(projectId);
+      setProjectId(null);
+      navigate('/projects');
+    } catch {
+      // mutation error surfaced by hook toast
+    }
   };
 
   const integrations = useMemo(() => [
@@ -352,6 +368,9 @@ export default function SettingsPage() {
               </SettingRow>
               <SettingRow label="Clear All Data" desc="Permanently delete all trading data">
                 <Button variant="outline" size="sm" className="text-danger border-danger/30" onClick={clearAllData}><Trash2 className="h-3.5 w-3.5 mr-1" />Clear Data</Button>
+              </SettingRow>
+              <SettingRow label="Delete Project" desc="Permanently delete this project and all of its data">
+                <Button variant="outline" size="sm" className="text-danger border-danger/30" onClick={deleteProject}><Trash2 className="h-3.5 w-3.5 mr-1" />Delete Project</Button>
               </SettingRow>
             </SettingsSection>
           )}

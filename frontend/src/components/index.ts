@@ -4,7 +4,6 @@ export * from './ui';
 // Re-export root-level components
 export { PageLoader } from './ui/Spinner';
 export { ClaimCount } from './ClaimCount';
-export { default as ComingSoon } from './ComingSoon';
 export { ErrorBoundary } from './ErrorBoundary';
 export { OfflineBanner } from './OfflineBanner';
 export { Sidebar } from './Sidebar';

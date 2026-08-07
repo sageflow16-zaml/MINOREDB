@@ -221,27 +221,6 @@ export const useCreateEdgeSnapshot = (projectId: string) => {
   });
 };
 
-// ── AI Research ──
-export const useAIResearch = (projectId: string) => {
-  return useMutation({
-    mutationFn: (data: { query: string; experiment_id?: string; context?: Record<string, unknown> }) =>
-      quantResearchService.aiResearch(projectId, data),
-  });
-};
-
-export const useAISummarize = (projectId: string) => {
-  return useMutation({
-    mutationFn: ({ experimentId, backtestRunId }: { experimentId?: string; backtestRunId?: string }) =>
-      quantResearchService.aiSummarize(projectId, experimentId, backtestRunId),
-  });
-};
-
-export const useAIImprove = (projectId: string) => {
-  return useMutation({
-    mutationFn: (experimentId: string) => quantResearchService.aiSuggestImprovements(projectId, experimentId),
-  });
-};
-
 // ── Notebooks ──
 export const useNotebooks = (projectId: string, params?: { experiment_id?: string; content_type?: string }) => {
   return useQuery({
