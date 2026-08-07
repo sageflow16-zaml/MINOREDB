@@ -1,0 +1,42 @@
+name: Provision E2E test user
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Test user email'
+        required: true
+        default: 'e2e@minoredb.test'
+      password:
+        description: 'Test user password'
+        required: true
+      name:
+        description: 'Display name'
+        required: false
+        default: 'E2E Bot'
+
+jobs:
+  create-user:
+    name: Create user via Auth Admin API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch service_role key
+        id: keys
+        run: |
+          RESP=$(curl -s -X GET \
+            "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_REF }}/api-keys" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}")
+          KEY=$(echo "$RESP" | node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); const k=d.find(x=>x.name==='service_role'); if(!k) { console.error(JSON.stringify(d).slice(0,300)); process.exit(1);} console.log(k.api_key);")
+          echo "SERVICE_ROLE=$KEY" >> "$GITHUB_ENV"
+
+      - name: Create user
+        run: |
+          curl -s -X POST \
+            "https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/auth/v1/admin/users" \
+            -H "apikey: $SERVICE_ROLE" \
+            -H "Authorization: Bearer $SERVICE_ROLE" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"${{ inputs.email }}","password":"${{ inputs.password }}","email_confirm":true,"user_metadata":{"full_name":"${{ inputs.name }}"}}' \
+            -w '\nHTTP %{http_code}\n'
