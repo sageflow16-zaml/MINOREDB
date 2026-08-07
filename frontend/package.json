@@ -40,7 +40,7 @@
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.1.2",
     "react-hot-toast": "^2.6.0",
-    "react-router-dom": "^6.28.0",
+    "react-router-dom": "^7.11.0",
     "reactflow": "^11.11.4",
     "recharts": "^2.13.3",
     "tailwind-merge": "^2.5.4",
@@ -55,7 +55,7 @@
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3",
+    "@vitejs/plugin-react": "^5.2.0",
     "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.20",
     "esbuild": "^0.28.1",
@@ -63,7 +63,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11",
+    "vite": "^7.3.6",
     "vitest": "^4.1.10"
   }
 }
