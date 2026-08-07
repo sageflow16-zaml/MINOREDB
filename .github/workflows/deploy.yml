@@ -34,7 +34,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: v2.112.0 (2026-08-07) regressed `supabase link` API-key
+          # fetch with a SchemaError on the timestamp field. Bump after
+          # upstream fixes the release.
+          version: v2.111.0
       - name: Link project
         run: supabase link --project-ref $SUPABASE_PROJECT_ID
       - name: Remove stale CRON_SECRET env (rotated to DB-backed secret)
