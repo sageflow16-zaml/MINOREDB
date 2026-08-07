@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { supabase } from '../lib/supabase';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { clearAllTokens } from './tokenStorage';
+import { isSessionExpiredOrNearExpiry } from './sessionExpiry';
+import { queryClient } from '../lib/queryClient';
 
 export interface User {
   id: string;
@@ -40,13 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      if (currentSession?.user) {
-        setUser(mapSupabaseUser(currentSession.user));
+    let cancelled = false;
+    (async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (cancelled) return;
+      let activeSession = currentSession;
+      if (currentSession && isSessionExpiredOrNearExpiry(currentSession.expires_at)) {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (!error && data.session) activeSession = data.session;
+      }
+      setSession(activeSession);
+      if (activeSession?.user) {
+        setUser(mapSupabaseUser(activeSession.user));
       }
       setIsLoading(false);
-    });
+    })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
@@ -66,11 +76,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else if (event === 'USER_UPDATED' && currentSession?.user) {
           setUser(mapSupabaseUser(currentSession.user));
+        } else if (event === 'TOKEN_REFRESHED' && currentSession) {
+          queryClient.removeQueries({ predicate: (q) => q.state.status === 'error' });
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

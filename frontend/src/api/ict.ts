@@ -209,11 +209,59 @@ export const ictApi = {
     throw new Error('ICT signals require analysis engine');
   },
 
-  getAIContext: async (_projectId: string, _symbol = 'EURUSD'): Promise<{ data: AIContext }> => {
-    throw new Error('AI context requires analysis engine');
+  getAIContext: async (projectId: string, symbol = 'EURUSD'): Promise<{ data: AIContext }> => {
+    const [structuresRes, biasRes, eventsRes] = await Promise.all([
+      supabase.from('market_structure_point').select('*').eq('project_id', projectId).eq('symbol', symbol).order('created_at', { ascending: false }).limit(20),
+      supabase.rpc('get_market_bias_summary', { p_project_id: projectId }),
+      supabase.from('market_timeline').select('*').eq('project_id', projectId).eq('symbol', symbol).order('event_time', { ascending: false }).limit(10),
+    ]);
+    if (structuresRes.error) throw structuresRes.error;
+    if (eventsRes.error) throw eventsRes.error;
+
+    const points = (structuresRes.data ?? []) as Array<{ point_type?: string; price?: number }>;
+    const highs = points.filter((sp) => sp.point_type === 'high');
+    const lows = points.filter((sp) => sp.point_type === 'low');
+    const trend = highs.length > 1 && lows.length > 1
+      ? (highs[0]?.price ?? 0) > (highs[1]?.price ?? 0) && (lows[0]?.price ?? 0) > (lows[1]?.price ?? 0)
+        ? 'bullish'
+        : 'bearish'
+      : 'neutral';
+    const events = (eventsRes.data ?? []) as Record<string, unknown>[];
+
+    return {
+      data: {
+        symbol,
+        bias: biasRes.data ?? null,
+        best_setup: null,
+        recent_events: events,
+        active_signal: null,
+        summary: points.length > 0
+          ? `${points.length} swing points detected for ${symbol}. Trend: ${trend}. ${events.length} market events.`
+          : `No market structure data for ${symbol} yet. Run analysis after importing market data.`,
+      },
+    };
   },
 
-  getFullContext: async (_projectId: string, _symbol = 'EURUSD'): Promise<{ data: ICTFullContext }> => {
-    throw new Error('Full context requires analysis engine');
+  getFullContext: async (projectId: string, symbol = 'EURUSD'): Promise<{ data: ICTFullContext }> => {
+    const [structuresRes, eventsRes, biasRes] = await Promise.all([
+      supabase.from('market_structure_point').select('*').eq('project_id', projectId).eq('symbol', symbol).order('created_at', { ascending: false }).limit(50),
+      supabase.from('market_timeline').select('*').eq('project_id', projectId).eq('symbol', symbol).order('event_time', { ascending: false }).limit(50),
+      supabase.rpc('get_market_bias_summary', { p_project_id: projectId }),
+    ]);
+    if (structuresRes.error) throw structuresRes.error;
+    if (eventsRes.error) throw eventsRes.error;
+
+    return {
+      data: {
+        structures: structuresRes.data ?? [],
+        events: eventsRes.data ?? [],
+        fvgs: [],
+        order_blocks: [],
+        liquidity: [],
+        setups: [],
+        bias: { current: biasRes.data ?? null },
+        signals: [],
+      },
+    };
   },
 };

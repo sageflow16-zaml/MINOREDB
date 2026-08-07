@@ -31,6 +31,7 @@ export function useICTStructures(projectId: string, symbol?: string) {
   return useQuery({
     queryKey: ictKeys.structures(projectId, symbol),
     queryFn: () => ictApi.getStructures(projectId, symbol),
+    enabled: !!projectId,
   });
 }
 
@@ -38,6 +39,7 @@ export function useICTEvents(projectId: string, symbol?: string, eventType?: str
   return useQuery({
     queryKey: [...ictKeys.events(projectId, symbol), eventType],
     queryFn: () => ictApi.getEvents(projectId, symbol, eventType),
+    enabled: !!projectId,
   });
 }
 
@@ -45,6 +47,7 @@ export function useICTFVGs(projectId: string, symbol?: string, status?: string) 
   return useQuery({
     queryKey: [...ictKeys.fvgs(projectId, symbol), status],
     queryFn: () => ictApi.getFVGs(projectId, symbol, status),
+    enabled: !!projectId,
   });
 }
 
@@ -52,6 +55,7 @@ export function useICTOrderBlocks(projectId: string, symbol?: string, blockType?
   return useQuery({
     queryKey: [...ictKeys.orderBlocks(projectId, symbol), blockType],
     queryFn: () => ictApi.getOrderBlocks(projectId, symbol, blockType),
+    enabled: !!projectId,
   });
 }
 
@@ -59,6 +63,7 @@ export function useICTLiquidity(projectId: string, symbol?: string, liquidityTyp
   return useQuery({
     queryKey: [...ictKeys.liquidity(projectId, symbol), liquidityType],
     queryFn: () => ictApi.getLiquidityZones(projectId, symbol, liquidityType),
+    enabled: !!projectId,
   });
 }
 
@@ -66,6 +71,7 @@ export function useICTSetups(projectId: string, symbol?: string, modelType?: str
   return useQuery({
     queryKey: [...ictKeys.setups(projectId, symbol), modelType, status],
     queryFn: () => ictApi.getSetups(projectId, symbol, modelType, status),
+    enabled: !!projectId,
   });
 }
 
@@ -81,6 +87,7 @@ export function useICTSessions(projectId: string, symbol?: string, date?: string
   return useQuery({
     queryKey: [...ictKeys.sessions(projectId, symbol), date],
     queryFn: () => ictApi.getSessions(projectId, symbol, date),
+    enabled: !!projectId,
   });
 }
 
@@ -88,6 +95,7 @@ export function useICTMarketBias(projectId: string, symbol?: string) {
   return useQuery({
     queryKey: ictKeys.bias(projectId, symbol),
     queryFn: () => ictApi.getMarketBias(projectId, symbol),
+    enabled: !!projectId,
   });
 }
 
@@ -95,6 +103,7 @@ export function useICTSignals(projectId: string, symbol?: string, status?: strin
   return useQuery({
     queryKey: [...ictKeys.signals(projectId, symbol), status],
     queryFn: () => ictApi.getSignals(projectId, symbol, status),
+    enabled: !!projectId,
   });
 }
 
@@ -105,6 +114,7 @@ export function useICTAIContext(projectId: string, symbol?: string) {
       const resp = await ictApi.getAIContext(projectId, symbol);
       return resp.data;
     },
+    enabled: !!projectId,
   });
 }
 
@@ -115,5 +125,6 @@ export function useICTFullContext(projectId: string, symbol?: string) {
       const resp = await ictApi.getFullContext(projectId, symbol);
       return resp.data;
     },
+    enabled: !!projectId,
   });
 }

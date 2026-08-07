@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useAnalyzeICT, useICTFullContext, useICTAIContext } from '../hooks/useICT';
+import { useAnalyzeICT, useICTAIContext } from '../hooks/useICT';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { KpiCard } from '../components/ui/KpiCard';
 import { cn } from '../lib/utils';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import {
   Brain, TrendingUp, TrendingDown, Activity, Layers,
   Zap, Target, Shield, AlertTriangle, CheckCircle2,
@@ -143,9 +143,8 @@ export default function ICTSmartEngine() {
   const [timeframe, setTimeframe] = useState('1h');
   const [includeModels, setIncludeModels] = useState(true);
 
-  const analyzeMutation = useAnalyzeICT(projectId!);
-  const { data: ctx, isLoading: ctxLoading, error: ctxError, refetch } = useICTFullContext(projectId!, symbol);
-  const { data: aiCtx, isLoading: aiLoading, error: aiError } = useICTAIContext(projectId!, symbol);
+  const analyzeMutation = useAnalyzeICT(projectId || '');
+  const { data: aiCtx, isLoading: aiLoading } = useICTAIContext(projectId || '', symbol);
 
   const [analysis, setAnalysis] = useState<ICTAnalysisResponse | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -175,12 +174,16 @@ export default function ICTSmartEngine() {
     }
   }, [projectId, symbol, timeframe, includeModels, analyzeMutation]);
 
-  if (ctxLoading || aiLoading) {
-    return <LoadingSpinner message="Loading ICT analysis..." />;
+  if (!projectId) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <EmptyState icon={<Brain className="h-6 w-6" />} title="No project selected" description="Select a project to open the ICT Smart Engine." />
+      </div>
+    );
   }
 
-  if (ctxError || aiError) {
-    return <ErrorState message="Failed to load ICT analysis" description={ctxError?.message || aiError?.message || 'An unexpected error occurred'} onRetry={() => { refetch(); }} />;
+  if (aiLoading) {
+    return <LoadingSpinner message="Loading ICT analysis..." />;
   }
 
   if (!analysis) {
