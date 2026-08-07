@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] — 2026-08-07
+
+### Fixed
+- **Risk page position-size calculator** — `calculate_position_size` was called with the pre-`00031` RPC contract (`p_account_balance`, `p_stop_loss`, `p_contract_size`), causing every calculation to fail in production with `PGRST202` (function not found). The frontend now calls the live signature (`p_balance`, `p_risk_percent`, `p_entry_price`, `p_stop_price`, `p_account_currency_usd_rate`) and derives the UI metrics (expected R:R, potential profit/loss, stop distance in pips, risk per pip) client-side from the RPC result.
+
+---
+
 ## [1.0.0] — 2026-07-27
 
 ### Added
