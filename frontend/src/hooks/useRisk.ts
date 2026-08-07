@@ -84,7 +84,7 @@ export const useValidateTrade = (projectId: string) => {
 
 export const useCalculatePositionSize = (projectId: string) => {
   return useMutation({
-    mutationFn: (data: { account_balance: number; risk_percent: number; entry_price: number; stop_loss: number; pip_value?: number; instrument?: string; account_currency?: string }) =>
+    mutationFn: (data: { account_balance: number; risk_percent: number; entry_price: number; stop_loss: number; take_profit?: number; pip_value?: number; instrument?: string; account_currency?: string }) =>
       riskService.positionSize(projectId, data),
   });
 };

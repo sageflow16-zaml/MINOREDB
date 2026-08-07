@@ -68,16 +68,33 @@ export const riskService = {
     return row as TradeValidationResult;
   },
 
-  positionSize: async (_projectId: string, data: { account_balance: number; risk_percent: number; entry_price: number; stop_loss: number; contract_size?: number }): Promise<PositionSizeResult> => {
+  positionSize: async (_projectId: string, data: { account_balance: number; risk_percent: number; entry_price: number; stop_loss: number; take_profit?: number; pip_value?: number; contract_size?: number }): Promise<PositionSizeResult> => {
     const { data: result, error } = await supabase.rpc('calculate_position_size', {
-      p_account_balance: data.account_balance,
+      p_balance: data.account_balance,
       p_risk_percent: data.risk_percent,
       p_entry_price: data.entry_price,
-      p_stop_loss: data.stop_loss,
-      p_contract_size: data.contract_size ?? 1,
+      p_stop_price: data.stop_loss,
+      p_account_currency_usd_rate: 1,
     });
     if (error) throw error;
-    return (result ?? {}) as unknown as PositionSizeResult;
+    if (!result || typeof result !== 'object') throw new Error('Position size calculation failed');
+    const r = result as { position_size?: number; units?: number; risk_amount?: number; risk_percent?: number; error?: string };
+    if (r.error) throw new Error(r.error);
+    const positionSize = r.position_size ?? 0;
+    const riskAmount = r.risk_amount ?? 0;
+    const stopDistance = Math.abs(data.entry_price - data.stop_loss);
+    const stopDistancePips = data.pip_value && data.pip_value > 0 ? stopDistance / 0.0001 : stopDistance;
+    const expectedRr = data.take_profit && stopDistance > 0 ? Math.abs(data.take_profit - data.entry_price) / stopDistance : 0;
+    return {
+      position_size: positionSize,
+      lot_size: r.units ?? 0,
+      dollar_risk: riskAmount,
+      expected_rr: expectedRr,
+      potential_profit: riskAmount * expectedRr,
+      potential_loss: riskAmount,
+      risk_per_pip: stopDistancePips > 0 ? riskAmount / stopDistancePips : 0,
+      stop_distance_pips: stopDistancePips,
+    };
   },
 
   violations: async (projectId: string): Promise<RuleViolation[]> => {
