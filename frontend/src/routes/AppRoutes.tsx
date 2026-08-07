@@ -5,6 +5,7 @@ import { MainLayout } from '../layouts/MainLayout';
 import { LoadingSpinner } from '../components/ui/Feedback';
 import { ErrorFallback } from '../components/ui/ErrorFallback';
 import { ProtectedRoute } from './ProtectedRoute';
+import { ProjectGuard } from './ProjectGuard';
 
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const Projects = lazy(() => import('../pages/Projects'));
@@ -119,108 +120,111 @@ export const AppRoutes = () => (
         <Route path="/" element={<Navigate to="/projects" />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/:projectId/dashboard" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Dashboard /></ErrorBoundary>} />
-          <Route path="/projects/:projectId/projects" element={<Projects />} />
-          <Route path="/projects/:projectId/sources" element={<Sources />} />
-          <Route path="/projects/:projectId/claims" element={<Claims />} />
-          <Route path="/projects/:projectId/claims/:claim_id/graph" element={<GraphExplorer />} />
-          <Route path="/projects/:projectId/concepts" element={<Concepts />} />
-          <Route path="/projects/:projectId/associations" element={<Associations />} />
-          <Route path="/projects/:projectId/interpretations" element={<Interpretations />} />
-          <Route path="/projects/:projectId/trades" element={<Trades />} />
-          <Route path="/projects/:projectId/strategies" element={<Strategies />} />
-          <Route path="/projects/:projectId/strategies/new" element={<StrategyBuilder />} />
-          <Route path="/projects/:projectId/strategies/:strategyId" element={<StrategyDetail />} />
-          <Route path="/projects/:projectId/strategies/:strategyId/edit" element={<StrategyBuilder />} />
-          <Route path="/projects/:projectId/playbooks" element={<Playbooks />} />
-          <Route path="/projects/:projectId/playbooks/:playbookId" element={<PlaybookDetail />} />
-          <Route path="/projects/:projectId/market-structure" element={<MarketStructure />} />
-          <Route path="/projects/:projectId/collectors" element={<Collectors />} />
-<Route path="/projects/:projectId/statistics" element={<Statistics />} />
-          <Route path="/projects/:projectId/performance" element={<Performance />} />
-          <Route path="/projects/:projectId/risk" element={<Risk />} />
-          <Route path="/projects/:projectId/planning" element={<Planning />} />
-          <Route path="/projects/:projectId/similarity" element={<Similarity />} />
-          <Route path="/projects/:projectId/decision" element={<DecisionSupport />} />
-          <Route path="/projects/:projectId/learning" element={<Learning />} />
-          <Route path="/projects/:projectId/macro" element={<ErrorBoundary FallbackComponent={ErrorFallback}><MacroIntelligence /></ErrorBoundary>} />
-          <Route path="/projects/:projectId/mt5" element={<MT5Integration />} />
-          <Route path="/projects/:projectId/tradingview" element={<TradingViewPage />} />
-          <Route path="/projects/:projectId/conflicts" element={<Conflicts />} />
-          <Route path="/projects/:projectId/questions" element={<ResearchQuestions />} />
-          <Route path="/projects/:projectId/hypotheses" element={<Hypotheses />} />
-          <Route path="/projects/:projectId/search" element={<Search />} />
-          <Route path="/projects/:projectId/settings" element={<Settings />} />
-          <Route path="/projects/:projectId/analytics" element={<Analytics />} />
-          <Route path="/projects/:projectId/memories" element={<TradeMemory />} />
-          <Route path="/projects/:projectId/knowledge" element={<Knowledge />} />
-          <Route path="/projects/:projectId/knowledge-graph" element={<KnowledgeGraph />} />
-          <Route path="/projects/:projectId/knowledge-engine" element={<KnowledgeEngine />} />
-          <Route path="/projects/:projectId/analyst" element={<Analyst />} />
-          <Route path="/projects/:projectId/research" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Research /></ErrorBoundary>} />
-          <Route path="/projects/:projectId/replay" element={<Replay />} />
-          <Route path="/projects/:projectId/trader-intelligence" element={<TraderIntelligence />} />
-          <Route path="/projects/:projectId/knowledge-center" element={<KnowledgeCenter />} />
-          <Route path="/projects/:projectId/ai" element={<ErrorBoundary FallbackComponent={ErrorFallback}><AIDashboard /></ErrorBoundary>} />
-          <Route path="/projects/:projectId/ai/coach" element={<AICoach />} />
-          <Route path="/projects/:projectId/ai/profile" element={<AIProfile />} />
-          <Route path="/projects/:projectId/ai/knowledge" element={<KnowledgeExplorer />} />
-          <Route path="/projects/:projectId/obsidian/vaults" element={<VaultManager />} />
-          <Route path="/projects/:projectId/obsidian/sync" element={<SyncDashboard />} />
-          <Route path="/projects/:projectId/obsidian/notes" element={<NoteExplorer />} />
-          <Route path="/projects/:projectId/obsidian/templates" element={<TemplateLibrary />} />
-          <Route path="/projects/:projectId/obsidian/search" element={<ObsidianSearch />} />
-          <Route path="/projects/:projectId/market-intel" element={<MarketDashboard />} />
-          <Route path="/projects/:projectId/market-intel/calendar" element={<EconomicCalendar />} />
-          <Route path="/projects/:projectId/market-intel/correlations" element={<CorrelationCenter />} />
-          <Route path="/projects/:projectId/market-intel/liquidity" element={<LiquidityMonitor />} />
-          <Route path="/projects/:projectId/market-intel/watchlist" element={<Watchlist />} />
-          <Route path="/projects/:projectId/market-intel/sessions" element={<SessionAnalysis />} />
-          <Route path="/projects/:projectId/market-intel/timeline" element={<MarketTimeline />} />
-          <Route path="/projects/:projectId/market-intel/alerts" element={<AlertManager />} />
-          <Route path="/projects/:projectId/copilot" element={<CopilotWorkspace />} />
-          <Route path="/projects/:projectId/quant-research" element={<QuantResearchDashboard />} />
-          <Route path="/projects/:projectId/quant-research/experiments" element={<QuantExperiments />} />
-          <Route path="/projects/:projectId/quant-research/backtests" element={<QuantBacktestLab />} />
-          <Route path="/projects/:projectId/quant-research/backtests/:backtestId" element={<QuantBacktestDetail />} />
-          <Route path="/projects/:projectId/quant-research/simulations" element={<QuantSimulationLab />} />
-          <Route path="/projects/:projectId/quant-research/walkforward" element={<QuantWalkForwardLab />} />
-          <Route path="/projects/:projectId/quant-research/optimization" element={<QuantOptimizationLab />} />
-          <Route path="/projects/:projectId/quant-research/edge-health" element={<QuantEdgeHealth />} />
-          <Route path="/projects/:projectId/quant-research/notebooks" element={<QuantNotebooks />} />
-          <Route path="/projects/:projectId/automation" element={<AutomationDashboard />} />
-          <Route path="/projects/:projectId/automation/workflows" element={<WorkflowList />} />
-          <Route path="/projects/:projectId/automation/workflows/:workflowId" element={<WorkflowBuilder />} />
-          <Route path="/projects/:projectId/automation/rules" element={<RuleEngine />} />
-          <Route path="/projects/:projectId/automation/jobs" element={<Scheduler />} />
-          <Route path="/projects/:projectId/automation/notifications" element={<NotificationCenter />} />
-          <Route path="/projects/:projectId/automation/templates" element={<AutomationTemplates />} />
-          <Route path="/projects/:projectId/automation/connectors" element={<Connectors />} />
-          <Route path="/projects/:projectId/automation/audit" element={<AuditLog />} />
-          <Route path="/projects/:projectId/automation/reports" element={<AutomationReports />} />
-          <Route path="/projects/:projectId/portfolio" element={<PortfolioDashboard />} />
-          <Route path="/projects/:projectId/portfolio/accounts" element={<AccountList />} />
-          <Route path="/projects/:projectId/portfolio/accounts/:accountId" element={<AccountDetail />} />
-          <Route path="/projects/:projectId/portfolio/brokers" element={<BrokerProfiles />} />
-          <Route path="/projects/:projectId/portfolio/analytics" element={<PortfolioAnalytics />} />
-          <Route path="/projects/:projectId/portfolio/risk" element={<PortfolioRisk />} />
-          <Route path="/projects/:projectId/portfolio/allocations" element={<AllocationManager />} />
-          <Route path="/projects/:projectId/portfolio/transfers" element={<TransferManager />} />
-          <Route path="/projects/:projectId/portfolio/goals" element={<Goals />} />
-          <Route path="/projects/:projectId/portfolio/reports" element={<PortfolioReports />} />
-          <Route path="/projects/:projectId/broker" element={<BrokerHub />} />
-          <Route path="/projects/:projectId/broker/setup" element={<BrokerSetup />} />
-          <Route path="/projects/:projectId/broker/:connectionId" element={<BrokerDetail />} />
-          <Route path="/projects/:projectId/broker/analytics" element={<BrokerAnalyticsPage />} />
-          <Route path="/projects/:projectId/workspace" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Workspace /></ErrorBoundary>} />
-          <Route path="/projects/:projectId/ict" element={<ICTSmartEngine />} />
-          <Route path="/projects/:projectId/brain" element={<BrainDashboard />} />
-          <Route path="/projects/:projectId/intelligence" element={<IntelligenceDashboard />} />
-          <Route path="/projects/:projectId/collections" element={<CollectionsPage />} />
-          <Route path="/projects/:projectId/notes" element={<NotesPage />} />
-          <Route path="/projects/:projectId/bookmarks" element={<BookmarksPage />} />
-          <Route path="/projects/:projectId/graph" element={<GraphPage />} />
-          <Route path="/projects/:projectId/timeline" element={<TimelinePage />} />
+          <Route path="/projects/:projectId" element={<ProjectGuard />}>
+            <Route index element={<Navigate to="/projects" replace />} />
+            <Route path="dashboard" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Dashboard /></ErrorBoundary>} />
+            <Route path="projects" element={<Projects />} />
+            <Route path="sources" element={<Sources />} />
+            <Route path="claims" element={<Claims />} />
+            <Route path="claims/:claim_id/graph" element={<GraphExplorer />} />
+            <Route path="concepts" element={<Concepts />} />
+            <Route path="associations" element={<Associations />} />
+            <Route path="interpretations" element={<Interpretations />} />
+            <Route path="trades" element={<Trades />} />
+            <Route path="strategies" element={<Strategies />} />
+            <Route path="strategies/new" element={<StrategyBuilder />} />
+            <Route path="strategies/:strategyId" element={<StrategyDetail />} />
+            <Route path="strategies/:strategyId/edit" element={<StrategyBuilder />} />
+            <Route path="playbooks" element={<Playbooks />} />
+            <Route path="playbooks/:playbookId" element={<PlaybookDetail />} />
+            <Route path="market-structure" element={<MarketStructure />} />
+            <Route path="collectors" element={<Collectors />} />
+            <Route path="statistics" element={<Statistics />} />
+            <Route path="performance" element={<Performance />} />
+            <Route path="risk" element={<Risk />} />
+            <Route path="planning" element={<Planning />} />
+            <Route path="similarity" element={<Similarity />} />
+            <Route path="decision" element={<DecisionSupport />} />
+            <Route path="learning" element={<Learning />} />
+            <Route path="macro" element={<ErrorBoundary FallbackComponent={ErrorFallback}><MacroIntelligence /></ErrorBoundary>} />
+            <Route path="mt5" element={<MT5Integration />} />
+            <Route path="tradingview" element={<TradingViewPage />} />
+            <Route path="conflicts" element={<Conflicts />} />
+            <Route path="questions" element={<ResearchQuestions />} />
+            <Route path="hypotheses" element={<Hypotheses />} />
+            <Route path="search" element={<Search />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="memories" element={<TradeMemory />} />
+            <Route path="knowledge" element={<Knowledge />} />
+            <Route path="knowledge-graph" element={<KnowledgeGraph />} />
+            <Route path="knowledge-engine" element={<KnowledgeEngine />} />
+            <Route path="analyst" element={<Analyst />} />
+            <Route path="research" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Research /></ErrorBoundary>} />
+            <Route path="replay" element={<Replay />} />
+            <Route path="trader-intelligence" element={<TraderIntelligence />} />
+            <Route path="knowledge-center" element={<KnowledgeCenter />} />
+            <Route path="ai" element={<ErrorBoundary FallbackComponent={ErrorFallback}><AIDashboard /></ErrorBoundary>} />
+            <Route path="ai/coach" element={<AICoach />} />
+            <Route path="ai/profile" element={<AIProfile />} />
+            <Route path="ai/knowledge" element={<KnowledgeExplorer />} />
+            <Route path="obsidian/vaults" element={<VaultManager />} />
+            <Route path="obsidian/sync" element={<SyncDashboard />} />
+            <Route path="obsidian/notes" element={<NoteExplorer />} />
+            <Route path="obsidian/templates" element={<TemplateLibrary />} />
+            <Route path="obsidian/search" element={<ObsidianSearch />} />
+            <Route path="market-intel" element={<MarketDashboard />} />
+            <Route path="market-intel/calendar" element={<EconomicCalendar />} />
+            <Route path="market-intel/correlations" element={<CorrelationCenter />} />
+            <Route path="market-intel/liquidity" element={<LiquidityMonitor />} />
+            <Route path="market-intel/watchlist" element={<Watchlist />} />
+            <Route path="market-intel/sessions" element={<SessionAnalysis />} />
+            <Route path="market-intel/timeline" element={<MarketTimeline />} />
+            <Route path="market-intel/alerts" element={<AlertManager />} />
+            <Route path="copilot" element={<CopilotWorkspace />} />
+            <Route path="quant-research" element={<QuantResearchDashboard />} />
+            <Route path="quant-research/experiments" element={<QuantExperiments />} />
+            <Route path="quant-research/backtests" element={<QuantBacktestLab />} />
+            <Route path="quant-research/backtests/:backtestId" element={<QuantBacktestDetail />} />
+            <Route path="quant-research/simulations" element={<QuantSimulationLab />} />
+            <Route path="quant-research/walkforward" element={<QuantWalkForwardLab />} />
+            <Route path="quant-research/optimization" element={<QuantOptimizationLab />} />
+            <Route path="quant-research/edge-health" element={<QuantEdgeHealth />} />
+            <Route path="quant-research/notebooks" element={<QuantNotebooks />} />
+            <Route path="automation" element={<AutomationDashboard />} />
+            <Route path="automation/workflows" element={<WorkflowList />} />
+            <Route path="automation/workflows/:workflowId" element={<WorkflowBuilder />} />
+            <Route path="automation/rules" element={<RuleEngine />} />
+            <Route path="automation/jobs" element={<Scheduler />} />
+            <Route path="automation/notifications" element={<NotificationCenter />} />
+            <Route path="automation/templates" element={<AutomationTemplates />} />
+            <Route path="automation/connectors" element={<Connectors />} />
+            <Route path="automation/audit" element={<AuditLog />} />
+            <Route path="automation/reports" element={<AutomationReports />} />
+            <Route path="portfolio" element={<PortfolioDashboard />} />
+            <Route path="portfolio/accounts" element={<AccountList />} />
+            <Route path="portfolio/accounts/:accountId" element={<AccountDetail />} />
+            <Route path="portfolio/brokers" element={<BrokerProfiles />} />
+            <Route path="portfolio/analytics" element={<PortfolioAnalytics />} />
+            <Route path="portfolio/risk" element={<PortfolioRisk />} />
+            <Route path="portfolio/allocations" element={<AllocationManager />} />
+            <Route path="portfolio/transfers" element={<TransferManager />} />
+            <Route path="portfolio/goals" element={<Goals />} />
+            <Route path="portfolio/reports" element={<PortfolioReports />} />
+            <Route path="broker" element={<BrokerHub />} />
+            <Route path="broker/setup" element={<BrokerSetup />} />
+            <Route path="broker/:connectionId" element={<BrokerDetail />} />
+            <Route path="broker/analytics" element={<BrokerAnalyticsPage />} />
+            <Route path="workspace" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Workspace /></ErrorBoundary>} />
+            <Route path="ict" element={<ICTSmartEngine />} />
+            <Route path="brain" element={<BrainDashboard />} />
+            <Route path="intelligence" element={<IntelligenceDashboard />} />
+            <Route path="collections" element={<CollectionsPage />} />
+            <Route path="notes" element={<NotesPage />} />
+            <Route path="bookmarks" element={<BookmarksPage />} />
+            <Route path="graph" element={<GraphPage />} />
+            <Route path="timeline" element={<TimelinePage />} />
+          </Route>
         </Route>
       </Routes>
     </Suspense>

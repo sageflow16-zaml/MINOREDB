@@ -69,6 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setIsRecovery(false);
           clearAllTokens();
+          // Never let the previous user's cached data leak into the next
+          // session (or back into this one after a revoked session or
+          // cross-tab sign-out). All queries refetch on next mount.
+          queryClient.clear();
         } else if (event === 'PASSWORD_RECOVERY') {
           setIsRecovery(true);
           if (currentSession?.user) {
@@ -107,6 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setIsRecovery(false);
+    // Clear cached data immediately so a failed signOut (offline) cannot
+    // leave the previous user's data behind or on screen.
+    queryClient.clear();
     try {
       await supabase.auth.signOut();
     } catch {

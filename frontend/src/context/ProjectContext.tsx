@@ -42,3 +42,19 @@ export const useProject = () => {
   }
   return context;
 };
+
+/**
+ * Extract the project id from a location pathname, if the path is a
+ * project-scoped route (/projects/:projectId/...). Returns null for
+ * non-project paths (e.g. /projects list, /login) and for malformed
+ * paths where the param is missing or empty.
+ *
+ * Used to keep the project context in sync with the URL so that deep
+ * links, browser back/forward and project switching always land the
+ * sidebar/Topbar on the same project the URL points at.
+ */
+export function projectIdFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/projects\/([^/]+)/);
+  if (!match || !match[1]) return null;
+  return match[1];
+}

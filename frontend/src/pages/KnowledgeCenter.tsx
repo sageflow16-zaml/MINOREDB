@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -181,7 +181,7 @@ export default function KnowledgeCenter() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadLibrary = useCallback(() => {
     setLoading(true);
     setError(null);
     Promise.all([
@@ -192,6 +192,10 @@ export default function KnowledgeCenter() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    loadLibrary();
+  }, [loadLibrary]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -200,7 +204,7 @@ export default function KnowledgeCenter() {
 
   const filteredConcepts = selectedCategory ? concepts.filter(c => c.category_id === selectedCategory) : concepts;
 
-  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
+  if (error) return <ErrorState message={error} onRetry={loadLibrary} />;
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="p-4 md:p-6 space-y-6">

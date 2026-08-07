@@ -67,7 +67,7 @@ const EXPORT_FIELDS = ['pair', 'direction', 'result', 'pnl', 'rr', 'entry_price'
 
 export default function SettingsPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { setProjectId } = useProject();
   const deleteProjectMutation = useDeleteProject();
   const navigate = useNavigate();
@@ -301,10 +301,10 @@ export default function SettingsPage() {
                   <option>30 minutes</option><option>1 hour</option><option>4 hours</option><option>8 hours</option>
                 </select></SettingRow>
               <SettingRow label="Password" desc="Reset your account password">
-                <Button variant="outline" size="sm" onClick={() => window.location.assign('/forgot-password')}>Reset Password</Button>
+                <Button variant="outline" size="sm" onClick={() => navigate('/forgot-password')}>Reset Password</Button>
               </SettingRow>
               <SettingRow label="Sign Out" desc="End this session">
-                <Button variant="outline" size="sm" className="text-danger border-danger/30" onClick={() => window.location.assign('/login')}>Sign Out</Button>
+                <Button variant="outline" size="sm" className="text-danger border-danger/30" onClick={async () => { await logout(); navigate('/login'); }}>Sign Out</Button>
               </SettingRow>
             </SettingsSection>
           )}

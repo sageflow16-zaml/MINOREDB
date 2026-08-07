@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppRoutes } from './routes/AppRoutes';
 import { PageLoader } from './components/ui/Spinner';
@@ -17,9 +18,16 @@ function withSuspense(node: React.ReactNode) {
   return <Suspense fallback={<PageLoader />}>{node}</Suspense>;
 }
 
-export const App = () => {
+/**
+ * App-level error boundary keyed on the current pathname. When a lazy
+ * chunk fails to load (flaky network, stale chunk after a deploy), the
+ * boundary renders its fallback; navigating anywhere (or pressing
+ * "Try again") re-mounts it and retries the import — no reload needed.
+ */
+const AppShell = () => {
+  const location = useLocation();
   return (
-    <ErrorBoundary>
+    <ErrorBoundary key={location.pathname}>
       <OfflineBanner />
       <Routes>
         <Route path="/login" element={withSuspense(<Login />)} />
@@ -36,4 +44,8 @@ export const App = () => {
       </Routes>
     </ErrorBoundary>
   );
+};
+
+export const App = () => {
+  return <AppShell />;
 };

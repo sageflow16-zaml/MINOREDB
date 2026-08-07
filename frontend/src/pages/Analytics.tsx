@@ -178,7 +178,7 @@ export default function AnalyticsPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Brain className="h-6 w-6 text-danger" /></div>
           <p className="text-sm font-medium text-foreground">Error loading analytics</p>
           <p className="text-xs text-muted">There was a problem fetching analytics data.</p>
-          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Try Again</Button>
+          <Button variant="outline" size="sm" onClick={() => stats.refetch()}>Try Again</Button>
         </div>
       </div>
     );

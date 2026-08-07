@@ -1,12 +1,12 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Sidebar } from '../components/Sidebar';
 import { Topbar } from '../components/Topbar';
 import { CommandPalette } from '../components/ui/CommandPalette';
 import { Toaster } from '../components/ui/toast';
 import { ErrorFallback } from '../components/ui/ErrorFallback';
-import { useProject } from '../context/ProjectContext';
+import { useProject, projectIdFromPath } from '../context/ProjectContext';
 import {
   LayoutDashboard, BarChart3, TrendingUp, Notebook, Plus, Sparkles,
   Search, CandlestickChart, LineChart, Target, Network,
@@ -93,8 +93,33 @@ const allPageRoutes: { section: string; items: { label: string; path: string; ic
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const { projectId } = useProject();
+  const { projectId, setProjectId } = useProject();
   const navigate = useNavigate();
+  const location = useLocation();
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  // Keep the project context in sync with the URL. Deep links,
+  // browser back/forward and direct project switches update the URL
+  // without going through setProjectId; without this, the sidebar,
+  // Topbar and command palette would keep pointing at the previous
+  // project after a browser-back/deep-link navigation.
+  useEffect(() => {
+    const urlProjectId = projectIdFromPath(location.pathname);
+    if (urlProjectId && urlProjectId !== projectId) {
+      setProjectId(urlProjectId);
+    }
+  }, [location.pathname, projectId, setProjectId]);
+
+  // Reset the content scroll position on route change (route
+  // transitions must not inherit the previous page's scroll offset).
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [location.pathname]);
+
+  // If a page crashes, the boundary below is reset automatically on the
+  // next navigation so one broken page can never trap the whole app
+  // until a manual "Try again" or reload.
+  const routeKey = location.pathname;
 
   const go = useCallback(
     (path: string) => {
@@ -248,8 +273,9 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
           onCommandPalette={() => setPaletteOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
+        <main ref={mainRef} className="flex-1 overflow-y-auto scrollbar-thin">
           <ErrorBoundary
+            resetKeys={[routeKey]}
             FallbackComponent={({ error, resetErrorBoundary }) => (
               <ErrorFallback error={error} resetErrorBoundary={resetErrorBoundary} />
             )}
