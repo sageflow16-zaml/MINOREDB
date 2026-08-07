@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input';
 import { KpiCard } from '../components/ui/KpiCard';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { ChartCard, LineChartCard } from '../components/ui/chart';
+import { ChartCard, LineChartCard } from '../components/charts/chart';
 import { useOptimizations, useRunOptimization } from '../hooks/useQuantResearch';
 import { Play, Trash2, Search, Grid3X3, Activity, Target } from 'lucide-react';
 

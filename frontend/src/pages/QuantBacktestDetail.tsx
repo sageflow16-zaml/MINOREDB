@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { KpiCard } from '../components/ui/KpiCard';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { ChartCard, AreaChartCard, BarChartCard, PieChartCard } from '../components/ui/chart';
+import { ChartCard, AreaChartCard, BarChartCard, PieChartCard } from '../components/charts/chart';
 import { cn } from '../lib/utils';
 import { useBacktest, useBacktestTrades, useEquityCurve, useBacktestMetrics } from '../hooks/useQuantResearch';
 import {

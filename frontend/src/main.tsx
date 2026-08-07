@@ -12,7 +12,7 @@ import { ProjectProvider } from './context/ProjectContext';
 import { App } from './App';
 import './index.css';
 
-initSentry();
+void initSentry();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

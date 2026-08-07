@@ -1,16 +1,14 @@
-import * as Sentry from '@sentry/react';
+export const isSentryEnabled = Boolean(import.meta.env.VITE_SENTRY_DSN);
 
-export function initSentry() {
-  if (import.meta.env.VITE_SENTRY_DSN) {
-    Sentry.init({
-      dsn: import.meta.env.VITE_SENTRY_DSN,
-      environment: import.meta.env.MODE,
-      tracesSampleRate: 0.2,
-      integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
-      replaysSessionSampleRate: 0.1,
-      replaysOnErrorSampleRate: 1.0,
-    });
-  }
+export async function initSentry() {
+  if (!isSentryEnabled) return;
+  const Sentry = await import('@sentry/react');
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: 0.2,
+    integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  });
 }
-
-export default Sentry;
