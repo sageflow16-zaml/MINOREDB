@@ -27,10 +27,10 @@ Project Minore is a production-grade platform for retail traders who want to ana
 │  │   PostgreSQL 16  │  │         Edge Functions (Deno)        │  │
 │  │  + Row Level     │  │  ┌──────┐ ┌──────────┐ ┌─────────┐ │  │
 │  │    Security      │  │  │  ai  │ │ broker-  │ │ obsidian│ │  │
-│  │  + 29 Migrations │  │  │      │ │ sync     │ │ -sync   │ │  │
+│  │  + 59 Migrations │  │  │      │ │ sync     │ │ -sync   │ │  │
 │  │  + SQL RPCs      │  │  ├──────┤ ├──────────┤ ├─────────┤ │  │
 │  │                  │  │  │replay│ │automation│ │collector│ │  │
-│  │  51 API modules  │  │  │-data │ │-connector│ │         │ │  │
+│  │  50 API modules │  │  │-data │ │-connector│ │         │ │  │
 │  │  (supabase-js)   │  │  ├──────┤ ├──────────┤ ├─────────┤ │  │
 │  │                  │  │  │ mt5  │ │tv-webhook│ │ context │ │  │
 │  │  Auth (email/    │  │  └──────┘ └──────────┘ └─────────┘ │  │
@@ -89,7 +89,7 @@ Project Minore is a production-grade platform for retail traders who want to ana
 | API Layer | supabase-js (client-side) |
 | Edge Functions | Deno / TypeScript |
 | Storage | Supabase Storage (S3-compatible) |
-| Migrations | 29 SQL migrations |
+| Migrations | 59 SQL migrations |
 
 ### Infrastructure
 | Category | Technology |
@@ -145,7 +145,7 @@ Open http://localhost:5173 in your browser.
 project-minore/
 ├── frontend/                 # React + Vite SPA
 │   ├── src/
-│   │   ├── api/              # 51 API service modules (supabase-js)
+│   │   ├── api/              # 50 API service modules (supabase-js)
 │   │   ├── components/       # Reusable UI components
 │   │   ├── hooks/            # Custom React hooks (TanStack Query)
 │   │   ├── pages/            # 100+ route page components
@@ -158,7 +158,7 @@ project-minore/
 │   ├── public/               # Static assets
 │   └── tests/                # Vitest test suite
 ├── supabase/                 # Supabase configuration
-│   ├── migrations/           # 29 database migrations
+│   ├── migrations/           # 59 database migrations
 │   ├── functions/            # 9 Edge Functions (Deno)
 │   │   ├── ai/               # AI analysis engine
 │   │   ├── broker-sync/      # Broker integration sync
