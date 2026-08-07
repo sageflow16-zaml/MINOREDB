@@ -690,6 +690,15 @@ serve(async (req) => {
       case 'run_jobs': {
         if (!isCron) return errorResponse('Forbidden', 403);
         const result = await runJobs(supabase);
+        await supabase.from('cron_heartbeat').upsert(
+          {
+            name: 'automation-run-jobs',
+            last_run_at: new Date().toISOString(),
+            last_status: 'ok',
+            last_error: null,
+          },
+          { onConflict: 'name' },
+        );
         reqLogger.info('jobs ran', { processed: result.processed, duration_ms: Date.now() - startedAt });
         return successResponse(result);
       }
