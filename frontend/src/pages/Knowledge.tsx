@@ -18,7 +18,7 @@ function InsightBadge({ label, value, good }: { label: string; value: string; go
   return (
     <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
       <span className="text-xs text-secondary">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger')}>{value}</span>
+      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger-text')}>{value}</span>
     </div>
   );
 }
@@ -35,7 +35,7 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-start gap-3">
             <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', isHighConfidence ? 'bg-success/10' : 'bg-primary/10')}>
-              <Lightbulb className={cn('h-5 w-5', isHighConfidence ? 'text-success' : 'text-primary')} />
+              <Lightbulb className={cn('h-5 w-5', isHighConfidence ? 'text-success' : 'text-primary-text')} />
             </div>
             <div><h3 className="text-sm font-semibold text-foreground">{rule.title}</h3>{rule.category && <p className="text-xs text-muted mt-0.5">{rule.category}</p>}</div>
           </div>
@@ -44,7 +44,7 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
         <div className="grid grid-cols-4 gap-2 mb-4">
           <div className="rounded-lg bg-background p-2.5 text-center"><p className="text-lg font-bold font-mono text-foreground">{rule.occurrences}</p><p className="text-3xs text-muted">Occurrences</p></div>
           <div className="rounded-lg bg-background p-2.5 text-center"><p className="text-lg font-bold font-mono text-success">{wr}%</p><p className="text-3xs text-muted">Win Rate</p></div>
-          <div className="rounded-lg bg-background p-2.5 text-center"><p className="text-lg font-bold font-mono text-primary">{rule.avg_rr != null ? rule.avg_rr.toFixed(2) : '—'}</p><p className="text-3xs text-muted">Avg R:R</p></div>
+          <div className="rounded-lg bg-background p-2.5 text-center"><p className="text-lg font-bold font-mono text-primary-text">{rule.avg_rr != null ? rule.avg_rr.toFixed(2) : '—'}</p><p className="text-3xs text-muted">Avg R:R</p></div>
           <div className="rounded-lg bg-background p-2.5 text-center"><p className="text-lg font-bold font-mono text-warning">{rule.expectancy != null ? rule.expectancy.toFixed(2) : '—'}</p><p className="text-3xs text-muted">Expectancy</p></div>
         </div>
         <button onClick={() => setExpanded(!expanded)} className="flex w-full items-center justify-between rounded-lg bg-background px-4 py-2 text-xs font-medium text-muted hover:text-secondary transition-colors">
@@ -64,8 +64,8 @@ function RuleCard({ rule }: { rule: KnowledgeRule }) {
                 <p className="text-lg font-bold font-mono text-success">{rule.wins}</p>
               </div>
               <div className="rounded-lg bg-danger/10 p-3">
-                <div className="flex items-center gap-1 mb-1"><TrendingDown className="h-3 w-3 text-danger" /><span className="text-xs font-medium text-danger">Losses</span></div>
-                <p className="text-lg font-bold font-mono text-danger">{rule.losses}</p>
+                <div className="flex items-center gap-1 mb-1"><TrendingDown className="h-3 w-3 text-danger-text" /><span className="text-xs font-medium text-danger-text">Losses</span></div>
+                <p className="text-lg font-bold font-mono text-danger-text">{rule.losses}</p>
               </div>
             </div>
             {rule.signature && (
@@ -112,7 +112,7 @@ export default function KnowledgePage() {
   }
 
   if (error) {
-    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Network className="h-6 w-6 text-danger" /></div><p className="text-sm font-medium text-foreground">Error loading knowledge</p><Button variant="outline" size="sm" onClick={() => refetch()}>Try Again</Button></div></div>);
+    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Network className="h-6 w-6 text-danger-text" /></div><p className="text-sm font-medium text-foreground">Error loading knowledge</p><Button variant="outline" size="sm" onClick={() => refetch()}>Try Again</Button></div></div>);
   }
 
   if (!rules || rules.length === 0) {
@@ -133,7 +133,7 @@ export default function KnowledgePage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Network className="h-5 w-5 text-primary" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Network className="h-5 w-5 text-primary-text" /></div>
           <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Knowledge</h1><p className="text-sm text-muted mt-0.5">{rules.length} rules in your knowledge base</p></div>
         </div>
       </motion.div>
@@ -146,9 +146,9 @@ export default function KnowledgePage() {
           <div>
             <h4 className="text-2xs font-medium text-muted mb-2 flex items-center gap-1"><Tags className="h-3 w-3" />Categories</h4>
             <div className="space-y-1">
-              <button onClick={() => setCategoryFilter(null)} className={cn('w-full text-left rounded-lg px-3 py-1.5 text-xs transition-colors', !categoryFilter ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>All ({rules.length})</button>
+              <button onClick={() => setCategoryFilter(null)} className={cn('w-full text-left rounded-lg px-3 py-1.5 text-xs transition-colors', !categoryFilter ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>All ({rules.length})</button>
               {categories.map((cat: any) => (
-                <button key={cat} onClick={() => setCategoryFilter(cat)} className={cn('w-full text-left rounded-lg px-3 py-1.5 text-xs transition-colors', categoryFilter === cat ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{cat} ({rules.filter((r: KnowledgeRule) => r.category === cat).length})</button>
+                <button key={cat} onClick={() => setCategoryFilter(cat)} className={cn('w-full text-left rounded-lg px-3 py-1.5 text-xs transition-colors', categoryFilter === cat ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{cat} ({rules.filter((r: KnowledgeRule) => r.category === cat).length})</button>
               ))}
             </div>
           </div>

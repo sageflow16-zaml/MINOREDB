@@ -119,7 +119,7 @@ export default function QuantEdgeHealth() {
                 <ul className="space-y-1">
                   {current.recommendations.map((r, i) => (
                     <li key={i} className="text-xs flex items-start gap-2">
-                      <ArrowUp className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                      <ArrowUp className="w-3 h-3 text-primary-text mt-0.5 shrink-0" />
                       {r}
                     </li>
                   ))}

@@ -36,13 +36,13 @@ const tooltipStyle = chartTooltipStyle.contentStyle;
 const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--info))', 'hsl(var(--chart-5))'];
 
 function StatCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
-  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger', warning: 'text-warning' };
+  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger-text', warning: 'text-warning' };
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-2xs font-medium text-muted tracking-wide">{label}</p>
         <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accent === 'success' ? 'bg-success/10' : accent === 'danger' ? 'bg-danger/10' : 'bg-primary/10')}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger' : 'text-primary')} />
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger-text' : 'text-primary-text')} />
         </div>
       </div>
       <p className={cn('text-lg font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
@@ -55,7 +55,7 @@ function InsightBadge({ label, value, good }: { label: string; value: string; go
   return (
     <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
       <span className="text-xs text-secondary">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger')}>{value}</span>
+      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger-text')}>{value}</span>
     </div>
   );
 }
@@ -153,7 +153,7 @@ export default function StatisticsPage() {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><BarChart3 className="h-6 w-6 text-danger" /></div>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><BarChart3 className="h-6 w-6 text-danger-text" /></div>
           <p className="text-sm font-medium text-foreground">Error loading statistics</p>
           <p className="text-xs text-muted">There was a problem fetching statistics.</p>
           <Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button>
@@ -189,7 +189,7 @@ export default function StatisticsPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
-            {['1M', '3M', '6M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>))}
+            {['1M', '3M', '6M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{p}</button>))}
           </div>
           <Button variant="ghost" size="icon" aria-label="Export"><Download className="h-4 w-4" /></Button>
         </div>
@@ -214,7 +214,7 @@ export default function StatisticsPage() {
               <h3 className="text-sm font-medium text-foreground">Equity Curve</h3>
             </div>
             <div className="flex items-center gap-1">
-              {['1W', '1M', '3M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>))}
+              {['1W', '1M', '3M', 'All'].map((p) => (<button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{p}</button>))}
             </div>
           </div>
           <div className="h-64">
@@ -309,7 +309,7 @@ export default function StatisticsPage() {
           ) : (<div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No session data</p></div>)}
           {sessionChartData.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {sessionChartData.map((s: any) => (<div key={s.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1"><span className="text-3xs text-secondary">{s.label}</span><span className={cn('text-3xs font-mono font-medium', s.winRate >= 50 ? 'text-success' : 'text-danger')}>{s.winRate}%</span></div>))}
+              {sessionChartData.map((s: any) => (<div key={s.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1"><span className="text-3xs text-secondary">{s.label}</span><span className={cn('text-3xs font-mono font-medium', s.winRate >= 50 ? 'text-success' : 'text-danger-text')}>{s.winRate}%</span></div>))}
             </div>
           )}
         </motion.div>
@@ -325,7 +325,7 @@ export default function StatisticsPage() {
           ) : (<div className="flex h-48 items-center justify-center"><p className="text-xs text-muted">No weekday data</p></div>)}
           {weekdayChartData.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {weekdayChartData.map((d: any) => (<div key={d.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1"><span className="text-3xs text-secondary">{d.label}</span><span className={cn('text-3xs font-mono font-medium', d.winRate >= 50 ? 'text-success' : 'text-danger')}>{d.winRate}%</span></div>))}
+              {weekdayChartData.map((d: any) => (<div key={d.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1"><span className="text-3xs text-secondary">{d.label}</span><span className={cn('text-3xs font-mono font-medium', d.winRate >= 50 ? 'text-success' : 'text-danger-text')}>{d.winRate}%</span></div>))}
             </div>
           )}
         </motion.div>
@@ -367,7 +367,7 @@ export default function StatisticsPage() {
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-foreground font-mono">{rolling10.data.trades}</p><p className="text-3xs text-muted mt-0.5">Trades</p></div>
               <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-success font-mono">{rolling10.data.win_rate}%</p><p className="text-3xs text-muted mt-0.5">Win Rate</p></div>
-              <div className="rounded-lg bg-background p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling10.data.pnl >= 0 ? 'text-success' : 'text-danger')}>{rolling10.data.pnl >= 0 ? '+' : ''}{rolling10.data.pnl.toFixed(0)}</p><p className="text-3xs text-muted mt-0.5">P&L</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling10.data.pnl >= 0 ? 'text-success' : 'text-danger-text')}>{rolling10.data.pnl >= 0 ? '+' : ''}{rolling10.data.pnl.toFixed(0)}</p><p className="text-3xs text-muted mt-0.5">P&L</p></div>
             </div>
           ) : (<p className="py-6 text-center text-xs text-muted">Need {rolling10.data?.trades_needed ?? 10} more trades</p>)}
         </motion.div>
@@ -381,7 +381,7 @@ export default function StatisticsPage() {
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-foreground font-mono">{rolling50.data.trades}</p><p className="text-3xs text-muted mt-0.5">Trades</p></div>
               <div className="rounded-lg bg-background p-3 text-center"><p className="text-lg font-bold text-success font-mono">{rolling50.data.win_rate}%</p><p className="text-3xs text-muted mt-0.5">Win Rate</p></div>
-              <div className="rounded-lg bg-background p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling50.data.pnl >= 0 ? 'text-success' : 'text-danger')}>{rolling50.data.pnl >= 0 ? '+' : ''}{rolling50.data.pnl.toFixed(0)}</p><p className="text-3xs text-muted mt-0.5">P&L</p></div>
+              <div className="rounded-lg bg-background p-3 text-center"><p className={cn('text-lg font-bold font-mono', rolling50.data.pnl >= 0 ? 'text-success' : 'text-danger-text')}>{rolling50.data.pnl >= 0 ? '+' : ''}{rolling50.data.pnl.toFixed(0)}</p><p className="text-3xs text-muted mt-0.5">P&L</p></div>
             </div>
           ) : (<p className="py-6 text-center text-xs text-muted">Need {rolling50.data?.trades_needed ?? 50} more trades</p>)}
         </motion.div>
@@ -402,8 +402,8 @@ export default function StatisticsPage() {
             data={trades.data.slice(0, 15)}
             columns={[
               { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
-              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger')}>{row.direction || '-'}</span>), width: '40px' },
-              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>{row.pnl >= 0 ? '+' : ''}${row.pnl.toFixed(2)}</span>) : '-', width: '100px' },
+              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger-text')}>{row.direction || '-'}</span>), width: '40px' },
+              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger-text')}>{row.pnl >= 0 ? '+' : ''}${row.pnl.toFixed(2)}</span>) : '-', width: '100px' },
               { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr?.toFixed(2) ?? '-', width: '60px' },
               { id: 'session', header: 'Session', accessor: (row: any) => row.session || '-', width: '80px', hideOnMobile: true },
               { id: 'result', header: 'Result', accessor: (row: any) => row.result ? <Badge variant={row.result === 'WIN' ? 'success' : row.result === 'LOSS' ? 'destructive' : 'warning'} size="sm">{row.result}</Badge> : '-', width: '70px' },

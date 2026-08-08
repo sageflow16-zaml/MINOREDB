@@ -29,8 +29,8 @@ const COLOR_MAP: Record<string, string> = {
   milestone: 'text-chart-4 bg-chart-4/10',
   recommendation: 'text-chart-3 bg-chart-3/10',
   observation: 'text-warning bg-warning/10',
-  task: 'text-primary bg-primary/10',
-  alert: 'text-danger bg-danger/10',
+  task: 'text-primary-text bg-primary/10',
+  alert: 'text-danger-text bg-danger/10',
   default: 'text-muted-foreground bg-muted/20',
 };
 

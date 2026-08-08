@@ -30,7 +30,7 @@ export function TaskCard({ step, title, status, description, result, className }
     <Card className={cn('overflow-hidden', className)}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary-text">
             {step}
           </div>
           <div className="flex-1 min-w-0">

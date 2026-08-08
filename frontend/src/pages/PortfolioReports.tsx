@@ -108,7 +108,7 @@ export default function PortfolioReportsPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
+                <Sparkles className="h-4 w-4 text-primary-text" />
                 <CardTitle className="text-sm font-medium">AI-Generated Report</CardTitle>
               </div>
             </CardHeader>

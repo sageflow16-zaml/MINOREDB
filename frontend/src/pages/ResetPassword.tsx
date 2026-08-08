@@ -70,7 +70,7 @@ export default function ResetPassword() {
     return (
       <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary-text" />
           <p className="text-sm text-muted-foreground">Verifying reset link...</p>
         </div>
       </div>

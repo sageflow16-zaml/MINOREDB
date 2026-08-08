@@ -127,7 +127,7 @@ export default function TraderIntelligencePage() {
   if (error && !dashboard) return (
     <div className="flex h-[80vh] items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <AlertTriangle className="h-8 w-8 text-danger" />
+        <AlertTriangle className="h-8 w-8 text-danger-text" />
         <p className="text-sm text-muted-foreground">{error}</p>
         <Button variant="outline" size="sm" onClick={fetchData}>Retry</Button>
       </div>
@@ -140,7 +140,7 @@ export default function TraderIntelligencePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-            <BrainCircuit className="h-5 w-5 text-primary" />
+            <BrainCircuit className="h-5 w-5 text-primary-text" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-foreground">Intelligence Hub</h1>
@@ -208,7 +208,7 @@ export default function TraderIntelligencePage() {
                   'flex items-start gap-2 rounded-lg p-2',
                   obs.priority === 'high' ? 'bg-danger/5 border border-danger/10' : 'bg-background/40'
                 )}>
-                  {obs.type === 'warning' ? <AlertTriangle className="h-3.5 w-3.5 text-danger mt-0.5 shrink-0" /> :
+                  {obs.type === 'warning' ? <AlertTriangle className="h-3.5 w-3.5 text-danger-text mt-0.5 shrink-0" /> :
                    obs.type === 'reminder' ? <BookOpen className="h-3.5 w-3.5 text-warning mt-0.5 shrink-0" /> :
                    <Lightbulb className="h-3.5 w-3.5 text-chart-4 mt-0.5 shrink-0" />}
                   <div className="flex-1 min-w-0">
@@ -290,7 +290,7 @@ function OverviewSection({ scores, dna, concepts, learningPath, patterns, rules,
         <Card className="lg:col-span-2">
           <CardHeader className="py-3 px-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-medium flex items-center gap-2"><Target className="h-4 w-4 text-primary" />Trading Score</CardTitle>
+              <CardTitle className="text-xs font-medium flex items-center gap-2"><Target className="h-4 w-4 text-primary-text" />Trading Score</CardTitle>
               {scores && (
                 <Button size="xs" variant="ghost" onClick={() => openExplain('score', 'overall', 'Trading Score', { score: scores.overall, categories: scores.categories, ...scores })}>
                   <Info className="h-3 w-3 mr-1" /> Explain
@@ -331,7 +331,7 @@ function OverviewSection({ scores, dna, concepts, learningPath, patterns, rules,
         <Card>
           <CardHeader className="py-3 px-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xs font-medium flex items-center gap-2"><Brain className="h-4 w-4 text-primary" />Trader DNA</CardTitle>
+              <CardTitle className="text-xs font-medium flex items-center gap-2"><Brain className="h-4 w-4 text-primary-text" />Trader DNA</CardTitle>
               {dna && (
                 <Button size="xs" variant="ghost" onClick={() => openExplain('dna', 'trader-dna', 'Trader DNA', { ...dna, patterns, debriefs, profile, rules, trades })}>
                   <Info className="h-3 w-3 mr-1" /> Explain
@@ -371,7 +371,7 @@ function OverviewSection({ scores, dna, concepts, learningPath, patterns, rules,
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Today's Goal */}
         <Card>
-          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" />Today's Goal</CardTitle></CardHeader>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary-text" />Today's Goal</CardTitle></CardHeader>
           <CardContent className="px-4 pb-4">
             {learningPath?.todayGoal ? (
               <div className="space-y-2">
@@ -406,7 +406,7 @@ function OverviewSection({ scores, dna, concepts, learningPath, patterns, rules,
 
         {/* Concept Mastery (top) */}
         <Card>
-          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><Brain className="h-4 w-4 text-primary" />Concept Mastery</CardTitle></CardHeader>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><Brain className="h-4 w-4 text-primary-text" />Concept Mastery</CardTitle></CardHeader>
           <CardContent className="px-4 pb-4">
             {concepts.length > 0 ? (
               <div className="space-y-1.5">
@@ -417,7 +417,7 @@ function OverviewSection({ scores, dna, concepts, learningPath, patterns, rules,
                         <span className="text-3xs text-foreground truncate">{c.name}</span>
                         <span className={cn(
                           'text-3xs font-medium shrink-0 ml-1',
-                          c.understanding >= 70 ? 'text-success' : c.understanding >= 40 ? 'text-warning' : 'text-danger'
+                          c.understanding >= 70 ? 'text-success' : c.understanding >= 40 ? 'text-warning' : 'text-danger-text'
                         )}>{c.understanding}%</span>
                       </div>
                       <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
@@ -438,7 +438,7 @@ function OverviewSection({ scores, dna, concepts, learningPath, patterns, rules,
 
         {/* Recent Activity */}
         <Card>
-          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Activity</CardTitle></CardHeader>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-xs font-medium flex items-center gap-2"><Activity className="h-4 w-4 text-primary-text" />Activity</CardTitle></CardHeader>
           <CardContent className="px-4 pb-4 space-y-1.5">
             <div className="flex justify-between py-1"><span className="text-3xs text-muted-foreground">Debriefs</span><span className="text-xs text-foreground font-medium">{debriefs?.length || 0}</span></div>
             <div className="flex justify-between py-1"><span className="text-3xs text-muted-foreground">Patterns</span><span className="text-xs text-foreground font-medium">{patterns?.length || 0}</span></div>
@@ -530,7 +530,7 @@ function ScoreSection({ scores, debriefs, patterns, rules, trades, openExplain }
                   <ConfidenceBadge score={c.score} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={cn('text-sm font-bold', c.score >= 70 ? 'text-success' : c.score >= 40 ? 'text-warning' : 'text-danger')}>{c.score}</span>
+                  <span className={cn('text-sm font-bold', c.score >= 70 ? 'text-success' : c.score >= 40 ? 'text-warning' : 'text-danger-text')}>{c.score}</span>
                   <Button size="xs" variant="ghost" onClick={() => openExplain('score', c.key, c.label, { score: c.score, factors: c.factors, categories: scores.categories, debriefs, patterns, rules, trades })}>
                     <Info className="h-3 w-3" /> Explain
                   </Button>
@@ -542,7 +542,7 @@ function ScoreSection({ scores, debriefs, patterns, rules, trades, openExplain }
               {c.factors?.map((f: any, i: number) => (
                 <div key={i} className="flex items-center justify-between text-3xs text-muted-foreground py-0.5">
                   <span>{f.label}</span>
-                  <span className={f.impact === 'positive' ? 'text-success' : f.impact === 'negative' ? 'text-danger' : ''}>{f.value}/{f.max}</span>
+                  <span className={f.impact === 'positive' ? 'text-success' : f.impact === 'negative' ? 'text-danger-text' : ''}>{f.value}/{f.max}</span>
                 </div>
               ))}
               <div className="mt-2 pt-2 border-t border-border/50">
@@ -610,7 +610,7 @@ function DNASection({ dna, profile, debriefs, patterns, rules, trades, openExpla
               )}>
                 <div className="flex items-start gap-1.5 mb-1">
                   {insight.type === 'strength' ? <CheckCircle className="h-3.5 w-3.5 text-success mt-0.5" /> :
-                   insight.type === 'weakness' ? <AlertTriangle className="h-3.5 w-3.5 text-danger mt-0.5" /> :
+                   insight.type === 'weakness' ? <AlertTriangle className="h-3.5 w-3.5 text-danger-text mt-0.5" /> :
                    <Lightbulb className="h-3.5 w-3.5 text-chart-4 mt-0.5" />}
                   <div className="flex-1">
                     <div className="flex items-center gap-2">

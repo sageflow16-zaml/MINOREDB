@@ -168,11 +168,11 @@ export default function PlaybookDetailPage() {
                   {isEditing ? (
                     <div className="space-y-2">
                       <Input defaultValue={step.title} onChange={(e) => updateStep.mutate({ id: pb.id, stepId: step.id, updates: { title: e.target.value } })} className="text-sm font-medium" />
-                      <button onClick={() => setEditingStepId(null)} className="text-xs text-primary"><Check className="h-3 w-3 inline mr-1" />Done</button>
+                      <button onClick={() => setEditingStepId(null)} className="text-xs text-primary-text"><Check className="h-3 w-3 inline mr-1" />Done</button>
                     </div>
                   ) : (
                     <div className="flex items-start gap-3">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary-text text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <StepIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -235,7 +235,7 @@ export default function PlaybookDetailPage() {
         <Section title="Tags" delay={0.3}>
           <div className="flex flex-wrap gap-1.5">
             {pb.tags.map((tag) => (
-              <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">{tag}</span>
+              <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary-text">{tag}</span>
             ))}
           </div>
         </Section>

@@ -40,7 +40,7 @@ export default function ForgotPassword() {
             <p className="text-sm text-muted-foreground mb-6">
               We sent a password reset link to <strong>{email}</strong>
             </p>
-            <Link to="/login" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+            <Link to="/login" className="text-sm font-medium text-primary-text hover:text-primary-text/80 transition-colors">
               Back to sign in
             </Link>
           </div>
@@ -95,7 +95,7 @@ export default function ForgotPassword() {
           <div className="mt-6 text-center">
             <p className="text-xs text-muted-foreground">
               Remember your password?{' '}
-              <Link to="/login" className="font-medium text-primary hover:text-primary/80 transition-colors">
+              <Link to="/login" className="font-medium text-primary-text hover:text-primary-text/80 transition-colors">
                 Sign in
               </Link>
             </p>

@@ -69,7 +69,7 @@ export function ChartToolbar({
                   onClick={() => { onSymbolChange(s); setSearchOpen(false); setSearch(''); }}
                   className={cn(
                     'w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors',
-                    s === symbol && 'bg-muted text-primary font-medium'
+                    s === symbol && 'bg-muted text-primary-text font-medium'
                   )}
                 >
                   {s}
@@ -88,7 +88,7 @@ export function ChartToolbar({
             onClick={() => onTimeframeChange(tf)}
             className={cn(
               'px-1.5 py-0.5 text-3xs font-medium rounded hover:bg-muted transition-colors',
-              timeframe === tf && 'bg-muted text-primary'
+              timeframe === tf && 'bg-muted text-primary-text'
             )}
           >
             {tf}
@@ -100,14 +100,14 @@ export function ChartToolbar({
       <div className="flex items-center gap-0.5 ml-auto">
         <button
           onClick={onToggleICT}
-          className={cn('flex items-center gap-1 px-2 py-0.5 text-3xs rounded hover:bg-muted transition-colors', showICT && 'bg-muted text-primary')}
+          className={cn('flex items-center gap-1 px-2 py-0.5 text-3xs rounded hover:bg-muted transition-colors', showICT && 'bg-muted text-primary-text')}
         >
           <Layers className="w-3 h-3" />
           ICT
         </button>
         <button
           onClick={onToggleSessions}
-          className={cn('flex items-center gap-1 px-2 py-0.5 text-3xs rounded hover:bg-muted transition-colors', showSessions && 'bg-muted text-primary')}
+          className={cn('flex items-center gap-1 px-2 py-0.5 text-3xs rounded hover:bg-muted transition-colors', showSessions && 'bg-muted text-primary-text')}
         >
           <Clock className="w-3 h-3" />
           Sessions

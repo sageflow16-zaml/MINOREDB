@@ -36,12 +36,12 @@ export function HistoricalTrend({ metric, period = '30d', label, className, valu
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center gap-2">
         {displayTrend === 'improving' ? <TrendingUp className="h-3.5 w-3.5 text-success" /> :
-         displayTrend === 'declining' ? <TrendingDown className="h-3.5 w-3.5 text-danger" /> :
+         displayTrend === 'declining' ? <TrendingDown className="h-3.5 w-3.5 text-danger-text" /> :
          <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
         <span className={cn(
           'text-xs font-medium',
           displayTrend === 'improving' ? 'text-success' :
-          displayTrend === 'declining' ? 'text-danger' :
+          displayTrend === 'declining' ? 'text-danger-text' :
           'text-muted-foreground'
         )}>
           {displayTrend === 'improving' ? 'Improving' :
@@ -49,7 +49,7 @@ export function HistoricalTrend({ metric, period = '30d', label, className, valu
            'Stable'}
         </span>
         {diff !== 0 && (
-          <span className={cn('text-3xs', diff > 0 ? 'text-success' : 'text-danger')}>
+          <span className={cn('text-3xs', diff > 0 ? 'text-success' : 'text-danger-text')}>
             {diff > 0 ? '+' : ''}{diff}pts
           </span>
         )}

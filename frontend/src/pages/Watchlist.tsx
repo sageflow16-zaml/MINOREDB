@@ -75,7 +75,7 @@ export default function WatchlistPage() {
                 onClick={() => setActiveWl(wl.id)}
                 className={cn(
                   'w-full flex items-center justify-between rounded-lg border p-3 text-left text-sm transition-colors',
-                  activeWl === wl.id ? 'border-primary bg-primary/5 text-primary' : 'border-border/50 hover:border-border text-foreground',
+                  activeWl === wl.id ? 'border-primary bg-primary/5 text-primary-text' : 'border-border/50 hover:border-border text-foreground',
                 )}
               >
                 <span className="font-medium truncate">{wl.name}</span>

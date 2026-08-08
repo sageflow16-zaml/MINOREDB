@@ -60,7 +60,7 @@ export default function Register() {
             <p className="text-sm text-muted-foreground mb-6">
               We sent a confirmation link to <strong>{email}</strong>. Please click it to activate your account.
             </p>
-            <Link to="/login" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+            <Link to="/login" className="text-sm font-medium text-primary-text hover:text-primary-text/80 transition-colors">
               Go to sign in
             </Link>
           </div>
@@ -171,7 +171,7 @@ export default function Register() {
           <div className="mt-6 text-center">
             <p className="text-xs text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-primary hover:text-primary/80 transition-colors">
+              <Link to="/login" className="font-medium text-primary-text hover:text-primary-text/80 transition-colors">
                 Sign in
               </Link>
             </p>

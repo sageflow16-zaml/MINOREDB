@@ -64,7 +64,7 @@ export default function NoteExplorerPage() {
             <motion.div key={n.id} variants={item}>
               <Card className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => { setSelectedNote(n.id); setView('detail'); }}>
                 <CardContent className="flex items-start gap-3 p-4">
-                  <FileText className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <FileText className="h-5 w-5 text-primary-text shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-medium truncate">{n.title || n.file_name}</h4>
@@ -146,7 +146,7 @@ function NoteDetail({ note, backlinks, onBack }: { note: ObsidianNote; backlinks
               <CardContent className="p-4">
                 <p className="text-xs font-semibold mb-2 flex items-center gap-1"><Link2 className="h-3.5 w-3.5" />Wiki Links</p>
                 <ul className="space-y-1">{note.wiki_links.map((wl, i) => (
-                  <li key={i} className="text-xs text-primary cursor-pointer hover:underline">{wl.target}</li>
+                  <li key={i} className="text-xs text-primary-text cursor-pointer hover:underline">{wl.target}</li>
                 ))}</ul>
               </CardContent>
             </Card>
@@ -156,7 +156,7 @@ function NoteDetail({ note, backlinks, onBack }: { note: ObsidianNote; backlinks
               <CardContent className="p-4">
                 <p className="text-xs font-semibold mb-2">Backlinks ({backlinks.length})</p>
                 <ul className="space-y-1">{backlinks.map((b, i) => (
-                  <li key={i} className="text-xs text-primary cursor-pointer hover:underline">{b.link_text || b.source_path}</li>
+                  <li key={i} className="text-xs text-primary-text cursor-pointer hover:underline">{b.link_text || b.source_path}</li>
                 ))}</ul>
               </CardContent>
             </Card>

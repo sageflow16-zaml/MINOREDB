@@ -395,7 +395,7 @@ export default function ICTSmartEngine() {
                     <p className="text-xs text-muted-foreground">{aiCtx.summary}</p>
                     {aiCtx.best_setup && (
                       <div className="flex items-center gap-2 px-2 py-1 rounded bg-primary/10 text-xs">
-                        <Zap className="w-3 h-3 text-primary" />
+                        <Zap className="w-3 h-3 text-primary-text" />
                         <span>Best: {(aiCtx.best_setup as Record<string, unknown>).type as string}</span>
                       </div>
                     )}

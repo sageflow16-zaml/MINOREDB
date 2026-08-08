@@ -11,7 +11,7 @@ interface EvidencePanelProps {
 function ConfidenceBadge({ value }: { value: number }) {
   const color = value >= 70 ? 'text-success bg-success/10 border-success/20' :
     value >= 40 ? 'text-warning bg-warning/10 border-warning/20' :
-    'text-danger bg-danger/10 border-danger/20';
+    'text-danger-text bg-danger/10 border-danger/20';
   return (
     <span className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-3xs font-medium ${color}`}>
       {value}%

@@ -97,11 +97,11 @@ export default function AlertManagerPage() {
         {(['all', 'unread', 'critical'] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)}
             className={cn('px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
-              filter === f ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+              filter === f ? 'border-primary text-primary-text' : 'border-transparent text-muted-foreground hover:text-foreground'
             )}>
             {f}
             {f === 'unread' && unreadCount > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-3xs font-bold text-primary">{unreadCount}</span>
+              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-3xs font-bold text-primary-text">{unreadCount}</span>
             )}
           </button>
         ))}

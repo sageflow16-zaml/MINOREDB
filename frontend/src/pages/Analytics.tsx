@@ -29,14 +29,14 @@ const CHART_COLORS_5 = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(-
 
 function HeroCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
   const accentColors = {
-    default: 'text-foreground', success: 'text-success', danger: 'text-danger', warning: 'text-warning',
+    default: 'text-foreground', success: 'text-success', danger: 'text-danger-text', warning: 'text-warning',
   };
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-2xs font-medium text-muted tracking-wide">{label}</p>
         <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accent === 'success' ? 'bg-success/10' : accent === 'danger' ? 'bg-danger/10' : 'bg-primary/10')}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger' : 'text-primary')} />
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger-text' : 'text-primary-text')} />
         </div>
       </div>
       <p className={cn('text-xl font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
@@ -50,13 +50,13 @@ function InsightCard({ title, description, icon: Icon, action }: { title: string
     <div className="rounded-lg border border-border bg-gradient-to-r from-primary/5 to-transparent p-3.5">
       <div className="flex items-start gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="h-4 w-4 text-primary" />
+          <Icon className="h-4 w-4 text-primary-text" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-foreground">{title}</p>
           <p className="text-2xs text-secondary mt-0.5 leading-relaxed">{description}</p>
           {action && (
-            <button onClick={action.onClick} className="mt-1.5 text-2xs font-medium text-primary hover:text-primary/80 transition-colors">
+            <button onClick={action.onClick} className="mt-1.5 text-2xs font-medium text-primary-text hover:text-primary-text/80 transition-colors">
               {action.label} <ChevronRight className="h-2.5 w-2.5 inline" />
             </button>
           )}
@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Brain className="h-6 w-6 text-danger" /></div>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Brain className="h-6 w-6 text-danger-text" /></div>
           <p className="text-sm font-medium text-foreground">Error loading analytics</p>
           <p className="text-xs text-muted">There was a problem fetching analytics data.</p>
           <Button variant="outline" size="sm" onClick={() => stats.refetch()}>Try Again</Button>
@@ -203,7 +203,7 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
             {['1W', '1M', '3M', 'All'].map((p) => (
-              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>
+              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{p}</button>
             ))}
           </div>
           <Button variant="ghost" size="icon" aria-label="Export"><Download className="h-4 w-4" /></Button>
@@ -229,7 +229,7 @@ export default function AnalyticsPage() {
           </div>
           <div className="flex items-center gap-1">
             {['1W', '1M', '3M', 'All'].map((p) => (
-              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>
+              <button key={p} onClick={() => setTimeRange(p.toLowerCase())} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', timeRange === p.toLowerCase() ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{p}</button>
             ))}
           </div>
         </div>
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
               {sessionChartData.map((s: any) => (
                 <div key={s.label} className="flex items-center justify-between rounded-md bg-background px-2.5 py-1.5">
                   <span className="text-3xs text-secondary">{s.label}</span>
-                  <span className={cn('text-3xs font-mono font-medium', s.winRate >= 50 ? 'text-success' : 'text-danger')}>{s.winRate}%</span>
+                  <span className={cn('text-3xs font-mono font-medium', s.winRate >= 50 ? 'text-success' : 'text-danger-text')}>{s.winRate}%</span>
                 </div>
               ))}
             </div>
@@ -295,7 +295,7 @@ export default function AnalyticsPage() {
               {weekdayChartData.map((d: any) => (
                 <div key={d.label} className="flex items-center gap-1.5 rounded-md bg-background px-2 py-1">
                   <span className="text-3xs text-secondary">{d.label}</span>
-                  <span className={cn('text-3xs font-mono font-medium', d.winRate >= 50 ? 'text-success' : 'text-danger')}>{d.winRate}%</span>
+                  <span className={cn('text-3xs font-mono font-medium', d.winRate >= 50 ? 'text-success' : 'text-danger-text')}>{d.winRate}%</span>
                 </div>
               ))}
             </div>
@@ -358,7 +358,7 @@ export default function AnalyticsPage() {
       {insightCards.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Sparkles className="h-4 w-4 text-primary-text" />
             <h3 className="text-sm font-medium text-foreground">Intelligence</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -385,8 +385,8 @@ export default function AnalyticsPage() {
             data={trades.data.slice(0, 10)}
             columns={[
               { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
-              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger')}>{row.direction || '-'}</span>), width: '40px' },
-              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null && !Number.isNaN(row.pnl) ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>{row.pnl >= 0 ? '+' : ''}${Number(row.pnl).toFixed(2)}</span>) : '-', width: '100px' },
+              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger-text')}>{row.direction || '-'}</span>), width: '40px' },
+              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null && !Number.isNaN(row.pnl) ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger-text')}>{row.pnl >= 0 ? '+' : ''}${Number(row.pnl).toFixed(2)}</span>) : '-', width: '100px' },
               { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr != null && !Number.isNaN(row.rr) ? Number(row.rr).toFixed(2) : '-', width: '60px', hideOnMobile: true },
               { id: 'session', header: 'Session', accessor: (row: any) => row.session || '-', width: '80px', hideOnMobile: true },
               { id: 'result', header: 'Result', accessor: (row: any) => row.result ? <Badge variant={row.result === 'WIN' ? 'success' : row.result === 'LOSS' ? 'destructive' : 'warning'} size="sm">{row.result}</Badge> : '-', width: '70px' },

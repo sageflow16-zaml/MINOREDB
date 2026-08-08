@@ -81,7 +81,7 @@ function MessageBubble({ message }: { message: AIMessage }) {
     <motion.div variants={item} className={cn('flex gap-3', isUser ? 'flex-row-reverse' : '')}>
       <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
         isUser ? 'bg-primary/10' : 'bg-zinc-500/10')}>
-        {isUser ? <User className="h-4 w-4 text-primary" /> : <Bot className="h-4 w-4 text-muted-foreground" />}
+        {isUser ? <User className="h-4 w-4 text-primary-text" /> : <Bot className="h-4 w-4 text-muted-foreground" />}
       </div>
       <div className={cn('flex-1 max-w-[80%] space-y-2', isUser ? 'items-end' : '')}>
         <div className={cn(
@@ -126,7 +126,7 @@ function AgentCard({ agent, active, onClick }: { agent: AIAgentConfig; active: b
     <button onClick={onClick}
       className={cn(
         'flex items-center gap-2 rounded-lg border p-2 text-left text-xs transition-colors w-full',
-        active ? 'border-primary bg-primary/5 text-primary' : 'border-border/50 hover:border-border text-foreground',
+        active ? 'border-primary bg-primary/5 text-primary-text' : 'border-border/50 hover:border-border text-foreground',
       )}>
       <div className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full', AGENT_COLORS[agent.agent_type] ?? 'bg-zinc-500/15')}>
         <Icon className="h-3 w-3" />
@@ -257,7 +257,7 @@ export default function CopilotWorkspace() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/30">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowSidebar((s) => !s)}>
+            <Button variant="ghost" size="sm" aria-label="Toggle conversation sidebar" onClick={() => setShowSidebar((s) => !s)}>
               <PanelLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium text-foreground">
@@ -268,7 +268,7 @@ export default function CopilotWorkspace() {
             )}
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setShowAgentPanel((s) => !s)}>
+            <Button variant="ghost" size="sm" aria-label="Toggle AI agents panel" onClick={() => setShowAgentPanel((s) => !s)}>
               <Bot className="h-4 w-4" />
             </Button>
           </div>
@@ -323,7 +323,7 @@ export default function CopilotWorkspace() {
                 rows={2}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 pr-12 text-sm placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary/50" />
             </div>
-            <Button onClick={handleSend} disabled={!input.trim() || chatMutation.isPending} className="shrink-0 h-[52px]">
+            <Button aria-label="Send message" onClick={handleSend} disabled={!input.trim() || chatMutation.isPending} className="shrink-0 h-[52px]">
               {chatMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
@@ -340,7 +340,7 @@ export default function CopilotWorkspace() {
           <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
             <button onClick={() => setActiveAgent(undefined)}
               className={cn('flex items-center gap-2 rounded-lg border p-2 text-left text-xs transition-colors w-full',
-                !activeAgent ? 'border-primary bg-primary/5 text-primary' : 'border-border/50 hover:border-border text-foreground'
+                !activeAgent ? 'border-primary bg-primary/5 text-primary-text' : 'border-border/50 hover:border-border text-foreground'
               )}>
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-500/15">
                 <Sparkles className="h-3 w-3" />
@@ -384,7 +384,7 @@ function ConvRow({ conv, active, onClick, onPin, onDelete, pinned }: {
   return (
     <div className={cn(
       'flex items-center gap-1 rounded-lg p-2 text-xs transition-colors cursor-pointer group',
-      active ? 'bg-primary/5 text-primary' : 'hover:bg-card/50 text-foreground',
+      active ? 'bg-primary/5 text-primary-text' : 'hover:bg-card/50 text-foreground',
     )} onClick={onClick}>
       <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <span className="flex-1 truncate">{conv.title}</span>

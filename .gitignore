@@ -82,3 +82,8 @@ risk_debug.png
 
 .vercel
 .env*
+
+# Playwright artifacts
+frontend/test-results/
+frontend/playwright-report/
+frontend/e2e/.auth-state.json

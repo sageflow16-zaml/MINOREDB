@@ -128,7 +128,7 @@ export default function MarketDashboardPage() {
                 ))}
                 {sessions.current && sessions.current !== 'closed' && (
                   <div className="mt-2 rounded-lg bg-primary/5 border border-primary/20 p-2">
-                    <span className="text-xs font-medium text-primary">Current: {SESSION_LABELS[sessions.current] ?? sessions.current}</span>
+                    <span className="text-xs font-medium text-primary-text">Current: {SESSION_LABELS[sessions.current] ?? sessions.current}</span>
                   </div>
                 )}
               </CardContent>

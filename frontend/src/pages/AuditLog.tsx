@@ -18,7 +18,7 @@ const severityColors: Record<string, string> = {
 };
 
 const eventColors: Record<string, string> = {
-  workflow_run: 'bg-primary/10 text-primary',
+  workflow_run: 'bg-primary/10 text-primary-text',
   workflow_created: 'bg-success/10 text-success',
   rule_triggered: 'bg-warning/10 text-warning',
   notification_sent: 'bg-info/10 text-info',
@@ -66,7 +66,7 @@ export default function AuditLog() {
 
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Filter className="w-3.5 h-3.5" />
-        {eventFilter ? <span>Filtered by: <Badge variant="info">{eventFilter.replace(/_/g, ' ')}</Badge> <button className="text-primary underline" onClick={() => setEventFilter(undefined)}>Clear</button></span> : <span>All events</span>}
+        {eventFilter ? <span>Filtered by: <Badge variant="info">{eventFilter.replace(/_/g, ' ')}</Badge> <button className="text-primary-text underline" onClick={() => setEventFilter(undefined)}>Clear</button></span> : <span>All events</span>}
         <span className="ml-auto">{logs.length} entries</span>
       </div>
 

@@ -110,7 +110,7 @@ export default function PlaybooksPage() {
                       <ListChecks className="h-3 w-3" /> {(pb.steps || []).length} steps
                     </span>
                     {(pb.tags || []).slice(0, 3).map((tag) => (
-                      <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2 py-0.5 text-3xs font-medium text-primary">{tag}</span>
+                      <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2 py-0.5 text-3xs font-medium text-primary-text">{tag}</span>
                     ))}
                     {(pb.linked_trades?.length ?? 0) > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-md bg-muted/30 px-2 py-0.5 text-3xs font-medium text-muted-foreground ml-auto">

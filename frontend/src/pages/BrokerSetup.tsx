@@ -128,7 +128,7 @@ export default function BrokerSetup() {
               onClick={() => handleSelectProvider(p.name)}
               className="flex items-start gap-4 p-4 rounded-xl border bg-card hover:border-primary/50 transition-colors text-left"
             >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-sm font-bold text-primary-text shrink-0">
                 {providerIcons[p.name] || '?'}
               </div>
               <div className="space-y-1">

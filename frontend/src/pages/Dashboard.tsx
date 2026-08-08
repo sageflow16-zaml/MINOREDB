@@ -50,10 +50,10 @@ function KpiCard({ title, value, icon: Icon, trend, subtitle, variant = 'default
   subtitle?: string; variant?: 'default' | 'success' | 'warning' | 'danger'; onClick?: () => void;
 }) {
   const accentMap = {
-    default: { bg: 'bg-primary/10', text: 'text-primary' },
+    default: { bg: 'bg-primary/10', text: 'text-primary-text' },
     success: { bg: 'bg-success/10', text: 'text-success' },
     warning: { bg: 'bg-warning/10', text: 'text-warning' },
-    danger: { bg: 'bg-danger/10', text: 'text-danger' },
+    danger: { bg: 'bg-danger/10', text: 'text-danger-text' },
   };
   const accent = accentMap[variant];
   return (
@@ -81,9 +81,9 @@ function KpiCard({ title, value, icon: Icon, trend, subtitle, variant = 'default
               {trend.positive ? (
                 <ArrowUpRight className="h-3 w-3 text-success" />
               ) : (
-                <ArrowDownRight className="h-3 w-3 text-danger" />
+                <ArrowDownRight className="h-3 w-3 text-danger-text" />
               )}
-              <span className={cn('text-xs font-medium', trend.positive ? 'text-success' : 'text-danger')}>
+              <span className={cn('text-xs font-medium', trend.positive ? 'text-success' : 'text-danger-text')}>
                 {trend.value > 0 ? '+' : ''}{trend.value}%
               </span>
             </div>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4 max-w-md text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10">
-            <TrendingUp className="h-6 w-6 text-danger" />
+            <TrendingUp className="h-6 w-6 text-danger-text" />
           </div>
           <p className="text-sm font-medium text-foreground">Error loading dashboard</p>
           <p className="text-xs text-muted">{(stats.error as Error)?.message || 'There was a problem fetching your data.'}</p>
@@ -304,7 +304,7 @@ export default function DashboardPage() {
                   className={cn(
                     'rounded-md px-2.5 py-1 text-xs font-medium transition-all',
                     equityPeriod === period
-                      ? 'bg-primary/10 text-primary'
+                      ? 'bg-primary/10 text-primary-text'
                       : 'text-muted hover:text-secondary'
                   )}
                 >
@@ -402,14 +402,14 @@ export default function DashboardPage() {
               columns={[
                 { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
                 { id: 'direction', header: 'Dir', accessor: (row: any) => (
-                  <span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger')}>
+                  <span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger-text')}>
                     {row.direction || '-'}
                   </span>
                 ), width: '40px' },
                 { id: 'pnl', header: 'P&L', accessor: (row: any) => {
                   if (row.pnl == null) return '-';
                   return (
-                    <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>
+                    <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger-text')}>
                       {row.pnl >= 0 ? '+' : ''}${safeToFixed(row.pnl, 2)}
                     </span>
                   );
@@ -448,13 +448,13 @@ export default function DashboardPage() {
           {/* AI Daily Brief */}
           <div className="rounded-xl border border-border bg-card p-5 cursor-pointer transition-all hover:border-border/80" onClick={() => navigate(`/projects/${projectId}/analyst`)}>
             <div className="flex items-center gap-2 mb-4">
-              <Brain className="h-4 w-4 text-primary" />
+              <Brain className="h-4 w-4 text-primary-text" />
               <h3 className="text-sm font-medium text-foreground">AI Daily Brief</h3>
             </div>
             <div className="rounded-lg bg-gradient-to-r from-primary/5 to-success/5 p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <Bot className="h-4 w-4 text-primary" />
+                  <Bot className="h-4 w-4 text-primary-text" />
                 </div>
                 <div className="text-xs text-secondary space-y-1.5 leading-relaxed">
                   <p>{s?.total_trades ? `${s.total_trades} total trades with ${winRate}% win rate` : 'No trades yet — add your first trade to generate insights.'}</p>
@@ -493,7 +493,7 @@ export default function DashboardPage() {
                     onClick={() => navigate(`/projects/${projectId}/${action.path}`)}
                     className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-xs font-medium text-secondary hover:text-foreground hover:border-border/80 transition-all"
                   >
-                    <Icon className="h-3.5 w-3.5 text-primary" />
+                    <Icon className="h-3.5 w-3.5 text-primary-text" />
                     {action.label}
                   </button>
                 );
@@ -540,12 +540,12 @@ export default function DashboardPage() {
           {/* Knowledge Growth */}
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Network className="h-4 w-4 text-primary" />
+              <Network className="h-4 w-4 text-primary-text" />
               <h3 className="text-sm font-medium text-foreground">Knowledge Growth</h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-background p-3 text-center">
-                <p className="text-2xl font-bold text-primary font-mono">{s?.graph_nodes ?? 0}</p>
+                <p className="text-2xl font-bold text-primary-text font-mono">{s?.graph_nodes ?? 0}</p>
                 <p className="text-3xs text-muted mt-0.5">Graph Nodes</p>
               </div>
               <div className="rounded-lg bg-background p-3 text-center">

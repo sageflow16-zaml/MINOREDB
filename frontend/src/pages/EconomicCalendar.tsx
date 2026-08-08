@@ -105,7 +105,7 @@ export default function EconomicCalendarPage() {
         {(['calendar', 'favorites'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={cn('px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
-              tab === t ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+              tab === t ? 'border-primary text-primary-text' : 'border-transparent text-muted-foreground hover:text-foreground'
             )}>{t}</button>
         ))}
       </div>

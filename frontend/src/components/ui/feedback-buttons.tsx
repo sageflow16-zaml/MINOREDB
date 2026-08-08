@@ -14,7 +14,7 @@ const options = [
   { value: 'correct' as const, icon: CheckCircle, label: 'Correct', color: 'text-success hover:text-success/80' },
   { value: 'helpful' as const, icon: ThumbsUp, label: 'Helpful', color: 'text-chart-4 hover:text-chart-4/80' },
   { value: 'not_helpful' as const, icon: ThumbsDown, label: 'Not Helpful', color: 'text-warning hover:text-warning/80' },
-  { value: 'incorrect' as const, icon: XCircle, label: 'Incorrect', color: 'text-danger hover:text-danger/80' },
+  { value: 'incorrect' as const, icon: XCircle, label: 'Incorrect', color: 'text-danger-text hover:text-danger-text/80' },
 ];
 
 export function FeedbackButtons({ source, targetType, targetId, className }: FeedbackButtonsProps) {

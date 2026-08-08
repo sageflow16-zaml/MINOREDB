@@ -33,7 +33,7 @@ function StatCard({ label, value, sub, accent }: { label: string; value: string;
   const accentColors = {
     default: 'text-foreground',
     success: 'text-success',
-    danger: 'text-danger',
+    danger: 'text-danger-text',
     warning: 'text-warning',
   };
   return (
@@ -49,7 +49,7 @@ function MiniStat({ label, value, positive }: { label: string; value: string; po
   return (
     <div className="rounded-lg bg-background p-3">
       <p className="text-3xs text-muted tracking-wide">{label}</p>
-      <p className={cn('text-sm font-bold font-mono mt-1', positive === undefined ? 'text-foreground' : positive ? 'text-success' : 'text-danger')}>{value}</p>
+      <p className={cn('text-sm font-bold font-mono mt-1', positive === undefined ? 'text-foreground' : positive ? 'text-success' : 'text-danger-text')}>{value}</p>
     </div>
   );
 }
@@ -96,7 +96,7 @@ export default function PortfolioDashboardPage() {
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10">
-            <Wallet className="h-6 w-6 text-danger" />
+            <Wallet className="h-6 w-6 text-danger-text" />
           </div>
           <p className="text-sm font-medium text-foreground">Error loading portfolio</p>
           <p className="text-xs text-muted">There was a problem fetching your portfolio data.</p>
@@ -192,7 +192,7 @@ export default function PortfolioDashboardPage() {
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
-              <DollarSign className="h-3.5 w-3.5 text-primary" />
+              <DollarSign className="h-3.5 w-3.5 text-primary-text" />
             </div>
             <span className="text-2xs font-medium text-muted">Balance</span>
           </div>
@@ -207,7 +207,7 @@ export default function PortfolioDashboardPage() {
             <span className="text-2xs font-medium text-muted">Equity</span>
           </div>
           <p className="text-lg font-bold font-mono text-foreground">{formatCurrency(summary.total_equity)}</p>
-          <p className={cn('text-3xs mt-0.5', summary.total_open_pnl >= 0 ? 'text-success' : 'text-danger')}>
+          <p className={cn('text-3xs mt-0.5', summary.total_open_pnl >= 0 ? 'text-success' : 'text-danger-text')}>
             {formatCurrency(summary.total_open_pnl)} open P&L
           </p>
         </div>
@@ -218,7 +218,7 @@ export default function PortfolioDashboardPage() {
             </div>
             <span className="text-2xs font-medium text-muted">Drawdown</span>
           </div>
-          <p className={cn('text-lg font-bold font-mono', summary.max_drawdown_pct > 20 ? 'text-danger' : summary.max_drawdown_pct > 10 ? 'text-warning' : 'text-foreground')}>
+          <p className={cn('text-lg font-bold font-mono', summary.max_drawdown_pct > 20 ? 'text-danger-text' : summary.max_drawdown_pct > 10 ? 'text-warning' : 'text-foreground')}>
             {formatPercent(summary.max_drawdown_pct)}
           </p>
           <p className="text-3xs text-muted mt-0.5">Max portfolio drawdown</p>
@@ -328,7 +328,7 @@ export default function PortfolioDashboardPage() {
             { id: 'balance', header: 'Balance', accessor: (row: any) => formatCurrency(row.current_balance), width: '100px' },
             { id: 'equity', header: 'Equity', accessor: (row: any) => formatCurrency(row.current_equity), width: '100px' },
             { id: 'pnl', header: 'P&L', accessor: (row: any) => (
-              <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>{formatCurrency(row.pnl)}</span>
+              <span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger-text')}>{formatCurrency(row.pnl)}</span>
             ), width: '90px' },
             { id: 'trades', header: 'Trades', accessor: (row: any) => row.trade_count ?? '-', width: '70px' },
             { id: 'win_rate', header: 'Win Rate', accessor: (row: any) => row.win_rate != null ? `${row.win_rate}%` : '-', width: '80px' },
@@ -361,7 +361,7 @@ export default function PortfolioDashboardPage() {
                   onClick={() => navigate(`/projects/${projectId}/${link.path}`)}
                   className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2.5 text-xs font-medium text-secondary hover:text-foreground hover:border-border/80 transition-all"
                 >
-                  <Icon className="h-3.5 w-3.5 text-primary" />
+                  <Icon className="h-3.5 w-3.5 text-primary-text" />
                   {link.label}
                 </button>
               );

@@ -325,7 +325,7 @@ export default function StrategyBuilderPage() {
                 <button key={s} type="button" onClick={() => toggleSession(s)}
                   className={cn('rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
                     (form.preferred_sessions || []).includes(s)
-                      ? 'border-primary bg-primary/10 text-primary'
+                      ? 'border-primary bg-primary/10 text-primary-text'
                       : 'border-input text-muted-foreground hover:text-foreground'
                   )}>
                   {s}
@@ -406,9 +406,9 @@ export default function StrategyBuilderPage() {
           {(form.tags || []).length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {(form.tags || []).map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
+                <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary-text">
                   {tag}
-                  <button onClick={() => removeTag(tag)} className="text-primary/60 hover:text-primary"><X className="h-3 w-3" /></button>
+                  <button onClick={() => removeTag(tag)} className="text-primary-text/60 hover:text-primary-text"><X className="h-3 w-3" /></button>
                 </span>
               ))}
             </div>

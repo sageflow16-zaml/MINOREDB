@@ -102,7 +102,7 @@ export default function QuantBacktestLab() {
           data={backtests}
           columns={[
             { id: 'name', header: 'Name', accessor: (row: any) => (
-              <button onClick={() => navigate(`/projects/${projectId}/quant-research/backtests/${row.id}`)} className="text-primary hover:underline font-medium">{row.name}</button>
+              <button onClick={() => navigate(`/projects/${projectId}/quant-research/backtests/${row.id}`)} className="text-primary-text hover:underline font-medium">{row.name}</button>
             )},
             { id: 'status', header: 'Status', accessor: (row: any) => <Badge variant={row.status === 'completed' ? 'success' : row.status === 'running' ? 'info' : row.status === 'failed' ? 'destructive' : 'outline'}>{row.status}</Badge> },
             { id: 'backtest_type', header: 'Type', accessor: (row: any) => <Badge variant="outline">{row.backtest_type}</Badge> },

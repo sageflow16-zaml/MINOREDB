@@ -97,7 +97,7 @@ export default function TradeExportDialog({ projectId, open, onClose, selectedId
                       onClick={() => setFormat(f)}
                       className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                         format === f
-                          ? 'border-primary bg-primary/10 text-primary'
+                          ? 'border-primary bg-primary/10 text-primary-text'
                           : 'border-border hover:border-muted-foreground'
                       }`}
                     >

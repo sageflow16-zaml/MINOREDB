@@ -88,7 +88,7 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <button onClick={onBack} className="mb-2 inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+              <button onClick={onBack} className="mb-2 inline-flex items-center gap-1 text-xs text-primary-text hover:text-primary-text/80 transition-colors">
                 <ArrowLeft className="h-3 w-3" /> Back to concepts
               </button>
               <h2 className="text-base font-bold text-foreground">{concept.title}</h2>
@@ -147,16 +147,16 @@ function ConceptDetailView({ conceptId, onBack }: { conceptId: string; onBack: (
               <div className="space-y-1">
                 {concept.relationships_outgoing?.map((r: any) => (
                   <div key={r.id} className="flex items-center gap-1.5 text-xs">
-                    <span className="font-medium text-primary">{concept.title}</span>
+                    <span className="font-medium text-primary-text">{concept.title}</span>
                     <span className="text-muted-foreground">—[{r.relationship_type}]→</span>
-                    <span className="font-medium text-primary">{r.target_concept?.title || r.target_concept_id}</span>
+                    <span className="font-medium text-primary-text">{r.target_concept?.title || r.target_concept_id}</span>
                   </div>
                 ))}
                 {concept.relationships_incoming?.map((r: any) => (
                   <div key={r.id} className="flex items-center gap-1.5 text-xs">
-                    <span className="font-medium text-primary">{r.source_concept?.title || r.source_concept_id}</span>
+                    <span className="font-medium text-primary-text">{r.source_concept?.title || r.source_concept_id}</span>
                     <span className="text-muted-foreground">—[{r.relationship_type}]→</span>
-                    <span className="font-medium text-primary">{concept.title}</span>
+                    <span className="font-medium text-primary-text">{concept.title}</span>
                   </div>
                 ))}
               </div>
@@ -286,12 +286,12 @@ export default function KnowledgeCenter() {
                       {relationships.slice(0, 100).map(r => (
                         <div key={r.id} className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-2 text-xs transition-colors hover:bg-muted/30">
                           <button onClick={() => { setSelectedConcept(r.source_concept_id); setActiveTab('concepts'); }}
-                            className="font-medium text-primary hover:text-primary/80 truncate max-w-[120px] transition-colors">
+                            className="font-medium text-primary-text hover:text-primary-text/80 truncate max-w-[120px] transition-colors">
                             {r.source_concept?.title || r.source_concept_id.slice(0, 8)}
                           </button>
                           <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-3xs font-medium text-muted-foreground shrink-0">{r.relationship_type}</span>
                           <button onClick={() => { setSelectedConcept(r.target_concept_id); setActiveTab('concepts'); }}
-                            className="font-medium text-primary hover:text-primary/80 truncate max-w-[120px] transition-colors">
+                            className="font-medium text-primary-text hover:text-primary-text/80 truncate max-w-[120px] transition-colors">
                             {r.target_concept?.title || r.target_concept_id.slice(0, 8)}
                           </button>
                           {r.strength && <span className="text-xs text-muted-foreground ml-auto shrink-0">strength: {r.strength.toFixed(1)}</span>}
@@ -318,7 +318,7 @@ export default function KnowledgeCenter() {
                     <button key={r.id || i} onClick={() => { setSelectedConcept(r.id); setActiveTab('concepts'); }}
                       className="w-full rounded-xl border border-border bg-card p-3 text-left transition-all hover:shadow-md hover:border-primary/30 active:scale-[0.98]">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-primary">{r.title}</span>
+                        <span className="text-sm font-medium text-primary-text">{r.title}</span>
                         <Badge variant="secondary" size="sm">{r.category_name || r.match_type}</Badge>
                       </div>
                       {r.summary && <p className="mt-1 text-xs text-muted-foreground">{r.summary}</p>}

@@ -279,7 +279,7 @@ export default function TemplateLibraryPage() {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <BookOpen className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <BookOpen className="h-5 w-5 text-primary-text shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="text-sm font-medium">{t.name}</h4>

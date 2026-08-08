@@ -80,8 +80,8 @@ function TimelinePanel({ state, currentCandle, onJump, playbackSpeed, onSpeedCha
   const events = useMemo(() => {
     const items: { candle_index: number; type: string; label: string; icon: any; color: string }[] = [];
     state.trades.forEach((t) => items.push({ candle_index: t.candle_index, type: 'trade', label: `${t.direction} @ ${t.entry_price}`, icon: TrendingUp, color: 'text-success' }));
-    state.bookmarks.forEach((b) => items.push({ candle_index: b.candle_index, type: 'bookmark', label: b.note || 'Bookmark', icon: BookOpen, color: 'text-primary' }));
-    state.mistakes.forEach((m) => { if (m.candle_index != null) items.push({ candle_index: m.candle_index, type: 'mistake', label: m.mistake_type || 'Mistake', icon: AlertTriangle, color: 'text-danger' }); });
+    state.bookmarks.forEach((b) => items.push({ candle_index: b.candle_index, type: 'bookmark', label: b.note || 'Bookmark', icon: BookOpen, color: 'text-primary-text' }));
+    state.mistakes.forEach((m) => { if (m.candle_index != null) items.push({ candle_index: m.candle_index, type: 'mistake', label: m.mistake_type || 'Mistake', icon: AlertTriangle, color: 'text-danger-text' }); });
     state.annotations.forEach((a) => items.push({ candle_index: a.candle_index, type: 'annotation', label: a.label || a.annotation_type, icon: Edit3, color: 'text-success' }));
     return items.sort((a, b) => a.candle_index - b.candle_index);
   }, [state]);
@@ -102,7 +102,7 @@ function TimelinePanel({ state, currentCandle, onJump, playbackSpeed, onSpeedCha
         <span className="text-3xs text-muted">Speed</span>
         {[1, 2, 5, 10].map((s) => (
           <button key={s} onClick={() => onSpeedChange(1000 / s)}
-            className={cn('rounded px-2 py-0.5 text-3xs font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{s}x</button>
+            className={cn('rounded px-2 py-0.5 text-3xs font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{s}x</button>
         ))}
       </div>
       <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
@@ -200,9 +200,9 @@ function MistakePanel({ projectId, state }: { projectId: string; state: ReplayWo
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2"><span className="text-3xs font-medium text-secondary">{m.mistake_type || 'Mistake'}</span><Badge variant={m.severity === 'High' ? 'destructive' : m.severity === 'Medium' ? 'warning' : 'default'} size="sm">{m.severity}</Badge></div>
                 <p className="text-3xs text-muted mt-0.5">{m.description}</p>
-                {m.recommendation && <p className="text-3xs text-primary mt-0.5">&rarr; {m.recommendation}</p>}
+                {m.recommendation && <p className="text-3xs text-primary-text mt-0.5">&rarr; {m.recommendation}</p>}
               </div>
-              <button onClick={() => deleteMistake.mutate({ sessionId: state.session.id, mistakeId: m.id })} className="text-muted hover:text-danger shrink-0"><X className="h-3 w-3" /></button>
+              <button onClick={() => deleteMistake.mutate({ sessionId: state.session.id, mistakeId: m.id })} className="text-muted hover:text-danger-text shrink-0"><X className="h-3 w-3" /></button>
             </div>
           ))}
         </div>
@@ -309,7 +309,7 @@ export default function ReplayPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><BarChart3 className="h-5 w-5 text-primary" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><BarChart3 className="h-5 w-5 text-primary-text" /></div>
           <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Replay</h1><p className="text-sm text-muted mt-0.5">{dashboardQuery.data?.total_sessions ?? 0} sessions &bull; {dashboardQuery.data?.total_trades ?? 0} trades{dashboardQuery.data?.avg_win_rate != null ? ` &bull; WR ${dashboardQuery.data.avg_win_rate.toFixed(1)}%` : ''}</p></div>
         </div>
       </motion.div>
@@ -318,7 +318,7 @@ export default function ReplayPage() {
       <div className="flex flex-wrap items-center gap-2">
         {sessions.slice().reverse().map((s: any) => (
           <button key={s.id} onClick={() => setActiveSessionId(s.id)}
-            className={cn('shrink-0 rounded-lg border px-2.5 py-1 text-2xs font-medium transition-colors', s.id === activeSessionId ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border bg-card text-muted hover:text-secondary')}>
+            className={cn('shrink-0 rounded-lg border px-2.5 py-1 text-2xs font-medium transition-colors', s.id === activeSessionId ? 'border-primary/40 bg-primary/5 text-primary-text' : 'border-border bg-card text-muted hover:text-secondary')}>
             {s.pair} {s.timeframe} <span className="text-3xs opacity-60">{new Date(s.start_date).toLocaleDateString()}</span>
           </button>
         ))}
@@ -376,7 +376,7 @@ export default function ReplayPage() {
                       {state.screenshots.map((s: any) => (
                         <div key={s.id} className="relative rounded-lg bg-background p-2 aspect-video flex items-center justify-center group">
                           <div className="flex flex-col items-center gap-1"><Image className="h-5 w-5 text-muted" /><span className="text-3xs text-muted">{s.category || 'Shot'}</span></div>
-                          <button onClick={() => deleteScreenshot.mutate({ sessionId: state.session.id, screenshotId: s.id })} className="absolute top-1 right-1 rounded bg-background p-0.5 text-muted hover:text-danger opacity-0 group-hover:opacity-100"><X className="h-3 w-3" /></button>
+                          <button onClick={() => deleteScreenshot.mutate({ sessionId: state.session.id, screenshotId: s.id })} className="absolute top-1 right-1 rounded bg-background p-0.5 text-muted hover:text-danger-text opacity-0 group-hover:opacity-100"><X className="h-3 w-3" /></button>
                         </div>
                       ))}
                     </div>
@@ -396,7 +396,7 @@ export default function ReplayPage() {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div><p className="text-3xs text-muted">O</p><p className="text-2xs font-mono font-semibold text-foreground">{state.candle.open.toFixed(5)}</p></div>
                   <div><p className="text-3xs text-muted">H</p><p className="text-2xs font-mono font-semibold text-success">{state.candle.high.toFixed(5)}</p></div>
-                  <div><p className="text-3xs text-muted">L</p><p className="text-2xs font-mono font-semibold text-danger">{state.candle.low.toFixed(5)}</p></div>
+                  <div><p className="text-3xs text-muted">L</p><p className="text-2xs font-mono font-semibold text-danger-text">{state.candle.low.toFixed(5)}</p></div>
                 </div>
               </div>
             )}
@@ -408,16 +408,16 @@ export default function ReplayPage() {
             <div className="rounded-xl border border-border bg-card p-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={handlePrev} disabled={!activeSessionId || currentCandleIndex <= 0} aria-label="Previous candle" className="rounded-lg border border-border p-1.5 text-muted hover:text-foreground hover:bg-background disabled:opacity-30"><SkipBack className="h-4 w-4" /></button>
-                <button onClick={() => setIsPlaying(!isPlaying)} disabled={!activeSessionId || state.session.status !== 'active'} aria-label={isPlaying ? 'Pause' : 'Play'} className={cn('rounded-lg p-1.5 transition-colors disabled:opacity-30', isPlaying ? 'bg-danger/10 text-danger hover:bg-danger/20' : 'bg-primary/10 text-primary hover:bg-primary/20')}>{isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+                <button onClick={() => setIsPlaying(!isPlaying)} disabled={!activeSessionId || state.session.status !== 'active'} aria-label={isPlaying ? 'Pause' : 'Play'} className={cn('rounded-lg p-1.5 transition-colors disabled:opacity-30', isPlaying ? 'bg-danger/10 text-danger-text hover:bg-danger/20' : 'bg-primary/10 text-primary-text hover:bg-primary/20')}>{isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
                 <button onClick={handleNext} disabled={!activeSessionId} aria-label="Next candle" className="rounded-lg border border-border p-1.5 text-muted hover:text-foreground hover:bg-background disabled:opacity-30"><SkipForward className="h-4 w-4" /></button>
                 <div className="h-4 w-px bg-elevated" />
                 <span className="text-2xs text-muted font-mono">{currentCandleIndex + 1}/{state.session.total_candles}</span>
                 <div className="h-4 w-px bg-elevated" />
-                {[0.5, 1, 2, 5].map((s) => (<button key={s} onClick={() => setPlaybackSpeed(1000 / s)} className={cn('rounded px-2 py-0.5 text-3xs font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{s}x</button>))}
+                {[0.5, 1, 2, 5].map((s) => (<button key={s} onClick={() => setPlaybackSpeed(1000 / s)} className={cn('rounded px-2 py-0.5 text-3xs font-medium transition-colors', 1000 / s === playbackSpeed ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{s}x</button>))}
                 <div className="ml-auto flex gap-1">
                   <button onClick={() => handleJump(0)} className="rounded px-2 py-0.5 text-3xs font-medium text-muted hover:text-secondary">Start</button>
-                  {sessionTrades.length > 0 && <button onClick={() => handleJump(sessionTrades[0].candle_index)} className="rounded px-2 py-0.5 text-3xs font-medium text-primary hover:bg-primary/10">Entry</button>}
-                  {state.mistakes.length > 0 && <button onClick={() => handleJump(state.mistakes[0].candle_index ?? 0)} className="rounded px-2 py-0.5 text-3xs font-medium text-danger hover:bg-danger/10">Mistake</button>}
+                  {sessionTrades.length > 0 && <button onClick={() => handleJump(sessionTrades[0].candle_index)} className="rounded px-2 py-0.5 text-3xs font-medium text-primary-text hover:bg-primary/10">Entry</button>}
+                  {state.mistakes.length > 0 && <button onClick={() => handleJump(state.mistakes[0].candle_index ?? 0)} className="rounded px-2 py-0.5 text-3xs font-medium text-danger-text hover:bg-danger/10">Mistake</button>}
                 </div>
               </div>
             </div>
@@ -431,7 +431,7 @@ export default function ReplayPage() {
                 <span className="text-3xs font-medium text-muted mr-1">Draw:</span>
                 {ANNOTATION_TOOLS.map((tool) => (
                   <button key={tool.type} onClick={() => setActiveTool(activeTool === tool.type ? null : tool.type)}
-                    className={cn('rounded-lg border p-1.5 transition-colors', activeTool === tool.type ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted hover:text-foreground hover:bg-background')} title={tool.label}>
+                    className={cn('rounded-lg border p-1.5 transition-colors', activeTool === tool.type ? 'border-primary bg-primary/10 text-primary-text' : 'border-border text-muted hover:text-foreground hover:bg-background')} title={tool.label}>
                     <tool.icon className="h-3.5 w-3.5" />
                   </button>
                 ))}
@@ -470,7 +470,7 @@ export default function ReplayPage() {
               <div className="max-h-[100px] overflow-y-auto space-y-1">
                 {sessionBookmarks.slice(-5).map((b: any) => (
                   <div key={b.id} className="flex items-center gap-2 rounded-lg bg-background px-2 py-1 text-3xs cursor-pointer hover:bg-card" onClick={() => handleJump(b.candle_index)}>
-                    <BookOpen className="h-3 w-3 text-primary shrink-0" />
+                    <BookOpen className="h-3 w-3 text-primary-text shrink-0" />
                     <span className="text-muted truncate flex-1">{b.note || 'Bookmark'}</span>
                     <span className="text-muted shrink-0">#{b.candle_index}</span>
                   </div>

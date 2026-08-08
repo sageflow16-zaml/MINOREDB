@@ -84,7 +84,7 @@ export default function BrokerHub() {
   const columns: Column<BrokerHubConnection>[] = [
     { id: 'label', header: 'Connection', accessor: (row) => (
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary-text">
           {providerIcons[row.provider] || '?'}
         </div>
         <div>
@@ -183,7 +183,7 @@ export default function BrokerHub() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {providers.map((p) => (
                 <div key={p.name} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary-text">
                     {providerIcons[p.name] || '?'}
                   </div>
                   <div>

@@ -12,7 +12,7 @@ interface DiscoveryPanelProps {
 function DiscoveryIcon({ type }: { type: string }) {
   const icons: Record<string, React.ReactNode> = {
     gap: <Lightbulb className="h-4 w-4 text-chart-4" />,
-    contradiction: <AlertTriangle className="h-4 w-4 text-danger" />,
+    contradiction: <AlertTriangle className="h-4 w-4 text-danger-text" />,
     repeated_mistake: <Repeat className="h-4 w-4 text-warning" />,
     successful_behavior: <TrendingUp className="h-4 w-4 text-success" />,
     hidden_relationship: <Zap className="h-4 w-4 text-chart-2" />,
@@ -78,7 +78,7 @@ export function DiscoveryPanel({ items, loading, onExplore }: DiscoveryPanelProp
                 <span className="text-2xs font-medium text-foreground">{item.title}</span>
                 {item.severity && (
                   <span className={`text-3xs font-medium px-1 rounded ${
-                    item.severity === 'high' ? 'text-danger bg-danger/10' :
+                    item.severity === 'high' ? 'text-danger-text bg-danger/10' :
                     item.severity === 'medium' ? 'text-warning bg-warning/10' : 'text-muted bg-muted/20'
                   }`}>
                     {item.severity}
@@ -87,7 +87,7 @@ export function DiscoveryPanel({ items, loading, onExplore }: DiscoveryPanelProp
               </div>
               <p className="text-3xs text-muted-foreground line-clamp-2">{item.description}</p>
               {item.actionable && (
-                <span className="text-3xs text-primary mt-0.5 inline-block">Explore →</span>
+                <span className="text-3xs text-primary-text mt-0.5 inline-block">Explore →</span>
               )}
             </div>
           </div>

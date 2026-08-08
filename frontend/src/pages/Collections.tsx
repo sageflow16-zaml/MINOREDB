@@ -218,7 +218,7 @@ export default function CollectionsPage() {
                     <ChevronRight
                       className={cn(
                         'h-4 w-4 transition-all duration-200',
-                        isActive ? 'text-primary opacity-100' : 'text-border opacity-0'
+                        isActive ? 'text-primary-text opacity-100' : 'text-border opacity-0'
                       )}
                     />
                   </motion.button>
@@ -339,7 +339,7 @@ export default function CollectionsPage() {
                                 collectionId: selectedCollection.id,
                               });
                             }}
-                            className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-danger/10 hover:bg-danger/20 text-danger"
+                            className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-danger/10 hover:bg-danger/20 text-danger-text"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -442,7 +442,7 @@ export default function CollectionsPage() {
                       setPreviewDocument(null);
                     }
                   }}
-                  className="text-danger hover:text-danger hover:bg-danger/10"
+                  className="text-danger-text hover:text-danger-text hover:bg-danger/10"
                 >
                   <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                   Remove from collection

@@ -151,7 +151,7 @@ export function BacktestIntelligencePanel({ projectId, backtestId, metrics }: {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
         <div className="flex items-center gap-2">
-          <Brain className="h-4 w-4 text-primary" />
+          <Brain className="h-4 w-4 text-primary-text" />
           <CardTitle className="text-xs font-medium">Backtest Intelligence</CardTitle>
         </div>
         <div className="flex items-center gap-1">
@@ -168,7 +168,7 @@ export function BacktestIntelligencePanel({ projectId, backtestId, metrics }: {
               <span className="text-3xs text-muted-foreground uppercase tracking-wider">Strategy Score</span>
               <span className={cn(
                 'text-xs font-bold',
-                analysis.overallScore >= 70 ? 'text-success' : analysis.overallScore >= 40 ? 'text-warning' : 'text-danger'
+                analysis.overallScore >= 70 ? 'text-success' : analysis.overallScore >= 40 ? 'text-warning' : 'text-danger-text'
               )}>{analysis.overallScore}/100</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-muted/30 overflow-hidden">
@@ -221,7 +221,7 @@ export function BacktestIntelligencePanel({ projectId, backtestId, metrics }: {
             )}
             {analysis.weaknesses.length > 0 && (
               <div>
-                <p className="text-3xs font-medium text-danger mb-1.5 flex items-center gap-1">
+                <p className="text-3xs font-medium text-danger-text mb-1.5 flex items-center gap-1">
                   <TrendingDown className="h-3 w-3" /> Weaknesses
                 </p>
                 {analysis.weaknesses.map((w, i) => (
@@ -281,7 +281,7 @@ export function BacktestIntelligencePanel({ projectId, backtestId, metrics }: {
                     className="flex items-start gap-2 rounded-lg bg-danger/5 border border-danger/10 p-2.5"
                   >
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger/10">
-                      <AlertTriangle className="h-3 w-3 text-danger" />
+                      <AlertTriangle className="h-3 w-3 text-danger-text" />
                     </div>
                     <p className="text-3xs text-muted-foreground">{w}</p>
                   </motion.div>

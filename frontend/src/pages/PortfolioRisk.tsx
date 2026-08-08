@@ -158,7 +158,7 @@ export default function PortfolioRiskPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <BrainCircuit className="h-4 w-4 text-primary" />
+                <BrainCircuit className="h-4 w-4 text-primary-text" />
                 <CardTitle className="text-sm font-medium">AI Risk Assessment</CardTitle>
               </div>
             </CardHeader>

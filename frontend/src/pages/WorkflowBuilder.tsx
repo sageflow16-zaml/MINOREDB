@@ -17,7 +17,7 @@ import {
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 
 const NODE_TYPES = [
-  { type: 'trigger', label: 'Trigger', icon: Zap, color: 'text-primary' },
+  { type: 'trigger', label: 'Trigger', icon: Zap, color: 'text-primary-text' },
   { type: 'action', label: 'Action', icon: Play, color: 'text-success' },
   { type: 'condition', label: 'Condition', icon: GitBranch, color: 'text-warning' },
   { type: 'loop', label: 'Loop', icon: Clock, color: 'text-info' },

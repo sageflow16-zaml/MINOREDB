@@ -12,7 +12,7 @@ interface RelatedItemsPanelProps {
 function RelationshipIcon({ type }: { type: RelationshipType }) {
   const icons = {
     supports: () => <ArrowUp className="h-3 w-3 text-success" />,
-    contradicts: () => <ArrowDown className="h-3 w-3 text-danger" />,
+    contradicts: () => <ArrowDown className="h-3 w-3 text-danger-text" />,
     explains: () => <ArrowRight className="h-3 w-3 text-chart-4" />,
     references: () => <ExternalLink className="h-3 w-3 text-chart-2" />,
     derived_from: () => <ArrowLeft className="h-3 w-3 text-warning" />,
@@ -20,7 +20,7 @@ function RelationshipIcon({ type }: { type: RelationshipType }) {
     used_by: () => <ArrowRight className="h-3 w-3 text-chart-1" />,
     mentioned_in: () => <ExternalLink className="h-3 w-3 text-chart-3" />,
     validated_by: () => <ArrowUp className="h-3 w-3 text-success" />,
-    broken_by: () => <ArrowDown className="h-3 w-3 text-danger" />,
+    broken_by: () => <ArrowDown className="h-3 w-3 text-danger-text" />,
   };
   return (icons[type] || icons.related_to)();
 }

@@ -88,7 +88,7 @@ export function AIQualityPanel({ className }: QualityPanelProps) {
               <item.icon className={cn(
                 'h-3 w-3',
                 item.status === 'good' ? 'text-success' :
-                item.status === 'bad' ? 'text-danger' :
+                item.status === 'bad' ? 'text-danger-text' :
                 'text-warning'
               )} />
               <span className="text-3xs text-muted-foreground">{item.label}</span>
@@ -106,7 +106,7 @@ export function AIQualityPanel({ className }: QualityPanelProps) {
         </div>
         <span className={cn(
           'text-3xs font-medium',
-          positiveRate >= 70 ? 'text-success' : positiveRate >= 40 ? 'text-warning' : 'text-danger'
+          positiveRate >= 70 ? 'text-success' : positiveRate >= 40 ? 'text-warning' : 'text-danger-text'
         )}>
           Overall: {positiveRate}%
         </span>

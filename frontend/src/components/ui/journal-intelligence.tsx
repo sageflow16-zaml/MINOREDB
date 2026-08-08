@@ -76,7 +76,7 @@ export function JournalIntelligencePanel({ projectId }: { projectId: string }) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
         <div className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-primary" />
+          <BookOpen className="h-4 w-4 text-primary-text" />
           <CardTitle className="text-xs font-medium">Journal Intelligence</CardTitle>
           {displayPatterns.length > 0 && (
             <Badge variant="secondary" size="sm">{displayPatterns.length}</Badge>
@@ -100,7 +100,7 @@ export function JournalIntelligencePanel({ projectId }: { projectId: string }) {
               <p className="text-3xs text-muted-foreground">Strengths</p>
             </div>
             <div className="rounded-lg bg-danger/5 border border-danger/10 p-2 text-center">
-              <p className="text-xs font-bold text-danger">{negativePatterns.length}</p>
+              <p className="text-xs font-bold text-danger-text">{negativePatterns.length}</p>
               <p className="text-3xs text-muted-foreground">Weaknesses</p>
             </div>
             <div className="rounded-lg bg-chart-1/5 border border-chart-1/10 p-2 text-center">
@@ -116,7 +116,7 @@ export function JournalIntelligencePanel({ projectId }: { projectId: string }) {
             <button key={tab} onClick={() => setView(tab)}
               className={cn(
                 'flex-1 rounded-md px-2 py-1 text-3xs font-medium transition-all',
-                view === tab ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                view === tab ? 'bg-background text-foreground shadow-sm' : 'text-secondary hover:text-foreground'
               )}>
               {tab === 'patterns' ? 'Patterns' : tab === 'evaluations' ? 'Evaluations' : 'Insights'}
             </button>
@@ -154,7 +154,7 @@ export function JournalIntelligencePanel({ projectId }: { projectId: string }) {
           <div className="space-y-2">
             {negativePatterns.length > 0 && (
               <div>
-                <p className="text-3xs font-medium text-danger mb-1.5 flex items-center gap-1">
+                <p className="text-3xs font-medium text-danger-text mb-1.5 flex items-center gap-1">
                   <TrendingDown className="h-3 w-3" /> Areas to Improve
                 </p>
                 {negativePatterns.slice(0, 4).map((p) => (
@@ -202,7 +202,7 @@ export function JournalIntelligencePanel({ projectId }: { projectId: string }) {
                     {e.strength_score != null && (
                       <span className={cn(
                         'text-3xs font-medium',
-                        e.strength_score >= 70 ? 'text-success' : e.strength_score >= 40 ? 'text-warning' : 'text-danger'
+                        e.strength_score >= 70 ? 'text-success' : e.strength_score >= 40 ? 'text-warning' : 'text-danger-text'
                       )}>
                         {e.strength_score}/100
                       </span>
@@ -279,7 +279,7 @@ function PatternCard({ pattern }: { pattern: PatternDisplay }) {
           pattern.direction === 'negative' ? 'bg-danger/10' : 'bg-muted/30'
         )}>
           {pattern.direction === 'positive' ? <TrendingUp className="h-3 w-3 text-success" /> :
-           pattern.direction === 'negative' ? <TrendingDown className="h-3 w-3 text-danger" /> :
+           pattern.direction === 'negative' ? <TrendingDown className="h-3 w-3 text-danger-text" /> :
            <Eye className="h-3 w-3 text-muted-foreground" />}
         </div>
         <div className="flex-1 min-w-0">
@@ -299,7 +299,7 @@ function PatternCard({ pattern }: { pattern: PatternDisplay }) {
             {pattern.description}
           </p>
           {pattern.description.length > 80 && (
-            <button onClick={() => setExpanded(!expanded)} className="text-3xs text-primary hover:underline mt-0.5">
+            <button onClick={() => setExpanded(!expanded)} className="text-3xs text-primary-text hover:underline mt-0.5">
               {expanded ? 'Less' : 'More'}
             </button>
           )}

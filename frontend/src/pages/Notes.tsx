@@ -151,7 +151,7 @@ export default function NotesPage() {
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <StickyNote className="h-5 w-5 text-primary" />
+            <StickyNote className="h-5 w-5 text-primary-text" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-foreground tracking-tight">Notes</h1>
@@ -238,7 +238,7 @@ export default function NotesPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => navigate(`/projects/${projectId}/library`)}
-                        className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary-text hover:bg-primary/20 transition-colors"
                       >
                         <BookOpen className="h-3 w-3" />
                         {note.source_name}
@@ -269,7 +269,7 @@ export default function NotesPage() {
                   {/* Delete button */}
                   <button
                     onClick={() => setDeleteConfirmId(note.id)}
-                    className="shrink-0 flex items-center justify-center h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-danger/10 text-muted hover:text-danger"
+                    className="shrink-0 flex items-center justify-center h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-danger/10 text-muted hover:text-danger-text"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -306,7 +306,7 @@ export default function NotesPage() {
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
                   filterDocId === source.id
-                    ? 'bg-primary/20 text-primary border border-primary/30'
+                    ? 'bg-primary/20 text-primary-text border border-primary/30'
                     : 'bg-background text-muted border border-border hover:text-secondary hover:border-elevated',
                 )}
               >
@@ -323,7 +323,7 @@ export default function NotesPage() {
       {sources && sources.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Plus className="h-4 w-4 text-primary" />
+            <Plus className="h-4 w-4 text-primary-text" />
             <h3 className="text-sm font-medium text-foreground">Quick Add Note</h3>
           </div>
           {!quickAddDocId ? (

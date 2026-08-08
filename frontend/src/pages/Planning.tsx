@@ -30,7 +30,7 @@ function getWeekStart(date: Date): Date { const d = new Date(date); d.setDate(d.
 function formatDate(d: Date): string { return d.toISOString().split('T')[0]; }
 
 function InsightBadge({ label, value, good }: { label: string; value: string; good?: boolean }) {
-  return (<div className="flex items-center justify-between rounded-lg bg-background px-3 py-2"><span className="text-xs text-secondary">{label}</span><span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger')}>{value}</span></div>);
+  return (<div className="flex items-center justify-between rounded-lg bg-background px-3 py-2"><span className="text-xs text-secondary">{label}</span><span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger-text')}>{value}</span></div>);
 }
 
 export default function PlanningPage() {
@@ -93,14 +93,14 @@ export default function PlanningPage() {
   }
 
   if (isError) {
-    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Calendar className="h-6 w-6 text-danger" /></div><p className="text-sm font-medium text-foreground">Error loading planning data</p><Button variant="outline" size="sm" onClick={() => dashboard.refetch()}>Try Again</Button></div></div>);
+    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Calendar className="h-6 w-6 text-danger-text" /></div><p className="text-sm font-medium text-foreground">Error loading planning data</p><Button variant="outline" size="sm" onClick={() => dashboard.refetch()}>Try Again</Button></div></div>);
   }
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Calendar className="h-5 w-5 text-primary" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Calendar className="h-5 w-5 text-primary-text" /></div>
           <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Planning</h1><p className="text-sm text-muted mt-0.5">Trading operations hub</p></div>
         </div>
       </motion.div>
@@ -135,7 +135,7 @@ export default function PlanningPage() {
               return (
                 <button key={i} onClick={() => setSelectedDate(dateStr)}
                   className={cn('relative h-16 rounded-lg border p-1 text-left transition-all hover:border-primary/50', isSelected ? 'border-primary bg-primary/5' : 'border-border/50', isToday && 'ring-1 ring-primary/30', day.getMonth() !== currentMonth.getMonth() && 'opacity-40')}>
-                  <span className={cn('text-3xs font-medium', isToday ? 'text-primary' : 'text-foreground')}>{day.getDate()}</span>
+                  <span className={cn('text-3xs font-medium', isToday ? 'text-primary-text' : 'text-foreground')}>{day.getDate()}</span>
                 </button>
               );
             })}
@@ -194,7 +194,7 @@ export default function PlanningPage() {
                       <div className="flex items-center gap-2"><span className="text-xs text-foreground">{g.title}</span><Badge variant={g.priority === 'high' ? 'destructive' : g.priority === 'medium' ? 'warning' : 'default'} size="sm">{g.priority}</Badge></div>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" onClick={() => updateGoal.mutate({ goalId: g.id, data: { current_value: (g.current_value || 0) + 1 } })}><Plus className="h-3 w-3" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteGoal.mutate(g.id)}><Trash2 className="h-3 w-3 text-danger" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteGoal.mutate(g.id)}><Trash2 className="h-3 w-3 text-danger-text" /></Button>
                       </div>
                     </div>
                     <div className="flex items-center gap-2"><div className="h-1.5 flex-1 rounded-full bg-elevated"><div className="h-1.5 rounded-full bg-primary" style={{ width: `${progress}%` }} /></div><span className="text-3xs font-mono text-muted">{progress.toFixed(0)}%</span></div>
@@ -229,10 +229,10 @@ export default function PlanningPage() {
           {showCreateReminder && <CreateReminderFormSmall onSubmit={(data) => { createReminder.mutate(data); setShowCreateReminder(false); }} onCancel={() => setShowCreateReminder(false)} />}
           {reminderList.length > 0 ? reminderList.map((r: Reminder) => (
             <div key={r.id} className="flex items-center justify-between rounded-lg bg-background px-3 py-2 mb-1">
-              <div className="flex items-center gap-2"><button onClick={() => toggleReminder.mutate(r.id)}>{r.is_active ? <Bell className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4 text-muted" />}</button>
+              <div className="flex items-center gap-2"><button onClick={() => toggleReminder.mutate(r.id)}>{r.is_active ? <Bell className="h-4 w-4 text-primary-text" /> : <BellOff className="h-4 w-4 text-muted" />}</button>
                 <div><span className="text-xs text-foreground">{r.title}</span><p className="text-3xs text-muted">{r.reminder_time}</p></div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => deleteReminder.mutate(r.id)}><Trash2 className="h-3.5 w-3.5 text-danger" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => deleteReminder.mutate(r.id)}><Trash2 className="h-3.5 w-3.5 text-danger-text" /></Button>
             </div>
           )) : <p className="text-xs text-muted py-4 text-center">No reminders. Set reminders for market opens and reviews.</p>}
         </motion.div>

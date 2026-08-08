@@ -160,7 +160,7 @@ export default function StrategiesPage() {
                       </span>
                     )}
                     {strategy.tags?.slice(0, 3).map((tag) => (
-                      <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2 py-0.5 text-3xs font-medium text-primary">
+                      <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2 py-0.5 text-3xs font-medium text-primary-text">
                         {tag}
                       </span>
                     ))}

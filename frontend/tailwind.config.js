@@ -37,6 +37,7 @@ export default {
           hover: 'hsl(var(--primary-hover))',
           foreground: 'hsl(var(--primary-foreground))',
           muted: 'hsl(var(--primary-muted))',
+          text: 'hsl(var(--primary-text))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -51,6 +52,7 @@ export default {
           DEFAULT: 'hsl(var(--danger))',
           foreground: 'hsl(var(--danger-foreground))',
           muted: 'hsl(var(--danger-muted))',
+          text: 'hsl(var(--danger-text))',
         },
         warning: {
           DEFAULT: 'hsl(var(--warning))',

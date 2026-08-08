@@ -139,7 +139,7 @@ export default function PortfolioAnalyticsPage() {
                 <Card key={q.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => handleAskAI(q.question, q.id)}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-center mb-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
+                      <Sparkles className="h-5 w-5 text-primary-text" />
                     </div>
                     <p className="text-xs text-center text-foreground font-medium">{q.label}</p>
                     {aiLoading === q.id && <p className="text-xs text-center text-muted-foreground mt-1">Analyzing...</p>}
@@ -151,7 +151,7 @@ export default function PortfolioAnalyticsPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">
-                    <BrainCircuit className="h-4 w-4 text-primary" />
+                    <BrainCircuit className="h-4 w-4 text-primary-text" />
                     <CardTitle className="text-sm font-medium">AI Analysis Result</CardTitle>
                   </div>
                 </CardHeader>

@@ -27,7 +27,7 @@ const typeIcons: Record<string, any> = {
 
 const typeColors: Record<string, string> = {
   markdown: 'bg-muted text-muted-foreground',
-  chart: 'bg-primary/10 text-primary',
+  chart: 'bg-primary/10 text-primary-text',
   table: 'bg-info/10 text-info',
   code: 'bg-warning/10 text-warning',
   observation: 'bg-success/10 text-success',

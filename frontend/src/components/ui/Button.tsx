@@ -27,7 +27,7 @@ const buttonVariants = cva(
           'bg-success text-success-foreground shadow-sm hover:opacity-90',
         warning:
           'bg-warning text-warning-foreground shadow-sm hover:opacity-90',
-        link: 'text-primary underline-offset-4 hover:underline',
+        link: 'text-primary-text underline-offset-4 hover:underline',
       },
       size: {
         xs: 'h-7 rounded px-2.5 text-xs gap-1.5',

@@ -72,14 +72,14 @@ export function AITaskList({ projectId, className }: { projectId?: string; class
   return (
     <div className={cn('space-y-1', className)}>
       <div className="flex items-center gap-1.5 mb-1">
-        <Target className="h-3.5 w-3.5 text-primary" />
+        <Target className="h-3.5 w-3.5 text-primary-text" />
         <span className="text-2xs font-medium text-foreground">AI Tasks</span>
         <span className="text-3xs text-muted-foreground">({tasks.length})</span>
       </div>
       <AnimatePresence>
         {high.length > 0 && (
           <div>
-            <p className="text-3xs font-medium text-danger mb-0.5">Priority</p>
+            <p className="text-3xs font-medium text-danger-text mb-0.5">Priority</p>
             {high.map((t) => (<TaskRow key={t.id} task={t} onComplete={completeTask} />))}
           </div>
         )}

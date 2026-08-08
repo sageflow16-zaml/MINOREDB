@@ -21,7 +21,7 @@ const itemAnim = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 const statusColors: Record<string, string> = {
   completed: 'bg-success/10 text-success',
   failed: 'bg-destructive/10 text-destructive',
-  running: 'bg-primary/10 text-primary',
+  running: 'bg-primary/10 text-primary-text',
   pending: 'bg-muted text-muted-foreground',
   cancelled: 'bg-warning/10 text-warning',
 };
@@ -105,7 +105,7 @@ export default function AutomationDashboard() {
         <Link to={`/projects/${projectId}/automation/workflows`} className="block">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardContent className="flex items-center gap-3 py-4">
-              <div className="p-2 rounded-lg bg-primary/10"><Workflow className="w-5 h-5 text-primary" /></div>
+              <div className="p-2 rounded-lg bg-primary/10"><Workflow className="w-5 h-5 text-primary-text" /></div>
               <div><div className="font-medium">Workflows</div><div className="text-xs text-muted-foreground">Build & manage</div></div>
             </CardContent>
           </Card>
@@ -161,7 +161,7 @@ export default function AutomationDashboard() {
         <Link to={`/projects/${projectId}/automation/reports`} className="block">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardContent className="flex items-center gap-3 py-4">
-              <div className="p-2 rounded-lg bg-primary/10"><BarChart3 className="w-5 h-5 text-primary" /></div>
+              <div className="p-2 rounded-lg bg-primary/10"><BarChart3 className="w-5 h-5 text-primary-text" /></div>
               <div><div className="font-medium">Reports</div><div className="text-xs text-muted-foreground">Auto-generated</div></div>
             </CardContent>
           </Card>

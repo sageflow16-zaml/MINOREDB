@@ -78,7 +78,7 @@ export function TradeMemoryCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-              <Brain className="h-5 w-5 text-primary" />
+              <Brain className="h-5 w-5 text-primary-text" />
             </div>
             <div>
               <CardTitle className="text-sm font-semibold">
@@ -199,7 +199,7 @@ export function ResearchTaskCard({ step, tool, description, status, evidence_cou
   };
   return (
     <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/20">
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-3xs font-bold text-primary">
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-3xs font-bold text-primary-text">
         {step}
       </div>
       <div className="flex-1 min-w-0">

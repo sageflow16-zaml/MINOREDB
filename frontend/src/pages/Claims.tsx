@@ -38,7 +38,7 @@ export default function ClaimsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <FileText className="h-4 w-4 text-primary" />
+                      <FileText className="h-4 w-4 text-primary-text" />
                     </div>
                     <div className="min-w-0">
                       <CardTitle className="text-sm font-medium truncate">{row.id}</CardTitle>

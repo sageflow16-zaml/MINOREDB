@@ -104,7 +104,7 @@ export default function SourcesPage() {
   }
 
   if (error) {
-    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><FileText className="h-6 w-6 text-danger" /></div><p className="text-sm font-medium text-foreground">Error loading sources</p><Button variant="outline" size="sm" onClick={() => refetch()}>Try Again</Button></div></div>);
+    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><FileText className="h-6 w-6 text-danger-text" /></div><p className="text-sm font-medium text-foreground">Error loading sources</p><Button variant="outline" size="sm" onClick={() => refetch()}>Try Again</Button></div></div>);
   }
 
   if (!sources || sources.length === 0) {
@@ -139,7 +139,7 @@ export default function SourcesPage() {
           <div className="flex gap-1 flex-wrap">
             {allTags.slice(0, 6).map((tag: any) => (
               <button key={tag} onClick={() => setFilterTag(filterTag === tag ? null : tag)}
-                className={cn('rounded-full px-2.5 py-0.5 text-3xs font-medium transition-colors', filterTag === tag ? 'bg-primary/20 text-primary' : 'bg-background text-muted hover:text-secondary')}>{tag}</button>
+                className={cn('rounded-full px-2.5 py-0.5 text-3xs font-medium transition-colors', filterTag === tag ? 'bg-primary/20 text-primary-text' : 'bg-background text-muted hover:text-secondary')}>{tag}</button>
             ))}
           </div>
           <div
@@ -171,7 +171,7 @@ export default function SourcesPage() {
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" onClick={() => extractClaims.mutate(viewSource.id)}><Brain className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => detectConflicts.mutate(viewSource.id)}><AlertTriangle className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => { setDeleteId(viewSource.id); setViewSource(null); }}><Trash2 className="h-4 w-4 text-danger" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => { setDeleteId(viewSource.id); setViewSource(null); }}><Trash2 className="h-4 w-4 text-danger-text" /></Button>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto rounded-lg bg-background p-4">
@@ -197,7 +197,7 @@ export default function SourcesPage() {
             <DocumentIntelligencePanel projectId={projectId} documentId={viewSource.id} />
           ) : (
             <>
-              <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /><h3 className="text-xs font-medium text-foreground uppercase tracking-wider">AI Intelligence</h3></div>
+              <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary-text" /><h3 className="text-xs font-medium text-foreground uppercase tracking-wider">AI Intelligence</h3></div>
               <div className="flex flex-col items-center justify-center flex-1 text-center py-8">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-elevated"><Lightbulb className="h-5 w-5 text-muted" /></div>
                 <p className="text-sm text-secondary">Select a source</p>

@@ -26,7 +26,7 @@ export function AIPanel({ previewMode }: { previewMode?: boolean }) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-1 mb-2">
-          <Bot className="w-3.5 h-3.5 text-primary" />
+          <Bot className="w-3.5 h-3.5 text-primary-text" />
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI Analyst</h3>
         </div>
         <div className="flex flex-col items-center justify-center gap-3 py-6 px-4 border border-dashed border-border rounded-lg bg-muted/20 flex-1">
@@ -50,7 +50,7 @@ export function AIPanel({ previewMode }: { previewMode?: boolean }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1 mb-2">
-        <Bot className="w-3.5 h-3.5 text-primary" />
+        <Bot className="w-3.5 h-3.5 text-primary-text" />
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI Analyst</h3>
       </div>
       {isLoading ? (

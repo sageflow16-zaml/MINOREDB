@@ -51,7 +51,7 @@ export function EvidencePanel({ items, title = 'Evidence', className, maxItems =
             <div className="border-t border-border px-3 py-2">
               <p className="text-xs text-muted-foreground">{item.content}</p>
               {item.sourceUrl && (
-                <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-primary-text hover:underline">
                   <ExternalLink className="h-3 w-3" /> View source
                 </a>
               )}

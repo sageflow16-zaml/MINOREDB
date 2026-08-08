@@ -194,7 +194,7 @@ export default function DecisionPage() {
             <Card>
               <CardContent className="py-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <Target className="h-3.5 w-3.5 text-primary" />
+                  <Target className="h-3.5 w-3.5 text-primary-text" />
                   <p className="text-xs text-muted-foreground">Market Alignment</p>
                 </div>
                 <p className="text-lg font-bold text-foreground">{ma?.score || 0}%</p>
@@ -203,7 +203,7 @@ export default function DecisionPage() {
             <Card>
               <CardContent className="py-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <Activity className="h-3.5 w-3.5 text-primary" />
+                  <Activity className="h-3.5 w-3.5 text-primary-text" />
                   <p className="text-xs text-muted-foreground">Similar Trades</p>
                 </div>
                 <p className="text-lg font-bold text-foreground">{String(sim?.matches_found || 0)}</p>

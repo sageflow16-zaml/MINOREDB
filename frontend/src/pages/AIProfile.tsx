@@ -55,7 +55,7 @@ export default function AIProfilePage() {
           <motion.div variants={item}>
             <div className="flex items-center gap-6 rounded-xl border border-border/50 bg-card p-6">
               <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-primary/10">
-                <span className="text-3xl font-bold text-primary">{data.overall_score?.toFixed(0) ?? '—'}</span>
+                <span className="text-3xl font-bold text-primary-text">{data.overall_score?.toFixed(0) ?? '—'}</span>
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold">Overall Score</h3>
@@ -235,7 +235,7 @@ export default function AIProfilePage() {
                     {(evaluations.data ?? []).slice(0, 5).map((ev: TradeEvaluation) => (
                       <div key={ev.id} className="flex items-center gap-4 rounded-lg border border-border/50 p-3">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                          <span className="text-sm font-bold text-primary">{ev.overall_quality?.toFixed(0) ?? '—'}</span>
+                          <span className="text-sm font-bold text-primary-text">{ev.overall_quality?.toFixed(0) ?? '—'}</span>
                         </div>
                         <div className="flex-1 grid grid-cols-4 gap-2 text-center text-xs">
                           <div><p className={`font-bold ${scoreColor(ev.strength_score ?? 0)}`}>{ev.strength_score?.toFixed(0) ?? '—'}</p><p className="text-muted-foreground">Strength</p></div>

@@ -16,7 +16,7 @@ const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { st
 const statusColors: Record<string, string> = {
   completed: 'bg-success/10 text-success',
   failed: 'bg-destructive/10 text-destructive',
-  running: 'bg-primary/10 text-primary',
+  running: 'bg-primary/10 text-primary-text',
   pending: 'bg-muted text-muted-foreground',
 };
 

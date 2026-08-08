@@ -45,7 +45,7 @@ export default function WorkflowList() {
 
   const columns = [
     { id: 'name', header: 'Name', accessor: (row: Record<string, unknown>) => (
-      <Link to={`/projects/${projectId}/automation/workflows/${row.id}`} className="font-medium hover:text-primary transition-colors">{row.name as string}</Link>
+      <Link to={`/projects/${projectId}/automation/workflows/${row.id}`} className="font-medium hover:text-primary-text transition-colors">{row.name as string}</Link>
     )},
     { id: 'status', header: 'Status', accessor: (row: Record<string, unknown>) => <Badge className={statusColors[row.status as string] || ''}>{row.status as string}</Badge> },
     { id: 'category', header: 'Category', accessor: (row: Record<string, unknown>) => row.category ? <Badge variant="info">{row.category as string}</Badge> : '-' },

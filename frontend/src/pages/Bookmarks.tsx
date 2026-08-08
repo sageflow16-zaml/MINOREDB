@@ -281,7 +281,7 @@ export default function BookmarksPage() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      <FileText className="h-4 w-4 shrink-0 text-primary-text" />
                       <span className="text-sm font-medium text-foreground truncate">
                         {group.sourceName}
                       </span>
@@ -319,7 +319,7 @@ export default function BookmarksPage() {
                             className="flex items-center gap-4 px-4 py-3 hover:bg-elevated transition-colors"
                           >
                             <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 text-primary font-bold text-sm shrink-0">
+                              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 text-primary-text font-bold text-sm shrink-0">
                                 {bookmark.page}
                               </div>
                               <div className="min-w-0 flex-1">

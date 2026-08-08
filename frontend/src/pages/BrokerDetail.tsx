@@ -29,7 +29,7 @@ const statusColors: Record<string, string> = {
 };
 
 const logLevelColors: Record<string, string> = {
-  info: 'text-primary',
+  info: 'text-primary-text',
   warning: 'text-warning',
   error: 'text-destructive',
   debug: 'text-muted-foreground',

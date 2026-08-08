@@ -40,7 +40,7 @@ const statusToBadgeVariant = (s: string) => {
 const statusToColor = (s: string) => {
   if (s === 'completed') return 'text-success';
   if (s === 'failed') return 'text-destructive';
-  if (s === 'running') return 'text-primary';
+  if (s === 'running') return 'text-primary-text';
   return 'text-warning';
 };
 
@@ -88,7 +88,7 @@ export default function IntelligenceDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-text">
               <Bot className="h-5 w-5" />
             </div>
             Intelligence OS
@@ -134,7 +134,7 @@ export default function IntelligenceDashboard() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bot className="h-4 w-4 text-primary" />
+            <Bot className="h-4 w-4 text-primary-text" />
             Agent Fleet
           </CardTitle>
         </CardHeader>
@@ -148,7 +148,7 @@ export default function IntelligenceDashboard() {
                   className="rounded-xl border border-border/60 bg-card p-4 hover:border-primary/30 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary-text">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="relative flex items-center justify-center">
@@ -210,7 +210,7 @@ export default function IntelligenceDashboard() {
                   return (
                     <div key={task.id} className="flex items-center justify-between rounded-lg border border-border/50 p-3 hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary-text">
                           <Icon className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
@@ -227,7 +227,7 @@ export default function IntelligenceDashboard() {
                         </Badge>
                         <button
                           onClick={() => runTask.mutate(task.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-primary-text hover:bg-primary/10 transition-all"
                           title="Run now"
                         >
                           <Play className="h-3.5 w-3.5" />
@@ -252,7 +252,7 @@ export default function IntelligenceDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Sparkles className="h-4 w-4 text-primary-text" />
               Create Task
             </CardTitle>
           </CardHeader>
@@ -263,6 +263,7 @@ export default function IntelligenceDashboard() {
                 onChange={setTaskFormAgent}
                 options={agents.map(a => ({ value: a.agent_name, label: a.display_name }))}
                 placeholder="Select agent..."
+                ariaLabel="Task agent"
               />
               <Select
                 value={taskFormType}
@@ -275,6 +276,7 @@ export default function IntelligenceDashboard() {
                   { value: 'learn', label: 'Learn' },
                   { value: 'generate', label: 'Generate' },
                 ]}
+                ariaLabel="Task type"
               />
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Title</label>
@@ -313,11 +315,12 @@ export default function IntelligenceDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
+              <Activity className="h-4 w-4 text-primary-text" />
               Recent Executions
             </div>
             <div className="flex items-center gap-2">
               <select
+                aria-label="Filter executions by agent"
                 value={selectedAgent}
                 onChange={(e) => setSelectedAgent(e.target.value)}
                 className="rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary/50"
@@ -342,7 +345,7 @@ export default function IntelligenceDashboard() {
                   const agent = agents.find(a => a.agent_name === row.agent_name);
                   return (
                     <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary-text">
                         <Icon className="h-3.5 w-3.5" />
                       </div>
                       <span className="text-sm font-medium">{agent?.display_name || row.agent_name}</span>
@@ -426,7 +429,7 @@ export default function IntelligenceDashboard() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Workflow className="h-4 w-4 text-primary" />
+            <Workflow className="h-4 w-4 text-primary-text" />
             Workflow Chains
           </CardTitle>
         </CardHeader>

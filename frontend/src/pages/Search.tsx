@@ -143,7 +143,7 @@ export default function SearchPage() {
                         <CardContent className="p-4">
                           <div className="flex items-start gap-3">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                              <Icon className="h-4 w-4 text-primary" />
+                              <Icon className="h-4 w-4 text-primary-text" />
                             </div>
                             <div className="min-w-0 flex-1 space-y-1.5">
                               <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function SearchPage() {
                                   </Badge>
                                 )}
                                 {(r as any).pnl != null && (
-                                  <span className={cn('text-3xs font-mono', (r as any).pnl >= 0 ? 'text-success' : 'text-danger')}>
+                                  <span className={cn('text-3xs font-mono', (r as any).pnl >= 0 ? 'text-success' : 'text-danger-text')}>
                                     {(r as any).pnl >= 0 ? '+' : ''}{Number((r as any).pnl).toFixed(2)}
                                   </span>
                                 )}

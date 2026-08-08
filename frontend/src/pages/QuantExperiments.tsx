@@ -22,7 +22,7 @@ const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { st
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   draft: { label: 'Draft', color: 'bg-muted text-muted-foreground border-border' },
-  running: { label: 'Running', color: 'bg-primary/10 text-primary border-primary/20' },
+  running: { label: 'Running', color: 'bg-primary/10 text-primary-text border-primary/20' },
   completed: { label: 'Completed', color: 'bg-success/10 text-success border-success/20' },
   failed: { label: 'Failed', color: 'bg-destructive/10 text-destructive border-destructive/20' },
   archived: { label: 'Archived', color: 'bg-muted text-muted-foreground border-border' },
@@ -127,7 +127,7 @@ export default function QuantExperiments() {
                 </div>
               </div>
               <Link to={`/projects/${projectId}/quant-research/experiments/${exp.id}`} className="block">
-                <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">{exp.name}</h3>
+                <h3 className="font-semibold mb-1 group-hover:text-primary-text transition-colors">{exp.name}</h3>
                 {exp.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{exp.description}</p>}
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                   {exp.hypothesis_status && (
@@ -140,7 +140,7 @@ export default function QuantExperiments() {
                   )}
                   <span>v{exp.version}</span>
                 </div>
-                <div className="mt-3 flex items-center gap-2 text-xs text-primary">
+                <div className="mt-3 flex items-center gap-2 text-xs text-primary-text">
                   <Eye className="w-3 h-3" /> View Details <ArrowRight className="w-3 h-3" />
                 </div>
               </Link>

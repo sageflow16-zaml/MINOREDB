@@ -80,7 +80,7 @@ export function WorkspaceToolbar() {
       <div className="flex items-center gap-1 border-r border-border pr-2">
         <button
           onClick={() => dispatch({ type: 'TOGGLE_FOCUS_MODE' })}
-          className={cn('p-1 rounded hover:bg-muted transition-colors', layout.focusMode && 'bg-muted text-primary')}
+          className={cn('p-1 rounded hover:bg-muted transition-colors', layout.focusMode && 'bg-muted text-primary-text')}
           title="Focus Mode"
         >
           <Focus className="w-4 h-4" />

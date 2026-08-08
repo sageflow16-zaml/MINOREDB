@@ -82,7 +82,7 @@ export default function Login() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium text-muted-foreground">Password</label>
-                <Link to="/forgot-password" className="text-3xs font-medium text-primary hover:text-primary/80 transition-colors">
+                <Link to="/forgot-password" className="text-3xs font-medium text-primary-text hover:text-primary-text/80 transition-colors">
                   Forgot?
                 </Link>
               </div>
@@ -115,7 +115,7 @@ export default function Login() {
           <div className="mt-6 text-center">
             <p className="text-xs text-muted-foreground">
               Don&apos;t have an account?{' '}
-              <Link to="/register" className="font-medium text-primary hover:text-primary/80 transition-colors">
+              <Link to="/register" className="font-medium text-primary-text hover:text-primary-text/80 transition-colors">
                 Create account
               </Link>
             </p>

@@ -156,9 +156,9 @@ export function DataTable<T>({
                         <span className="shrink-0">
                           {sortKey === col.accessor ? (
                             sortDir === 'asc' ? (
-                              <ArrowUp className="h-3 w-3 text-primary" />
+                              <ArrowUp className="h-3 w-3 text-primary-text" />
                             ) : (
-                              <ArrowDown className="h-3 w-3 text-primary" />
+                              <ArrowDown className="h-3 w-3 text-primary-text" />
                             )
                           ) : (
                             <ArrowUpDown className="h-3 w-3 opacity-20 group-hover:opacity-40" />

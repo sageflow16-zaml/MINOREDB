@@ -17,7 +17,7 @@ export function MarketContext({ previewMode }: { previewMode?: boolean }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1 mb-2">
-        <Globe className="w-3.5 h-3.5 text-primary" />
+        <Globe className="w-3.5 h-3.5 text-primary-text" />
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Research Context</h3>
       </div>
       {!projectId ? (

@@ -103,6 +103,7 @@ interface SelectProps {
   error?: boolean;
   disabled?: boolean;
   className?: string;
+  ariaLabel?: string;
 }
 
 export function Select({
@@ -113,10 +114,15 @@ export function Select({
   error,
   disabled,
   className,
+  ariaLabel,
 }: SelectProps) {
   return (
     <SelectRoot value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger error={error} className={className}>
+      <SelectTrigger
+        aria-label={ariaLabel ?? options.find((o) => o.value === value)?.label ?? placeholder}
+        error={error}
+        className={className}
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

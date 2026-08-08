@@ -25,10 +25,10 @@ const variantStyles = {
 };
 
 const iconContainerStyles = {
-  default: 'text-primary bg-primary-muted',
+  default: 'text-primary-text bg-primary-muted',
   success: 'text-success bg-success-muted',
   warning: 'text-warning bg-warning-muted',
-  danger: 'text-danger bg-danger-muted',
+  danger: 'text-danger-text bg-danger-muted',
   info: 'text-info bg-info-muted',
 };
 
@@ -59,12 +59,12 @@ export function KpiCard({ title, value, icon: Icon, trend, subtitle, onClick, va
                 trend.positive ? (
                   <TrendingUp className="h-3 w-3 text-success" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 text-danger" />
+                  <TrendingDown className="h-3 w-3 text-danger-text" />
                 )
               ) : null}
               <span className={cn(
                 'text-xs font-medium',
-                trend.positive ? 'text-success' : trend.positive === false ? 'text-danger' : 'text-muted'
+                trend.positive ? 'text-success' : trend.positive === false ? 'text-danger-text' : 'text-muted'
               )}>
                 {trend.value > 0 ? '+' : ''}{trend.value}%
               </span>

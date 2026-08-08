@@ -94,7 +94,7 @@ export default function MarketTimelinePage() {
           {EVENT_TYPES.map((t) => (
             <button key={t} onClick={() => setEventType(t)}
               className={cn('px-3 py-1.5 text-xs font-medium capitalize transition-colors border-b-2 -mb-px',
-                eventType === t ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+                eventType === t ? 'border-primary text-primary-text' : 'border-transparent text-muted-foreground hover:text-foreground'
               )}>{t}</button>
           ))}
         </div>
@@ -111,7 +111,7 @@ export default function MarketTimelinePage() {
           <motion.div key={date} variants={item}>
             <div className="flex items-center gap-3 mb-3">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Calendar className="h-4 w-4 text-primary" />
+                <Calendar className="h-4 w-4 text-primary-text" />
               </div>
               <h3 className="text-sm font-semibold text-foreground">{date}</h3>
               <span className="text-xs text-muted-foreground">{dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}</span>

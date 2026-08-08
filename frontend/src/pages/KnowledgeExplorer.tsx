@@ -123,7 +123,7 @@ export default function KnowledgeExplorerPage() {
                     {graphData.edges.map((edge, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span className="font-mono">{edge.source.split(':')[1]?.slice(0, 8)}</span>
-                        <span className="text-primary">→ {edge.relationship}</span>
+                        <span className="text-primary-text">→ {edge.relationship}</span>
                         <span className="font-mono">{edge.target.split(':')[1]?.slice(0, 8)}</span>
                         <span className="text-3xs">({(edge.strength * 100).toFixed(0)}%)</span>
                       </div>
@@ -147,7 +147,7 @@ export default function KnowledgeExplorerPage() {
                   {linksData.map((link: KnowledgeLink) => (
                     <div key={link.id} className="flex items-center gap-2 rounded-lg border border-border/50 p-2 text-xs">
                       <Badge variant="outline" className="text-3xs shrink-0">{link.source_type}</Badge>
-                      <span className="text-primary shrink-0">→ {link.relationship}</span>
+                      <span className="text-primary-text shrink-0">→ {link.relationship}</span>
                       <Badge variant="outline" className="text-3xs shrink-0">{link.target_type}</Badge>
                       <Button size="sm" variant="ghost" className="ml-auto shrink-0 h-6 w-6 p-0" onClick={() => deleteLink.mutate(link.id)}>
                         <Trash2 className="h-3 w-3" />

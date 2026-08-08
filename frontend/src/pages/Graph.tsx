@@ -259,7 +259,7 @@ export default function GraphPage() {
     <div className="p-6 md:p-8 space-y-4 max-w-screen-2xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Network className="h-5 w-5 text-primary" /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10"><Network className="h-5 w-5 text-primary-text" /></div>
           <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Knowledge Graph</h1>
           <p className="text-sm text-muted mt-0.5">{nodes.length} concepts, {edges.length} relationships</p></div>
         </div>

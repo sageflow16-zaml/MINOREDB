@@ -364,6 +364,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
         {!collapsed && (
           <div className="px-3 pt-3 pb-1 shrink-0">
             <select
+              aria-label="Select project"
               value={projectId || ''}
               onChange={(e) => handleProjectChange(e.target.value)}
               className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-xs text-secondary outline-none focus:border-primary/50 transition-colors appearance-none cursor-pointer"
@@ -437,7 +438,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                                 cn(
                                   'relative flex h-9 w-9 items-center justify-center rounded transition-all',
                                   active
-                                    ? 'bg-primary/15 text-primary'
+                                    ? 'bg-primary/15 text-primary-text'
                                     : 'text-muted hover:bg-surface hover:text-secondary'
                                 )
                               }
@@ -503,7 +504,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                                       <Icon className="h-3.5 w-3.5 shrink-0 ml-1" aria-hidden="true" />
                                       <span className="truncate flex-1">{item.name}</span>
                                       {item.badge && (
-                                        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-3xs font-medium text-primary">
+                                        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-3xs font-medium text-primary-text">
                                           {item.badge}
                                         </span>
                                       )}
@@ -556,14 +557,14 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
               >
                 <Search className="h-3.5 w-3.5" />
               </button>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-3xs font-bold" title={displayName}>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary-text text-3xs font-bold" title={displayName}>
                 {initials}
               </div>
             </>
           ) : (
             <div className="flex items-center gap-2.5 rounded px-2 py-1.5 hover:bg-surface transition-colors group cursor-pointer">
               <Avatar className="h-7 w-7 shrink-0 ring-2 ring-border">
-                <AvatarFallback className="bg-primary/20 text-primary text-3xs font-bold">
+                <AvatarFallback className="bg-primary/20 text-primary-text text-3xs font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -574,7 +575,7 @@ export const Sidebar = React.memo(({ open, onClose }: SidebarProps) => {
                 </p>
               </div>
               <button
-                className="text-muted hover:text-danger transition-colors opacity-0 group-hover:opacity-100"
+                className="text-muted hover:text-danger-text transition-colors opacity-0 group-hover:opacity-100"
                 aria-label="Logout"
                 onClick={(e) => {
                   e.stopPropagation();

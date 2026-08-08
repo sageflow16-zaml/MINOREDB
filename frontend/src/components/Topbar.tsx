@@ -139,22 +139,22 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => go('trades')}>
-              <Plus className="mr-2 h-4 w-4 text-primary" />
+              <Plus className="mr-2 h-4 w-4 text-primary-text" />
               New Trade
               <kbd className="ml-auto">T</kbd>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => go('dashboard')}>
-              <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
+              <LayoutDashboard className="mr-2 h-4 w-4 text-primary-text" />
               Dashboard
               <kbd className="ml-auto">D</kbd>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => go('learning')}>
-              <Notebook className="mr-2 h-4 w-4 text-primary" />
+              <Notebook className="mr-2 h-4 w-4 text-primary-text" />
               Journal
               <kbd className="ml-auto">G J</kbd>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => go('analyst')}>
-              <Sparkles className="mr-2 h-4 w-4 text-primary" />
+              <Sparkles className="mr-2 h-4 w-4 text-primary-text" />
               AI Analyst
               <kbd className="ml-auto">A</kbd>
             </DropdownMenuItem>
@@ -177,7 +177,7 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full ml-1">
               <Avatar className="h-7 w-7 ring-2 ring-border ring-offset-2 ring-offset-background">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                <AvatarFallback className="bg-primary/10 text-primary-text text-xs font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -206,7 +206,7 @@ export const Topbar = React.memo(({ onToggleSidebar, onCommandPalette }: TopbarP
               Keyboard Shortcuts
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-danger hover:text-danger hover:bg-danger/10 focus:bg-danger/10 focus:text-danger">
+            <DropdownMenuItem onClick={handleLogout} className="text-danger-text hover:text-danger-text hover:bg-danger/10 focus:bg-danger/10 focus:text-danger-text">
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

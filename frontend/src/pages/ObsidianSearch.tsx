@@ -59,7 +59,7 @@ export default function ObsidianSearchPage() {
               <motion.div key={`${r.result_type}-${r.id}`} variants={item}>
                 <Card className="cursor-pointer hover:border-primary/30 transition-colors">
                   <CardContent className="flex items-start gap-3 p-4">
-                    <Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <Icon className="h-5 w-5 text-primary-text shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-medium">{r.title}</h4>

@@ -85,7 +85,7 @@ export default function BrokerAnalyticsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" /> Fastest Execution
+              <Clock className="w-4 h-4 text-primary-text" /> Fastest Execution
             </CardTitle>
           </CardHeader>
           <CardContent>

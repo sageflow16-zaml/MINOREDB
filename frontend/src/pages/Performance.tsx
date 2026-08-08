@@ -38,19 +38,19 @@ function formatCurrency(value: number | undefined | null): string {
 const tooltipStyle = chartTooltipStyle.contentStyle;
 
 function MetricCard({ label, value, icon: Icon, accent, sub, trend }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string; trend?: { value: number; positive: boolean } }) {
-  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger', warning: 'text-warning' };
+  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger-text', warning: 'text-warning' };
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-2xs font-medium text-muted tracking-wide">{label}</p>
         <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accent === 'success' ? 'bg-success/10' : accent === 'danger' ? 'bg-danger/10' : 'bg-primary/10')}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger' : 'text-primary')} />
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger-text' : 'text-primary-text')} />
         </div>
       </div>
       <p className={cn('text-xl font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
       <div className="flex items-center gap-2 mt-1">
         {trend && (
-          <span className={cn('text-3xs font-medium flex items-center gap-0.5', trend.positive ? 'text-success' : 'text-danger')}>
+          <span className={cn('text-3xs font-medium flex items-center gap-0.5', trend.positive ? 'text-success' : 'text-danger-text')}>
             {trend.positive ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
             {trend.value}%
           </span>
@@ -65,7 +65,7 @@ function InsightBadge({ label, value, good }: { label: string; value: string; go
   return (
     <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
       <span className="text-xs text-secondary">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger')}>{value}</span>
+      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger-text')}>{value}</span>
     </div>
   );
 }
@@ -155,7 +155,7 @@ export default function PerformancePage() {
   }
 
   if (isError) {
-    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><TrendingUp className="h-6 w-6 text-danger" /></div><p className="text-sm font-medium text-foreground">Error loading performance</p><p className="text-xs text-muted">There was a problem fetching performance data.</p><Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button></div></div>);
+    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><TrendingUp className="h-6 w-6 text-danger-text" /></div><p className="text-sm font-medium text-foreground">Error loading performance</p><p className="text-xs text-muted">There was a problem fetching performance data.</p><Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button></div></div>);
   }
 
   const o = overview.data?.overview;
@@ -181,7 +181,7 @@ export default function PerformancePage() {
         <div><h1 className="text-xl font-semibold text-foreground tracking-tight">Performance</h1><p className="text-sm text-muted mt-0.5">Institutional performance reporting</p></div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-0.5">
-            {['1M', '3M', '6M', '1Y', 'All'].map((p) => (<button key={p} onClick={() => setDateRange(p)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', dateRange === p ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>))}
+            {['1M', '3M', '6M', '1Y', 'All'].map((p) => (<button key={p} onClick={() => setDateRange(p)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', dateRange === p ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{p}</button>))}
           </div>
           <Button variant="ghost" size="icon" onClick={exportCSV} aria-label="Export"><Download className="h-4 w-4" /></Button>
         </div>
@@ -204,7 +204,7 @@ export default function PerformancePage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2"><Wallet className="h-4 w-4 text-muted" /><h3 className="text-sm font-medium text-foreground">Equity Curve</h3></div>
           <div className="flex items-center gap-1">
-            {['1W', '1M', '3M', 'All'].map((p) => (<button key={p} onClick={() => setDateRange(p)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', dateRange === p ? 'bg-primary/10 text-primary' : 'text-muted hover:text-secondary')}>{p}</button>))}
+            {['1W', '1M', '3M', 'All'].map((p) => (<button key={p} onClick={() => setDateRange(p)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium transition-all', dateRange === p ? 'bg-primary/10 text-primary-text' : 'text-muted hover:text-secondary')}>{p}</button>))}
           </div>
         </div>
         <div className="h-72">
@@ -277,7 +277,7 @@ export default function PerformancePage() {
           {pairStats.length > 0 ? (
             <div className="space-y-1">
               {pairStats.slice(0, 8).map((p: any) => (
-                <div key={p.label} className="flex items-center justify-between rounded-md bg-background px-3 py-1.5"><span className="text-xs text-secondary">{p.label}</span><span className={cn('text-xs font-mono font-medium', p.pnl >= 0 ? 'text-success' : 'text-danger')}>{formatCurrency(p.pnl)}</span></div>
+                <div key={p.label} className="flex items-center justify-between rounded-md bg-background px-3 py-1.5"><span className="text-xs text-secondary">{p.label}</span><span className={cn('text-xs font-mono font-medium', p.pnl >= 0 ? 'text-success' : 'text-danger-text')}>{formatCurrency(p.pnl)}</span></div>
               ))}
             </div>
           ) : (<div className="flex h-44 items-center justify-center"><p className="text-xs text-muted">No symbol data</p></div>)}
@@ -289,7 +289,7 @@ export default function PerformancePage() {
           {strategyStats.length > 0 ? (
             <div className="space-y-1">
               {strategyStats.slice(0, 8).map((s: any) => (
-                <div key={s.label} className="flex items-center justify-between rounded-md bg-background px-3 py-1.5"><span className="text-xs text-secondary truncate flex-1">{s.label}</span><span className={cn('text-xs font-mono font-medium ml-2', s.winRate >= 50 ? 'text-success' : 'text-danger')}>{s.winRate}%</span></div>
+                <div key={s.label} className="flex items-center justify-between rounded-md bg-background px-3 py-1.5"><span className="text-xs text-secondary truncate flex-1">{s.label}</span><span className={cn('text-xs font-mono font-medium ml-2', s.winRate >= 50 ? 'text-success' : 'text-danger-text')}>{s.winRate}%</span></div>
               ))}
             </div>
           ) : (<div className="flex h-44 items-center justify-center"><p className="text-xs text-muted">No strategy data</p></div>)}
@@ -331,7 +331,7 @@ export default function PerformancePage() {
 
       {/* AI Summary */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24 }} className="rounded-xl border border-border bg-card p-5">
-        <div className="flex items-center gap-2 mb-4"><Sparkles className="h-4 w-4 text-primary" /><h3 className="text-sm font-medium text-foreground">Performance Summary</h3></div>
+        <div className="flex items-center gap-2 mb-4"><Sparkles className="h-4 w-4 text-primary-text" /><h3 className="text-sm font-medium text-foreground">Performance Summary</h3></div>
         <div className="rounded-lg bg-gradient-to-r from-primary/5 to-success/5 p-4">
           <p className="text-sm text-secondary leading-relaxed">
             {o.total_trades > 0
@@ -356,8 +356,8 @@ export default function PerformancePage() {
             data={trades.data.slice(0, 15)}
             columns={[
               { id: 'pair', header: 'Pair', accessor: (row: any) => row.pair || '-', width: '80px' },
-              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger')}>{row.direction || '-'}</span>), width: '40px' },
-              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger')}>{row.pnl >= 0 ? '+' : ''}${row.pnl.toFixed(2)}</span>) : '-', width: '100px' },
+              { id: 'direction', header: 'Dir', accessor: (row: any) => (<span className={cn(row.direction === 'BUY' ? 'text-success' : 'text-danger-text')}>{row.direction || '-'}</span>), width: '40px' },
+              { id: 'pnl', header: 'P&L', accessor: (row: any) => row.pnl != null ? (<span className={cn('font-medium font-mono', row.pnl >= 0 ? 'text-success' : 'text-danger-text')}>{row.pnl >= 0 ? '+' : ''}${row.pnl.toFixed(2)}</span>) : '-', width: '100px' },
               { id: 'rr', header: 'R:R', accessor: (row: any) => row.rr?.toFixed(2) ?? '-', width: '60px' },
               { id: 'session', header: 'Session', accessor: (row: any) => row.session || '-', width: '80px', hideOnMobile: true },
               { id: 'result', header: 'Result', accessor: (row: any) => row.result ? <Badge variant={row.result === 'WIN' ? 'success' : row.result === 'LOSS' ? 'destructive' : 'warning'} size="sm">{row.result}</Badge> : '-', width: '70px' },

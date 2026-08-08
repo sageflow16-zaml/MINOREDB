@@ -309,7 +309,7 @@ export default function StrategyDetailPage() {
             <ul className="space-y-1.5">
               {strategy.confirmation_rules.map((rule: string, i: number) => (
                 <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <span className="text-primary mt-0.5">•</span> {rule}
+                  <span className="text-primary-text mt-0.5">•</span> {rule}
                 </li>
               ))}
             </ul>
@@ -383,7 +383,7 @@ export default function StrategyDetailPage() {
             <h4 className="text-xs font-medium text-muted-foreground mb-2">Partial Close Rules</h4>
             <ul className="space-y-1">
               {strategy.partial_close_rules.map((r: string, i: number) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground"><span className="text-primary mt-0.5">•</span>{r}</li>
+                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground"><span className="text-primary-text mt-0.5">•</span>{r}</li>
               ))}
             </ul>
           </div>
@@ -393,7 +393,7 @@ export default function StrategyDetailPage() {
             <h4 className="text-xs font-medium text-muted-foreground mb-2">Trade Management Rules</h4>
             <ul className="space-y-1">
               {strategy.trade_management_rules.map((r: string, i: number) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground"><span className="text-primary mt-0.5">•</span>{r}</li>
+                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground"><span className="text-primary-text mt-0.5">•</span>{r}</li>
               ))}
             </ul>
           </div>
@@ -452,7 +452,7 @@ export default function StrategyDetailPage() {
                 <span className="text-xs font-medium text-muted-foreground">Discipline Rules</span>
                 <ul className="space-y-1 mt-1">
                   {strategy.discipline_rules.map((r: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground"><span className="text-primary mt-0.5">•</span>{r}</li>
+                    <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground"><span className="text-primary-text mt-0.5">•</span>{r}</li>
                   ))}
                 </ul>
               </div>
@@ -514,7 +514,7 @@ export default function StrategyDetailPage() {
         <Section title="Tags" delay={0.65}>
           <div className="flex flex-wrap gap-1.5">
             {strategy.tags.map((tag: string) => (
-              <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
+              <span key={tag} className="inline-flex items-center rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary-text">
                 {tag}
               </span>
             ))}
@@ -553,7 +553,7 @@ export default function StrategyDetailPage() {
             {strategy.change_log.map((entry: any, i: number) => (
               <div key={i} className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Layers className="h-3 w-3 text-primary" />
+                  <Layers className="h-3 w-3 text-primary-text" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

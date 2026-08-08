@@ -102,7 +102,7 @@ export function Watchlist() {
               }}
               className={cn(
                 'flex items-center justify-between px-2 py-1 rounded cursor-pointer transition-colors group',
-                isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50'
+                isActive ? 'bg-primary/10 text-primary-text' : 'hover:bg-muted/50'
               )}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -113,7 +113,7 @@ export function Watchlist() {
                   <Star className={cn('w-3 h-3', isFav ? 'text-warning fill-warning' : 'text-muted-foreground')} />
                 </button>
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className={cn('text-xs font-medium truncate', isActive && 'text-primary')}>
+                  <span className={cn('text-xs font-medium truncate', isActive && 'text-primary-text')}>
                     {item.symbol}
                   </span>
                   {cat && <span className="text-[9px] text-muted-foreground/50 px-1 rounded bg-muted/30 shrink-0">{cat.slice(0, 3)}</span>}

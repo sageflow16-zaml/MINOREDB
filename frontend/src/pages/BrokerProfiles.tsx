@@ -141,7 +141,7 @@ export default function BrokerProfilesPage() {
                     <div className="flex justify-between"><span className="text-muted-foreground">Commission</span><span className="text-foreground font-medium">{broker.commission_model.replace(/_/g, ' ')}</span></div>
                     {broker.spread_profile && <div className="flex justify-between"><span className="text-muted-foreground">Spread</span><span className="text-foreground font-medium">{broker.spread_profile}</span></div>}
                   </div>
-                  <button onClick={() => navigate(`/projects/${projectId}/portfolio/accounts?broker_id=${broker.id}`)} className="flex items-center gap-1 mt-3 text-xs text-primary hover:underline">
+                  <button onClick={() => navigate(`/projects/${projectId}/portfolio/accounts?broker_id=${broker.id}`)} className="flex items-center gap-1 mt-3 text-xs text-primary-text hover:underline">
                     <ExternalLink className="h-3 w-3" /> View Accounts
                   </button>
                 </CardContent>

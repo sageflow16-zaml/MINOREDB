@@ -186,7 +186,7 @@ export default function AccountListPage() {
               data={accounts}
               columns={[
                 { id: 'name', header: 'Name', accessor: (row: any) => (
-                  <button onClick={() => navigate(`/projects/${projectId}/portfolio/accounts/${row.id}`)} className="text-sm font-medium text-foreground hover:text-primary transition-colors">{row.name}</button>
+                  <button onClick={() => navigate(`/projects/${projectId}/portfolio/accounts/${row.id}`)} className="text-sm font-medium text-foreground hover:text-primary-text transition-colors">{row.name}</button>
                 ), width: '140px' },
                 { id: 'type', header: 'Type', accessor: (row: any) => (
                   <Badge className={cn('text-xs', typeColors[row.account_type])} size="sm">{row.account_type}</Badge>

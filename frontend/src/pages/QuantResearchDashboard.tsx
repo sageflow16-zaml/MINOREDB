@@ -22,7 +22,7 @@ const itemAnim = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
-  running: 'bg-primary/10 text-primary',
+  running: 'bg-primary/10 text-primary-text',
   completed: 'bg-success/10 text-success',
   failed: 'bg-destructive/10 text-destructive',
   archived: 'bg-muted text-muted-foreground',
@@ -33,7 +33,7 @@ const hypothesisStatusColors: Record<string, string> = {
   rejected: 'bg-destructive/10 text-destructive',
   inconclusive: 'bg-warning/10 text-warning',
   proposed: 'bg-muted text-muted-foreground',
-  testing: 'bg-primary/10 text-primary',
+  testing: 'bg-primary/10 text-primary-text',
 };
 
 export default function QuantResearchDashboard() {
@@ -239,7 +239,7 @@ export default function QuantResearchDashboard() {
               data={experiments}
               columns={[
                 { id: 'name', header: 'Name', accessor: (row: any) => (
-                  <Link to={`/projects/${projectId}/quant-research/experiments/${row.id}`} className="text-primary hover:underline font-medium">{row.name}</Link>
+                  <Link to={`/projects/${projectId}/quant-research/experiments/${row.id}`} className="text-primary-text hover:underline font-medium">{row.name}</Link>
                 )},
                 { id: 'status', header: 'Status', accessor: (row: any) => <Badge className={statusColors[row.status]}>{row.status}</Badge> },
                 { id: 'hypothesis_status', header: 'Hypothesis', accessor: (row: any) => row.hypothesis_status ? <Badge className={hypothesisStatusColors[row.hypothesis_status]}>{row.hypothesis_status}</Badge> : <span className="text-muted-foreground text-sm">—</span> },

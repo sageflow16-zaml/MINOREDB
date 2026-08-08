@@ -19,7 +19,7 @@ const categoryIcons: Record<string, typeof GitBranch> = {
 };
 
 const categoryColors: Record<string, string> = {
-  trading: 'text-primary', reporting: 'text-success', risk: 'text-warning', psychology: 'text-destructive', research: 'text-info',
+  trading: 'text-primary-text', reporting: 'text-success', risk: 'text-warning', psychology: 'text-destructive', research: 'text-info',
 };
 
 export default function AutomationTemplates() {

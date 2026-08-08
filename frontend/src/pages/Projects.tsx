@@ -141,7 +141,7 @@ export default function ProjectsPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                      <FolderKanban className="h-5 w-5 text-primary" />
+                      <FolderKanban className="h-5 w-5 text-primary-text" />
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
@@ -186,7 +186,7 @@ export default function ProjectsPage() {
                     <Badge variant="outline" size="sm">
                       {project.status || 'Active'}
                     </Badge>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary-text transition-colors" />
                   </div>
                 </CardContent>
               </Card>

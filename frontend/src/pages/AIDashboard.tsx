@@ -103,7 +103,7 @@ export default function AIDashboardPage() {
           <motion.div variants={item}>
             <div className="flex items-center gap-6 rounded-xl border border-border/50 bg-card p-6">
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
-                <span className="text-2xl font-bold text-primary">{data.overall_score?.toFixed(0) ?? '—'}</span>
+                <span className="text-2xl font-bold text-primary-text">{data.overall_score?.toFixed(0) ?? '—'}</span>
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Trader Score</h3>
@@ -396,7 +396,7 @@ export default function AIDashboardPage() {
                       rec.priority === 'critical' ? 'bg-destructive/10' : rec.priority === 'high' ? 'bg-warning/10' : 'bg-primary/10'
                     }`}>
                       <Target className={`h-5 w-5 ${
-                        rec.priority === 'critical' ? 'text-destructive' : rec.priority === 'high' ? 'text-warning' : 'text-primary'
+                        rec.priority === 'critical' ? 'text-destructive' : rec.priority === 'high' ? 'text-warning' : 'text-primary-text'
                       }`} />
                     </div>
                     <div className="flex-1 min-w-0">

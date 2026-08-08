@@ -49,7 +49,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
             {variant !== 'default' && (
               <div className={cn(
                 'flex h-10 w-10 shrink-0 items-center justify-center rounded',
-                variant === 'danger' ? 'bg-danger-muted text-danger' : 'bg-warning-muted text-warning'
+                variant === 'danger' ? 'bg-danger-muted text-danger-text' : 'bg-warning-muted text-warning'
               )}>
                 <AlertTriangle className="h-5 w-5" />
               </div>

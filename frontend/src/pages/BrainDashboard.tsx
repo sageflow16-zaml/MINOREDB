@@ -134,7 +134,7 @@ export default function BrainDashboardPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />Today's Intelligence
+                    <Sparkles className="h-4 w-4 text-primary-text" />Today's Intelligence
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -164,7 +164,7 @@ export default function BrainDashboardPage() {
                     <div className="space-y-2">
                       {data.today_intelligence.insights.map((ins, i) => (
                         <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <Brain className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+                          <Brain className="h-3.5 w-3.5 mt-0.5 text-primary-text shrink-0" />
                           {ins}
                         </div>
                       ))}
@@ -599,11 +599,11 @@ export default function BrainDashboardPage() {
 
                   {coaching.data.action_items && coaching.data.action_items.length > 0 && (
                     <div className="mt-4">
-                      <p className="text-xs font-medium text-primary mb-2">Action Items</p>
+                      <p className="text-xs font-medium text-primary-text mb-2">Action Items</p>
                       <div className="space-y-1">
                         {coaching.data.action_items.map((a, i) => (
                           <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Target className="h-3 w-3 text-primary shrink-0" />
+                            <Target className="h-3 w-3 text-primary-text shrink-0" />
                             <span>{a.action}</span>
                             <Badge variant={a.priority === 'high' ? 'destructive' : a.priority === 'medium' ? 'warning' : 'secondary'} className="text-3xs">{a.priority}</Badge>
                           </div>
@@ -771,7 +771,7 @@ export default function BrainDashboardPage() {
                   <div className="space-y-2">
                     {dna.data.raw_insights.map((ins, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Sparkles className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+                        <Sparkles className="h-3.5 w-3.5 mt-0.5 text-primary-text shrink-0" />
                         {ins}
                       </div>
                     ))}

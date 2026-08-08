@@ -14,7 +14,7 @@ import { Bell, Plus, Trash2, Check, CheckCheck, Send, Mail, MessageSquare, Setti
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 
 const typeColors: Record<string, string> = {
-  info: 'bg-primary/10 text-primary',
+  info: 'bg-primary/10 text-primary-text',
   warning: 'bg-warning/10 text-warning',
   success: 'bg-success/10 text-success',
   error: 'bg-destructive/10 text-destructive',

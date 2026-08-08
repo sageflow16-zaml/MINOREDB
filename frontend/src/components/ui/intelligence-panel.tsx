@@ -36,7 +36,7 @@ interface IntelligencePanelProps {
 function getConfidenceColor(confidence: number): string {
   if (confidence >= 70) return 'text-success bg-success/10 border-success/20';
   if (confidence >= 40) return 'text-warning bg-warning/10 border-warning/20';
-  return 'text-danger bg-danger/10 border-danger/20';
+  return 'text-danger-text bg-danger/10 border-danger/20';
 }
 
 function getTypeIcon(type: string) {
@@ -120,7 +120,7 @@ export function IntelligenceCard({ item, onDismiss, onAction }: {
               {item.description.length > 120 && (
                 <button
                   onClick={() => setExpanded(!expanded)}
-                  className="flex items-center gap-0.5 text-3xs text-primary mt-1 hover:underline"
+                  className="flex items-center gap-0.5 text-3xs text-primary-text mt-1 hover:underline"
                 >
                   {expanded ? 'Show less' : 'Show more'}
                   <ChevronDown className={cn('h-3 w-3 transition-transform', expanded && 'rotate-180')} />
@@ -132,7 +132,7 @@ export function IntelligenceCard({ item, onDismiss, onAction }: {
             <Button
               variant="ghost"
               size="xs"
-              className="mt-2 text-primary"
+              className="mt-2 text-primary-text"
               onClick={() => onAction(item)}
             >
               <Sparkles className="h-3 w-3 mr-1" /> Apply
@@ -154,7 +154,7 @@ export function IntelligencePanel({
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
         <div className="flex items-center gap-2">
-          {icon || <Brain className="h-4 w-4 text-primary" />}
+          {icon || <Brain className="h-4 w-4 text-primary-text" />}
           <CardTitle className="text-xs font-medium">{title}</CardTitle>
           {items.length > 0 && (
             <Badge variant="secondary" size="sm">{items.length}</Badge>
@@ -190,7 +190,7 @@ export function IntelligencePanel({
         )}
         {error && (
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <AlertTriangle className="h-6 w-6 text-danger mb-2" />
+            <AlertTriangle className="h-6 w-6 text-danger-text mb-2" />
             <p className="text-xs text-muted-foreground">{error}</p>
             {onRefresh && (
               <Button variant="outline" size="xs" className="mt-3" onClick={onRefresh}>
@@ -265,7 +265,7 @@ export function DocumentIntelligencePanel({ projectId, documentId, onRefresh }: 
     <Card>
       <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-primary" />
+          <FileText className="h-4 w-4 text-primary-text" />
           <CardTitle className="text-xs font-medium">Document Intelligence</CardTitle>
         </div>
         <Button variant="ghost" size="icon-xs" onClick={handleExtract} disabled={loading} aria-label="Extract intelligence">
@@ -285,7 +285,7 @@ export function DocumentIntelligencePanel({ projectId, documentId, onRefresh }: 
         )}
         {error && (
           <div className="flex flex-col items-center py-4 text-center">
-            <AlertTriangle className="h-5 w-5 text-danger mb-1" />
+            <AlertTriangle className="h-5 w-5 text-danger-text mb-1" />
             <p className="text-xs text-muted-foreground">{error}</p>
           </div>
         )}

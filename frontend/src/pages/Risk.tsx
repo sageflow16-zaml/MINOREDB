@@ -31,14 +31,14 @@ function formatCurrency(value: number | undefined | null): string {
 const tooltipStyle = chartTooltipStyle.contentStyle;
 
 function MetricCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
-  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger', warning: 'text-warning' };
+  const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger-text', warning: 'text-warning' };
   const accentBg = { default: 'bg-primary/10', success: 'bg-success/10', danger: 'bg-danger/10', warning: 'bg-warning/10' };
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-2xs font-medium text-muted tracking-wide">{label}</p>
         <div className={cn('flex h-7 w-7 items-center justify-center rounded-md', accentBg[accent || 'default'])}>
-          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger' : accent === 'warning' ? 'text-warning' : 'text-primary')} />
+          <Icon className={cn('h-3.5 w-3.5', accent === 'success' ? 'text-success' : accent === 'danger' ? 'text-danger-text' : accent === 'warning' ? 'text-warning' : 'text-primary-text')} />
         </div>
       </div>
       <p className={cn('text-xl font-bold font-mono tracking-tight', accentColors[accent || 'default'])}>{value}</p>
@@ -51,7 +51,7 @@ function InsightBadge({ label, value, good }: { label: string; value: string; go
   return (
     <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
       <span className="text-xs text-secondary">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger')}>{value}</span>
+      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger-text')}>{value}</span>
     </div>
   );
 }
@@ -155,10 +155,10 @@ function PositionSizeCalculator({ projectId }: { projectId: string }) {
           {[
             { label: 'Position Size', value: result.position_size.toLocaleString(), color: 'text-foreground' },
             { label: 'Lot Size', value: result.lot_size, color: 'text-foreground' },
-            { label: 'Dollar Risk', value: `-$${result.dollar_risk}`, color: 'text-danger' },
+            { label: 'Dollar Risk', value: `-$${result.dollar_risk}`, color: 'text-danger-text' },
             { label: 'Expected R:R', value: `${result.expected_rr}R`, color: result.expected_rr >= 1 ? 'text-success' : 'text-warning' },
             { label: 'Potential Profit', value: `+$${result.potential_profit}`, color: 'text-success' },
-            { label: 'Potential Loss', value: `-$${result.potential_loss}`, color: 'text-danger' },
+            { label: 'Potential Loss', value: `-$${result.potential_loss}`, color: 'text-danger-text' },
             { label: 'Stop Distance', value: `${result.stop_distance_pips} pips`, color: 'text-foreground' },
             { label: 'Risk/Pip', value: `$${result.risk_per_pip}`, color: 'text-foreground' },
           ].map((r) => (
@@ -207,8 +207,8 @@ function TradeValidator({ projectId }: { projectId: string }) {
       {result && (
         <div className={cn('rounded-xl border p-5', result.status === 'approved' ? 'border-success/50 bg-success/5' : result.status === 'warning' ? 'border-warning/50 bg-warning/5' : 'border-danger/50 bg-danger/5')}>
           <div className="flex items-center gap-3 mb-4">
-            {result.status === 'approved' ? <CheckCircle className="h-5 w-5 text-success" /> : result.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-warning" /> : <XCircle className="h-5 w-5 text-danger" />}
-            <span className={cn('text-sm font-medium capitalize', result.status === 'approved' ? 'text-success' : result.status === 'warning' ? 'text-warning' : 'text-danger')}>{result.status}</span>
+            {result.status === 'approved' ? <CheckCircle className="h-5 w-5 text-success" /> : result.status === 'warning' ? <AlertTriangle className="h-5 w-5 text-warning" /> : <XCircle className="h-5 w-5 text-danger-text" />}
+            <span className={cn('text-sm font-medium capitalize', result.status === 'approved' ? 'text-success' : result.status === 'warning' ? 'text-warning' : 'text-danger-text')}>{result.status}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             {result.risk_amount != null && <InsightBadge label="Risk Amount" value={`$${result.risk_amount}`} />}
@@ -219,7 +219,7 @@ function TradeValidator({ projectId }: { projectId: string }) {
           <div className="space-y-2">
             {result.checks.map((check, i) => (
               <div key={i} className="flex items-center gap-3 rounded-lg bg-background px-3 py-2">
-                {check.passed ? <CheckCircle className="h-4 w-4 text-success shrink-0" /> : check.severity === 'critical' ? <XCircle className="h-4 w-4 text-danger shrink-0" /> : <AlertTriangle className="h-4 w-4 text-warning shrink-0" />}
+                {check.passed ? <CheckCircle className="h-4 w-4 text-success shrink-0" /> : check.severity === 'critical' ? <XCircle className="h-4 w-4 text-danger-text shrink-0" /> : <AlertTriangle className="h-4 w-4 text-warning shrink-0" />}
                 <span className="text-xs text-secondary flex-1">{check.check_name}: {check.message}</span>
                 <Badge variant={check.passed ? 'success' : check.severity === 'critical' ? 'destructive' : 'warning'} size="sm">{check.passed ? 'Pass' : check.severity}</Badge>
               </div>
@@ -270,7 +270,7 @@ export default function RiskPage() {
   }
 
   if (isError) {
-    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Shield className="h-6 w-6 text-danger" /></div><p className="text-sm font-medium text-foreground">Error loading risk data</p><p className="text-xs text-muted">There was a problem fetching risk data.</p><Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button></div></div>);
+    return (<div className="flex h-[80vh] items-center justify-center"><div className="flex flex-col items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/10"><Shield className="h-6 w-6 text-danger-text" /></div><p className="text-sm font-medium text-foreground">Error loading risk data</p><p className="text-xs text-muted">There was a problem fetching risk data.</p><Button variant="outline" size="sm" onClick={handleRetry}>Try Again</Button></div></div>);
   }
 
   const d = dashboard.data;
@@ -314,7 +314,7 @@ export default function RiskPage() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <div className={cn('rounded-xl border p-4 flex items-center gap-4', (d.active_alerts ?? 0) > 0 ? 'border-danger/50 bg-danger/5' : 'border-warning/50 bg-warning/5')}>
             <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', (d.active_alerts ?? 0) > 0 ? 'bg-danger/10' : 'bg-warning/10')}>
-              {(d.active_alerts ?? 0) > 0 ? <AlertOctagon className="h-5 w-5 text-danger" /> : <AlertTriangle className="h-5 w-5 text-warning" />}
+              {(d.active_alerts ?? 0) > 0 ? <AlertOctagon className="h-5 w-5 text-danger-text" /> : <AlertTriangle className="h-5 w-5 text-warning" />}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">{(d.active_alerts ?? 0)} Active Alert{(d.active_alerts ?? 0) !== 1 ? 's' : ''} &bull; {(d.rule_violations ?? 0)} Rule Violation{(d.rule_violations ?? 0) !== 1 ? 's' : ''}</p>
@@ -410,7 +410,7 @@ export default function RiskPage() {
               <div key={rule.id} className="flex items-center justify-between rounded-lg bg-background px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', rule.severity === 'critical' ? 'bg-danger/10' : rule.severity === 'warning' ? 'bg-warning/10' : 'bg-primary/10')}>
-                    {rule.severity === 'critical' ? <Shield className="h-4 w-4 text-danger" /> : rule.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-warning" /> : <Info className="h-4 w-4 text-primary" />}
+                    {rule.severity === 'critical' ? <Shield className="h-4 w-4 text-danger-text" /> : rule.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-warning" /> : <Info className="h-4 w-4 text-primary-text" />}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">{rule.name}</p>
@@ -420,7 +420,7 @@ export default function RiskPage() {
                 <div className="flex items-center gap-2">
                   <Badge variant={rule.is_active ? 'success' : 'secondary'} size="sm">{rule.is_active ? 'Active' : 'Inactive'}</Badge>
                   {rule.violation_count > 0 && <Badge variant="warning" size="sm">{rule.violation_count} violations</Badge>}
-                  <Button variant="ghost" size="icon" onClick={() => deleteRule.mutate(rule.id)}><Trash2 className="h-4 w-4 text-danger" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => deleteRule.mutate(rule.id)}><Trash2 className="h-4 w-4 text-danger-text" /></Button>
                 </div>
               </div>
             ))}
@@ -437,7 +437,7 @@ export default function RiskPage() {
               <div key={alert.id} className={cn('flex items-center justify-between rounded-lg px-4 py-3', alert.severity === 'critical' ? 'bg-danger/5 border border-danger/20' : alert.severity === 'warning' ? 'bg-warning/5 border border-warning/20' : 'bg-background')}>
                 <div className="flex items-center gap-3">
                   <div className={cn('flex h-8 w-8 items-center justify-center rounded-md', alert.severity === 'critical' ? 'bg-danger/10' : alert.severity === 'warning' ? 'bg-warning/10' : 'bg-primary/10')}>
-                    {alert.severity === 'critical' ? <AlertOctagon className="h-4 w-4 text-danger" /> : alert.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-warning" /> : <Info className="h-4 w-4 text-primary" />}
+                    {alert.severity === 'critical' ? <AlertOctagon className="h-4 w-4 text-danger-text" /> : alert.severity === 'warning' ? <AlertTriangle className="h-4 w-4 text-warning" /> : <Info className="h-4 w-4 text-primary-text" />}
                   </div>
                   <div>
                     <p className="text-sm text-foreground">{alert.title}</p>
@@ -483,7 +483,7 @@ export default function RiskPage() {
               { id: 'rule', header: 'Rule', accessor: (row: RuleViolation) => row.rule_name, width: '120px' },
               { id: 'type', header: 'Type', accessor: (row: RuleViolation) => row.rule_type.replace(/_/g, ' '), width: '120px', hideOnMobile: true },
               { id: 'limit', header: 'Limit', accessor: (row: RuleViolation) => String(row.limit_value), width: '60px', hideOnMobile: true },
-              { id: 'actual', header: 'Actual', accessor: (row: RuleViolation) => (<span className="text-danger">{row.actual_value}</span>), width: '60px' },
+              { id: 'actual', header: 'Actual', accessor: (row: RuleViolation) => (<span className="text-danger-text">{row.actual_value}</span>), width: '60px' },
               { id: 'severity', header: 'Severity', accessor: (row: RuleViolation) => (<Badge variant={row.severity === 'critical' ? 'destructive' : 'warning'} size="sm">{row.severity}</Badge>), width: '80px' },
               { id: 'time', header: 'Time', accessor: (row: RuleViolation) => row.timestamp ? new Date(row.timestamp).toLocaleString() : '-', width: '140px', hideOnMobile: true },
             ]}

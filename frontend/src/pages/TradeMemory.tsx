@@ -40,7 +40,7 @@ export default function TradeMemoryPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Brain className="h-5 w-5 text-primary" />
+                      <Brain className="h-5 w-5 text-primary-text" />
                     </div>
                     <div>
                       <CardTitle className="text-sm font-semibold">

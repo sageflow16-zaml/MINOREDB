@@ -43,7 +43,7 @@ export function DrawingToolbar() {
             onClick={() => setActiveTool(activeTool === tool.type ? null : tool.type)}
             className={cn(
               'flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-lg border border-transparent hover:bg-muted/50 transition-colors',
-              activeTool === tool.type && 'border-primary/30 bg-primary/5 text-primary'
+              activeTool === tool.type && 'border-primary/30 bg-primary/5 text-primary-text'
             )}
             title={`${tool.label} (${tool.shortcut || 'N/A'})`}
           >

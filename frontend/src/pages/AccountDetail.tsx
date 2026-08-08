@@ -286,7 +286,7 @@ export default function AccountDetailPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-foreground">{note.title}</span>
-                          {note.pinned && <Pin className="h-3 w-3 text-primary" />}
+                          {note.pinned && <Pin className="h-3 w-3 text-primary-text" />}
                         </div>
                         {note.content && <p className="text-xs text-muted-foreground mt-1">{note.content}</p>}
                         <p className="text-xs text-muted-foreground mt-1">{new Date(note.created_at).toLocaleDateString()}</p>

@@ -144,7 +144,7 @@ export default function AnalystPage() {
                 >
                   <div className="text-center max-w-md">
                     <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      <Bot className="h-6 w-6 text-primary" />
+                      <Bot className="h-6 w-6 text-primary-text" />
                     </div>
                     <p className="text-sm font-medium text-foreground mb-1">Ask the AI Analyst anything</p>
                     <p className="text-xs text-muted-foreground mb-4">Examples: performance, patterns, risk analysis</p>
@@ -177,7 +177,7 @@ export default function AnalystPage() {
                         {msg.question}
                       </div>
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 mt-1">
-                        <User className="h-4 w-4 text-primary" />
+                        <User className="h-4 w-4 text-primary-text" />
                       </div>
                     </div>
                   </div>

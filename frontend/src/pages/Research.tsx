@@ -65,8 +65,8 @@ function getFileIcon(source: SourceRead | undefined | null) {
   const ext = name.split('.').pop()?.toLowerCase() || '';
   if (['csv', 'xls', 'xlsx'].includes(ext)) return <FileSpreadsheet className="h-3.5 w-3.5 text-success" />;
   if (['json'].includes(ext)) return <FileJson className="h-3.5 w-3.5 text-warning" />;
-  if (['pdf'].includes(ext)) return <FileText className="h-3.5 w-3.5 text-danger" />;
-  if (['txt', 'md'].includes(ext)) return <FileText className="h-3.5 w-3.5 text-primary" />;
+  if (['pdf'].includes(ext)) return <FileText className="h-3.5 w-3.5 text-danger-text" />;
+  if (['txt', 'md'].includes(ext)) return <FileText className="h-3.5 w-3.5 text-primary-text" />;
   return <File className="h-3.5 w-3.5 text-muted" />;
 }
 
@@ -94,7 +94,7 @@ function CitationBadge({ citation, onClick }: { citation: AICitation; onClick?: 
   return (
     <span
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-3xs font-medium text-primary border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
+      className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-3xs font-medium text-primary-text border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
     >
       <Bookmark className="h-2.5 w-2.5" />
       {citation.source_title || citation.source_type || 'Source'}
@@ -125,7 +125,7 @@ function FlashcardView({ flashcards }: FlashcardViewProps) {
                   <Badge variant="secondary" size="sm">{card.difficulty || 'Medium'}</Badge>
                 </div>
                 <p className="text-xs text-secondary leading-relaxed flex-1">{card.back}</p>
-                <p className="text-3xs text-primary mt-2">Tap to flip back</p>
+                <p className="text-3xs text-primary-text mt-2">Tap to flip back</p>
               </motion.div>
             ) : (
               <motion.div key="front" initial={{ opacity: 0, rotateY: -90 }} animate={{ opacity: 1, rotateY: 0 }} exit={{ opacity: 0, rotateY: 90 }} transition={{ duration: 0.2 }} className="flex flex-col h-full">
@@ -168,8 +168,8 @@ function QuizView({ questions }: QuizViewProps) {
                 <button key={oIdx} onClick={() => handleSelect(qIdx, oIdx)}
                   className={cn('w-full text-left rounded-lg border px-4 py-2.5 text-xs transition-all',
                     isSubmitted && oIdx === q.correct_index && 'border-success/40 bg-success/5 text-success',
-                    isSubmitted && oIdx === selected && oIdx !== q.correct_index && 'border-danger/40 bg-danger/5 text-danger',
-                    !isSubmitted && selected === oIdx && 'border-primary/40 bg-primary/5 text-primary',
+                    isSubmitted && oIdx === selected && oIdx !== q.correct_index && 'border-danger/40 bg-danger/5 text-danger-text',
+                    !isSubmitted && selected === oIdx && 'border-primary/40 bg-primary/5 text-primary-text',
                     !isSubmitted && selected !== oIdx && 'border-border text-secondary hover:border-secondary',
                     isSubmitted && oIdx !== selected && oIdx !== q.correct_index && 'border-border text-muted opacity-60',
                   )}
@@ -180,7 +180,7 @@ function QuizView({ questions }: QuizViewProps) {
               ))}
             </div>
             {isSubmitted ? (
-              <div className={cn('mt-3 rounded-lg p-3 text-xs', isCorrect ? 'bg-success/5 text-success border border-success/20' : 'bg-danger/5 text-danger border border-danger/20')}>
+              <div className={cn('mt-3 rounded-lg p-3 text-xs', isCorrect ? 'bg-success/5 text-success border border-success/20' : 'bg-danger/5 text-danger-text border border-danger/20')}>
                 <div className="flex items-center gap-1.5 mb-1 font-medium">
                   {isCorrect ? <CheckCircle className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
                   {isCorrect ? 'Correct!' : 'Incorrect'}
@@ -203,8 +203,8 @@ function ComparisonView({ comparison }: ComparisonViewProps) {
   const sections = [
     { title: 'Similarities', items: comparison.similarities, color: 'text-success', border: 'border-success/20', bg: 'bg-success/5' },
     { title: 'Differences', items: comparison.differences, color: 'text-warning', border: 'border-warning/20', bg: 'bg-warning/5' },
-    { title: 'Complementary Insights', items: comparison.complementary, color: 'text-primary', border: 'border-primary/20', bg: 'bg-primary/5' },
-    { title: 'Contradictions', items: comparison.contradictions, color: 'text-danger', border: 'border-danger/20', bg: 'bg-danger/5' },
+    { title: 'Complementary Insights', items: comparison.complementary, color: 'text-primary-text', border: 'border-primary/20', bg: 'bg-primary/5' },
+    { title: 'Contradictions', items: comparison.contradictions, color: 'text-danger-text', border: 'border-danger/20', bg: 'bg-danger/5' },
   ];
   return (
     <div className="space-y-4">
@@ -251,7 +251,7 @@ function StudyNotesView({ notes }: StudyNotesViewProps) {
       )}
       {notes.topics?.map((topic, tIdx) => (
         <div key={tIdx}>
-          <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5"><BookOpen className="h-4 w-4 text-primary" />{topic.topic}</h4>
+          <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5"><BookOpen className="h-4 w-4 text-primary-text" />{topic.topic}</h4>
           {topic.subtopics?.map((sub, sIdx) => (
             <div key={sIdx} className="ml-4 mt-3 rounded-lg border border-border bg-background p-3">
               <h5 className="text-xs font-medium text-foreground mb-1">{sub.subtopic}</h5>
@@ -270,7 +270,7 @@ function StudyNotesView({ notes }: StudyNotesViewProps) {
                 <div className="mt-2">
                   <p className="text-3xs font-medium text-muted mb-1 flex items-center gap-1"><Quote className="h-3 w-3" />Quotes</p>
                   {sub.quotes.map((q, qIdx) => (
-                    <p key={qIdx} className="text-2xs text-primary italic border-l-2 border-primary/30 pl-2 mt-1">&ldquo;{q}&rdquo;</p>
+                    <p key={qIdx} className="text-2xs text-primary-text italic border-l-2 border-primary/30 pl-2 mt-1">&ldquo;{q}&rdquo;</p>
                   ))}
                 </div>
               )}
@@ -579,15 +579,15 @@ export default function ResearchPage() {
             <div className="flex flex-col h-full w-[320px]">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <Library className="h-4 w-4 text-primary" />
+                  <Library className="h-4 w-4 text-primary-text" />
                   <span className="text-sm font-medium text-foreground">Library</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon-xs" onClick={() => fileInputRef.current?.click()}>
+                  <Button variant="ghost" size="icon-xs" aria-label="Upload document" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="h-4 w-4" />
                   </Button>
                   <input ref={fileInputRef} type="file" hidden accept=".txt,.pdf,.docx,.png,.jpg,.jpeg,.gif" onChange={handleFileSelect} />
-                  <Button variant="ghost" size="icon-xs" onClick={() => setSidebarOpen(false)}>
+                  <Button variant="ghost" size="icon-xs" aria-label="Close library panel" onClick={() => setSidebarOpen(false)}>
                     <PanelLeftClose className="h-4 w-4" />
                   </Button>
                 </div>
@@ -628,7 +628,7 @@ export default function ResearchPage() {
                           const isSelected = selectedDocIds.includes(s.id);
                           return (
                             <button key={s.id} onClick={() => toggleDocSelection(s.id)}
-                              className={cn('w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-all text-xs', isSelected ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-card hover:text-foreground')}
+                              className={cn('w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-all text-xs', isSelected ? 'bg-primary/10 text-primary-text' : 'text-secondary hover:bg-card hover:text-foreground')}
                             >
                               <div className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors', isSelected ? 'bg-primary border-primary' : 'border-border')}>
                                 {isSelected && <CheckCircle className="h-3 w-3 text-white" />}
@@ -660,7 +660,7 @@ export default function ResearchPage() {
                           <div key={rd.source_id || i}
                             className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-secondary bg-card/50"
                           >
-                            <FileText className="h-3 w-3 text-primary shrink-0" />
+                            <FileText className="h-3 w-3 text-primary-text shrink-0" />
                             <span className="truncate flex-1">{rd.title}</span>
                             <span className="shrink-0 text-3xs text-muted">{(rd.similarity * 100).toFixed(0)}%</span>
                           </div>
@@ -692,7 +692,7 @@ export default function ResearchPage() {
                           const docCount = meta?.document_ids?.length || 0;
                           return (
                             <button key={conv.id} onClick={() => loadConversation(conv.id)}
-                              className={cn('w-full flex items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-all', activeConversationId === conv.id ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-card')}
+                              className={cn('w-full flex items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-all', activeConversationId === conv.id ? 'bg-primary/10 text-primary-text' : 'text-secondary hover:bg-card')}
                             >
                               <MessageSquare className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                               <div className="min-w-0 flex-1">
@@ -745,7 +745,7 @@ export default function ResearchPage() {
             </Button>
           )}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Brain className="h-5 w-5 text-primary shrink-0" />
+            <Brain className="h-5 w-5 text-primary-text shrink-0" />
             <h1 className="text-sm font-semibold text-foreground">Research</h1>
             {selectedDocIds.length > 0 && (
               <Badge variant="secondary" size="sm">{selectedDocIds.length} selected</Badge>
@@ -782,7 +782,7 @@ export default function ResearchPage() {
                     className="flex flex-col items-center justify-center py-20 text-center"
                   >
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4">
-                      <Brain className="h-7 w-7 text-primary" />
+                      <Brain className="h-7 w-7 text-primary-text" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground mb-1">Research Chat</h2>
                     <p className="text-sm text-muted max-w-md">
@@ -805,13 +805,13 @@ export default function ResearchPage() {
                                 <Badge variant="outline" size="sm" className="text-3xs capitalize">{rec.category?.replace(/_/g, ' ')}</Badge>
                                 <Badge variant="secondary" size="sm" className={cn(
                                   'text-3xs',
-                                  rec.priority === 'high' ? 'text-danger' : rec.priority === 'medium' ? 'text-warning' : 'text-success'
+                                  rec.priority === 'high' ? 'text-danger-text' : rec.priority === 'medium' ? 'text-warning' : 'text-success'
                                 )}>{rec.priority}</Badge>
                               </div>
                               <p className="text-xs font-medium text-foreground">{rec.title}</p>
                               <p className="text-2xs text-secondary mt-1">{rec.description}</p>
                               <button onClick={() => setShowRecommendations(false)}
-                                className="text-3xs text-primary mt-1 hover:underline">Dismiss</button>
+                                className="text-3xs text-primary-text mt-1 hover:underline">Dismiss</button>
                             </div>
                           ))}
                         </div>
@@ -836,7 +836,7 @@ export default function ResearchPage() {
                     className="flex flex-col items-center justify-center py-12 text-center"
                   >
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4">
-                      <Brain className="h-7 w-7 text-primary" />
+                      <Brain className="h-7 w-7 text-primary-text" />
                     </div>
                     <h2 className="text-lg font-semibold text-foreground mb-1">Ready to Research</h2>
                     <p className="text-sm text-muted max-w-md mb-6">
@@ -866,7 +866,7 @@ export default function ResearchPage() {
                             ) : (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                  <Brain className="h-3.5 w-3.5 text-primary" />
+                                  <Brain className="h-3.5 w-3.5 text-primary-text" />
                                   <span className="text-3xs font-medium text-muted">Research AI</span>
                                   {msg.created_at && <span className="text-3xs text-muted">{formatDate(msg.created_at)}</span>}
                                 </div>
@@ -920,7 +920,7 @@ export default function ResearchPage() {
                 <div className="flex gap-2">
                   <Input value={message} onChange={e => setMessage(e.target.value)} onKeyDown={handleKeyDown}
                     placeholder="Ask about your documents..." disabled={isLoading} className="h-10 flex-1" />
-                  <Button onClick={() => handleSend()} disabled={!message.trim() || isLoading} isLoading={isLoading} size="icon">
+                  <Button aria-label="Send message" onClick={() => handleSend()} disabled={!message.trim() || isLoading} isLoading={isLoading} size="icon">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -931,7 +931,7 @@ export default function ResearchPage() {
           <div className="flex-1 p-4 max-w-4xl mx-auto w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <StickyNoteIcon className="h-4 w-4 text-primary" />
+                <StickyNoteIcon className="h-4 w-4 text-primary-text" />
                 Notes
               </h3>
               {selectedDocIds.length === 0 && <p className="text-3xs text-muted">Select a document to view notes</p>}
@@ -960,7 +960,7 @@ export default function ResearchPage() {
           <div className="flex-1 p-4 max-w-4xl mx-auto w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Bookmark className="h-4 w-4 text-primary" />
+                <Bookmark className="h-4 w-4 text-primary-text" />
                 Bookmarks
               </h3>
               {selectedDocIds.length === 0 && <p className="text-3xs text-muted">Select a document to view bookmarks</p>}
@@ -972,7 +972,7 @@ export default function ResearchPage() {
                 ) : (
                   bookmarksData.map((bm: any) => (
                     <div key={bm.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-                      <Bookmark className="h-4 w-4 text-primary shrink-0" />
+                      <Bookmark className="h-4 w-4 text-primary-text shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-secondary">{bm.label || `Page ${bm.page}`}</p>
                         {bm.page != null && <span className="text-3xs text-muted">p.{bm.page}</span>}
@@ -1001,7 +1001,7 @@ export default function ResearchPage() {
             <div className="flex flex-col h-full w-[440px]">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <FileText className="h-4 w-4 text-primary shrink-0" />
+                  <FileText className="h-4 w-4 text-primary-text shrink-0" />
                   <span className="text-sm font-medium text-foreground truncate">{viewerSource.sourceTitle}</span>
                   {viewerSource.page != null && (
                     <Badge variant="secondary" size="sm">p.{viewerSource.page}</Badge>
@@ -1067,7 +1067,7 @@ export default function ResearchPage() {
                           return (
                             <div key={i} className={cn('flex gap-2 text-xs leading-relaxed', isHighlighted ? 'bg-primary/10 rounded px-1 -mx-1' : '')}>
                               <span className="text-3xs text-muted w-6 text-right shrink-0 select-none">{lineNum}</span>
-                              <span className={cn(isHighlighted ? 'text-primary' : 'text-secondary')}>{line || '\u00A0'}</span>
+                              <span className={cn(isHighlighted ? 'text-primary-text' : 'text-secondary')}>{line || '\u00A0'}</span>
                             </div>
                           );
                         })}
@@ -1088,11 +1088,11 @@ export default function ResearchPage() {
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {activeModal === 'flashcards' && <BookOpen className="h-4 w-4 text-primary" />}
-              {activeModal === 'compare-docs' && <GitCompare className="h-4 w-4 text-primary" />}
-              {activeModal === 'confluences-tool' && <Network className="h-4 w-4 text-primary" />}
-              {activeModal === 'quiz' && <GraduationCap className="h-4 w-4 text-primary" />}
-              {activeModal === 'study-notes' && <StickyNote className="h-4 w-4 text-primary" />}
+              {activeModal === 'flashcards' && <BookOpen className="h-4 w-4 text-primary-text" />}
+              {activeModal === 'compare-docs' && <GitCompare className="h-4 w-4 text-primary-text" />}
+              {activeModal === 'confluences-tool' && <Network className="h-4 w-4 text-primary-text" />}
+              {activeModal === 'quiz' && <GraduationCap className="h-4 w-4 text-primary-text" />}
+              {activeModal === 'study-notes' && <StickyNote className="h-4 w-4 text-primary-text" />}
               {getToolTitle(activeModal)}
             </DialogTitle>
           </DialogHeader>
@@ -1104,7 +1104,7 @@ export default function ResearchPage() {
       <Dialog open={isToolRunning}>
         <DialogContent className="max-w-sm">
           <div className="flex flex-col items-center py-8">
-            <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+            <Loader2 className="h-8 w-8 text-primary-text animate-spin mb-4" />
             <p className="text-sm text-secondary">Processing your request...</p>
           </div>
         </DialogContent>
@@ -1139,7 +1139,7 @@ function ConfluencesView({ data }: { data: any }) {
       {confluences.map((item: any, i: number) => (
         <div key={i} className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Network className="h-4 w-4 text-primary" />
+            <Network className="h-4 w-4 text-primary-text" />
             <span className="text-xs font-medium text-foreground">{item.title || `Confluence ${i + 1}`}</span>
           </div>
           <p className="text-xs text-secondary leading-relaxed">{item.description || item.content || item.detail || ''}</p>
