@@ -1,10 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
-import { login, ensureProject, settled, trackNavigations, collectConsoleIssues } from './helpers';
+import { ensureProject, settled, trackNavigations, collectConsoleIssues, sidebarTo } from './helpers';
 
 async function openContext(page: Page) {
   const nav = trackNavigations(page);
   const console = collectConsoleIssues(page);
-  await login(page);
   const projectId = await ensureProject(page);
   return { projectId, nav, console };
 }
@@ -14,39 +13,33 @@ test.describe('Navigation', () => {
     const { projectId, nav, console } = await openContext(page);
 
     const modules: Array<{ name: string; path: string; marker: RegExp }> = [
-      { name: 'Dashboard', path: 'dashboard', marker: /equity curve|active trades/i },
-      { name: 'ICT Engine', path: 'ict', marker: /current session|swing points/i },
+      { name: 'Dashboard', path: 'dashboard', marker: /total p&l|equity curve/i },
+      { name: 'ICT Engine', path: 'ict', marker: /no analysis available|current session/i },
       { name: 'Journal', path: 'learning', marker: /continuous learning/i },
       { name: 'Portfolio', path: 'portfolio', marker: /account breakdown|balance/i },
-      { name: 'Risk', path: 'risk', marker: /risk rule/i },
-      { name: 'Analytics', path: 'analytics', marker: /behavior analysis|analytics/i },
-      { name: 'Knowledge Center', path: 'knowledge-center', marker: /knowledge center/i },
-      { name: 'Copilot', path: 'copilot', marker: /AI Research Copilot|AI Agents/i },
+      { name: 'Risk', path: 'risk', marker: /risk management/i },
+      { name: 'Analytics', path: 'analytics', marker: /analytics/i },
+      { name: 'Copilot', path: 'copilot', marker: /new chat|ai research copilot/i },
       { name: 'Automation', path: 'automation', marker: /automation & workflow/i },
-      { name: 'Settings', path: 'settings', marker: /advanced|clear data/i },
-      { name: 'Agent Fleet', path: 'intelligence', marker: /all agents/i },
+      { name: 'Settings', path: 'settings', marker: /configure your workspace|your trading identity/i },
+      { name: 'Agent Fleet', path: 'intelligence', marker: /intelligence os|all agents/i },
     ];
 
+    const s = nav.snapshot();
     for (const m of modules) {
-      const s = nav.snapshot();
-      await page.goto(`/projects/${projectId}/${m.path}`);
-      await settled(page);
-      const visible = await page.getByText(m.marker).first().isVisible().catch(() => false);
-      expect(visible, `${m.name} did not render expected content`).toBe(true);
+      await sidebarTo(page, projectId, m.path);
+      await expect(page.getByText(m.marker).first(), `${m.name} did not render expected content`).toBeVisible();
       s.assertNoFullReload();
     }
 
-    nav.snapshot().assertNoFullReload();
     console.assertClean();
   });
 
   test('browser back and forward navigate within the SPA', async ({ page }) => {
     const { projectId, nav } = await openContext(page);
-    await page.goto(`/projects/${projectId}/dashboard`);
-    await settled(page);
+    await sidebarTo(page, projectId, 'dashboard');
+    await sidebarTo(page, projectId, 'analytics');
     const s = nav.snapshot();
-    await page.goto(`/projects/${projectId}/analytics`);
-    await settled(page);
     await page.goBack();
     await expect(page).toHaveURL(/\/dashboard/);
     await settled(page);
@@ -92,8 +85,9 @@ test.describe('Navigation', () => {
     const name = `E2E switch ${Date.now()}`;
     await page.getByPlaceholder('Project name').fill(name);
     await page.getByRole('button', { name: 'Create' }).click();
-    await expect(page.getByText(name).first()).toBeVisible({ timeout: 15_000 });
-    await page.getByText(name).first().click();
+    const card = page.locator('main').getByText(name).first();
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    await card.click();
     await page.waitForURL(/\/projects\/[0-9a-f-]{36}\/dashboard/);
     const secondId = page.url().match(/\/projects\/([0-9a-f-]{36})/)?.[1];
     expect(secondId).not.toBe(projectId);

@@ -247,7 +247,7 @@ export const researchV3Service = {
       .eq('project_id', projectId)
       .order('updated_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     return data;
   },
 };

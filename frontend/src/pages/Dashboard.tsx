@@ -110,6 +110,36 @@ export default function DashboardPage() {
   const { data: rawEquityCurve } = useEquityCurve(projectId || '');
   const [equityPeriod, setEquityPeriod] = useState('1M');
 
+  const periodLimit: Record<string, number> = { '1W': 7, '1M': 30, '3M': 90, 'All': Infinity };
+  const limit = periodLimit[equityPeriod] ?? 30;
+  const equityData = useMemo(() => {
+    const curve = rawEquityCurve ?? [];
+    if (curve.length === 0) return [];
+    const sliced = limit === Infinity ? curve : curve.slice(-limit);
+    return sliced.map((p: any) => ({
+      day: p.date ? new Date(p.date).toLocaleDateString() : '',
+      value: p.equity,
+    }));
+  }, [rawEquityCurve, limit]);
+
+  const weeklyData = useMemo(() => {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    if (!trades.data || trades.data.length === 0) return dayNames.map(day => ({ day, pnl: 0 }));
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    weekStart.setHours(0, 0, 0, 0);
+    const dayPnls = [0, 0, 0, 0, 0, 0, 0];
+    trades.data.forEach((t: any) => {
+      const d = new Date(t.created_at);
+      if (d >= weekStart && t.pnl != null) {
+        const dayIdx = (d.getDay() + 6) % 7;
+        dayPnls[dayIdx] += t.pnl;
+      }
+    });
+    return dayNames.map((day, i) => ({ day, pnl: dayPnls[i] }));
+  }, [trades.data]);
+
   if (!projectId) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
@@ -174,36 +204,6 @@ export default function DashboardPage() {
   const winRate = s?.win_rate ?? 0;
   const session = getCurrentSession();
   const today = new Date();
-
-  const periodLimit: Record<string, number> = { '1W': 7, '1M': 30, '3M': 90, 'All': Infinity };
-  const limit = periodLimit[equityPeriod] ?? 30;
-  const equityData = useMemo(() => {
-    const curve = rawEquityCurve ?? [];
-    if (curve.length === 0) return [];
-    const sliced = limit === Infinity ? curve : curve.slice(-limit);
-    return sliced.map((p: any) => ({
-      day: p.date ? new Date(p.date).toLocaleDateString() : '',
-      value: p.equity,
-    }));
-  }, [rawEquityCurve, limit]);
-
-  const weeklyData = useMemo(() => {
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    if (!trades.data || trades.data.length === 0) return dayNames.map(day => ({ day, pnl: 0 }));
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    weekStart.setHours(0, 0, 0, 0);
-    const dayPnls = [0, 0, 0, 0, 0, 0, 0];
-    trades.data.forEach((t: any) => {
-      const d = new Date(t.created_at);
-      if (d >= weekStart && t.pnl != null) {
-        const dayIdx = (d.getDay() + 6) % 7;
-        dayPnls[dayIdx] += t.pnl;
-      }
-    });
-    return dayNames.map((day, i) => ({ day, pnl: dayPnls[i] }));
-  }, [trades.data]);
 
   const recentTrades = trades.data?.slice(0, 5) ?? [];
   const openTrades = trades.data?.filter((t: any) => t.status === 'OPEN') ?? [];

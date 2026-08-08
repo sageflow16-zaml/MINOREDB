@@ -1,5 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
-import { login, E2E_EMAIL, E2E_PASSWORD, collectConsoleIssues } from './helpers';
+import { test, expect } from '@playwright/test';
+import { login, E2E_EMAIL, collectConsoleIssues, forceSessionExpiry } from './helpers';
 
 test.describe('Authentication', () => {
   test('login with valid credentials', async ({ page }) => {
@@ -37,7 +37,10 @@ test.describe('Authentication', () => {
   test('forgot password form submits', async ({ page }) => {
     const console = collectConsoleIssues(page);
     await page.goto('/forgot-password');
-    await page.locator('input[type="email"]').fill(E2E_EMAIL);
+    // Supabase rejects the reserved .test TLD as an invalid email, so use a
+    // well-formed address — the form only requires a deliverable-format
+    // email to display the success state.
+    await page.locator('input[type="email"]').fill('e2e.placeholder@proton.me');
     await page.getByRole('button', { name: 'Send reset link' }).click();
     await expect(page.getByText(/we sent a password reset link/i)).toBeVisible({ timeout: 20_000 });
     console.assertClean();
@@ -49,15 +52,21 @@ test.describe('Authentication', () => {
   });
 
   test('expired session redirects to login', async ({ page }) => {
+    // Seed a stored session whose tokens can no longer be decoded/revalidated —
+    // supabase-js fails to refresh it, and the route guard must bounce to /login.
     const expired = {
-      currentSession: {
-        access_token: 'expired.jwt.token',
-        refresh_token: 'expired-refresh',
-        expires_at: Math.floor(Date.now() / 1000) - 60,
-      },
+      access_token: 'expired.jwt.token',
+      refresh_token: '',
+      expires_at: Math.floor(Date.now() / 1000) - 60,
+      token_type: 'bearer',
+      expires_in: 3600,
+      user: null,
     };
     await page.goto('/login');
-    await page.evaluate((p) => localStorage.setItem('supabase.auth.token', JSON.stringify(p)), expired);
+    await page.evaluate((p) => {
+      const key = Object.keys(localStorage).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
+      if (key) localStorage.setItem(key, JSON.stringify(p));
+    }, expired);
     await page.goto('/projects');
     await expect(page).toHaveURL(/\/login/, { timeout: 20_000 });
   });
@@ -68,14 +77,7 @@ test.describe('Authentication', () => {
     await page.route('**/auth/v1/token?grant_type=refresh_token*', (route) =>
       route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'invalid_grant' }) }),
     );
-    await page.evaluate(async () => {
-      const token = localStorage.getItem('supabase.auth.token');
-      if (token) {
-        const session = JSON.parse(token);
-        session.currentSession.expires_at = Math.floor(Date.now() / 1000) - 5;
-        localStorage.setItem('supabase.auth.token', JSON.stringify(session));
-      }
-    });
+    await forceSessionExpiry(page, -5);
     await page.reload();
     await expect(page).toHaveURL(/\/login/, { timeout: 25_000 });
   });
@@ -87,17 +89,9 @@ test.describe('Authentication', () => {
       refreshCalls += 1;
       await route.continue();
     });
-    await page.evaluate(async () => {
-      const token = localStorage.getItem('supabase.auth.token');
-      if (token) {
-        const session = JSON.parse(token);
-        // Push the session inside the 30s refresh safety window; the app
-        // should refresh in the background without any user-visible
-        // interruption.
-        session.currentSession.expires_at = Math.floor(Date.now() / 1000) + 20;
-        localStorage.setItem('supabase.auth.token', JSON.stringify(session));
-      }
-    });
+    // Push the session inside the 30s refresh safety window; the app should
+    // refresh in the background without any user-visible interruption.
+    await forceSessionExpiry(page, 20);
     await page.goto('/projects');
     await expect(page.getByText('Projects').first()).toBeVisible();
     await page.waitForTimeout(5_000);
@@ -108,8 +102,9 @@ test.describe('Authentication', () => {
   test('revoked session (401 on data + refresh) signs out to login', async ({ page }) => {
     await login(page);
     // Simulate server-side revocation: data calls 401 and the refresh token
-    // is rejected. supabase-js must emit SIGNED_OUT and the app must land on
-    // /login — never hang in an error loop.
+    // is rejected. The app must sign the user out and land on /login — never
+    // hang in an error loop.
+    await forceSessionExpiry(page, -5);
     await page.route('**/rest/v1/**', (route) =>
       route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ message: 'JWT expired' }) }),
     );

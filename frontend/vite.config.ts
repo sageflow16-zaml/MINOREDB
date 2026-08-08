@@ -47,8 +47,9 @@ export default defineConfig({
             if (id.includes('framer-motion')) return 'vendor-motion';
             if (id.includes('@radix-ui')) return 'vendor-radix';
             if (id.includes('reactflow') || id.includes('@xyflow') ||
-                id.includes('dagre') || id.includes('graphlib') || id.includes('lodash')) return 'vendor-flow';
-            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+                id.includes('dagre') || id.includes('graphlib') || id.includes('lodash') ||
+                id.includes('d3-')) return 'vendor-flow';
+            if (id.includes('recharts')) return 'vendor-charts';
             if (id.includes('lightweight-charts')) return 'vendor-lightweight';
             if (id.includes('react-router')) return 'vendor-router';
             if (id.includes('@supabase')) return 'vendor-supabase';

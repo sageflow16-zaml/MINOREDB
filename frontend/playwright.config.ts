@@ -18,8 +18,27 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'setup',
+      testMatch: /setup\.spec\.ts/,
+    },
+    {
       name: 'chromium',
+      testIgnore: /auth\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth-state.json' },
+      dependencies: ['setup'],
+      // A single serial worker avoids racing the shared persisted session
+      // (refresh-token rotation / Supabase auth rate limits) across parallel
+      // browser contexts during the module sweep.
+      workers: 1,
+    },
+    {
+      name: 'chromium-auth',
+      testMatch: /auth\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
+      // auth.spec mutates/revokes the shared E2E user's session (refresh-token
+      // rotation, forced expiry). Running it last keeps parallel workers from
+      // racing the persisted storageState session used by every other spec.
+      dependencies: ['chromium'],
     },
   ],
 });

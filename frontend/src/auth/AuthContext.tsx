@@ -49,7 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let activeSession = currentSession;
       if (currentSession && isSessionExpiredOrNearExpiry(currentSession.expires_at)) {
         const { data, error } = await supabase.auth.refreshSession();
-        if (!error && data.session) activeSession = data.session;
+        if (error) {
+          // Refresh failed (token revoked/expired or offline). Drop the
+          // session locally so route guards send the user to /login instead
+          // of trapping them in a dead state where every call silently 401s.
+          await supabase.auth.signOut({ scope: 'local' });
+          activeSession = null;
+        } else if (data.session) {
+          activeSession = data.session;
+        }
       }
       setSession(activeSession);
       if (activeSession?.user) {
