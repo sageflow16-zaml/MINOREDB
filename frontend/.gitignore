@@ -2,3 +2,6 @@
 .env*
 
 e2e/.auth-state.json
+
+e2e/perf-results.json
+e2e/loadtest-results.json

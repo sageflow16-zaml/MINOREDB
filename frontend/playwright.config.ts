@@ -23,7 +23,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      testIgnore: /auth\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|perf-webvitals\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth-state.json' },
       dependencies: ['setup'],
       // A single serial worker avoids racing the shared persisted session
@@ -39,6 +39,11 @@ export default defineConfig({
       // rotation, forced expiry). Running it last keeps parallel workers from
       // racing the persisted storageState session used by every other spec.
       dependencies: ['chromium'],
+    },
+    {
+      name: 'perf',
+      testMatch: /perf-.*\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });

@@ -56,6 +56,7 @@ export default defineConfig({
             if (id.includes('@sentry/')) return 'vendor-sentry';
             if (id.includes('pdfjs-dist') || id.includes('tesseract')) return 'vendor-ocr';
             if (id.includes('@tanstack/react-query')) return 'vendor-query';
+            if (id.includes('posthog-js')) return 'vendor-posthog';
             return 'vendor';
           }
           // Modules are grouped by source-layer, mirroring the dependency
