@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { motion } from 'framer-motion';
 import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import { usePortfolioDashboard } from '../hooks/usePortfolio';
 import { Badge } from '../components/ui/badge';
@@ -76,7 +75,16 @@ export default function PortfolioDashboardPage() {
             </div>
           ))}
         </div>
-        <Skeleton className="h-72 rounded-xl" />
+        <div className="rounded-xl border border-border bg-card p-5" style={{ minHeight: '368px' }}>
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-4 w-20" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-12" />
+            </div>
+          </div>
+          <Skeleton className="h-72 w-full" />
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-3">
@@ -84,6 +92,45 @@ export default function PortfolioDashboardPage() {
               <Skeleton className="h-6 w-20" />
             </div>
           ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="rounded-xl border border-border bg-card p-5" style={{ minHeight: '281px' }}>
+            <Skeleton className="h-4 w-20 mb-4" />
+            <Skeleton className="h-44 w-full" />
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5" style={{ minHeight: '281px' }}>
+            <Skeleton className="h-4 w-24 mb-4" />
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-lg bg-background p-3 space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3" style={{ minHeight: '292px' }}>
+          <Skeleton className="h-4 w-32" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3" style={{ minHeight: '204px' }}>
+            <Skeleton className="h-4 w-20" />
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3" style={{ minHeight: '204px' }}>
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-20 w-full" />
+          </div>
         </div>
       </div>
     );
@@ -124,7 +171,7 @@ export default function PortfolioDashboardPage() {
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-screen-2xl mx-auto">
       {/* Top Section — Title + Quick Stats */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground tracking-tight">Portfolio</h1>
           <p className="text-sm text-muted mt-0.5">Multi-account overview and performance</p>
@@ -140,10 +187,10 @@ export default function PortfolioDashboardPage() {
             <Download className="h-4 w-4" />
           </Button>
         </div>
-      </motion.div>
+      </div>
 
       {/* KPI Grid — 6 cards: Balance, Equity, Daily/Weekly/Monthly PnL, Drawdown */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatCard label="Total Balance" value={formatCurrency(summary.total_balance)} sub={`${summary.account_count} accounts`} />
         <StatCard label="Combined Equity" value={formatCurrency(summary.total_equity)} sub={summary.total_open_pnl ? `${formatCurrency(summary.total_open_pnl)} open P&L` : undefined} />
         <StatCard label="Daily P&L" value={formatCurrency(summary.daily_pnl)} accent={isDailyPnlPositive ? 'success' : 'danger'} />
@@ -154,10 +201,10 @@ export default function PortfolioDashboardPage() {
           value={formatPercent(summary.max_drawdown_pct)}
           accent={summary.max_drawdown_pct > 20 ? 'danger' : summary.max_drawdown_pct > 10 ? 'warning' : 'success'}
         />
-      </motion.div>
+      </div>
 
       {/* Large Equity Curve */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="rounded-xl border border-border bg-card p-5">
+      <div className="rounded-xl border border-border bg-card p-5" style={{ contain: 'layout', minHeight: '368px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-muted" />
@@ -174,27 +221,27 @@ export default function PortfolioDashboardPage() {
             </div>
           </div>
         </div>
-        <div className="h-72">
+        <div className="relative h-72 w-full" style={{ contain: 'layout' }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={equityData} {...chartDefaultProps}>
               <defs>
                 <linearGradient id="equityGradientPortfolio" x1="0" y1="0" x2="0" y2="1">
-<stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
-<stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-<XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
-<YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted))' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Area type="monotone" dataKey="equity" stroke="#4F46E5" strokeWidth={2} fill="url(#equityGradientPortfolio)" name="Equity" dot={false} activeDot={{ r: 4, fill: '#4F46E5' }} />
               <Area type="monotone" dataKey="balance" stroke="hsl(var(--success))" strokeWidth={1.5} fill="none" name="Balance" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </motion.div>
+      </div>
 
       {/* Four KPI Cards — Balance, Equity, Drawdown, Risk Exposure */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
@@ -241,19 +288,19 @@ export default function PortfolioDashboardPage() {
             Margin: {risk.margin_level?.toFixed(0)}% &middot; {risk.total_open_positions} positions
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Allocation + Performance Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Allocation */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-5" style={{ contain: 'layout' }}>
           <div className="flex items-center gap-2 mb-4">
             <PieChartIcon className="h-4 w-4 text-muted" />
             <h3 className="text-sm font-medium text-foreground">Allocation</h3>
           </div>
           {allocationData.length > 0 ? (
             <div className="flex items-center gap-6">
-              <div className="h-44 w-44 shrink-0">
+              <div className="relative h-44 w-44 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={allocationData} cx="50%" cy="50%" innerRadius={44} outerRadius={64} paddingAngle={3} dataKey="value">
@@ -286,10 +333,10 @@ export default function PortfolioDashboardPage() {
               <p className="text-xs text-muted mt-1">Set up allocations to see your portfolio breakdown.</p>
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Performance Stats */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }} className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-4">
             <Target className="h-4 w-4 text-muted" />
             <h3 className="text-sm font-medium text-foreground">Performance</h3>
@@ -312,11 +359,11 @@ export default function PortfolioDashboardPage() {
               <p className="text-sm font-bold font-mono text-foreground mt-1">{formatCurrency(summary.total_withdrawals)}</p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Account Breakdown Table */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="rounded-xl border border-border bg-card p-5">
+      <div className="rounded-xl border border-border bg-card p-5" style={{ contain: 'layout' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-muted" />
@@ -342,10 +389,10 @@ export default function PortfolioDashboardPage() {
           searchable={false}
           pageSize={10}
         />
-      </motion.div>
+      </div>
 
       {/* Recent Activity — Trades + Journal + Insights */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center gap-2 mb-3">
             <BookOpen className="h-4 w-4 text-muted" />
@@ -393,7 +440,7 @@ export default function PortfolioDashboardPage() {
             </Button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
