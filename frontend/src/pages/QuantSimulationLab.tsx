@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { KpiCard } from '../components/ui/KpiCard';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { ChartCard, AreaChartCard, BarChartCard } from '../components/charts/chart';
+import {ChartCard, BarChartCard} from '../components/charts/chart';
 import { cn } from '../lib/utils';
 import { useSimulations, useRunSimulation, useDeleteSimulation, useSimulation } from '../hooks/useQuantResearch';
 import {

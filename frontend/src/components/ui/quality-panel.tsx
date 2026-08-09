@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Bug, AlertTriangle, CheckCircle, XCircle, BarChart3, TrendingUp, Link2, Brain } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { getRatings, getAccuracyRate } from '../../lib/trust/feedback';
+import {getAccuracyRate} from '../../lib/trust/feedback';
 import { getAllMetrics, getHistory } from '../../lib/trust/history';
 
 interface QualityPanelProps {

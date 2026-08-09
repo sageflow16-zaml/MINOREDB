@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useClaims, useExtractConcepts, useInterpretClaim, useDeleteClaim } from '../hooks/useClaims';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardHeader, CardTitle} from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/badge';
+
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { FileText, ExternalLink, Trash2, Brain, RefreshCw } from 'lucide-react';

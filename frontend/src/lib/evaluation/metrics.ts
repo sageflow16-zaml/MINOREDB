@@ -1,4 +1,4 @@
-import type { MetricResult, BenchmarkResult, Scorecard } from './types';
+import {BenchmarkResult, Scorecard} from './types';
 
 export function aggregateMetrics(results: BenchmarkResult[]): Record<string, number> {
   const metricGroups: Record<string, { total: number; count: number }> = {};

@@ -9,13 +9,10 @@ import { Input } from '../components/ui/input';
 import { Select } from '../components/ui/select';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { Alert } from '../components/ui/alert';
+
 import { useStrategies, useDeleteStrategy, useDuplicateStrategy } from '../hooks/useStrategies';
-import {
-  BookOpen, Plus, Search, Trash2, Copy, Archive,
-  Eye, Layers, TrendingUp, Clock, Target,
-} from 'lucide-react';
-import { cn } from '../lib/utils';
+import {Plus, Search, Trash2, Copy, Layers} from 'lucide-react';
+
 
 const statusColors: Record<string, 'default' | 'success' | 'warning' | 'info' | 'destructive'> = {
   Draft: 'default',

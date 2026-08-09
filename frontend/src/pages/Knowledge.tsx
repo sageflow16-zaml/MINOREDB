@@ -7,11 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
 import { cn } from '../lib/utils';
-import {
-  Lightbulb, TrendingUp, TrendingDown, Target, Zap, Search,
-  Network, Tags, Link, Sparkles, ChevronDown, BookOpen,
-  CheckCircle, AlertTriangle, Layers,
-} from 'lucide-react';
+import {Lightbulb, TrendingUp, TrendingDown, Search, Network, Tags, Link, ChevronDown} from 'lucide-react';
 import type { KnowledgeRule } from '../api/types';
 
 function InsightBadge({ label, value, good }: { label: string; value: string; good?: boolean }) {

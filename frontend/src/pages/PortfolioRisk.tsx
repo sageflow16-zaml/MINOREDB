@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { PageLayout, PageSection } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Badge } from '../components/ui/badge';
+
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';

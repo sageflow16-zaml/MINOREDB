@@ -1,14 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useKnowledgeGraphData, useKnowledgeGraphSnapshot } from '../hooks/useKnowledgeGraph';
-import { knowledgeGraphService } from '../api/knowledgeGraph';
+
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/badge';
+
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { X } from 'lucide-react';
-import type { KnowledgeNode, KnowledgeEdge, GraphSnapshot } from '../api/types';
+import {KnowledgeNode, KnowledgeEdge} from '../api/types';
 
 const NODE_TYPES = [
   { value: '', label: 'All Types' },

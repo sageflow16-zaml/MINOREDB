@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useWorkflows, useCreateWorkflow, useDeleteWorkflow, useDuplicateWorkflow, useToggleWorkflow, useExecuteWorkflow } from '../hooks/useAutomation';
-import { Workflow, Play, Pause, Trash2, Copy, Eye, Plus, Search, ExternalLink } from 'lucide-react';
+import {Workflow, Play, Pause, Trash2, Copy, Eye, Plus, Search} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

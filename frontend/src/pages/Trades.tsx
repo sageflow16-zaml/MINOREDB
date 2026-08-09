@@ -15,7 +15,6 @@ import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedbac
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
 import { FormField, SectionLabel } from '../components/ui/form-field';
 import TradeImportDialog from '../components/TradeImportDialog';

@@ -1,5 +1,5 @@
 import type { RawIntelligenceData } from '../intelligence/types';
-import type { IntelligenceOutput } from '../intelligence/types';
+
 
 export type ScenarioCategory = 'scores' | 'dna' | 'patterns' | 'recommendations' | 'concepts' | 'confidence' | 'planning';
 

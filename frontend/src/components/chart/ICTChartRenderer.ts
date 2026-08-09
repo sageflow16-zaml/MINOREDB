@@ -1,4 +1,4 @@
-import type { IChartApi, ISeriesApi, Time } from 'lightweight-charts';
+import {IChartApi, ISeriesApi} from 'lightweight-charts';
 import type { ChartConfig, ICTOverlay } from '../workspace/types';
 
 export function renderICT(

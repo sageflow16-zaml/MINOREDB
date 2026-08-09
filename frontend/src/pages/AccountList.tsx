@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout, PageSection, PageGrid } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';

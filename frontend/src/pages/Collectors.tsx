@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useState } from 'react';
 import { Play, ToggleLeft, ToggleRight, AlertTriangle, Activity } from 'lucide-react';
-import { cn } from '../lib/utils';
+
 
 export default function CollectorsPage() {
   const { projectId } = useParams<{ projectId: string }>();

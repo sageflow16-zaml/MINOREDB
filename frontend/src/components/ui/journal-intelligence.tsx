@@ -1,9 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Brain, TrendingUp, TrendingDown, AlertTriangle, Target,
-  BookOpen, RefreshCw, Sparkles, Lightbulb, Eye, BarChart3,
-} from 'lucide-react';
+import {Brain, TrendingUp, TrendingDown, BookOpen, RefreshCw, Sparkles, Eye} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { Badge } from './badge';
 import { Button } from './Button';

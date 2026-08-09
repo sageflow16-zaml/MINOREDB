@@ -1,4 +1,4 @@
-import { useState } from 'react';
+
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
@@ -8,12 +8,8 @@ import { Button } from '../components/ui/Button';
 import { KpiCard } from '../components/ui/KpiCard';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { useAutomationDashboard, useWorkflows, useRules, useJobs, useNotifications, useUnreadCount } from '../hooks/useAutomation';
-import {
-  Workflow, GitBranch, Shield, Clock, Bell, Activity,
-  PlayCircle, CheckCircle2, XCircle, AlertTriangle, RefreshCw,
-  Settings, Zap, BarChart3, Bot,
-} from 'lucide-react';
+import {useAutomationDashboard, useWorkflows, useRules, useJobs, useNotifications} from '../hooks/useAutomation';
+import {Workflow, GitBranch, Shield, Clock, Bell, Activity, PlayCircle, Settings, Zap, BarChart3} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const itemAnim = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };

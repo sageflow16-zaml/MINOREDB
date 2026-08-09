@@ -2,17 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '../lib/animate';
-import {
-  LayoutDashboard, BarChart3,   BookOpen, BookTemplate, Brain, Database, Settings,
-  ChevronDown, Search, LogOut, PanelLeftClose, PanelLeft, Activity,
-  CandlestickChart, Sparkles, LineChart, Target, Network, Layers,
-  MessageSquare, AlertTriangle, Lightbulb, PieChart, Globe, Zap,
-  RefreshCw, Library, ScrollText, GraduationCap, Notebook, UserCircle2,
-  FolderOpen, FileText, Star, Clock, MoreHorizontal, Shield, Calendar, Bot, BookMarked,
-  Radar, Bell, Link2, FlaskConical, Beaker, Dices, Heart, History,
-  Workflow, GitBranch, BellRing, DollarSign, TrendingUp, Repeat, Briefcase,
-  Wifi, TestTube, ExternalLink, Monitor, Cpu,
-} from 'lucide-react';
+import {LayoutDashboard, BarChart3, BookOpen, BookTemplate, Brain, Database, Settings, ChevronDown, Search, LogOut, PanelLeftClose, PanelLeft, Activity, CandlestickChart, Sparkles, LineChart, Target, Network, Layers, Lightbulb, PieChart, Globe, Zap, RefreshCw, Library, ScrollText, Notebook, UserCircle2, FolderOpen, FileText, Star, Clock, Shield, Calendar, Bot, BookMarked, Radar, Bell, Link2, FlaskConical, Beaker, Dices, Heart, History, Workflow, GitBranch, BellRing, DollarSign, TrendingUp, Repeat, Briefcase, Wifi, TestTube, Monitor, Cpu} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 import { useProjects } from '../hooks/useProjects';

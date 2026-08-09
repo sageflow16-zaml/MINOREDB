@@ -1,5 +1,5 @@
 import { useStableQuery } from './useStableQuery';
-import { dashboardService, type DashboardStats } from '../api';
+import {dashboardService} from '../api';
 
 export const useDashboardStats = (projectId: string) => {
   return useStableQuery({

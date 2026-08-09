@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { eventBus, createEvent } from '../lib/ai/eventBus';
 import { aiMemory } from '../lib/ai/memory';

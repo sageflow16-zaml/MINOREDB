@@ -1,11 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { callEdgeFunction } from '../lib/edgeFunctions';
-import type {
-  QuantExperiment, BacktestRun, BacktestTrade, SimulationRun,
-  WalkForwardRun, OptimizationRun, EdgeHealthSnapshot,
-  ResearchNotebook, HypothesisTestResult, QuantDashboardData,
-  AISummaryResponse, AIImproveResponse, ExportResponse,
-} from './types';
+import {QuantExperiment, BacktestRun, BacktestTrade, SimulationRun, WalkForwardRun, OptimizationRun, EdgeHealthSnapshot, ResearchNotebook, HypothesisTestResult, QuantDashboardData, ExportResponse} from './types';
 
 export const quantResearchService = {
   // Dashboard

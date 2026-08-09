@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as brainApi from '../api/brain';
-import type { BrainAskRequest, BrainCoachingRequest, SimilaritySearchRequest, BrainMemoryCreate } from '../api/brain';
+import {BrainAskRequest, BrainCoachingRequest} from '../api/brain';
 
 // ── Keys ──
 const brainKeys = {

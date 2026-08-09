@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, EmptyState} from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
 import {
   useMarketAlerts, useCreateAlert, useReadAlert, useDismissAlert, useCheckNewsAlerts,
 } from '../hooks/useMarketIntelligence';
 import type { MarketAlert } from '../api/types';
-import { Bell, Plus, X, CheckCircle, Trash2, AlertTriangle, Clock, RefreshCw, Eye, BellOff } from 'lucide-react';
+import {Plus, X, Trash2, RefreshCw, Eye} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };

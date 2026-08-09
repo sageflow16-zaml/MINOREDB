@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type {
-  BrokerAccount, SyncHistoryRecord, BrokerLog, BrokerHealth, BrokerAnalytics,
-} from '../api/types';
+import {BrokerAccount, SyncHistoryRecord, BrokerLog} from '../api/types';
 import {
   useBrokerConnection, useBrokerAccounts, useSyncHistory,
   useSyncConnection, useSyncAccountTrades, useBrokerLogs,

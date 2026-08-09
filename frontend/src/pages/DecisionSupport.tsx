@@ -8,7 +8,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
+import {ErrorState} from '../components/ui/Feedback';
 import { useDecisionCurrent, useDecisionTrade, useDecisionHistory } from '../hooks/useDecision';
 import { BarChart3, TrendingUp, Target, Scale, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';

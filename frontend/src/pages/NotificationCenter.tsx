@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { DataTable } from '../components/ui/DataTable';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, EmptyState} from '../components/ui/Feedback';
 import { useNotifications, useSendNotification, useMarkNotificationRead, useMarkAllNotificationsRead, useUnreadCount, useChannels, useCreateChannel, useDeleteChannel, useVerifyChannel } from '../hooks/useAutomation';
 import { Bell, Plus, Trash2, Check, CheckCheck, Send, Mail, MessageSquare, Settings, Wifi, WifiOff } from 'lucide-react';
 

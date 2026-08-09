@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useReports, useCreateReport, useDeleteReport, useGenerateReport } from '../hooks/useAutomation';
-import { BarChart3, Plus, Trash2, Play, FileText, Calendar } from 'lucide-react';
+import {BarChart3, Plus, Trash2, Play, Calendar} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

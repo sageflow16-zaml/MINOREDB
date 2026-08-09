@@ -1,4 +1,4 @@
-import type { IntelligenceContext, UnifiedRecommendation, RecommendationProvider, RecommendationCategory, BehavioralPattern } from './types';
+import {IntelligenceContext, UnifiedRecommendation, RecommendationCategory, BehavioralPattern} from './types';
 
 const MEMORY_STORAGE_KEY = 'minore_completed_recommendations';
 const MAX_RECOMMENDATIONS = 10;

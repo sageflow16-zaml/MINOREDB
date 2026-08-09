@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import {describe, it, expect} from 'vitest';
 import { LoadingSpinner, ErrorState, EmptyState } from '../../components/ui/Feedback';
 
 describe('LoadingSpinner', () => {

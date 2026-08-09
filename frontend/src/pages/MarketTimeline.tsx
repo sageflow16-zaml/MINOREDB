@@ -2,16 +2,16 @@ import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, EmptyState} from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
 import {
   useTimeline, useCreateTimelineEvent, useAutoPopulateTimeline,
 } from '../hooks/useMarketIntelligence';
 import type { MarketTimelineEvent } from '../api/types';
-import { Clock, Plus, X, RefreshCw, Zap, Calendar } from 'lucide-react';
+import {Plus, X, RefreshCw, Calendar} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };

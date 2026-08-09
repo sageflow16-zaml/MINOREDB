@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { claimService, type GraphResponse } from '../api';
+import {claimService} from '../api';
 
 export const useGraphData = (projectId: string, claimId: string) => {
   return useQuery({

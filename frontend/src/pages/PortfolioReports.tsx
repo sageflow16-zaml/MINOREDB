@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { PageLayout, PageSection, PageGrid } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../components/ui/Card';
-import { Badge } from '../components/ui/badge';
+import {Card, CardContent, CardHeader, CardTitle} from '../components/ui/Card';
+
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/select';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, EmptyState} from '../components/ui/Feedback';
 import { usePortfolioReport, usePortfolioAskAI, useAccounts } from '../hooks/usePortfolio';
 import { FileText, Shield, PieChart, BarChart3, BrainCircuit, Sparkles, Download } from 'lucide-react';
 import { cn } from '../lib/utils';

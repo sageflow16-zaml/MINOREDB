@@ -1,8 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Sparkles, BookOpen, BarChart3, Target, FileText,
-  TrendingUp, Brain, X, ChevronRight,
-} from 'lucide-react';
+import {Sparkles, BookOpen, BarChart3, Target, FileText, TrendingUp, Brain, X} from 'lucide-react';
 import { useSmartRecommendations } from '../../hooks/useAIWorkflow';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/badge';

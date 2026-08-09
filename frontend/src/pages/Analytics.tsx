@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import {ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar, AreaChart, Area} from 'recharts';
 import { useFullStatistics, useEquityCurve, useStatisticsBySession, useStatisticsByWeekday, useMonthlyReturns, usePsychologyAnalytics } from '../hooks/useStatistics';
 import { useTrades } from '../hooks/useTrades';
 import { Badge } from '../components/ui/badge';

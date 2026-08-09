@@ -1,9 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Brain, FileText, BookOpen, BarChart3, Target, TrendingUp,
-  AlertTriangle, CheckCircle, Zap, Sparkles, Lightbulb,
-} from 'lucide-react';
+import {Brain, FileText, BookOpen, BarChart3, Target, TrendingUp, Zap, Sparkles, Lightbulb} from 'lucide-react';
 import { useMentorTimeline } from '../../hooks/useAIWorkflow';
 import { cn } from '../../lib/utils';
 import type { TimelineEntry } from '../../lib/ai/types';

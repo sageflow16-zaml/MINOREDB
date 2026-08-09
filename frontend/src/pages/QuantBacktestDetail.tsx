@@ -6,14 +6,11 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { KpiCard } from '../components/ui/KpiCard';
 import { DataTable } from '../components/ui/DataTable';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, ErrorState} from '../components/ui/Feedback';
 import { ChartCard, AreaChartCard, BarChartCard, PieChartCard } from '../components/charts/chart';
 import { cn } from '../lib/utils';
 import { useBacktest, useBacktestTrades, useEquityCurve, useBacktestMetrics } from '../hooks/useQuantResearch';
-import {
-  TrendingUp, BarChart3, Activity, DollarSign, Target,
-  Percent, Zap, ArrowLeft, Download, Brain,
-} from 'lucide-react';
+import {TrendingUp, BarChart3, Activity, DollarSign, Target, Percent, Zap, ArrowLeft} from 'lucide-react';
 import { BacktestIntelligencePanel } from '../components/ui/backtest-intelligence-panel';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };

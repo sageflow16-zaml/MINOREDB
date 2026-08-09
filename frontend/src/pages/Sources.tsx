@@ -12,11 +12,7 @@ import { DocumentIntelligencePanel } from '../components/ui/intelligence-panel';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
 import { extractTextFromFile } from '../lib/textExtraction';
-import {
-  Upload, FileText, Brain, AlertTriangle, Trash2, Search,
-  Bookmark, Layers, Link, CheckCircle, XCircle, Sparkles,
-  ChevronRight, File, Download, ExternalLink, Eye, Lightbulb,
-} from 'lucide-react';
+import {Upload, FileText, Brain, AlertTriangle, Trash2, Search, Sparkles, File, Lightbulb} from 'lucide-react';
 import type { SourceRead } from '../api/types';
 
 export default function SourcesPage() {

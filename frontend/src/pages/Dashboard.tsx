@@ -11,12 +11,7 @@ import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
-import {
-  TrendingUp, BarChart3, DollarSign, Activity,
-  BookOpen, Sparkles, Plus, Award,
-  Brain, Bot, ChevronRight, ArrowUpRight, ArrowDownRight,
-  CalendarDays, Network, Clock, Layers, Lightbulb,
-} from 'lucide-react';
+import {TrendingUp, BarChart3, DollarSign, Activity, BookOpen, Sparkles, Plus, Award, Brain, Bot, ChevronRight, ArrowUpRight, ArrowDownRight, CalendarDays, Network, Clock, Layers} from 'lucide-react';
 import { cn, safeToFixed } from '../lib/utils';
 
 function getGreeting() {

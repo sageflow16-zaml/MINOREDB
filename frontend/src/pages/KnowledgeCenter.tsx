@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent, CardHeader} from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { knowledgeService, type KnowledgeCategory, type KnowledgeConcept, type KnowledgeConceptDetail, type KnowledgeRelationship, type KnowledgeStats } from '../api/knowledge';
-import { BookOpen, Layers, ArrowLeft, Search, FileText, Network, Lightbulb, Sparkles, Library, ChevronRight } from 'lucide-react';
-import { cn } from '../lib/utils';
+import {Layers, ArrowLeft, Search, Network, Lightbulb, Library, ChevronRight} from 'lucide-react';
+
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };

@@ -14,10 +14,7 @@ import {
   useAddPlaybookStep, useUpdatePlaybookStep, useRemovePlaybookStep,
 } from '../hooks/usePlaybooks';
 import type { PlaybookStep } from '../api/types';
-import {
-  ArrowLeft, Trash2, Plus, GripVertical, Edit3, Check, X,
-  ListChecks, BookTemplate, Play, Target, Shield, Brain, FileText,
-} from 'lucide-react';
+import {ArrowLeft, Trash2, Plus, Edit3, Check, X, ListChecks, BookTemplate, Play, Target, Shield, Brain, FileText} from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const statusColors: Record<string, 'default' | 'success' | 'warning' | 'info' | 'destructive'> = {

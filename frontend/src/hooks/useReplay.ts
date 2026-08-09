@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStableQuery } from './useStableQuery';
-import { replayService, type ReplaySession, type ReplayWorkspaceState, type ReplayBookmark, type MarketCandle } from '../api/replay';
+import {replayService} from '../api/replay';
 
 export const useFetchCandles = (projectId: string) => {
   return useMutation({

@@ -1,8 +1,8 @@
 import { useRef, useCallback, type ReactNode } from 'react';
-import { GripHorizontal, Minus, Maximize2, X } from 'lucide-react';
+import {GripHorizontal, Minus, X} from 'lucide-react';
 import { useWorkspace } from './WorkspaceContext';
 import { cn } from '../../lib/utils';
-import type { PanelId, WorkspacePanel } from './types';
+import {WorkspacePanel} from './types';
 
 interface PanelProps {
   panel: WorkspacePanel;

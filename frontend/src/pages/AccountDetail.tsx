@@ -16,9 +16,7 @@ import {
   useBalanceHistory, useEquityHistory, useCheckRules,
 } from '../hooks/usePortfolio';
 import { portfolioService } from '../api/portfolio';
-import {
-  ArrowLeft, DollarSign, Wallet, TrendingUp, Shield, Activity, Plus, Trash2, Pin, PinOff, AlertTriangle,
-} from 'lucide-react';
+import {ArrowLeft, DollarSign, Wallet, TrendingUp, Shield, Activity, Plus, Trash2, Pin, AlertTriangle} from 'lucide-react';
 import { cn } from '../lib/utils';
 import { chartTooltipStyle } from '../lib/chart';
 

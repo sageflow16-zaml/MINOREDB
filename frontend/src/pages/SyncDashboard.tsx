@@ -7,8 +7,8 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import { KpiCard } from '../components/ui/KpiCard';
-import { useSyncDashboard, useSyncLogs, useConflicts, useResolveConflict } from '../hooks/useObsidian';
-import { RefreshCw, CheckCircle, AlertTriangle, Clock, ArrowRight, GitBranch, Activity } from 'lucide-react';
+import {useSyncDashboard, useResolveConflict} from '../hooks/useObsidian';
+import {CheckCircle, AlertTriangle, Clock, GitBranch, Activity} from 'lucide-react';
 import type { SyncLog, SyncConflict } from '../api/types';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };

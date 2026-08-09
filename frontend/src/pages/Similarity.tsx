@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { KpiCard } from '../components/ui/KpiCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {ErrorState, EmptyState} from '../components/ui/Feedback';
 import { DataTable } from '../components/ui/DataTable';
 import {
   useSimilarityCurrent, useSimilarityTrade, useSimilarityPattern, useSimilarityHistory,
 } from '../hooks/useSimilarity';
 import type { SimilarityResponse, SimilarityEnvironment } from '../api/types';
-import { TrendingUp, Target, BarChart3, Activity, Search, ArrowUpRight } from 'lucide-react';
+import {TrendingUp, Target, BarChart3, Activity, Search} from 'lucide-react';
 import { cn } from '../lib/utils';
 import { FormField } from '../components/ui/form-field';
 import { chartTooltipStyle } from '../lib/chart';

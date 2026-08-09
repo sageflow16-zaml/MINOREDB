@@ -12,11 +12,7 @@ import {
   useDetectPatterns, useAnalyzeProfile, useDismissInsight,
   useDismissRecommendation,
 } from '../hooks/useAIFoundation';
-import {
-  Sparkles, Brain, Target, Shield, TrendingUp, AlertTriangle,
-  RefreshCw, ChevronRight, CheckCircle, XCircle, Lightbulb,
-  BarChart3, Activity, BookOpen,
-} from 'lucide-react';
+import {Brain, Target, AlertTriangle, CheckCircle, XCircle, Lightbulb, BarChart3, Activity, BookOpen} from 'lucide-react';
 import type { AIInsight, AIRecommendation, DetectedPattern, CoachingSession } from '../api/types';
 
 type TabType = 'overview' | 'insights' | 'patterns' | 'coaching' | 'recommendations';

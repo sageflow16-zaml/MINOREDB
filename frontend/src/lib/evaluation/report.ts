@@ -1,5 +1,4 @@
 import type { BenchmarkResult, Scorecard, EvaluationHistoryEntry, FailureReport, AISelfReview } from './types';
-import { computeRecommendationPrecision, computePatternAccuracy, computeConfidenceCalibration, computeEvidenceCoverage, computeOverallIntelligenceScore } from './metrics';
 
 const HISTORY_KEY = 'minore_evaluation_history';
 

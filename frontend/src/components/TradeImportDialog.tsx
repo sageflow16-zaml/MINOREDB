@@ -6,7 +6,7 @@ import { Badge } from './ui/badge';
 import toast from 'react-hot-toast';
 import { useImportPreview, useConfirmImport, useImportHistory } from '../hooks/useTradeImportExport';
 import type { ImportPreview, ImportRow } from '../api/types';
-import type { ImportHistoryItem } from '../api/types';
+
 
 interface Props {
   projectId: string;

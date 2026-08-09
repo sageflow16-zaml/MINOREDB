@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from 'react';
+import {useRef, useEffect, useCallback} from 'react';
 import {
   createChart, CandlestickSeries, HistogramSeries,
   ColorType, type IChartApi, type ISeriesApi, type Time,

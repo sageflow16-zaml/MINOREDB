@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Lightbulb, ListChecks, ScrollText, BarChart3, ArrowRight, ExternalLink } from 'lucide-react';
+import {Lightbulb, ListChecks, ScrollText, BarChart3, ArrowRight} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 import { Badge } from './badge';

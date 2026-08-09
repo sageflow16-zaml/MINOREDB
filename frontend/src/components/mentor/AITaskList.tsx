@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Circle, Target, BookOpen, BarChart3, Brain, RefreshCw, Sparkles } from 'lucide-react';
+import {CheckCircle, Circle, Target, BookOpen, BarChart3, Brain, Sparkles} from 'lucide-react';
 import { useAITasks } from '../../hooks/useAIWorkflow';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/badge';

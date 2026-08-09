@@ -1,4 +1,4 @@
-import { useState } from 'react';
+
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
@@ -11,11 +11,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { cn } from '../lib/utils';
 import { useQuantDashboard, useExperiments, useCurrentEdgeHealth, useEdgeHealthSnapshots } from '../hooks/useQuantResearch';
 import { useBacktests } from '../hooks/useQuantResearch';
-import {
-  FlaskConical, Beaker, CheckCircle2, XCircle, Activity,
-  TrendingUp, BarChart3, Brain, AlertTriangle, Clock,
-  PlayCircle, FileText, GitBranch, ArrowRight,
-} from 'lucide-react';
+import {FlaskConical, Beaker, CheckCircle2, Activity, TrendingUp, BarChart3, Brain, AlertTriangle, Clock, PlayCircle, FileText} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const itemAnim = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };

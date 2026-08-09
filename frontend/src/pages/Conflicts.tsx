@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useConflicts, useDeleteConflict, useGenerateRQ } from '../hooks/useConflicts';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardHeader, CardTitle} from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { ConflictDrawer } from '../components/ConflictDrawer';

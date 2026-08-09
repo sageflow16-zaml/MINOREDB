@@ -9,12 +9,9 @@ import { Input } from '../components/ui/input';
 import { KpiCard } from '../components/ui/KpiCard';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
-import { cn } from '../lib/utils';
+
 import { useBacktests, useRunBacktest, useDeleteBacktest } from '../hooks/useQuantResearch';
-import {
-  Play, Trash2, TrendingUp, BarChart3, Activity,
-  DollarSign, Target, Percent, Zap,
-} from 'lucide-react';
+import {Play, BarChart3} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

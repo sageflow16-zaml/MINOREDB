@@ -6,13 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
-import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
+import {LoadingSpinner} from '../components/ui/Feedback';
 import { useWorkflow, useUpdateWorkflow, useExecuteWorkflow, useCreateWorkflow } from '../hooks/useAutomation';
-import {
-  Plus, Play, Save, Trash2, GripVertical, Workflow,
-  Bell, Clock, GitBranch, AlertTriangle, Zap, ArrowRight,
-  X, ChevronDown, ChevronUp,
-} from 'lucide-react';
+import {Plus, Play, Save, Trash2, GripVertical, Workflow, Clock, GitBranch, Zap, ArrowRight} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

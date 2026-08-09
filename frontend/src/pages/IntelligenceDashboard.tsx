@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  useAgentDashboard, useAgentTasks, useAgentExecutions, useAgentWorkflows,
-  useCreateAgentTask, useRunAgentTask, useCancelAgentTask, useRunAgentWorkflow,
-} from '../hooks/useAgents';
+import {useAgentDashboard, useCreateAgentTask, useRunAgentTask, useCancelAgentTask, useRunAgentWorkflow} from '../hooks/useAgents';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
 import { Badge } from '../components/ui/badge';
@@ -11,13 +8,9 @@ import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
 import { Select } from '../components/ui/select';
-import {
-  Bot, BarChart3, BookOpen, Brain, Target, Network, Eye, Sparkles,
-  Activity, Clock, CheckCircle, XCircle, TrendingUp, Database, Search,
-  Workflow, Layers, Play,
-} from 'lucide-react';
+import {Bot, BarChart3, BookOpen, Brain, Network, Eye, Sparkles, Activity, Clock, CheckCircle, XCircle, TrendingUp, Database, Search, Workflow, Layers, Play} from 'lucide-react';
 import { cn } from '../lib/utils';
-import type { AgentStatus, AgentExecution, AgentTask, AgentWorkflow } from '../api/types';
+import {AgentExecution, AgentWorkflow} from '../api/types';
 
 const agentIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   market_analyst: TrendingUp,

@@ -9,20 +9,9 @@ import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { PageLayout, PageHeader, fadeSlideUp } from '../components/ui/PageLayout';
-import { cn, formatDateTime, relativeTime } from '../lib/utils';
+import {cn, relativeTime} from '../lib/utils';
 import toast from 'react-hot-toast';
-import {
-  FileText,
-  Bookmark,
-  Trash2,
-  Search,
-  BookMarked,
-  Calendar,
-  ArrowUpRight,
-  X,
-  ExternalLink,
-  CornerDownRight,
-} from 'lucide-react';
+import {FileText, Bookmark, Trash2, Search, BookMarked, Calendar, X, ExternalLink, CornerDownRight} from 'lucide-react';
 import type { SourceRead } from '../api/types';
 
 interface BookmarkEntry {

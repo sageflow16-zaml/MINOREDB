@@ -11,7 +11,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ChartCard, LineChartCard } from '../components/charts/chart';
 import { useOptimizations, useRunOptimization } from '../hooks/useQuantResearch';
-import { Play, Trash2, Search, Grid3X3, Activity, Target } from 'lucide-react';
+import {Search, Grid3X3, Activity, Target} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

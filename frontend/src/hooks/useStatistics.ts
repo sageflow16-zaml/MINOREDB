@@ -1,5 +1,5 @@
 import { useStableQuery } from './useStableQuery';
-import { statisticsService, type StatisticsResponse, type EquityPoint, type DistributionData, type MonthlyReturn, type RollingStats, type WeeklyReturn, type YearlyReturn, type RiskAnalytics, type PsychologyAnalytics, type CalendarHeatmap, type ScatterData } from '../api';
+import {statisticsService} from '../api';
 
 export const useStatisticsOverview = (projectId: string) => {
   return useStableQuery({

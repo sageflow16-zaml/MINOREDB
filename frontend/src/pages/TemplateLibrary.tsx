@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import { useTemplates, useCreateTemplate, useDeleteTemplate } from '../hooks/useObsidian';
-import { FileText, Plus, Trash2, Copy, BookOpen } from 'lucide-react';
+import {Plus, Trash2, BookOpen} from 'lucide-react';
 import type { NoteTemplate } from '../api/types';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };

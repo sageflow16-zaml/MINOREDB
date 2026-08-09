@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Brain, Sparkles, Quote, CheckCircle } from 'lucide-react';
+import {Brain, Sparkles, Quote} from 'lucide-react';
 import { EvidenceSource } from './types';
 import { EvidencePanel } from './evidence-panel';
 

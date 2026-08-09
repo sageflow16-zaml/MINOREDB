@@ -1,5 +1,5 @@
 import type { BenchmarkResult, Scorecard, CategoryScore } from './types';
-import { aggregateMetrics, computeCategoryAverages } from './metrics';
+import {aggregateMetrics} from './metrics';
 
 export function generateScorecard(results: BenchmarkResult[], totalDurationMs: number): Scorecard {
   const passed = results.filter((r) => r.passed);

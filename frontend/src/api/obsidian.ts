@@ -1,10 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { callEdgeFunction } from '../lib/edgeFunctions';
-import type {
-  Vault, ObsidianNote, SyncLog, SyncConflict, SyncSettings,
-  VaultStatistics, NoteTemplate, SyncDashboardData, ObsidianSearchResult,
-  ParsedMarkdown, BacklinkRef,
-} from './types';
+import {Vault, ObsidianNote, SyncLog, SyncConflict, SyncSettings, VaultStatistics, NoteTemplate, SyncDashboardData, ObsidianSearchResult, BacklinkRef} from './types';
 
 export const obsidianService = {
   // Vaults — Supabase client (vault table migrated)

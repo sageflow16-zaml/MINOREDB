@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import {CheckCircle, AlertTriangle, ExternalLink} from 'lucide-react';
 import { EvidenceSource } from './types';
 
 interface EvidencePanelProps {

@@ -1,13 +1,10 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Brain, TrendingUp, TrendingDown, AlertTriangle, Target,
-  Shield, BarChart3, RefreshCw, Sparkles, Lightbulb,
-} from 'lucide-react';
+import {Brain, TrendingUp, TrendingDown, AlertTriangle, Target, Sparkles, Lightbulb} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
-import { Badge } from './badge';
+
 import { Button } from './Button';
-import { IntelligencePanel } from './intelligence-panel';
+
 import { cn } from '../../lib/utils';
 import { callEdgeFunction } from '../../lib/edgeFunctions';
 import { useReducedMotion } from '../../lib/animate';

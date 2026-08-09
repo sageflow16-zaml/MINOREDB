@@ -8,9 +8,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { usePortfolioAnalytics, usePortfolioAskAI, useAccounts, useBrokers } from '../hooks/usePortfolio';
-import {
-  BarChart3, TrendingUp, TrendingDown, Building, BrainCircuit, Sparkles,
-} from 'lucide-react';
+import {BarChart3, Building, BrainCircuit, Sparkles} from 'lucide-react';
 import { cn } from '../lib/utils';
 
 function formatCurrency(value: number | undefined | null): string {

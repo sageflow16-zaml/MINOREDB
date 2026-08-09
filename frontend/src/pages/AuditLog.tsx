@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useAuditLogs, useAuditSummary } from '../hooks/useAutomation';
-import { BarChart3, Activity, Filter } from 'lucide-react';
+import {Filter} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

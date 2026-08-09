@@ -12,7 +12,7 @@ import { useProjects } from '../hooks/useProjects';
 import { useCreateProject, useUpdateProject, useDeleteProject } from '../hooks/useProjectMutations';
 import { useProject } from '../context/ProjectContext';
 import { FolderKanban, Plus, ArrowRight, Pencil, Trash2, X, Calendar, FileText } from 'lucide-react';
-import { cn } from '../lib/utils';
+
 
 export default function ProjectsPage() {
   const navigate = useNavigate();

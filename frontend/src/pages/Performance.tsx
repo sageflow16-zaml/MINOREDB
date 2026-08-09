@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from 'recharts';
+import {AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar} from 'recharts';
 import {
   useStatisticsOverview,
   useStatisticsBySession,
@@ -21,12 +21,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
 import { EmptyState } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
-import {
-  TrendingUp, BarChart3, DollarSign, Target, Award, Shield,
-  Brain, Sparkles, ChevronRight, Clock, CalendarDays, Download,
-  Activity, Search, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight,
-  RotateCcw,
-} from 'lucide-react';
+import {TrendingUp, BarChart3, DollarSign, Target, Award, Shield, Brain, Sparkles, ChevronRight, Clock, CalendarDays, Download, Activity, Search, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight} from 'lucide-react';
 import { cn } from '../lib/utils';
 
 function formatCurrency(value: number | undefined | null): string {

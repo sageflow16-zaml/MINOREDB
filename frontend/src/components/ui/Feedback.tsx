@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { AlertCircle, Inbox, RefreshCw, SearchX } from 'lucide-react';
+import {AlertCircle, Inbox, RefreshCw} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from './Button';
 import { useReducedMotion } from '../../lib/animate';

@@ -5,14 +5,14 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, EmptyState} from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
 import {
   useWatchlists, useCreateWatchlist, useDeleteWatchlist,
   useWatchlistItems, useAddWatchlistItem, useDeleteWatchlistItem,
 } from '../hooks/useMarketIntelligence';
 import type { Watchlist, WatchlistItem } from '../api/types';
-import { Star, Plus, Trash2, X, ChevronRight, Eye, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import {Plus, Trash2, X, TrendingUp, TrendingDown} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };

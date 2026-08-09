@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, ChevronDown, Layers, Clock, Palette } from 'lucide-react';
+import {Search, ChevronDown, Layers, Clock} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Timeframe } from '../workspace/types';
 

@@ -6,7 +6,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner} from '../components/ui/Feedback';
 import { Send, Bot, User, BarChart3, Brain, LineChart, BookOpen, Network, Globe, Layers, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { EvidenceItem } from '../api/analyst';

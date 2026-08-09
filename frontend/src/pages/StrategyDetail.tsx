@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell} from 'recharts';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
@@ -16,12 +16,7 @@ import {
   useStrategy, useDeleteStrategy, useDuplicateStrategy,
   useStrategyAnalytics, useStrategyVersions, useCreateStrategyVersion,
 } from '../hooks/useStrategies';
-import {
-  ArrowLeft, Edit, Trash2, Copy, Archive, Layers, TrendingUp,
-  DollarSign, Award, Activity, Target, Shield, LineChart,
-  BookOpen, BarChart3, Clock, Star, TrendingDown, Plus,
-  CheckCircle2, XCircle, AlertTriangle, Zap, Brain,
-} from 'lucide-react';
+import {ArrowLeft, Edit, Trash2, Copy, Layers, TrendingUp, DollarSign, Award, Activity, Target, Shield, LineChart, BookOpen, BarChart3, Clock, Star, TrendingDown, CheckCircle2, XCircle, AlertTriangle, Zap, Brain} from 'lucide-react';
 import { cn } from '../lib/utils';
 import { chartTooltipStyle } from '../lib/chart';
 

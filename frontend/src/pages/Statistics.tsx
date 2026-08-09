@@ -18,12 +18,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
 import { EmptyState } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
-import {
-  TrendingUp, BarChart3, DollarSign, Target, Award, Shield,
-  Brain, Sparkles, ChevronRight, Clock, CalendarDays, Download,
-  AlertTriangle, Zap, Activity, Search, ArrowUpRight, ArrowDownRight,
-  PieChart as PieChartIcon, TrendingDown, Wallet,
-} from 'lucide-react';
+import {TrendingUp, BarChart3, DollarSign, Target, Award, Shield, ChevronRight, Clock, CalendarDays, Download, Activity, Search, PieChart as PieChartIcon} from 'lucide-react';
 import { cn } from '../lib/utils';
 
 function formatCurrency(value: number | undefined | null): string {

@@ -1,4 +1,4 @@
-import { ConflictRead, ClaimRead } from '../types';
+import {ConflictRead} from '../types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { conflictService } from '../api';
 import toast from 'react-hot-toast';

@@ -8,13 +8,7 @@ import { Button } from '../components/ui/Button';
 import { KpiCard } from '../components/ui/KpiCard';
 import { cn } from '../lib/utils';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
-import {
-  Brain, TrendingUp, TrendingDown, Activity, Layers,
-  Zap, Target, Shield, AlertTriangle, CheckCircle2,
-  Gauge, BarChart3, Globe,
-  RefreshCw, Sparkles,
-  ArrowUpRight, ArrowDownRight,
-} from 'lucide-react';
+import {Brain, TrendingUp, TrendingDown, Activity, Layers, Zap, Target, CheckCircle2, Gauge, BarChart3, Globe, RefreshCw, Sparkles, ArrowUpRight, ArrowDownRight} from 'lucide-react';
 import type { ICTAnalysisResponse } from '../api/types';
 
 const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'XAUUSD', 'BTCUSD'];

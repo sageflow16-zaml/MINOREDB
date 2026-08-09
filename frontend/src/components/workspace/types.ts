@@ -1,4 +1,4 @@
-import type { IChartApi, ISeriesApi, CandlestickData, Time } from 'lightweight-charts';
+import {IChartApi, ISeriesApi, Time} from 'lightweight-charts';
 
 export type PanelId = string;
 export type PanelType = 'chart' | 'execution' | 'watchlist' | 'ai' | 'market' | 'notes' | 'drawing' | 'ict';

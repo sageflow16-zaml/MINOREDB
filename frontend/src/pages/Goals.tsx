@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { PageLayout, PageSection, PageGrid } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
@@ -12,7 +12,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePortfolioGoals } from '../hooks/usePortfolio';
 import { portfolioService } from '../api/portfolio';
-import type { PortfolioGoal, GoalStatus, GoalMetric } from '../api/types';
+import {PortfolioGoal, GoalMetric} from '../api/types';
 import { Plus, Edit3, Trash2, Target, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 

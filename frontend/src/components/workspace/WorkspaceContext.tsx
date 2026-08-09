@@ -1,9 +1,5 @@
-import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react';
-import type {
-  WorkspaceState, WorkspaceLayout, WorkspacePanel, ChartConfig,
-  ICTOverlay, SessionOverlay, Drawing, ChartNote, PanelId,
-  ChartLayout, Symbol, Timeframe, DrawingPoint, WatchlistItem,
-} from './types';
+import {createContext, useContext, useReducer, type ReactNode} from 'react';
+import {WorkspaceState, WorkspaceLayout, WorkspacePanel, ChartConfig, ICTOverlay, SessionOverlay, Drawing, ChartNote, PanelId, ChartLayout, Symbol, Timeframe, WatchlistItem} from './types';
 
 const defaultPanels = (layout: ChartLayout): WorkspacePanel[] => {
   const charts: WorkspacePanel[] = [];

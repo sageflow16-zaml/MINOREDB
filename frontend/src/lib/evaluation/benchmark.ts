@@ -1,7 +1,7 @@
 import { benchmarkScenarios } from './dataset';
 import { runScenario } from './scenario-runner';
 import { generateScorecard } from './scorecard';
-import { generateReport, saveToHistory } from './report';
+import {saveToHistory} from './report';
 import type { BenchmarkScenario, BenchmarkResult, Scorecard, EvaluationHistoryEntry } from './types';
 
 const EVAL_VERSION = '1.0.0';

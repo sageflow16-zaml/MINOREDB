@@ -9,8 +9,8 @@ import { Input } from '../components/ui/input';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useAssociations, useCreateAssociation, useDeleteAssociation } from '../hooks/useAssociations';
-import { Link2, Trash2, Plus, X } from 'lucide-react';
-import { cn } from '../lib/utils';
+import {Trash2, Plus, X} from 'lucide-react';
+
 
 export default function AssociationsPage() {
   const { projectId } = useParams<{ projectId: string }>();

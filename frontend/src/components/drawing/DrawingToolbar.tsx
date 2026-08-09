@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { useWorkspace } from '../workspace/WorkspaceContext';
 import { cn } from '../../lib/utils';
-import {
-  Pencil, Minus, Square, ArrowUpRight, Circle,
-  TrendingUp, Target, Droplets, GripHorizontal,
-  MousePointer2, Image, Camera,
-} from 'lucide-react';
+import {Pencil, Minus, Square, ArrowUpRight, Circle, TrendingUp, Target, Droplets, GripHorizontal, Camera} from 'lucide-react';
 import type { DrawingType } from '../workspace/types';
 
 interface DrawingTool {

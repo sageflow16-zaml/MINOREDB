@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input';
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useJobs, useCreateJob, useDeleteJob, useUpdateJob, useExecuteJob, useJobExecutions } from '../hooks/useAutomation';
-import { Clock, Plus, Trash2, Play, ToggleLeft, ToggleRight, Calendar, History } from 'lucide-react';
+import {Plus, Trash2, Play, ToggleLeft, ToggleRight, History} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

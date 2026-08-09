@@ -5,16 +5,13 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
+
 import { Select } from '../components/ui/select';
-import { LoadingSpinner, ErrorState } from '../components/ui/Feedback';
-import { Alert } from '../components/ui/alert';
+import {LoadingSpinner} from '../components/ui/Feedback';
+
 import { useStrategy, useCreateStrategy, useUpdateStrategy } from '../hooks/useStrategies';
 import type { StrategyCreate, StrategyUpdate, ChecklistItem } from '../api/types';
-import {
-  ArrowLeft, Save, Plus, X, CheckCircle2, AlertTriangle, BookOpen,
-  TrendingUp, Activity, Shield, Zap, Clock, Brain,
-} from 'lucide-react';
+import {ArrowLeft, Save, Plus, X, CheckCircle2, BookOpen, Activity, Zap, Clock, Brain} from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const defaultStrategy: StrategyCreate = {

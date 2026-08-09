@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInterpretations, useDeleteInterpretation } from '../hooks/useInterpretations';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardHeader, CardTitle} from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { InterpretationDrawer } from '../components/InterpretationDrawer';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';

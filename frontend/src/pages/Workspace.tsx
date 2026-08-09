@@ -5,7 +5,7 @@ import { useProjects } from '../hooks/useProjects';
 import { WorkspaceProvider, useWorkspace } from '../components/workspace/WorkspaceContext';
 import { WorkspaceLayout } from '../components/workspace/WorkspaceLayout';
 import { WorkspaceToolbar } from '../components/workspace/WorkspaceToolbar';
-import { FolderOpen, ChevronDown, BarChart3, Settings } from 'lucide-react';
+import {FolderOpen, ChevronDown, BarChart3} from 'lucide-react';
 
 function WorkspaceContent({ hasProject }: { hasProject: boolean }) {
   const { state, dispatch } = useWorkspace();

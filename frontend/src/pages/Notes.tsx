@@ -11,7 +11,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
-import { FileText, Trash2, Search, Sparkles, Plus, StickyNote, BookOpen, Calendar, ArrowUpRight, X } from 'lucide-react';
+import {FileText, Trash2, Search, Plus, StickyNote, BookOpen, Calendar, ArrowUpRight, X} from 'lucide-react';
 import { normalizeLibraryDocument, getSourceDisplayName } from '../lib/libraryDocument';
 import type { SourceRead } from '../api/types';
 

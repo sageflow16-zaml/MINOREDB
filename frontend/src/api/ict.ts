@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { callEdgeFunction } from '../lib/edgeFunctions';
-import type { ICTAnalysisRequest, ICTAnalysisResponse, ICTMarketBias, ICTExecutionSignal, AIContext, ICTFullContext, SwingPoint, StructureResult, FVGResult, OrderBlockResult, LiquidityResult, SessionResult, ICTModelResult } from './types';
+import {ICTAnalysisRequest, ICTAnalysisResponse, ICTMarketBias, ICTExecutionSignal, AIContext, ICTFullContext, SwingPoint, StructureResult, SessionResult} from './types';
 
 export const ictApi = {
   analyze: async (projectId: string, data: ICTAnalysisRequest): Promise<{ data: ICTAnalysisResponse }> => {

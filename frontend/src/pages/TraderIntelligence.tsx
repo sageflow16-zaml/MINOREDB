@@ -1,11 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  BrainCircuit, Brain, Target, TrendingUp, Activity, Shield,
-  Scale, Sparkles, Lightbulb, AlertTriangle, CheckCircle,
-  RefreshCw, ChevronRight, Sun, BookOpen, BarChart3, Info,
-} from 'lucide-react';
+import {BrainCircuit, Brain, Target, Activity, Sparkles, Lightbulb, AlertTriangle, CheckCircle, RefreshCw, ChevronRight, Sun, BookOpen, Info} from 'lucide-react';
 import { traderIntelligenceService, type TraderProfile, type TradeDebrief, type PersonalPattern, type PersonalRule, type DashboardData } from '../api/traderIntelligence';
 import { useTrades } from '../hooks/useTrades';
 import { Button } from '../components/ui/Button';
@@ -14,12 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Skeleton } from '../components/ui/skeleton';
 import { cn } from '../lib/utils';
 import { interpretScore } from '../lib/trading-score/index';
-import { createEvent, eventBus } from '../lib/ai/eventBus';
-import { aiMemory } from '../lib/ai/memory';
+
 import { buildExplanation } from '../lib/trust/explainability';
-import { computeConfidenceFromScores } from '../lib/trust/confidence';
-import { recordSnapshot } from '../lib/trust/history';
-import { buildContext, detectPatterns, generateRecommendations, createPlan } from '../lib/intelligence/index';
+
+
+import {buildContext, detectPatterns} from '../lib/intelligence/index';
 import type { IntelligenceContext } from '../lib/intelligence/types';
 import { ExplainDialog } from '../components/ui/explain-dialog';
 import { ConfidenceBadge } from '../components/ui/confidence-badge';

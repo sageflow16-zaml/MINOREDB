@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { callEdgeFunction } from '../lib/edgeFunctions';
+
 import type { AgentTask, AgentExecution, AgentStatus, AgentWorkflow, AgentDashboard } from './types';
 
 export interface AgentTaskCreate {

@@ -8,12 +8,9 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
-import { useMarketDashboard, useMarketAlerts, useActiveRegime } from '../hooks/useMarketIntelligence';
+import {useMarketDashboard, useMarketAlerts} from '../hooks/useMarketIntelligence';
 import type { MarketDashboardData, MarketAlert, MarketRegime } from '../api/types';
-import {
-  Activity, TrendingUp, TrendingDown, Globe, Bell, Eye, Clock,
-  Zap, BarChart3, AlertTriangle, RefreshCw, ChevronRight,
-} from 'lucide-react';
+import {Activity, Bell, Zap, BarChart3, AlertTriangle, RefreshCw} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };

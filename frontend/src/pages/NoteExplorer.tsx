@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import { useVaults, useNotes, useNote, useBacklinks, useAutoLink } from '../hooks/useObsidian';
-import { FileText, ArrowLeft, Link2, Tag, Calendar, RefreshCw, ChevronRight } from 'lucide-react';
+import {FileText, ArrowLeft, Link2, Tag, RefreshCw, ChevronRight} from 'lucide-react';
 import type { ObsidianNote, BacklinkRef } from '../api/types';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };

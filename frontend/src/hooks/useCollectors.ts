@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collectorService, type CollectorStatus } from '../api';
+import {collectorService} from '../api';
 import toast from 'react-hot-toast';
 
 export const useCollectors = (projectId: string) => {

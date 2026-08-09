@@ -1,7 +1,7 @@
 import { useWorkspace } from '../workspace/WorkspaceContext';
 import { Switch } from '../ui/switch';
 import { Layers, Eye, EyeOff } from 'lucide-react';
-import { cn } from '../../lib/utils';
+
 
 const overlayLabels: Record<string, string> = {
   fvg: 'Fair Value Gaps',

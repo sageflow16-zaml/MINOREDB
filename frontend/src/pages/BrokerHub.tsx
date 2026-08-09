@@ -12,11 +12,7 @@ import { KpiCard } from '../components/ui/KpiCard';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import { DataTable, type Column } from '../components/ui/DataTable';
 import { Alert } from '../components/ui/alert';
-import {
-  Globe, Link2, RefreshCw, Activity, BarChart3,
-  Plus, Zap, Wifi, WifiOff, AlertTriangle, Trash2,
-  ExternalLink, TestTube, LayoutDashboard, Database,
-} from 'lucide-react';
+import {Globe, Link2, RefreshCw, Activity, BarChart3, Plus, Zap, Wifi, WifiOff, AlertTriangle, Trash2, ExternalLink, TestTube, Database} from 'lucide-react';
 
 const statusIcon: Record<string, typeof Wifi> = {
   connected: Wifi,

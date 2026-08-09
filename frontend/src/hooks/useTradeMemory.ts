@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { tradeMemoryService, type TradeMemory } from '../api';
+import {tradeMemoryService} from '../api';
 
 export const useTradeMemories = (projectId: string) => {
   return useQuery({

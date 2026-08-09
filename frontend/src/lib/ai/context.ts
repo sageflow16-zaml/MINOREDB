@@ -1,6 +1,6 @@
 import { aiMemory } from './memory';
 import { getTimeline, getTasks } from './workflowEngine';
-import { AIContextSnapshot, ConceptMastery } from './types';
+import {AIContextSnapshot} from './types';
 
 export function buildAIContext(projectId: string, overrides?: Partial<AIContextSnapshot>): AIContextSnapshot {
   const strengths = aiMemory.getStrengths();

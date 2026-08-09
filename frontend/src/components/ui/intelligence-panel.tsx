@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Sparkles, AlertTriangle, TrendingUp, Target, Shield, Lightbulb, X, ChevronDown, RefreshCw, FileText, BookOpen, BarChart3 } from 'lucide-react';
+import {Brain, Sparkles, AlertTriangle, TrendingUp, Target, Lightbulb, X, ChevronDown, RefreshCw, FileText} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Badge } from './badge';
 import { Button } from './Button';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
-import { Separator } from './separator';
+
 import { useReducedMotion } from '../../lib/animate';
 
 type IntelligenceItem = {

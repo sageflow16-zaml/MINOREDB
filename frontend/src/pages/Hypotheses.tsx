@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useHypotheses, useDeleteHypothesis } from '../hooks/useResearch';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardHeader, CardTitle} from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';

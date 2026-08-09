@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ictApi } from '../api/ict';
-import type { ICTAnalysisRequest, ICTAnalysisResponse } from '../api/types';
+import {ICTAnalysisRequest} from '../api/types';
 
 export const ictKeys = {
   all: ['ict'] as const,

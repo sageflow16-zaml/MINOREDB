@@ -5,7 +5,7 @@ import { useConcepts, useDeleteConcept } from '../hooks/useConcepts';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/badge';
+
 import { ConceptDrawer } from '../components/ConceptDrawer';
 import { ClaimCount } from '../components/ClaimCount';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';

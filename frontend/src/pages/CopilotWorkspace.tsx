@@ -2,10 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
 import {
   useChat, useConversations, useCreateConversation, useConversationMessages,

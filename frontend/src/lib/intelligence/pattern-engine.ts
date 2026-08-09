@@ -1,4 +1,4 @@
-import type { IntelligenceContext, BehavioralPattern, PatternCategory } from './types';
+import {IntelligenceContext, BehavioralPattern} from './types';
 
 const STORAGE_KEY = 'minore_behavioral_patterns';
 

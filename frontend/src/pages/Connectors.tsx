@@ -8,11 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useConnectors, useCreateConnector, useDeleteConnector, useTestConnector, useSyncConnector } from '../hooks/useAutomation';
-import {
-  Plus, Trash2, Wifi, WifiOff, RefreshCw, CheckCircle2, XCircle,
-  Calendar, BookOpen, Globe, MessageSquare, Music, HardDrive,
-  Github, Mail, Server,
-} from 'lucide-react';
+import {Plus, Trash2, Wifi, RefreshCw, Calendar, BookOpen, Globe, MessageSquare, HardDrive, Github, Mail, Server} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

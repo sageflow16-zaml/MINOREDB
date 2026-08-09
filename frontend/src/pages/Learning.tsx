@@ -9,11 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { KpiCard } from '../components/ui/KpiCard';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, ErrorState} from '../components/ui/Feedback';
 import {
   useLearningEvents, useLearningSnapshots, useLearningStatus, useLearningRebuild,
 } from '../hooks/useLearning';
-import { Brain, RefreshCw, TrendingUp, Layers, GitBranch, BookOpen, Sparkles } from 'lucide-react';
+import {Brain, RefreshCw, TrendingUp, Layers, GitBranch, BookOpen} from 'lucide-react';
 import { JournalIntelligencePanel } from '../components/ui/journal-intelligence';
 import { cn } from '../lib/utils';
 

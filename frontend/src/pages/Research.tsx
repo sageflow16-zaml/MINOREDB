@@ -22,14 +22,7 @@ import {
 import { cn } from '../lib/utils';
 import { extractTextFromFile } from '../lib/textExtraction';
 import toast from 'react-hot-toast';
-import {
-  Brain, Send, Plus, MessageSquare, X, Search, FileText,
-  FileSpreadsheet, FileJson, File, Sparkles, BookOpen, GitCompare,
-  Network, GraduationCap, StickyNote, Loader2, Lightbulb, Target,
-  AlertCircle, Layers, PanelLeftClose, PanelLeft, CheckCircle, Quote,
-  Bookmark, PanelRightClose, PanelRight, Upload,
-  Library, StickyNote as StickyNoteIcon,
-} from 'lucide-react';
+import {Brain, Send, Plus, MessageSquare, Search, FileText, FileSpreadsheet, FileJson, File, Sparkles, BookOpen, GitCompare, Network, GraduationCap, StickyNote, Loader2, Lightbulb, Target, AlertCircle, Layers, PanelLeftClose, PanelLeft, CheckCircle, Quote, Bookmark, PanelRightClose, Upload, Library, StickyNote as StickyNoteIcon} from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';

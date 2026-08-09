@@ -8,7 +8,6 @@ import {
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
 import { callEdgeFunction } from '../lib/edgeFunctions';

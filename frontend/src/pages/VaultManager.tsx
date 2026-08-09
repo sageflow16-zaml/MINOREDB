@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import { KpiCard } from '../components/ui/KpiCard';
 import { useVaults, useCreateVault, useDeleteVault, useVaultHealth, useVaultStatistics, useSyncImport, useSyncExport } from '../hooks/useObsidian';
-import { FolderOpen, Plus, Trash2, RefreshCw, CheckCircle, AlertTriangle, Database, Activity, HardDrive, Link2 } from 'lucide-react';
+import {Plus, Trash2, RefreshCw, Database} from 'lucide-react';
 import type { Vault } from '../api/types';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };

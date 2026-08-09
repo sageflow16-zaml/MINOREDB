@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { callEdgeFunction } from '../lib/edgeFunctions';
+
 import type { RiskDashboard, RiskRule, RiskAlert, DrawdownPoint, RiskHistoryPoint, TradeValidationResult, PositionSizeResult, RuleViolation } from './types';
 
 export const riskService = {

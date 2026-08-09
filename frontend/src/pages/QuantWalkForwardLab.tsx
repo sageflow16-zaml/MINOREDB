@@ -9,7 +9,7 @@ import { Input } from '../components/ui/input';
 import { KpiCard } from '../components/ui/KpiCard';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { useWalkforwardRuns, useRunWalkforward } from '../hooks/useQuantResearch';
-import { Play, Trash2, TrendingUp, Activity, Layers, Target, Clock } from 'lucide-react';
+import {Play, TrendingUp, Activity, Layers, Target} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

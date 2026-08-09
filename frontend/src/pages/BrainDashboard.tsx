@@ -14,13 +14,8 @@ import {
   useDismissBrainInsight, useDetectObservations, useDismissObservation,
   useLatestCoaching, useGenerateCoaching, useDNA, useRefreshDNA,
 } from '../hooks/useBrain';
-import {
-  Brain, MessageSquare, Sparkles, TrendingUp, Target, Shield,
-  AlertTriangle, CheckCircle, XCircle, Lightbulb, BookOpen,
-  Activity, RefreshCw, ChevronRight, BarChart3, User, Clock,
-  Award, Zap, Heart, TrendingDown,
-} from 'lucide-react';
-import type { BrainDecision, PersonalInsight, LearningObservation, BrainCoaching } from '../api/types';
+import {Brain, MessageSquare, Sparkles, TrendingUp, Target, AlertTriangle, CheckCircle, XCircle, Lightbulb, BookOpen, Activity, RefreshCw, BarChart3, User, Clock, Award} from 'lucide-react';
+import {BrainDecision, PersonalInsight, LearningObservation} from '../api/types';
 
 type TabType = 'overview' | 'ask' | 'insights' | 'observe' | 'coaching' | 'timeline' | 'dna';
 

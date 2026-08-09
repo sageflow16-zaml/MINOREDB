@@ -1,4 +1,4 @@
-import { ConceptRead, ClaimRead } from '../types';
+import {ConceptRead} from '../types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { conceptService } from '../api';
 import toast from 'react-hot-toast';

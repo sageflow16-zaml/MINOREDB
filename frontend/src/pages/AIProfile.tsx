@@ -6,12 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
-import { useAIProfile, useUpdateAIProfile, useAnalyzeProfile, useEvaluations, useEvaluateTrade } from '../hooks/useAIFoundation';
-import {
-  Brain, TrendingUp, Target, Shield, Activity, BarChart3,
-  RefreshCw, ChevronDown, CheckCircle, AlertTriangle,
-} from 'lucide-react';
-import type { AIProfile, TradeEvaluation, PsychologicalPattern } from '../api/types';
+import {useAIProfile, useAnalyzeProfile, useEvaluations, useEvaluateTrade} from '../hooks/useAIFoundation';
+import {Brain, Target, Shield, Activity, BarChart3, RefreshCw, CheckCircle, AlertTriangle} from 'lucide-react';
+import {TradeEvaluation, PsychologicalPattern} from '../api/types';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };

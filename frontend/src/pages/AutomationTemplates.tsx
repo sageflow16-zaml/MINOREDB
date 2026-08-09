@@ -5,12 +5,9 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+import {LoadingSpinner, EmptyState} from '../components/ui/Feedback';
 import { useTemplates, useCreateFromTemplate, useTemplateCategories } from '../hooks/useAutomation';
-import {
-  GitBranch, Sunrise, ClipboardCheck, Sunset, Calendar, BarChart3,
-  Shield, TrendingDown, Frown, Microscope, Heart, Plus,
-} from 'lucide-react';
+import {GitBranch, Sunrise, BarChart3, Shield, Microscope, Heart, Plus} from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

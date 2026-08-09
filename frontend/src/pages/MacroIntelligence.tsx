@@ -9,10 +9,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { cn, safeToFixed } from '../lib/utils';
 import { useMarketEvents } from '../hooks/useMarketIntelligence';
 import { useMarketData } from '../hooks/useMarketData';
-import {
-  Calendar, Globe, Search, Filter, Clock, TrendingUp, Activity,
-  AlertTriangle, DollarSign, RefreshCw
-} from 'lucide-react';
+import {Calendar, Globe, Search, Filter, TrendingUp, Activity, AlertTriangle, DollarSign, RefreshCw} from 'lucide-react';
 
 const COUNTRY_FLAGS: Record<string, string> = {
   US: '🇺🇸', EU: '🇪🇺', UK: '🇬🇧', JP: '🇯🇵', AU: '🇦🇺', CA: '🇨🇦', CH: '🇨🇭', CN: '🇨🇳', NZ: '🇳🇿', SE: '🇸🇪', NO: '🇳🇴',

@@ -2,15 +2,12 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import {Card, CardContent} from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
 import { useCoachingSessions, useGenerateCoaching } from '../hooks/useAIFoundation';
-import {
-  BookOpen, Calendar, TrendingUp, Target, AlertTriangle,
-  CheckCircle, RefreshCw, ChevronDown,
-} from 'lucide-react';
+import {BookOpen, Calendar, TrendingUp, Target, AlertTriangle, CheckCircle, RefreshCw} from 'lucide-react';
 import type { CoachingSession } from '../api/types';
 
 type SessionType = 'daily' | 'weekly' | 'monthly' | 'psychology' | 'risk' | 'strategy' | 'execution';

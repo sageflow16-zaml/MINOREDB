@@ -13,13 +13,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
 import { EmptyState } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
-import {
-  Shield, AlertTriangle, TrendingDown, Wallet, Activity, Target,
-  Plus, Trash2, CheckCircle, XCircle, AlertCircle, Clock,
-  Calculator, ShieldCheck, ArrowUpRight, ArrowDownRight,
-  BarChart3, Bell, AlertOctagon, Info, RotateCcw,
-  DollarSign, Hash, TrendingUp, EyeOff,
-} from 'lucide-react';
+import {Shield, AlertTriangle, TrendingDown, Wallet, Activity, Target, Plus, Trash2, CheckCircle, XCircle, Clock, Calculator, ShieldCheck, BarChart3, Bell, AlertOctagon, Info, RotateCcw, DollarSign, Hash, TrendingUp} from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { RiskRule, RiskAlert, RuleViolation, TradeValidationResult, PositionSizeResult } from '../api/types';
 
