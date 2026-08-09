@@ -1,4 +1,5 @@
 
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
@@ -23,6 +24,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AutomationDashboard() {
+  usePageTelemetry('automation_created');
   const { projectId } = useParams<{ projectId: string }>()!;
   const { data: dashboard, isLoading, error } = useAutomationDashboard(projectId!);
   useWorkflows(projectId!);

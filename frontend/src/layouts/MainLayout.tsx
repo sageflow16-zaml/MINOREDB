@@ -7,6 +7,7 @@ import { CommandPalette } from '../components/ui/CommandPalette';
 import { Toaster } from '../components/ui/toast';
 import { ErrorFallback } from '../components/ui/ErrorFallback';
 import { useProject, projectIdFromPath } from '../context/ProjectContext';
+import { reportError } from '../lib/observability';
 import { LayoutDashboard, BarChart3, TrendingUp, Notebook, Plus, Sparkles, Search, CandlestickChart, LineChart, Target, Network, Layers, MessageSquare, AlertTriangle, Lightbulb, PieChart, Globe, Zap, Database, Settings as SettingsIcon, Activity, FileText, Library } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -261,6 +262,13 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         <main ref={mainRef} className="flex-1 overflow-y-auto scrollbar-thin">
           <ErrorBoundary
             resetKeys={[routeKey]}
+            onError={(error, info) =>
+              reportError(error, {
+                category: 'react-render',
+                component: info.componentStack ?? '',
+                route: routeKey,
+              })
+            }
             FallbackComponent={({ error, resetErrorBoundary }) => (
               <ErrorFallback error={error} resetErrorBoundary={resetErrorBoundary} />
             )}

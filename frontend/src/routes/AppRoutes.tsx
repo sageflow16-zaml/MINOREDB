@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+import { reportError } from '../lib/observability';
 import { MainLayout } from '../layouts/MainLayout';
 import { LoadingSpinner } from '../components/ui/Feedback';
 import { ErrorFallback } from '../components/ui/ErrorFallback';
@@ -113,6 +114,14 @@ const TimelinePage = lazy(() => import('../pages/Timeline'));
  * Authenticated application routes. Every module under /projects/:projectId is
  * wired to a page; every route resolves to a fully implemented module.
  */
+const routeErrorHandler = (error: Error, info: { componentStack?: string | null }) => {
+  reportError(error, {
+    category: 'react-route',
+    component: info.componentStack ?? '',
+    route: typeof window !== 'undefined' ? window.location.pathname : '',
+  });
+};
+
 export const AppRoutes = () => (
   <MainLayout>
     <Suspense fallback={<LoadingSpinner />}>
@@ -122,7 +131,7 @@ export const AppRoutes = () => (
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:projectId" element={<ProjectGuard />}>
             <Route index element={<Navigate to="/projects" replace />} />
-            <Route path="dashboard" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Dashboard /></ErrorBoundary>} />
+            <Route path="dashboard" element={<ErrorBoundary FallbackComponent={ErrorFallback} onError={routeErrorHandler}><Dashboard /></ErrorBoundary>} />
             <Route path="projects" element={<Projects />} />
             <Route path="sources" element={<Sources />} />
             <Route path="claims" element={<Claims />} />
@@ -146,7 +155,7 @@ export const AppRoutes = () => (
             <Route path="similarity" element={<Similarity />} />
             <Route path="decision" element={<DecisionSupport />} />
             <Route path="learning" element={<Learning />} />
-            <Route path="macro" element={<ErrorBoundary FallbackComponent={ErrorFallback}><MacroIntelligence /></ErrorBoundary>} />
+            <Route path="macro" element={<ErrorBoundary FallbackComponent={ErrorFallback} onError={routeErrorHandler}><MacroIntelligence /></ErrorBoundary>} />
             <Route path="mt5" element={<MT5Integration />} />
             <Route path="tradingview" element={<TradingViewPage />} />
             <Route path="conflicts" element={<Conflicts />} />
@@ -160,11 +169,11 @@ export const AppRoutes = () => (
             <Route path="knowledge-graph" element={<KnowledgeGraph />} />
             <Route path="knowledge-engine" element={<KnowledgeEngine />} />
             <Route path="analyst" element={<Analyst />} />
-            <Route path="research" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Research /></ErrorBoundary>} />
+            <Route path="research" element={<ErrorBoundary FallbackComponent={ErrorFallback} onError={routeErrorHandler}><Research /></ErrorBoundary>} />
             <Route path="replay" element={<Replay />} />
             <Route path="trader-intelligence" element={<TraderIntelligence />} />
             <Route path="knowledge-center" element={<KnowledgeCenter />} />
-            <Route path="ai" element={<ErrorBoundary FallbackComponent={ErrorFallback}><AIDashboard /></ErrorBoundary>} />
+            <Route path="ai" element={<ErrorBoundary FallbackComponent={ErrorFallback} onError={routeErrorHandler}><AIDashboard /></ErrorBoundary>} />
             <Route path="ai/coach" element={<AICoach />} />
             <Route path="ai/profile" element={<AIProfile />} />
             <Route path="ai/knowledge" element={<KnowledgeExplorer />} />
@@ -215,7 +224,7 @@ export const AppRoutes = () => (
             <Route path="broker/setup" element={<BrokerSetup />} />
             <Route path="broker/:connectionId" element={<BrokerDetail />} />
             <Route path="broker/analytics" element={<BrokerAnalyticsPage />} />
-            <Route path="workspace" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Workspace /></ErrorBoundary>} />
+            <Route path="workspace" element={<ErrorBoundary FallbackComponent={ErrorFallback} onError={routeErrorHandler}><Workspace /></ErrorBoundary>} />
             <Route path="ict" element={<ICTSmartEngine />} />
             <Route path="brain" element={<BrainDashboard />} />
             <Route path="intelligence" element={<IntelligenceDashboard />} />

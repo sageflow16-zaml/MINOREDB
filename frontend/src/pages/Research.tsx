@@ -1,3 +1,4 @@
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import { useParams } from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -276,6 +277,7 @@ function StudyNotesView({ notes }: StudyNotesViewProps) {
 }
 
 export default function ResearchPage() {
+  usePageTelemetry('research_open');
   const { projectId } = useParams<{ projectId: string }>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);

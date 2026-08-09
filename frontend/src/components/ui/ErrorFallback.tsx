@@ -1,6 +1,14 @@
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from './Button';
 
+const SECRET_PATTERN = /(access[_-]?token|refresh[_-]?token|bearer\s+[\w-]{20,}|password|secret|api[_-]?key|eyJ[\w-]{10,})/i;
+
+function safeMessage(error?: Error): string {
+  if (!error?.message) return 'An unexpected error occurred.';
+  if (SECRET_PATTERN.test(error.message)) return 'An unexpected error occurred.';
+  return error.message;
+}
+
 export interface ErrorFallbackProps {
   error?: Error;
   resetErrorBoundary?: () => void;
@@ -17,7 +25,7 @@ export function ErrorFallback({ error, resetErrorBoundary, title = 'Something we
       <div>
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         <p className="mt-1 max-w-md text-sm text-muted-foreground">
-          {message ?? error?.message ?? 'An unexpected error occurred.'}
+          {message ?? safeMessage(error)}
         </p>
       </div>
       {resetErrorBoundary && (

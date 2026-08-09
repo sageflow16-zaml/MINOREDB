@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useParams } from 'react-router-dom';
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 
 /**
  * Centralized guard for every route under /projects/:projectId.
@@ -16,6 +17,8 @@ import { Navigate, Outlet, useParams } from 'react-router-dom';
  */
 export const ProjectGuard = () => {
   const { projectId } = useParams<{ projectId: string }>();
+
+  usePageTelemetry('project_open');
 
   if (!projectId) {
     return <Navigate to="/projects" replace />;

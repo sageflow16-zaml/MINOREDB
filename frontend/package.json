@@ -39,6 +39,7 @@
     "lightweight-charts": "^5.2.0",
     "lucide-react": "^0.454.0",
     "pdfjs-dist": "^6.2.108",
+    "posthog-js": "^1.414.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.1.2",

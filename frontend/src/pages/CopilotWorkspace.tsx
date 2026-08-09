@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import { motion } from 'framer-motion';
 
 import { Badge } from '../components/ui/badge';
@@ -132,6 +133,7 @@ function AgentCard({ agent, active, onClick }: { agent: AIAgentConfig; active: b
 }
 
 export default function CopilotWorkspace() {
+  usePageTelemetry('copilot_used');
   const { projectId } = useParams<{ projectId: string }>()!;
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [input, setInput] = useState('');

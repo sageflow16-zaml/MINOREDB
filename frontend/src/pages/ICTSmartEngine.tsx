@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import { useAnalyzeICT, useICTAIContext } from '../hooks/useICT';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
@@ -132,6 +133,7 @@ function normalizeICT(data: ICTAnalysisResponse | null): ICTAnalysisResponse | n
 }
 
 export default function ICTSmartEngine() {
+  usePageTelemetry('ict_open');
   const { projectId } = useParams<{ projectId: string }>();
   const [symbol, setSymbol] = useState('EURUSD');
   const [timeframe, setTimeframe] = useState('1h');

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import {
   useTrades,
   useCreateTrade,
@@ -65,6 +66,7 @@ type Direction = 'BUY' | 'SELL';
 type Status = 'OPEN' | 'CLOSED';
 
 export default function TradesPage() {
+  usePageTelemetry('journal_entry');
   const { projectId } = useParams<{ projectId: string }>();
   const { data: trades, isLoading, error, refetch } = useTrades(projectId!);
   const { data: strategies } = useStrategies(projectId!);

@@ -4,6 +4,8 @@ import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { clearAllTokens } from './tokenStorage';
 import { isSessionExpiredOrNearExpiry } from './sessionExpiry';
 import { queryClient } from '../lib/queryClient';
+import { track, breadcrumb, reportError } from '../lib/observability';
+import { identifyTelemetryUser } from '../lib/telemetry';
 
 export interface User {
   id: string;
@@ -44,26 +46,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (cancelled) return;
-      let activeSession = currentSession;
-      if (currentSession && isSessionExpiredOrNearExpiry(currentSession.expires_at)) {
-        const { data, error } = await supabase.auth.refreshSession();
-        if (error) {
-          // Refresh failed (token revoked/expired or offline). Drop the
-          // session locally so route guards send the user to /login instead
-          // of trapping them in a dead state where every call silently 401s.
-          await supabase.auth.signOut({ scope: 'local' });
-          activeSession = null;
-        } else if (data.session) {
-          activeSession = data.session;
+      let sessionError: Error | null = null;
+      let sessionRevoked = false;
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (cancelled) return;
+        let activeSession = currentSession;
+        if (currentSession && isSessionExpiredOrNearExpiry(currentSession.expires_at)) {
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            // Refresh failed (token revoked/expired or offline). Drop the
+            // session locally so route guards send the user to /login instead
+            // of trapping them in a dead state where every call silently 401s.
+            breadcrumb('auth', 'session refresh failed; signing out locally', {
+              reason: error.code ?? error.message,
+            });
+            reportError(error, {
+              category: 'auth',
+              operation: 'session-refresh', // never attach tokens/refresh payloads
+              route: typeof window !== 'undefined' ? window.location.pathname : '',
+            });
+            await supabase.auth.signOut({ scope: 'local' });
+            activeSession = null;
+            sessionRevoked = true;
+            track('auth.session_revoked', { reason: error.code ?? 'refresh_failed' });
+          } else if (data.session) {
+            activeSession = data.session;
+            track('auth.refresh_success');
+          }
         }
+        setSession(activeSession);
+        if (activeSession?.user) {
+          setUser(mapSupabaseUser(activeSession.user));
+          void identifyTelemetryUser(activeSession.user.id);
+        }
+        setIsLoading(false);
+        if (sessionRevoked) track('auth.logout', { source: 'expired' });
+      } catch (err) {
+        // Auth initialization failure — report for telemetry, keep app
+        // usable unauthenticated (guards will redirect).
+        sessionError = err instanceof Error ? err : new Error(String(err));
+        reportError(sessionError, { category: 'auth', operation: 'init' });
+        track('auth.init_failure', {});
       }
-      setSession(activeSession);
-      if (activeSession?.user) {
-        setUser(mapSupabaseUser(activeSession.user));
-      }
-      setIsLoading(false);
     })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -73,6 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && currentSession?.user) {
           setIsRecovery(false);
           setUser(mapSupabaseUser(currentSession.user));
+          void identifyTelemetryUser(currentSession.user.id);
+          track('auth.login_success', {});
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setIsRecovery(false);
@@ -81,14 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // session (or back into this one after a revoked session or
           // cross-tab sign-out). All queries refetch on next mount.
           queryClient.clear();
+          track('auth.logout', { source: 'signout' });
         } else if (event === 'PASSWORD_RECOVERY') {
           setIsRecovery(true);
           if (currentSession?.user) {
             setUser(mapSupabaseUser(currentSession.user));
           }
+          breadcrumb('auth', 'password recovery flow');
         } else if (event === 'USER_UPDATED' && currentSession?.user) {
           setUser(mapSupabaseUser(currentSession.user));
         } else if (event === 'TOKEN_REFRESHED' && currentSession) {
+          breadcrumb('auth', 'token refreshed');
           queryClient.removeQueries({ predicate: (q) => q.state.status === 'error' });
         }
       }
@@ -102,7 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      track('auth.login_failure', { reason: error.code ?? 'credentials' });
+      throw error;
+    }
+    // NOTE: SIGNED_IN event (handled above) emits the success event —
+    // password is never held or logged here.
   }, []);
 
   const register = useCallback(async (email: string, password: string, name?: string) => {
@@ -122,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear cached data immediately so a failed signOut (offline) cannot
     // leave the previous user's data behind or on screen.
     queryClient.clear();
+    track('auth.logout', { source: 'user' });
     try {
       await supabase.auth.signOut();
     } catch {
@@ -131,6 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
     const { data, error } = await supabase.auth.refreshSession();
+    if (error) {
+      track('auth.refresh_failure', { reason: error.code ?? 'unknown' });
+      return false;
+    }
+    if (data.session) track('auth.refresh_success', {});
     return !error && !!data.session;
   }, []);
 
@@ -139,12 +180,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) throw error;
+    breadcrumb('auth', 'reset password email sent');
   }, []);
 
   const updatePassword = useCallback(async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
     setIsRecovery(false);
+    breadcrumb('auth', 'password updated');
   }, []);
 
   const value = useMemo<AuthContextValue>(

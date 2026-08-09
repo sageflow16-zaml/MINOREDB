@@ -6,6 +6,7 @@ import { AppRoutes } from './routes/AppRoutes';
 import { PageLoader } from './components/ui/Spinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { OfflineBanner } from './components/OfflineBanner';
+import { RouteTelemetry } from './components/RouteTelemetry';
 
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -28,6 +29,7 @@ const AppShell = () => {
   const location = useLocation();
   return (
     <ErrorBoundary key={location.pathname}>
+      <RouteTelemetry />
       <OfflineBanner />
       <Routes>
         <Route path="/login" element={withSuspense(<Login />)} />

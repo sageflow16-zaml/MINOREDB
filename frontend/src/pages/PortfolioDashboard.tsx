@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion } from 'framer-motion';
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import { usePortfolioDashboard } from '../hooks/usePortfolio';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
@@ -51,6 +52,7 @@ function MiniStat({ label, value, positive }: { label: string; value: string; po
 }
 
 export default function PortfolioDashboardPage() {
+  usePageTelemetry('portfolio_open');
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = usePortfolioDashboard(projectId!);

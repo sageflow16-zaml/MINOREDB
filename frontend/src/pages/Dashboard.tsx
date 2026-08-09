@@ -6,6 +6,7 @@ import { useDashboardStats } from '../hooks/useDashboard';
 import { useTrades } from '../hooks/useTrades';
 import { useLearningEvents } from '../hooks/useLearning';
 import { useEquityCurve } from '../hooks/useStatistics';
+import { usePageTelemetry } from '../hooks/usePageTelemetry';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
@@ -97,6 +98,7 @@ function KpiCard({ title, value, icon: Icon, trend, subtitle, variant = 'default
 const tooltipStyle = chartTooltipStyle.contentStyle;
 
 export default function DashboardPage() {
+  usePageTelemetry('dashboard_open');
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const stats = useDashboardStats(projectId || '');

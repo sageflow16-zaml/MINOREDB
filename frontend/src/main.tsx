@@ -5,6 +5,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { queryClient } from './lib/queryClient';
 import { initSentry } from './lib/sentry';
+import { initTelemetry } from './lib/telemetry';
+import { initPerformanceTelemetry } from './lib/performance';
 import { SentryErrorBoundary } from './components/SentryErrorBoundary';
 import { AuthProvider } from './auth/AuthContext';
 import { ThemeProvider } from './theme/ThemeProvider';
@@ -13,6 +15,8 @@ import { App } from './App';
 import './index.css';
 
 void initSentry();
+void initTelemetry();
+initPerformanceTelemetry();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

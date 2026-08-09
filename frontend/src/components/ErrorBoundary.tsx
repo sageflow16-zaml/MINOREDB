@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { reportError } from '../lib/observability';
 
 interface Props {
   children: ReactNode;
@@ -19,6 +20,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    reportError(error, {
+      category: 'react-render',
+      component: errorInfo.componentStack ?? '',
+      route: typeof window !== 'undefined' ? window.location.pathname : '',
+      details: { recoverable: Boolean(this.props.fallback) },
+    });
   }
 
   render() {
