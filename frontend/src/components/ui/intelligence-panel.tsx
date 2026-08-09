@@ -227,7 +227,7 @@ export function IntelligencePanel({
   );
 }
 
-export function DocumentIntelligencePanel({ projectId, documentId, onRefresh }: {
+export function DocumentIntelligencePanel({ projectId, documentId }: {
   projectId: string;
   documentId: string;
   onRefresh?: () => void;
@@ -240,7 +240,6 @@ export function DocumentIntelligencePanel({ projectId, documentId, onRefresh }: 
     setLoading(true);
     setError(null);
     try {
-      const { useExtractRules } = await import('../../hooks/useResearchV3');
       const { researchV3Service } = await import('../../api/researchV3');
       const result = await researchV3Service.extractRules(projectId, documentId);
       if (result?.rules) {

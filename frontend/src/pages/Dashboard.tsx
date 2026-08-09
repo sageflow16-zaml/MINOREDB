@@ -352,7 +352,7 @@ export default function DashboardPage() {
                   <Bar
                     dataKey="pnl"
                     shape={(props: any) => {
-                      const { x, y, width, height, fill } = props;
+                      const { x, y, width, height } = props;
                       const isPositive = height < 0;
                       return (
                         <rect
@@ -422,7 +422,7 @@ export default function DashboardPage() {
               ]}
               searchable={false}
               pageSize={5}
-              onRowClick={(row: any) => navigate(`/projects/${projectId}/trades`)}
+              onRowClick={(_row: any) => navigate(`/projects/${projectId}/trades`)}
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">

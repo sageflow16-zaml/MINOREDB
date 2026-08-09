@@ -12,7 +12,7 @@ import { DocumentIntelligencePanel } from '../components/ui/intelligence-panel';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
 import { extractTextFromFile } from '../lib/textExtraction';
-import {Upload, FileText, Brain, AlertTriangle, Trash2, Search, Sparkles, File, Lightbulb} from 'lucide-react';
+import { Upload, FileText, Brain, AlertTriangle, Trash2, Sparkles, File, Lightbulb } from 'lucide-react';
 import type { SourceRead } from '../api/types';
 
 export default function SourcesPage() {
@@ -148,7 +148,7 @@ export default function SourcesPage() {
             <input ref={fileInputRef} type="file" accept=".txt,.pdf,.docx,.png,.jpg,.jpeg,.gif" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f); }} />
           </div>
           <div className="flex-1 overflow-y-auto space-y-1">
-            {filteredSources.length > 0 ? filteredSources.map((s: any, i: number) => (
+            {filteredSources.length > 0 ? filteredSources.map((s: any, _i: number) => (
               <button key={s.id} onClick={() => setViewSource(s)}
                 className={cn('w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-background', viewSource?.id === s.id && 'bg-primary/10')}>
                 <FileText className="h-4 w-4 text-muted shrink-0" />

@@ -77,7 +77,6 @@ export function analyzeDNA(params: {
   const days: Record<string, { wins: number; losses: number; pnl: number }> = {};
   const assets: Record<string, { wins: number; losses: number; pnl: number; rrSum: number; count: number }> = {};
   const sessions = params.profile?.preferred_sessions || [];
-  const pairs = params.profile?.preferred_pairs || [];
   let totalMinutes = 0;
   let tradeCount = 0;
 
@@ -165,7 +164,7 @@ export function analyzeDNA(params: {
 
 function generateInsights(
   debriefs: any[], patterns: any[], profile: any | null,
-  discipline: number, psychology: number, topMistake: string,
+  discipline: number, _psychology: number, topMistake: string,
   topStrength: string, topWeakness: string,
 ): DNAInsight[] {
   const insights: DNAInsight[] = [];

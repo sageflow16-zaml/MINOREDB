@@ -99,7 +99,6 @@ function forceSimulation(
       if (!other) continue;
       const dx = other.x - n.x;
       const dy = other.y - n.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
       const strength = (e.confidence || 0.5) * ATTRACTION;
       fx += dx * strength;
       fy += dy * strength;

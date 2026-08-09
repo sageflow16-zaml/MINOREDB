@@ -9,7 +9,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Dialog } from '../components/ui/dialog';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   useAccount, useAccountHealth, useAccountRules, useAccountNotes, useFundingHistory,
@@ -27,15 +27,9 @@ function formatCurrency(value: number | undefined | null): string {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function formatPercent(value: number | undefined | null): string {
-  if (value == null) return '—';
-  return `${(value * 100).toFixed(1)}%`;
-}
-
 export default function AccountDetailPage() {
   const { projectId, accountId } = useParams<{ projectId: string; accountId: string }>();
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState('balance');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');

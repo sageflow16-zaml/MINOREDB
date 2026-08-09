@@ -15,10 +15,6 @@ function formatCurrency(value: number | undefined | null): string {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function formatPercent(value: number | undefined | null): string {
-  if (value == null) return '—';
-  return `${(value * 100).toFixed(1)}%`;
-}
 
 export default function PortfolioRiskPage() {
   const { projectId } = useParams<{ projectId: string }>();

@@ -9,7 +9,7 @@ import { DataTable } from '../components/ui/DataTable';
 import {LoadingSpinner, ErrorState} from '../components/ui/Feedback';
 import { ChartCard, AreaChartCard, BarChartCard, PieChartCard } from '../components/charts/chart';
 import { cn } from '../lib/utils';
-import { useBacktest, useBacktestTrades, useEquityCurve, useBacktestMetrics } from '../hooks/useQuantResearch';
+import { useBacktest, useBacktestTrades, useEquityCurve } from '../hooks/useQuantResearch';
 import {TrendingUp, BarChart3, Activity, DollarSign, Target, Percent, Zap, ArrowLeft} from 'lucide-react';
 import { BacktestIntelligencePanel } from '../components/ui/backtest-intelligence-panel';
 
@@ -20,7 +20,6 @@ export default function QuantBacktestDetail() {
   const { data: bt, isLoading, error } = useBacktest(projectId!, backtestId);
   const { data: tradesData } = useBacktestTrades(projectId!, backtestId);
   const { data: equityCurve } = useEquityCurve(projectId!, backtestId);
-  const { data: metrics } = useBacktestMetrics(projectId!, backtestId);
 
   if (isLoading) return <LoadingSpinner />;
   if (error || !bt) return <ErrorState message="Backtest not found" />;
@@ -30,7 +29,6 @@ export default function QuantBacktestDetail() {
   const monthlyReturns = bt.monthly_returns || [];
   const tradeDist = bt.trade_distribution || {};
   const regimePerf = bt.regime_performance || [];
-  const rollingMetrics = bt.rolling_metrics || {};
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">

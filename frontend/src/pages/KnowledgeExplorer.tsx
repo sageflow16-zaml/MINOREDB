@@ -23,8 +23,7 @@ export default function KnowledgeExplorerPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ source_type: 'trade', source_id: '', target_type: 'strategy', target_id: '', relationship: 'related_to' });
-  const cleanForm = () => ({ source_type: 'trade', source_id: '', target_type: 'strategy', target_id: '', relationship: 'related_to' });
-
+  
   const links = useKnowledgeLinks(projectId!);
   const graph = useKnowledgeGraph(projectId!);
   const autoLink = useAutoLink(projectId!);

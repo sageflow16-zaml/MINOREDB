@@ -15,7 +15,6 @@ import { cn } from '../lib/utils';
 import { FormField } from '../components/ui/form-field';
 import type { DecisionResponse, DecisionEnvironment } from '../api/types';
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 export default function DecisionPage() {
   const { projectId } = useParams<{ projectId: string }>();

@@ -7,7 +7,6 @@ export function generateReport(
   scorecard: Scorecard,
 ): { failures: FailureReport[]; summary: string; selfReview: AISelfReview } {
   const allFailures = results.flatMap((r) => r.failures);
-  const name = results.find((r) => !r.passed)?.scenarioName || 'None';
 
   const failuresByMetric: Record<string, FailureReport[]> = {};
   for (const f of allFailures) {

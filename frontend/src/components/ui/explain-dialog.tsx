@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {Lightbulb, ListChecks, ScrollText, BarChart3, ArrowRight} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
@@ -21,14 +21,6 @@ interface ExplainDialogProps {
 
 export function ExplainDialog({ open, onOpenChange, explanation, source, targetType, targetId }: ExplainDialogProps) {
   const [tab, setTab] = useState('summary');
-
-  const confidenceVariant = useMemo(() => {
-    if (!explanation) return 'destructive' as const;
-    if (explanation.confidence >= 80) return 'success' as const;
-    if (explanation.confidence >= 60) return 'info' as const;
-    if (explanation.confidence >= 40) return 'warning' as const;
-    return 'destructive' as const;
-  }, [explanation]);
 
   if (!explanation) return null;
 

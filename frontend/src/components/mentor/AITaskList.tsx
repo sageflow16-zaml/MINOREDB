@@ -1,18 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import {CheckCircle, Circle, Target, BookOpen, BarChart3, Brain, Sparkles} from 'lucide-react';
+import {CheckCircle, Circle, Target} from 'lucide-react';
 import { useAITasks } from '../../hooks/useAIWorkflow';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/badge';
 import type { AITask } from '../../lib/ai/types';
-
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  study: <BookOpen className="h-3.5 w-3.5" />,
-  review: <Brain className="h-3.5 w-3.5" />,
-  backtest: <BarChart3 className="h-3.5 w-3.5" />,
-  journal: <BookOpen className="h-3.5 w-3.5" />,
-  research: <Sparkles className="h-3.5 w-3.5" />,
-  practice: <Target className="h-3.5 w-3.5" />,
-};
 
 function PriorityDot({ priority }: { priority: string }) {
   const colors: Record<string, string> = {

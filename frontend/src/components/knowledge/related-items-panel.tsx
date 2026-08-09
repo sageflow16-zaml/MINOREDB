@@ -25,7 +25,7 @@ function RelationshipIcon({ type }: { type: RelationshipType }) {
   return (icons[type] || icons.related_to)();
 }
 
-export function RelatedItemsPanel({ entity, related, loading, onNavigate }: RelatedItemsPanelProps) {
+export function RelatedItemsPanel({ related, loading, onNavigate }: RelatedItemsPanelProps) {
   if (loading) {
     return (
       <div className="space-y-2 p-4">

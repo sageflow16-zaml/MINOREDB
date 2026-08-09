@@ -648,7 +648,7 @@ export const automationService = {
   },
 
   // Templates
-  async templates(projectId: string, category?: string): Promise<WorkflowTemplate[]> {
+  async templates(_projectId: string, category?: string): Promise<WorkflowTemplate[]> {
     let query = supabase
       .from('automation_workflow_template')
       .select('*');
@@ -697,7 +697,7 @@ export const automationService = {
     return result as unknown as Workflow;
   },
 
-  async templateCategories(projectId: string): Promise<string[]> {
+  async templateCategories(_projectId: string): Promise<string[]> {
     const { data, error } = await supabase
       .from('automation_workflow_template')
       .select('category')
@@ -707,23 +707,23 @@ export const automationService = {
   },
 
   // Metadata
-  async triggerTypes(projectId: string): Promise<string[]> {
+  async triggerTypes(_projectId: string): Promise<string[]> {
     return ['time', 'event', 'webhook', 'schedule', 'manual', 'condition', 'alert', 'trade', 'price', 'indicator'];
   },
 
-  async actionTypes(projectId: string): Promise<string[]> {
+  async actionTypes(_projectId: string): Promise<string[]> {
     return ['webhook', 'notification', 'email', 'api_call', 'trade', 'update_record', 'create_record', 'calculate', 'transform', 'alert'];
   },
 
-  async conditionTypes(projectId: string): Promise<string[]> {
+  async conditionTypes(_projectId: string): Promise<string[]> {
     return ['comparison', 'logical', 'range', 'contains', 'regex', 'time_window', 'aggregate', 'threshold', 'trend'];
   },
 
-  async connectorTypes(projectId: string): Promise<string[]> {
+  async connectorTypes(_projectId: string): Promise<string[]> {
     return ['discord', 'telegram', 'slack', 'email', 'webhook', 'tradingview', 'mt4', 'mt5', 'custom_api', 'database'];
   },
 
-  async reportTypes(projectId: string): Promise<string[]> {
+  async reportTypes(_projectId: string): Promise<string[]> {
     return ['daily', 'weekly', 'monthly', 'quarterly', 'performance', 'risk', 'research', 'strategy'];
   },
 };

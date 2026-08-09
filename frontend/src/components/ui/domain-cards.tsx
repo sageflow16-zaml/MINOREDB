@@ -1,21 +1,8 @@
-import { TrendingUp, TrendingDown, AlertTriangle, Lightbulb, CheckCircle, XCircle, Brain, FileText, MessageSquare, Sparkles } from 'lucide-react';
+import { AlertTriangle, Lightbulb, CheckCircle, XCircle, Brain, FileText, MessageSquare, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { Badge } from './badge';
 import { MetricCard } from './metrics';
 import { cn } from '../../lib/utils';
-
-interface FeedbackSection {
-  title: string;
-  items: string[];
-  variant: 'success' | 'destructive' | 'warning' | 'info';
-}
-
-const feedbackConfig: Record<string, { icon: typeof TrendingUp; label: string; variant: FeedbackSection['variant'] }> = {
-  strengths: { icon: TrendingUp, label: 'Strengths', variant: 'success' },
-  weaknesses: { icon: TrendingDown, label: 'Weaknesses', variant: 'destructive' },
-  mistakes: { icon: AlertTriangle, label: 'Mistakes', variant: 'warning' },
-  lessons: { icon: Lightbulb, label: 'Lessons', variant: 'info' },
-};
 
 const sectionColors: Record<string, { border: string; bg: string; text: string; icon: typeof CheckCircle }> = {
   success: { border: 'border-success/20', bg: 'bg-success/5', text: 'text-success', icon: CheckCircle },

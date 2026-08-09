@@ -52,7 +52,7 @@ export const useUpdateTrade = (projectId: string) => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: TradeUpdate }) =>
       tradeService.update(projectId, id, data),
-    onSuccess: (result, variables) => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['trades', projectId] });
       toast.success('Trade updated');
       if ((variables.data as any)?.status === 'CLOSED') {
@@ -77,7 +77,7 @@ export const useDeleteTrade = (projectId: string) => {
       return { previous };
     },
     onSuccess: () => toast.success('Trade deleted'),
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       toast.error('Delete failed');
       queryClient.setQueryData(['trades', projectId], context?.previous);
     },

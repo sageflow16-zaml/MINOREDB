@@ -38,8 +38,7 @@ export default function QuantResearchDashboard() {
   const { data: experiments = [] } = useExperiments(projectId!);
   const { data: backtests = [] } = useBacktests(projectId!);
   const { data: edgeHealth } = useCurrentEdgeHealth(projectId!);
-  const { data: snapshots = [] } = useEdgeHealthSnapshots(projectId!);
-
+  useEdgeHealthSnapshots(projectId!);
   if (dashLoading) return <LoadingSpinner />;
   if (dashError) return <ErrorState message="Failed to load research dashboard" />;
   if (!dashboard) return <EmptyState title="No research data" message="Create your first experiment" />;

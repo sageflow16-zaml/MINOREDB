@@ -24,7 +24,6 @@ const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [
 export default function SyncDashboardPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [selectedVault, setSelectedVault] = useState('');
 
   const dashboard = useSyncDashboard(projectId!);
   const data = dashboard.data;

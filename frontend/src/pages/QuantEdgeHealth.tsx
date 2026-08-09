@@ -5,7 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
-import { KpiCard } from '../components/ui/KpiCard';
+
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
@@ -28,8 +28,7 @@ export default function QuantEdgeHealth() {
 
   const healthPct = current?.overall_health != null ? (current.overall_health * 100).toFixed(0) : '—';
   const healthColor = (current?.overall_health ?? 0) > 0.6 ? 'text-success' : (current?.overall_health ?? 0) > 0.3 ? 'text-warning' : 'text-destructive';
-  const healthBg = (current?.overall_health ?? 0) > 0.6 ? 'bg-success/10' : (current?.overall_health ?? 0) > 0.3 ? 'bg-warning/10' : 'bg-destructive/10';
-
+  
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <PageHeader

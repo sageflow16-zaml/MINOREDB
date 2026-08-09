@@ -144,7 +144,7 @@ export const useDeleteBookmark = (projectId: string) => {
 export const useUpdateBookmark = (projectId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ sessionId, bookmarkId, note }: { sessionId: string; bookmarkId: string; note: string }) =>
+    mutationFn: ({ bookmarkId, note }: { sessionId: string; bookmarkId: string; note: string }) =>
       replayService.updateBookmark(projectId, bookmarkId, note),
     onSuccess: (_data, { sessionId }) => {
       qc.invalidateQueries({ queryKey: ['replay-state', projectId, sessionId] });

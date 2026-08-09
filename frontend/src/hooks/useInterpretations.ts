@@ -22,7 +22,7 @@ export const useDeleteInterpretation = (projectId: string) => {
       return { previous };
     },
     onSuccess: () => toast.success('Interpretation deleted'),
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       toast.error('Delete failed');
       queryClient.setQueryData(['interpretations', projectId], context?.previous);
     },

@@ -10,15 +10,6 @@ import { cn } from '../lib/utils';
 import {Lightbulb, TrendingUp, TrendingDown, Search, Network, Tags, Link, ChevronDown} from 'lucide-react';
 import type { KnowledgeRule } from '../api/types';
 
-function InsightBadge({ label, value, good }: { label: string; value: string; good?: boolean }) {
-  return (
-    <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
-      <span className="text-xs text-secondary">{label}</span>
-      <span className={cn('text-xs font-mono font-medium', good === undefined ? 'text-foreground' : good ? 'text-success' : 'text-danger-text')}>{value}</span>
-    </div>
-  );
-}
-
 function RuleCard({ rule }: { rule: KnowledgeRule }) {
   const [expanded, setExpanded] = useState(false);
   const wr = rule.win_rate != null ? (rule.win_rate * 100).toFixed(1) : '—';

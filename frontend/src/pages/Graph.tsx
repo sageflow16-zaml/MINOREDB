@@ -7,7 +7,7 @@ import { ErrorState } from '../components/ui/Feedback';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
-import { ZoomIn, ZoomOut, Maximize, Search, Network, Move, Layers } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Network, Move, Layers } from 'lucide-react';
 
 interface SimNode {
   id: string; name: string; type: string; category?: string; color?: string; summary?: string;

@@ -2,10 +2,10 @@ import {IChartApi, ISeriesApi} from 'lightweight-charts';
 import type { ChartConfig, ICTOverlay } from '../workspace/types';
 
 export function renderICT(
-  chart: IChartApi,
-  series: ISeriesApi<'Candlestick'>,
+  _chart: IChartApi,
+  _series: ISeriesApi<'Candlestick'>,
   config: ChartConfig,
-  overlays: ICTOverlay[],
+  _overlays: ICTOverlay[],
 ) {
   if (!config.showICT) return;
   // ICT overlay rendering is handled by lightweight-charts API

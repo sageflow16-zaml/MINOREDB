@@ -105,7 +105,6 @@ export function computeConceptMastery(params: {
   const concepts: ConceptMastery[] = [];
   for (const [key, val] of conceptMap) {
     const totalApplications = val.wins + val.losses;
-    const winRate = totalApplications > 0 ? val.wins / totalApplications : 0.5;
     const mistakePenalty = Math.min(50, val.mistakes * 8);
     const confidenceBonus = val.confidence * 0.3;
     const applicationBonus = Math.min(30, totalApplications * 3);

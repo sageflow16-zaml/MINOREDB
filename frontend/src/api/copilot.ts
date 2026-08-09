@@ -63,7 +63,7 @@ export const copilotService = {
     if (error) throw error;
   },
 
-  messages: async (projectId: string, conversationId: string): Promise<AIMessage[]> => {
+  messages: async (_projectId: string, conversationId: string): Promise<AIMessage[]> => {
     const { data, error } = await supabase.from('ai_message').select('*').eq('conversation_id', conversationId).order('created_at', { ascending: true });
     if (error) throw error;
     return data ?? [];

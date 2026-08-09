@@ -316,7 +316,6 @@ export default function ResearchPage() {
   const [showRelatedDocs, setShowRelatedDocs] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [showRecommendations, setShowRecommendations] = useState(false);
-  const [processingStatus, setProcessingStatus] = useState<Record<string, string>>({});
 
   const [flashcardsData, setFlashcardsData] = useState<FlashCard[]>([]);
   const [comparisonData, setComparisonData] = useState<DocumentComparison | null>(null);

@@ -146,7 +146,6 @@ export default function QuantSimulationLab() {
                         const maxVal = Math.max(...Object.values(sim.equity_curves as Record<string, number[]>).flat());
                         const minVal = Math.min(...Object.values(sim.equity_curves as Record<string, number[]>).flat());
                         const range = maxVal - minVal || 1;
-                        const w = 100 / curve.length;
                         return (
                           <div key={pctl} className="absolute inset-0 flex items-end" style={{ opacity: pctl === 50 ? 1 : 0.3 }}>
                             {curve.map((val, i) => (

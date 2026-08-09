@@ -38,7 +38,7 @@ export const useDeleteConcept = (projectId: string) => {
         return { previous };
       },
       onSuccess: () => toast.success('Concept deleted'),
-      onError: (err, _, context) => {
+      onError: (_err, _, context) => {
         toast.error('Delete failed');
         queryClient.setQueryData(['concepts', projectId], context?.previous);
       },

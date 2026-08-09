@@ -1,14 +1,11 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  Brain, Network, Sparkles, RefreshCw, Filter, Layers,
-  PanelLeftClose, PanelRightClose, Lightbulb, Search,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
+import { Network, RefreshCw, Filter, Layers, PanelRightClose, Lightbulb } from 'lucide-react';
+
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/badge';
-import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
+
+import { ErrorState } from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
 import { callEdgeFunction } from '../lib/edgeFunctions';
 import { KnowledgeGraphView } from '../components/knowledge/knowledge-graph-view';
@@ -32,19 +29,13 @@ const ENTITY_TYPES: KnowledgeEntityType[] = [
   'chart', 'economic_event',
 ];
 
-const ENTITY_TYPE_ICONS: Partial<Record<KnowledgeEntityType, string>> = {
-  document: '📄', journal_entry: '📓', backtest: '📊', strategy: '🎯',
-  concept: '🧠', trading_rule: '📐', claim: '💡', pattern: '📈',
-  mistake: '⚠️', note: '📝', chart: '🖼️', economic_event: '📅',
-};
-
 export default function KnowledgeEnginePage() {
   const { projectId } = useParams<{ projectId: string }>()!;
 
   const [entities, setEntities] = useState<KnowledgeEntity[]>([]);
   const [connections, setConnections] = useState<EntityConnection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const [selectedEntity, setSelectedEntity] = useState<KnowledgeEntity | null>(null);
   const [rightTab, setRightTab] = useState<RightTab>('related');

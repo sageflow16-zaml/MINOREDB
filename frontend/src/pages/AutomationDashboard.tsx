@@ -25,10 +25,10 @@ const statusColors: Record<string, string> = {
 export default function AutomationDashboard() {
   const { projectId } = useParams<{ projectId: string }>()!;
   const { data: dashboard, isLoading, error } = useAutomationDashboard(projectId!);
-  const { data: workflows = [] } = useWorkflows(projectId!);
-  const { data: rules = [] } = useRules(projectId!);
-  const { data: jobs = [] } = useJobs(projectId!);
-  const { data: notifications = [] } = useNotifications(projectId!, { unread_only: true });
+  useWorkflows(projectId!);
+  useRules(projectId!);
+  useJobs(projectId!);
+  useNotifications(projectId!, { unread_only: true });
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorState message="Failed to load automation dashboard" />;

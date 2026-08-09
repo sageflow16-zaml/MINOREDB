@@ -61,7 +61,7 @@ function buildSummary(type: string, label: string, confidence: number, data: Rec
   }
 }
 
-function buildReasoningTrace(type: string, target: string, data: Record<string, unknown>): ReasoningStep[] {
+function buildReasoningTrace(type: string, _target: string, data: Record<string, unknown>): ReasoningStep[] {
   const steps: ReasoningStep[] = [];
   let order = 1;
 
@@ -120,7 +120,7 @@ function buildReasoningTrace(type: string, target: string, data: Record<string, 
   return steps;
 }
 
-function buildTimeline(type: string, target: string, data: Record<string, unknown>): HistoryPoint[] {
+function buildTimeline(_type: string, _target: string, data: Record<string, unknown>): HistoryPoint[] {
   const history = data.history as HistoryPoint[] | undefined;
   if (history?.length) return history;
 
@@ -143,7 +143,7 @@ function buildTimeline(type: string, target: string, data: Record<string, unknow
   return points;
 }
 
-function findRelatedItems(type: string, data: Record<string, unknown>): RelatedItem[] {
+function findRelatedItems(_type: string, data: Record<string, unknown>): RelatedItem[] {
   const items: RelatedItem[] = [];
   const patterns = data.patterns as Array<Record<string, unknown>> | undefined;
   const debriefs = data.debriefs as Array<Record<string, unknown>> | undefined;

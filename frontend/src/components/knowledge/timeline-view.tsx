@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Calendar, FileText, BookOpen, BarChart3, Target, Brain } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { KnowledgeEntity, ENTITY_COLORS, ENTITY_LABELS } from './types';
 
 interface TimelineViewProps {
@@ -32,17 +32,6 @@ function groupByTime(entities: KnowledgeEntity[]): TimeGroup[] {
   });
   const order = ['Today', 'This Week', 'This Month', 'Last 3 Months', 'Older', 'Unknown'];
   return order.filter((l) => groups[l]).map((label) => ({ label, entities: groups[label] }));
-}
-
-function EntityIcon({ type }: { type: string }) {
-  const icons: Record<string, React.ReactNode> = {
-    document: <FileText className="h-3.5 w-3.5" />,
-    journal_entry: <BookOpen className="h-3.5 w-3.5" />,
-    backtest: <BarChart3 className="h-3.5 w-3.5" />,
-    strategy: <Target className="h-3.5 w-3.5" />,
-    concept: <Brain className="h-3.5 w-3.5" />,
-  };
-  return icons[type] || <Calendar className="h-3.5 w-3.5" />;
 }
 
 export function TimelineView({ entities, loading, onNavigate }: TimelineViewProps) {

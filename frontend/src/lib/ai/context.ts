@@ -27,7 +27,7 @@ export function buildAIContext(projectId: string, overrides?: Partial<AIContextS
   return ctx;
 }
 
-export function buildDecisionContext(projectId: string, question: string): string[] {
+export function buildDecisionContext(projectId: string, _question: string): string[] {
   const ctx = buildAIContext(projectId);
   const parts: string[] = ['Context for decision analysis:'];
   if (ctx.strengths.length) parts.push(`Strengths: ${ctx.strengths.join(', ')}`);

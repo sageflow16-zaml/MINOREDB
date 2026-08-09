@@ -118,7 +118,7 @@ export function BacktestIntelligencePanel({ projectId, backtestId, metrics }: {
 }) {
   const [view, setView] = useState<'overview' | 'insights' | 'recommendations'>('overview');
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [, setAiAnalysis] = useState<any>(null);
   const prefersReduced = useReducedMotion();
 
   const analysis = useMemo(() => {

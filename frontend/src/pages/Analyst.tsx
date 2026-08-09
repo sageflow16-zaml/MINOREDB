@@ -80,7 +80,7 @@ export default function AnalystPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [showEvidence, setShowEvidence] = useState(false);
+  const [, setShowEvidence] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mutation = useAnalystQuery();
 

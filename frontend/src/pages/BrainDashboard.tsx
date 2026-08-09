@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState, ErrorState } from '../components/ui/Feedback';
 import { KpiCard } from '../components/ui/KpiCard';
-import { DataTable } from '../components/ui/DataTable';
+
 import { Input } from '../components/ui/input';
 import {
   useBrainDashboard, useBrainAsk, useBrainInsights, useGenerateBrainInsights,
@@ -54,7 +54,7 @@ export default function BrainDashboardPage() {
 
   const handleAsk = async () => {
     if (!askQuestion.trim()) return;
-    const result = askBrain.mutateAsync({ question: askQuestion }).then((r: import('../api/types').BrainAskResponse) => {
+    void askBrain.mutateAsync({ question: askQuestion }).then((r: import('../api/types').BrainAskResponse) => {
       setAskResult({
         id: r.decision_id,
         project_id: projectId!,

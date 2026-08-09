@@ -11,7 +11,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { PageLayout, PageHeader, fadeSlideUp } from '../components/ui/PageLayout';
 import {cn, relativeTime} from '../lib/utils';
 import toast from 'react-hot-toast';
-import {FileText, Bookmark, Trash2, Search, BookMarked, Calendar, X, ExternalLink, CornerDownRight} from 'lucide-react';
+import { FileText, Trash2, Search, BookMarked, Calendar, X, ExternalLink, CornerDownRight } from 'lucide-react';
 import type { SourceRead } from '../api/types';
 
 interface BookmarkEntry {

@@ -12,7 +12,7 @@ import {
   useToggleEventFavorite, useFavorites,
 } from '../hooks/useMarketIntelligence';
 import type { EconomicEvent } from '../api/types';
-import {Calendar, Star, Plus, Trash2, Edit3, X, Search} from 'lucide-react';
+import { Star, Plus, Trash2, Edit3, X, Search } from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };

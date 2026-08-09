@@ -57,7 +57,7 @@ export const conflictService = {
     if (error) throw error;
   },
 
-  claims: async (projectId: string, id: string): Promise<ClaimRead[]> => {
+  claims: async (_projectId: string, id: string): Promise<ClaimRead[]> => {
     const { data: ccs, error: ccError } = await supabase
       .from('claim_conflict')
       .select('claim_id')

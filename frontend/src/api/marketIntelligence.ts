@@ -603,7 +603,7 @@ export const marketIntelService = {
     if (error) throw error;
   },
 
-  async watchlistItems(projectId: string, watchlistId: string): Promise<WatchlistItem[]> {
+  async watchlistItems(_projectId: string, watchlistId: string): Promise<WatchlistItem[]> {
     const { data, error } = await supabase
       .from('watchlist_item')
       .select('*')
@@ -642,7 +642,7 @@ export const marketIntelService = {
     };
   },
 
-  async updateWatchlistItem(projectId: string, itemId: string, data: Partial<WatchlistItem>): Promise<WatchlistItem> {
+  async updateWatchlistItem(_projectId: string, itemId: string, data: Partial<WatchlistItem>): Promise<WatchlistItem> {
     const db: Record<string, unknown> = {};
     if (data.symbol !== undefined) db.symbol = data.symbol;
     if (data.notes !== undefined) db.notes = data.notes;
@@ -664,7 +664,7 @@ export const marketIntelService = {
     };
   },
 
-  async deleteWatchlistItem(projectId: string, itemId: string): Promise<void> {
+  async deleteWatchlistItem(_projectId: string, itemId: string): Promise<void> {
     const { error } = await supabase
       .from('watchlist_item')
       .delete()

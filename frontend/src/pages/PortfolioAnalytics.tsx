@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { PageLayout, PageSection } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/Button';
+
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
@@ -30,7 +30,7 @@ export default function PortfolioAnalyticsPage() {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState<string | null>(null);
 
-  const { data: analytics, isLoading, isError, refetch } = usePortfolioAnalytics(projectId!);
+  const { isLoading, isError, refetch } = usePortfolioAnalytics(projectId!);
   const { data: accounts } = useAccounts(projectId!);
   const { data: brokers } = useBrokers(projectId!);
   const askAI = usePortfolioAskAI(projectId!);

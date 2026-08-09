@@ -56,7 +56,7 @@ export const conceptService = {
     if (error) throw error;
   },
 
-  claims: async (projectId: string, id: string): Promise<ClaimRead[]> => {
+  claims: async (_projectId: string, id: string): Promise<ClaimRead[]> => {
     const { data: associations, error: assocError } = await supabase
       .from('association')
       .select('claim_id')

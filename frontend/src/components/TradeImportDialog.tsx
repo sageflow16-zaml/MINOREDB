@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function TradeImportDialog({ projectId, open, onClose }: Props) {
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [step, setStep] = useState<'upload' | 'preview' | 'confirming' | 'done'>('upload');

@@ -17,7 +17,7 @@ function useLearningStatus(projectId: string) {
   });
 }
 
-export function AIPanel({ previewMode }: { previewMode?: boolean }) {
+export function AIPanel({ previewMode: _previewMode }: { previewMode?: boolean }) {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { data: status, isLoading } = useLearningStatus(projectId || '');

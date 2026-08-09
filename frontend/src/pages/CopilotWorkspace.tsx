@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { PageHeader } from '../components/PageHeader';
+
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
@@ -11,13 +11,7 @@ import {
   useAgents, usePrompts, useSearchConversations, useIngestAll,
 } from '../hooks/useCopilot';
 import type { AIMessage, AIConversation, AICitation, AIAgentConfig, AIPrompt } from '../api/types';
-import {
-  MessageSquare, Sparkles, Send, Plus, Trash2, Pin, PinOff, Bot,
-  User, Search, PanelLeft, PanelRight, Clock, Star, Archive,
-  BookOpen, Brain, Target, Shield, TrendingUp, Globe, Activity,
-  FileText, Link2, AlertTriangle, RefreshCw, ChevronDown,
-  Folders, X, Copy, Check,
-} from 'lucide-react';
+import { MessageSquare, Sparkles, Send, Plus, Trash2, Pin, PinOff, Bot, User, Search, PanelLeft, Clock, Star, BookOpen, Brain, Target, Shield, TrendingUp, Globe, Activity, FileText, Link2, RefreshCw, Copy, Check } from 'lucide-react';
 
 const AGENT_ICONS: Record<string, typeof Bot> = {
   trading_coach: Brain, psychology_coach: Star, risk_coach: Shield,

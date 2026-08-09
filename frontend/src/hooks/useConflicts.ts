@@ -30,7 +30,7 @@ export const useDeleteConflict = (projectId: string) => {
       return { previous };
     },
     onSuccess: () => toast.success('Conflict deleted'),
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       toast.error('Delete failed');
       queryClient.setQueryData(['conflicts', projectId], context?.previous);
     },

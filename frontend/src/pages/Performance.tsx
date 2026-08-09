@@ -360,7 +360,7 @@ export default function PerformancePage() {
             ]}
             searchable={true}
             pageSize={15}
-            onRowClick={(row: any) => navigate(`/projects/${projectId}/trades`)}
+            onRowClick={(_row: any) => navigate(`/projects/${projectId}/trades`)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center">

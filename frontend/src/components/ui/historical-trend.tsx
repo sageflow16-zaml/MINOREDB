@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { getHistory, getTrend } from '../../lib/trust/history';
+import { getHistory } from '../../lib/trust/history';
 import type { HistoryPoint } from '../../lib/trust/types';
 
 interface HistoricalTrendProps {
@@ -12,9 +12,8 @@ interface HistoricalTrendProps {
   value?: number;
 }
 
-export function HistoricalTrend({ metric, period = '30d', label, className, value }: HistoricalTrendProps) {
+export function HistoricalTrend({ metric, period = '30d', className, value }: HistoricalTrendProps) {
   const history = useMemo(() => getHistory(metric, period), [metric, period]);
-  const trend = useMemo(() => getTrend(metric, period), [metric, period]);
 
   if (history.length < 2 && value === undefined) {
     return (

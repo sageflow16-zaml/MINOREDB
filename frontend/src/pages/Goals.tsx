@@ -16,13 +16,7 @@ import {PortfolioGoal, GoalMetric} from '../api/types';
 import { Plus, Edit3, Trash2, Target, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const statusOptions = [
-  { label: 'Active', value: 'active' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'At Risk', value: 'at_risk' },
-  { label: 'Failed', value: 'failed' },
-  { label: 'Paused', value: 'paused' },
-];
+
 
 const metricOptions = [
   { label: 'Portfolio Growth', value: 'portfolio_growth' },

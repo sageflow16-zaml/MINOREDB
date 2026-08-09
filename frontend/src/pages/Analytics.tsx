@@ -24,8 +24,6 @@ function formatCurrency(value: number | undefined | null): string {
 }
 
 const tooltipStyle = chartTooltipStyle.contentStyle;
-const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--chart-1))', 'hsl(var(--muted))'];
-const CHART_COLORS_5 = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--chart-1))'];
 
 function HeroCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
   const accentColors = {
@@ -92,13 +90,6 @@ export default function AnalyticsPage() {
 
   const isLoading = stats.isLoading || equityCurve.isLoading;
   const isError = stats.isError;
-
-  const kpiData = useMemo(() => {
-    if (!stats.data) return null;
-    const o = stats.data.overview;
-    const r = stats.data.risk;
-    return { o, r };
-  }, [stats.data]);
 
   const equityData = useMemo(() => {
     return (equityCurve.data ?? []).map((p: any) => ({
@@ -394,7 +385,7 @@ export default function AnalyticsPage() {
             ]}
             searchable={true}
             pageSize={10}
-            onRowClick={(row: any) => navigate(`/projects/${projectId}/trades`)}
+            onRowClick={(_row: any) => navigate(`/projects/${projectId}/trades`)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">

@@ -18,7 +18,7 @@ const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { st
 export default function QuantOptimizationLab() {
   const { projectId } = useParams<{ projectId: string }>()!;
   const [showForm, setShowForm] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '', optimization_type: 'grid', objective: 'sharpe_ratio',
     parameters: JSON.stringify({

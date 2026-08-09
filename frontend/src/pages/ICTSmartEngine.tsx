@@ -135,7 +135,7 @@ export default function ICTSmartEngine() {
   const { projectId } = useParams<{ projectId: string }>();
   const [symbol, setSymbol] = useState('EURUSD');
   const [timeframe, setTimeframe] = useState('1h');
-  const [includeModels, setIncludeModels] = useState(true);
+  const [includeModels] = useState(true);
 
   const analyzeMutation = useAnalyzeICT(projectId || '');
   const { data: aiCtx, isLoading: aiLoading } = useICTAIContext(projectId || '', symbol);

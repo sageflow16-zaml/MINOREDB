@@ -28,7 +28,6 @@ function formatCurrency(value: number | undefined | null): string {
 }
 
 const tooltipStyle = chartTooltipStyle.contentStyle;
-const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--danger))', 'hsl(var(--info))', 'hsl(var(--chart-5))'];
 
 function StatCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {
   const accentColors = { default: 'text-foreground', success: 'text-success', danger: 'text-danger-text', warning: 'text-warning' };
@@ -406,7 +405,7 @@ export default function StatisticsPage() {
             ]}
             searchable={true}
             pageSize={15}
-            onRowClick={(row: any) => navigate(`/projects/${projectId}/trades`)}
+            onRowClick={(_row: any) => navigate(`/projects/${projectId}/trades`)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center">

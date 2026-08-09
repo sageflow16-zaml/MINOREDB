@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, EmptyState } from '../components/ui/Feedback';
 import { KpiCard } from '../components/ui/KpiCard';
-import { useVaults, useCreateVault, useDeleteVault, useVaultHealth, useVaultStatistics, useSyncImport, useSyncExport } from '../hooks/useObsidian';
+import { useVaults, useCreateVault, useDeleteVault, useVaultStatistics, useSyncImport } from '../hooks/useObsidian';
 import {Plus, Trash2, RefreshCw, Database} from 'lucide-react';
 import type { Vault } from '../api/types';
 
@@ -23,7 +23,6 @@ export default function VaultManagerPage() {
   const createVault = useCreateVault(projectId!);
   const deleteVault = useDeleteVault(projectId!);
   const syncImport = useSyncImport(projectId!);
-  const syncExport = useSyncExport(projectId!);
 
   const vaultsData = vaults.data || [];
 
@@ -95,7 +94,6 @@ export default function VaultManagerPage() {
 }
 
 function VaultCard({ vault, projectId, onDelete, onSync }: { vault: Vault; projectId: string; onDelete: () => void; onSync: () => void }) {
-  const health = useVaultHealth(projectId, vault.id);
   const stats = useVaultStatistics(projectId, vault.id);
   const syncLogs = useSyncImport(projectId);
 

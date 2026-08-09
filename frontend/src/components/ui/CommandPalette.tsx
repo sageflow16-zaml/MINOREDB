@@ -159,7 +159,7 @@ export function CommandPalette({ open, onClose, groups, extraGroups = [] }: Comm
                     <p className="px-2 py-1.5 text-2xs font-medium text-muted-foreground uppercase tracking-wider">
                       {group.label}
                     </p>
-                    {groupItems.map((item, ii) => {
+                    {groupItems.map((item, _ii) => {
                       const flatIndex = filtered.indexOf(item);
                       const Icon = item.icon;
                       return (

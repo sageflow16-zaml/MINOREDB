@@ -7,20 +7,9 @@ import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
 import { EmptyState } from '../components/ui/Feedback';
 import { cn } from '../lib/utils';
-import {
-  usePlanningDashboard, useDayView, usePlans, useCreatePlan,
-  useChecklistTemplates, useCreateChecklistTemplate, useChecklistExecutions, useCreateChecklistExecution,
-  useEconomicEvents, useCreateEconomicEvent,
-  useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal,
-  useReminders, useCreateReminder, useToggleReminder, useDeleteReminder,
-  useCreateCalendarEvent,
-  useReviews, useCreateReview,
-} from '../hooks/usePlanning';
+import { usePlanningDashboard, useDayView, usePlans, useCreatePlan, useChecklistTemplates, useCreateChecklistTemplate, useCreateChecklistExecution, useEconomicEvents, useCreateEconomicEvent, useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal, useReminders, useCreateReminder, useToggleReminder, useDeleteReminder, useReviews, useCreateReview } from '../hooks/usePlanning';
 import type { PlanningDashboard, DayViewData, Goal, Reminder, EconomicEvent, ChecklistTemplate, DailyReview } from '../api/types';
-import {
-  Calendar, Target, CheckCircle, Bell, BellOff, Plus, Trash2,
-  ChevronLeft, ChevronRight, Eye, Brain,
-} from 'lucide-react';
+import { Calendar, CheckCircle, Bell, BellOff, Plus, Trash2, ChevronLeft, ChevronRight, Eye, Brain } from 'lucide-react';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -40,7 +29,6 @@ export default function PlanningPage() {
   const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [showCreateReminder, setShowCreateReminder] = useState(false);
-  const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [showCreateEconEvent, setShowCreateEconEvent] = useState(false);
   const [showCreateChecklist, setShowCreateChecklist] = useState(false);
   const [showCreateReview, setShowCreateReview] = useState(false);
@@ -51,7 +39,6 @@ export default function PlanningPage() {
   const goals = useGoals(projectId!);
   const reminders = useReminders(projectId!);
   const templates = useChecklistTemplates(projectId!);
-  const execs = useChecklistExecutions(projectId!, selectedDate);
   const econEvents = useEconomicEvents(projectId!, selectedDate, selectedDate);
   const reviews = useReviews(projectId!);
 
@@ -62,7 +49,6 @@ export default function PlanningPage() {
   const createReminder = useCreateReminder(projectId!);
   const toggleReminder = useToggleReminder(projectId!);
   const deleteReminder = useDeleteReminder(projectId!);
-  const createEvent = useCreateCalendarEvent(projectId!);
   const createEconEvent = useCreateEconomicEvent(projectId!);
   const createChecklistTemplate = useCreateChecklistTemplate(projectId!);
   const createChecklistExec = useCreateChecklistExecution(projectId!);

@@ -30,13 +30,6 @@ const statusToBadgeVariant = (s: string) => {
   return 'warning' as const;
 };
 
-const statusToColor = (s: string) => {
-  if (s === 'completed') return 'text-success';
-  if (s === 'failed') return 'text-destructive';
-  if (s === 'running') return 'text-primary-text';
-  return 'text-warning';
-};
-
 export default function IntelligenceDashboard() {
   const { projectId } = useParams<{ projectId: string }>();
   const pid = projectId ?? '';

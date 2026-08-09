@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useWorkspace } from '../workspace/WorkspaceContext';
+
 import { cn } from '../../lib/utils';
 import {Pencil, Minus, Square, ArrowUpRight, Circle, TrendingUp, Target, Droplets, GripHorizontal, Camera} from 'lucide-react';
 import type { DrawingType } from '../workspace/types';
@@ -25,7 +25,6 @@ const tools: DrawingTool[] = [
 
 export function DrawingToolbar() {
   const [activeTool, setActiveTool] = useState<DrawingType | null>(null);
-  const { state } = useWorkspace();
 
   return (
     <div>

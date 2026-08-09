@@ -60,7 +60,6 @@ export default function LearningPage() {
     total: s.total_trades + s.total_patterns + s.total_claims + s.total_concepts + s.total_sources + s.total_interpretations,
   }));
 
-  const chartConfig = { stroke: 'hsl(var(--chart-1))', fill: 'hsl(var(--chart-1))' };
 
   return (
     <div className="space-y-6">

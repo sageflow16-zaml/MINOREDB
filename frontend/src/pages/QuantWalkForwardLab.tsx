@@ -16,7 +16,7 @@ const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { st
 export default function QuantWalkForwardLab() {
   const { projectId } = useParams<{ projectId: string }>()!;
   const [showForm, setShowForm] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '', training_window: 252, validation_window: 63, step_size: 63,
     config: '{"num_trades": 400, "win_rate": 0.45}',

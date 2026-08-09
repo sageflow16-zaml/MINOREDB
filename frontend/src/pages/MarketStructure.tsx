@@ -10,8 +10,8 @@ import { Badge } from '../components/ui/badge';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { FormField, SectionLabel } from '../components/ui/form-field';
-import { Plus, ArrowUp, ArrowDown, Minus, Eye, Pencil, Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { Plus, ArrowUp, ArrowDown, Eye, Pencil, Trash2, X } from 'lucide-react';
+
 import type { MarketStructureRead, MarketStructureCreate, MarketStructureUpdate } from '../types';
 
 type FormData = MarketStructureCreate & MarketStructureUpdate;

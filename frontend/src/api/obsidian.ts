@@ -164,7 +164,7 @@ export const obsidianService = {
   syncExport: async (projectId: string, vaultId: string, noteIds?: string[]): Promise<any> =>
     callEdgeFunction('obsidian-sync', { operation: 'export', project_id: projectId, data: { vault_id: vaultId, note_ids: noteIds } }),
 
-  getSyncLogs: async (projectId: string, vaultId: string, limit = 20): Promise<SyncLog[]> => {
+  getSyncLogs: async (_projectId: string, vaultId: string, limit = 20): Promise<SyncLog[]> => {
     const { data, error } = await supabase
       .from('sync_log')
       .select('*')
@@ -183,7 +183,7 @@ export const obsidianService = {
     callEdgeFunction('obsidian-sync', { operation: 'knowledge-links', project_id: projectId }),
 
   // Conflicts — direct table queries
-  getConflicts: async (projectId: string, vaultId: string): Promise<SyncConflict[]> => {
+  getConflicts: async (_projectId: string, vaultId: string): Promise<SyncConflict[]> => {
     const { data, error } = await supabase
       .from('sync_conflict')
       .select('*')
@@ -210,7 +210,7 @@ export const obsidianService = {
   },
 
   // Settings — direct table queries
-  getSettings: async (projectId: string, vaultId: string): Promise<SyncSettings> => {
+  getSettings: async (_projectId: string, vaultId: string): Promise<SyncSettings> => {
     const { data, error } = await supabase
       .from('sync_settings')
       .select('*')
@@ -221,7 +221,7 @@ export const obsidianService = {
     return data as SyncSettings;
   },
 
-  updateSettings: async (projectId: string, vaultId: string, data: Partial<SyncSettings>): Promise<SyncSettings> => {
+  updateSettings: async (_projectId: string, vaultId: string, data: Partial<SyncSettings>): Promise<SyncSettings> => {
     const { data: row, error } = await supabase
       .from('sync_settings')
       .upsert({ ...data, vault_id: vaultId })
@@ -233,7 +233,7 @@ export const obsidianService = {
   },
 
   // Statistics — direct table query
-  getStatistics: async (projectId: string, vaultId: string): Promise<VaultStatistics> => {
+  getStatistics: async (_projectId: string, vaultId: string): Promise<VaultStatistics> => {
     const { data, error } = await supabase
       .from('vault_statistics')
       .select('*')

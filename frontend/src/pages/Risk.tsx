@@ -17,11 +17,6 @@ import {Shield, AlertTriangle, TrendingDown, Wallet, Activity, Target, Plus, Tra
 import { cn } from '../lib/utils';
 import type { RiskRule, RiskAlert, RuleViolation, TradeValidationResult, PositionSizeResult } from '../api/types';
 
-function formatCurrency(value: number | undefined | null): string {
-  if (value == null) return '—';
-  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 const tooltipStyle = chartTooltipStyle.contentStyle;
 
 function MetricCard({ label, value, icon: Icon, accent, sub }: { label: string; value: string; icon: any; accent?: 'success' | 'danger' | 'warning' | 'default'; sub?: string }) {

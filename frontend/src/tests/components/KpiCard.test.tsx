@@ -16,7 +16,7 @@ describe('KpiCard', () => {
   });
 
   it('renders icon when provided', () => {
-    const TestIcon = React.forwardRef<SVGSVGElement, React.ComponentPropsWithoutRef<'svg'>>((props, ref) => <span data-testid="test-icon">📊</span>);
+    const TestIcon = React.forwardRef<SVGSVGElement, React.ComponentPropsWithoutRef<'svg'>>((_props, _ref) => <span data-testid="test-icon">📊</span>);
     render(<KpiCard title="Trades" value="42" icon={TestIcon} />);
     expect(screen.getByTestId('test-icon')).toBeInTheDocument();
   });

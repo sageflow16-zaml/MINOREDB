@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Lightbulb, AlertTriangle, TrendingUp, Repeat, Zap, Search as SearchIcon } from 'lucide-react';
+import { Lightbulb, AlertTriangle, TrendingUp, Repeat, Zap } from 'lucide-react';
 import {DiscoveryItem} from './types';
 
 interface DiscoveryPanelProps {

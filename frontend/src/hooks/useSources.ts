@@ -63,7 +63,7 @@ export const useDeleteSource = (projectId: string) => {
       return { previousSources };
     },
     onSuccess: () => toast.success('Source deleted'),
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       toast.error('Delete failed');
       queryClient.setQueryData(['sources', projectId], context?.previousSources);
     },

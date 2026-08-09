@@ -62,7 +62,7 @@ export function ChartContainer({ panelId, config }: ChartContainerProps) {
   const { projectId } = useParams<{ projectId: string }>();
   const previewMode = state.layout.previewMode;
 
-  const { data: result, isLoading, isError } = useMarketData(
+  const { data: result, isLoading } = useMarketData(
     config.symbol, config.timeframe, projectId, !previewMode
   );
 

@@ -7,13 +7,7 @@ import { CommandPalette } from '../components/ui/CommandPalette';
 import { Toaster } from '../components/ui/toast';
 import { ErrorFallback } from '../components/ui/ErrorFallback';
 import { useProject, projectIdFromPath } from '../context/ProjectContext';
-import {
-  LayoutDashboard, BarChart3, TrendingUp, Notebook, Plus, Sparkles,
-  Search, CandlestickChart, LineChart, Target, Network,
-  Layers, MessageSquare, AlertTriangle, Lightbulb, PieChart, Globe, Zap,
-  Database, Settings as SettingsIcon, Activity, FileText, RefreshCw,
-  Library,
-} from 'lucide-react';
+import { LayoutDashboard, BarChart3, TrendingUp, Notebook, Plus, Sparkles, Search, CandlestickChart, LineChart, Target, Network, Layers, MessageSquare, AlertTriangle, Lightbulb, PieChart, Globe, Zap, Database, Settings as SettingsIcon, Activity, FileText, Library } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface QuickAction {
@@ -22,15 +16,6 @@ interface QuickAction {
   description: string;
   icon: LucideIcon;
   shortcut: string;
-  action: () => void;
-}
-
-interface NavEntry {
-  id: string;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-  shortcut?: string;
   action: () => void;
 }
 

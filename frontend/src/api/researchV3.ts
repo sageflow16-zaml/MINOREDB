@@ -141,7 +141,7 @@ export const researchV3Service = {
     }).select().single();
   },
 
-  removeFromCollection: async (projectId: string, documentId: string, collectionId: string) => {
+  removeFromCollection: async (_projectId: string, documentId: string, collectionId: string) => {
     return supabase.from('document_collection_member').delete().eq('document_id', documentId).eq('collection_id', collectionId);
   },
 
@@ -220,7 +220,7 @@ export const researchV3Service = {
     return data || [];
   },
 
-  saveResearchSession: async (projectId: string, title?: string, documentIds?: string[], conversationId?: string | null) => {
+  saveResearchSession: async (projectId: string, title?: string, documentIds?: string[], _conversationId?: string | null) => {
     const { data: existing } = await supabase.from('research_session')
       .select('id, document_ids')
       .eq('project_id', projectId)

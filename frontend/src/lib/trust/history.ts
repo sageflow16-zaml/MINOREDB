@@ -2,7 +2,7 @@ import type { HistoryPoint } from './types';
 
 const STORAGE_PREFIX = 'minore_history_';
 
-export function recordSnapshot(metric: string, value: number, context?: Record<string, unknown>): void {
+export function recordSnapshot(metric: string, value: number, _context?: Record<string, unknown>): void {
   try {
     const snapshots = loadSnapshots(metric);
     snapshots.push({

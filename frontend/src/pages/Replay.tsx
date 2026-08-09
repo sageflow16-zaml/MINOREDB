@@ -27,7 +27,6 @@ import { cn } from '../lib/utils';
 const TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h', '4h', '1d'];
 const PAIRS = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'XAUUSD'];
 const MISTAKE_TYPES = ['Entry', 'Exit', 'Risk Management', 'Psychology', 'Rule Violation', 'Missing Setup', 'Other'];
-const SCREENSHOT_CATEGORIES = ['Pre-entry', 'Entry', 'Management', 'Exit', 'Post-analysis'];
 const ANNOTATION_TOOLS = [
   { type: 'text', icon: Type, label: 'Text' },
   { type: 'arrow', icon: ArrowUpRight, label: 'Arrow' },
@@ -35,7 +34,7 @@ const ANNOTATION_TOOLS = [
   { type: 'rectangle', icon: Square, label: 'Rect' },
 ];
 
-function CandlestickChart({ candles, trades, annotations }: { candles?: MarketCandle[]; trades?: ReplayTrade[]; annotations?: ReplayAnnotation[] }) {
+function CandlestickChart({ candles }: { candles?: MarketCandle[]; trades?: ReplayTrade[]; annotations?: ReplayAnnotation[] }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
 

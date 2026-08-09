@@ -57,7 +57,7 @@ describe('patched useQuery option stability', () => {
     const queryFn = vi.fn().mockResolvedValue({ rows: [] });
 
     function Component({ filters }: { filters: { limit: number } }) {
-      const { data } = useQuery({
+       useQuery({
         queryKey: ['automation', 'proj-1', 'rules', { enabledOnly: filters.limit > 0 }],
         queryFn: () => queryFn(filters),
       });
@@ -84,7 +84,7 @@ describe('patched useQuery option stability', () => {
     const queryFn = vi.fn().mockResolvedValue({ rows: [] });
 
     function Component({ filters }: { filters: { limit: number } }) {
-      const { data } = useQuery({
+       useQuery({
         queryKey: ['broker', 'proj-1', 'logs', { limit: filters.limit }],
         queryFn: () => queryFn(filters),
       });

@@ -20,11 +20,7 @@ import { FormField, SectionLabel } from '../components/ui/form-field';
 import TradeImportDialog from '../components/TradeImportDialog';
 import TradeExportDialog from '../components/TradeExportDialog';
 import { ImageUpload } from '../components/ui/ImageUpload';
-import {
-  Plus, X, Pencil, Trash2, Eye, TrendingUp, TrendingDown,
-  DollarSign, BarChart3, Target, Activity, Search, ArrowUpDown,
-  Upload, Download, Image as ImageIcon
-} from 'lucide-react';
+import { Plus, X, Pencil, Trash2, Eye, TrendingUp, TrendingDown, DollarSign, BarChart3, Target, Activity, Upload, Download, Image as ImageIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { TradeRead, TradeCreate, TradeUpdate } from '../types';
 
@@ -84,7 +80,7 @@ export default function TradesPage() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds] = useState<string[]>([]);
 
   const wins = trades?.filter(t => t.result === 'WIN').length ?? 0;
   const losses = trades?.filter(t => t.result === 'LOSS').length ?? 0;

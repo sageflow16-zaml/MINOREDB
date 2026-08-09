@@ -7,15 +7,12 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { cn } from '../lib/utils';
+
 import {
   useExperiments, useCreateExperiment, useUpdateExperiment,
   useDeleteExperiment, useDuplicateExperiment,
 } from '../hooks/useQuantResearch';
-import {
-  FlaskConical, Plus, Trash2, Copy, Edit3, Play, CheckCircle2,
-  XCircle, AlertTriangle, Beaker, Eye, Brain, ArrowRight,
-} from 'lucide-react';
+import { FlaskConical, Plus, Trash2, Copy, Edit3, Eye, Brain, ArrowRight } from 'lucide-react';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 

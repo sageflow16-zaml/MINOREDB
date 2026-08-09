@@ -14,7 +14,7 @@ import { interpretScore } from '../lib/trading-score/index';
 import { buildExplanation } from '../lib/trust/explainability';
 
 
-import {buildContext, detectPatterns} from '../lib/intelligence/index';
+import { buildContext } from '../lib/intelligence/index';
 import type { IntelligenceContext } from '../lib/intelligence/types';
 import { ExplainDialog } from '../components/ui/explain-dialog';
 import { ConfidenceBadge } from '../components/ui/confidence-badge';

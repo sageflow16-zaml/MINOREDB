@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+
 import {Sun, Target, Brain, AlertTriangle, BookOpen, CheckCircle} from 'lucide-react';
 import { useDailyBrief } from '../../hooks/useAIWorkflow';
 import { cn } from '../../lib/utils';

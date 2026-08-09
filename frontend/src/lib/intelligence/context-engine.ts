@@ -97,9 +97,6 @@ export function buildContext(data: RawIntelligenceData): IntelligenceContext {
     recentDataDays: 3,
   });
 
-  const weakestScore = scores.categories.reduce((min, c) => c.score < min.score ? c : min, scores.categories[0]);
-  const strongestScore = scores.categories.reduce((max, c) => c.score > max.score ? c : max, scores.categories[0]);
-
   return {
     projectId,
     metadata: {

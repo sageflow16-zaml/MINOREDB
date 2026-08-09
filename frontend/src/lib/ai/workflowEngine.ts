@@ -73,13 +73,13 @@ function publishTimelineEntry(projectId: string, entry: Omit<TimelineEntry, 'id'
   eventBus.emit(createEvent('MENTOR_MESSAGE', projectId, { entry: full }, 'system'));
 }
 
-function publishTask(projectId: string, task: Omit<AITask, 'id' | 'createdAt'>) {
+function publishTask(_projectId: string, task: Omit<AITask, 'id' | 'createdAt'>) {
   const full: AITask = { id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, createdAt: new Date().toISOString(), ...task };
   taskStore.unshift(full);
   if (taskStore.length > 100) taskStore = taskStore.slice(0, 100);
 }
 
-function publishRecommendation(projectId: string, rec: Omit<SmartRecommendation, 'id' | 'createdAt'>) {
+function publishRecommendation(_projectId: string, rec: Omit<SmartRecommendation, 'id' | 'createdAt'>) {
   const full: SmartRecommendation = { id: `rec_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, createdAt: new Date().toISOString(), ...rec };
   recommendationStore.unshift(full);
   if (recommendationStore.length > 100) recommendationStore = recommendationStore.slice(0, 100);
@@ -121,7 +121,7 @@ function setupDefaultWorkflows() {
     trigger: 'DOCUMENT_PROCESSED',
     steps: [
       { type: 'extract-rules', action: async (e) => ({ eventToEmit: { type: 'RULE_EXTRACTED', data: { documentId: e.data.documentId } } }) },
-      { type: 'generate-tags', action: async (e) => ({ timeline: [{ type: 'event', eventType: 'DOCUMENT_PROCESSED', title: 'Document Processed', description: 'AI analysis complete', timestamp: new Date().toISOString(), actor: 'ai' }] }) },
+      { type: 'generate-tags', action: async (_e) => ({ timeline: [{ type: 'event', eventType: 'DOCUMENT_PROCESSED', title: 'Document Processed', description: 'AI analysis complete', timestamp: new Date().toISOString(), actor: 'ai' }] }) },
     ],
   });
   registerWorkflow('backtest-completed', {
@@ -145,7 +145,7 @@ function setupDefaultWorkflows() {
   registerWorkflow('journal-created', {
     trigger: 'JOURNAL_CREATED',
     steps: [
-      { type: 'check-consistency', action: async (e) => ({
+      { type: 'check-consistency', action: async (_e) => ({
         timeline: [{ type: 'action', eventType: 'JOURNAL_CREATED', title: 'Journal Updated', description: 'Journal entry recorded', timestamp: new Date().toISOString(), actor: 'user' }],
         tasks: [{ title: 'Review Recent Trades', description: 'Review trades linked to this journal entry', priority: 'low', reason: 'Journal entry recorded — review for patterns', relatedDocuments: [], estimatedMinutes: 5, completed: false, category: 'journal' }],
       })},
@@ -162,7 +162,7 @@ function setupDefaultWorkflows() {
   registerWorkflow('daily-brief', {
     trigger: 'DAILY_BRIEF_GENERATED',
     steps: [
-      { type: 'update-timeline', action: async (e) => ({
+      { type: 'update-timeline', action: async (_e) => ({
         timeline: [{ type: 'milestone', eventType: 'DAILY_BRIEF_GENERATED', title: 'Daily Brief Ready', description: 'Today\'s personalized briefing has been generated', timestamp: new Date().toISOString(), actor: 'ai', actionable: true }],
       })},
     ],

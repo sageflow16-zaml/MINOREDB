@@ -2,7 +2,7 @@ import { buildContext } from './context-engine';
 import { detectPatterns } from './pattern-engine';
 import { generateRecommendations, markRecommendationCompleted, markRecommendationDismissed } from './recommendation-engine';
 import { createPlan, getActivePlan, updateStep } from './planner-engine';
-import { loadMemory, updateMemory } from './memory-engine';
+import { updateMemory } from './memory-engine';
 import { executeReasoningPipeline, type ReasoningInput } from './reasoning-engine';
 import { recordSnapshot } from '../trust/history';
 import { eventBus } from '../ai/eventBus';
@@ -25,7 +25,6 @@ export async function orchestrate(data: RawIntelligenceData): Promise<Intelligen
   const patterns = detectPatterns(context);
   const recommendations = generateRecommendations(context, patterns);
   const plan = createPlan(recommendations);
-  const memory = loadMemory();
   const updatedMemory = updateMemory(context, recommendations, patterns);
 
   recordSnapshots(context);

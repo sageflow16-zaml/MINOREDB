@@ -1,10 +1,8 @@
 import {IntelligenceContext, BehavioralPattern} from './types';
 
-const STORAGE_KEY = 'minore_behavioral_patterns';
-
 export function detectPatterns(context: IntelligenceContext): BehavioralPattern[] {
   const patterns: BehavioralPattern[] = [];
-  const { scores, dna, concepts, learningPath, copilot, debriefs, patterns: rawPatterns, rules, trades, profile } = context;
+  const { scores, dna, concepts, debriefs, patterns: rawPatterns, trades, profile } = context;
 
   const psychologyScore = scores.categories.find((c) => c.key === 'psychology');
   const disciplineScore = scores.categories.find((c) => c.key === 'discipline');
@@ -12,8 +10,6 @@ export function detectPatterns(context: IntelligenceContext): BehavioralPattern[
   const journalScore = scores.categories.find((c) => c.key === 'journal');
   const executionScore = scores.categories.find((c) => c.key === 'execution');
 
-  const negativePatterns = rawPatterns.filter((p) => p.pattern_type === 'negative');
-  const positivePatterns = rawPatterns.filter((p) => p.pattern_type === 'positive');
   const debriefsWithEmotions = debriefs.filter((d) => d.emotional_state);
 
   // Pattern: Preparation affects trading quality

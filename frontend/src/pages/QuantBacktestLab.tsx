@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/input';
-import { KpiCard } from '../components/ui/KpiCard';
+
 import { DataTable } from '../components/ui/DataTable';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/ui/Feedback';
 
@@ -27,8 +27,7 @@ export default function QuantBacktestLab() {
 
   const { data: backtests = [], isLoading, error } = useBacktests(projectId!);
   const runBt = useRunBacktest(projectId!);
-  const deleteBt = useDeleteBacktest(projectId!);
-
+  useDeleteBacktest(projectId!);
   const handleRun = () => {
     let config = {};
     let costs = {};

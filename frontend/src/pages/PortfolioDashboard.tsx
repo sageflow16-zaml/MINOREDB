@@ -8,7 +8,7 @@ import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
 import { LoadingSpinner } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
-import {DollarSign, TrendingUp, Activity, TrendingDown, Wallet, PieChart as PieChartIcon, Shield, ArrowUpRight, BookOpen, Sparkles, ChevronRight, Download, Users, BarChart3, Target, Brain} from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Wallet, PieChart as PieChartIcon, Shield, ArrowUpRight, BookOpen, Sparkles, ChevronRight, Download, Users, BarChart3, Target, Brain } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 function formatCurrency(value: number | undefined | null): string {

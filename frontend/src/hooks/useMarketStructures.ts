@@ -56,7 +56,7 @@ export const useDeleteMarketStructure = (projectId: string) => {
       return { previous };
     },
     onSuccess: () => toast.success('Market structure deleted'),
-    onError: (err, _, context) => {
+    onError: (_err, _, context) => {
       toast.error('Delete failed');
       queryClient.setQueryData(['market-structures', projectId], context?.previous);
     },

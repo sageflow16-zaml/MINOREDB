@@ -34,7 +34,7 @@ export const useDeleteClaim = (projectId: string) => {
         return { previous };
       },
       onSuccess: () => toast.success('Claim deleted'),
-      onError: (err, _, context) => {
+      onError: (_err, _, context) => {
         toast.error('Delete failed');
         queryClient.setQueryData(['claims', projectId], context?.previous);
       },
