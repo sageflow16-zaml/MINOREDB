@@ -18,7 +18,7 @@ export function buildContext(data: RawIntelligenceData): IntelligenceContext {
       ? Math.round(debriefs.reduce((s, d) => s + (d.discipline_score || 50), 0) / debriefs.length)
       : 50,
     avgPsychologyScore: debriefs.length > 0
-      ? Math.round(debriefs.reduce((s, d) => s + ((d as any).psychology_score || (d as any).overall_rating || 50), 0) / debriefs.length)
+      ? Math.round(debriefs.reduce((s, d) => s + (d.overall_rating ?? 50), 0) / debriefs.length)
       : 50,
     totalPatterns: patterns.length,
     approvedRules: rules.filter((r) => r.status === 'approved').length,
@@ -73,7 +73,7 @@ export function buildContext(data: RawIntelligenceData): IntelligenceContext {
     totalTrades: trades?.length || 0,
     hasProfile: !!profile,
     avgPsychologyScore: debriefs.length > 0
-      ? Math.round(debriefs.reduce((s, d) => s + ((d as any).psychology_score || 50), 0) / debriefs.length)
+      ? Math.round(debriefs.reduce((s, d) => s + (d.overall_rating ?? 50), 0) / debriefs.length)
       : 50,
     avgDisciplineScore: debriefs.length > 0
       ? Math.round(debriefs.reduce((s, d) => s + (d.discipline_score || 50), 0) / debriefs.length)

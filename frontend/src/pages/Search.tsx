@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSearch } from '../hooks/useSearch';
+import type { SearchResult } from '../api/types';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -29,8 +30,8 @@ const ENTITY_FILTERS = [
   { label: 'Chunks', value: 'document_chunk' },
 ];
 
-function guessType(result: Record<string, unknown>): string {
-  return (result.type as string) || (result.entity_type as string) || (result.kind as string) || 'unknown';
+function guessType(result: SearchResult): string {
+  return result.type ?? result.entity_type ?? result.kind ?? 'unknown';
 }
 
 function renderValue(v: unknown): string {
@@ -132,11 +133,11 @@ export default function SearchPage() {
               <p className="text-xs text-muted-foreground">{data.length} result{data.length !== 1 ? 's' : ''} found</p>
               <div className="space-y-3">
                 {data.map((result, i) => {
-                  const r = result as Record<string, unknown>;
+                  const r = result;
                   const type = guessType(r);
                   const Icon = TYPE_ICONS[type] || SearchIcon;
                   const content = renderValue(r.content || r.text || r.description || r.verbatim_text || r.name || r.title || '');
-                  const similarity = r.similarity as number | undefined;
+                  const similarity = r.similarity;
                   return (
                     <motion.div key={'result-' + i} variants={item}>
                       <Card className="transition-all hover:shadow-md">
@@ -153,20 +154,20 @@ export default function SearchPage() {
                                     {(similarity * 100).toFixed(0)}% match
                                   </Badge>
                                 )}
-                                {(r as any).filename && (
-                                  <span className="text-3xs text-muted-foreground">{(r as any).filename}</span>
+                                {r.filename && (
+                                  <span className="text-3xs text-muted-foreground">{r.filename}</span>
                                 )}
-                                {(r as any).page != null && (
-                                  <span className="text-3xs text-muted-foreground">p.{(r as any).page}</span>
+                                {r.page != null && (
+                                  <span className="text-3xs text-muted-foreground">p.{r.page}</span>
                                 )}
-                                {(r as any).result && (
-                                  <Badge variant={(r as any).result === 'WIN' ? 'success' : (r as any).result === 'LOSS' ? 'danger' : 'default'} size="sm">
-                                    {(r as any).result}
+                                {r.result && (
+                                  <Badge variant={r.result === 'WIN' ? 'success' : r.result === 'LOSS' ? 'danger' : 'default'} size="sm">
+                                    {r.result}
                                   </Badge>
                                 )}
-                                {(r as any).pnl != null && (
-                                  <span className={cn('text-3xs font-mono', (r as any).pnl >= 0 ? 'text-success' : 'text-danger-text')}>
-                                    {(r as any).pnl >= 0 ? '+' : ''}{Number((r as any).pnl).toFixed(2)}
+                                {r.pnl != null && (
+                                  <span className={cn('text-3xs font-mono', r.pnl >= 0 ? 'text-success' : 'text-danger-text')}>
+                                    {r.pnl >= 0 ? '+' : ''}{Number(r.pnl).toFixed(2)}
                                   </span>
                                 )}
                               </div>

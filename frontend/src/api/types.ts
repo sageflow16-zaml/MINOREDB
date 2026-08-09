@@ -457,7 +457,29 @@ export interface DistributionData {
 }
 
 export interface SearchResult {
-  [key: string]: unknown;
+  id: string;
+  entity_type: string;
+  created_at: string;
+  type?: string;
+  kind?: string;
+  text?: string;
+  content?: string;
+  description?: string;
+  verbatim_text?: string;
+  name?: string;
+  title?: string;
+  filename?: string;
+  page?: number;
+  similarity?: number;
+  score?: number;
+  pair?: string;
+  direction?: string;
+  result?: string;
+  pnl?: number;
+  rr?: number;
+  status?: string;
+  notes?: string;
+  source_metadata?: Record<string, unknown>;
 }
 
 export interface MarketStructureRead {

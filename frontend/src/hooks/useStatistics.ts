@@ -217,11 +217,3 @@ export const useScatterData = (projectId: string) => {
     enabled: !!projectId,
   });
 };
-
-export const useFilteredStatistics = (projectId: string, startDate?: string, endDate?: string) => {
-  return useStableQuery({
-    queryKey: ['statistics', projectId, 'filtered', startDate, endDate],
-    queryFn: () => statisticsService.filtered(projectId, startDate, endDate),
-    enabled: !!projectId && (!!startDate || !!endDate),
-  });
-};

@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/DataTable';
 import { Skeleton } from '../components/ui/skeleton';
+import { LoadingSpinner } from '../components/ui/Feedback';
 import { chartTooltipStyle, chartDefaultProps } from '../lib/chart';
 import {
   DollarSign, TrendingUp, Activity, TrendingDown, Wallet, Award,
@@ -108,7 +109,15 @@ export default function PortfolioDashboardPage() {
     );
   }
 
-  const { summary, risk, allocations, account_breakdown, history } = data!;
+  if (!data) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  const { summary, risk, allocations, account_breakdown, history } = data;
   const isDailyPnlPositive = summary.daily_pnl >= 0;
   const equityData = (history.equity_curve ?? []).map((p) => ({ ...p, date: new Date(p.date).toLocaleDateString() }));
   const allocationData = allocations.allocations.map((a) => ({ name: a.entity_name || a.entity_type, value: a.current_percentage || 0 }));
